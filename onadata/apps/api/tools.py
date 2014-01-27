@@ -11,12 +11,13 @@ from onadata.apps.api.models.project import Project
 from onadata.apps.api.models.project_xform import ProjectXForm
 from onadata.apps.api.models.team import Team
 from onadata.apps.main.forms import QuickConverter
-from onadata.apps.odk_logger.models.xform import XForm
-from onadata.apps.odk_viewer.models.parsed_instance import datetime_from_str
+from onadata.apps.logger.models.xform import XForm
+from onadata.apps.viewer.models.parsed_instance import datetime_from_str
 from onadata.libs.data.query import get_field_records, get_numeric_fields
 from onadata.libs.utils.logger_tools import publish_form
 from onadata.libs.utils.user_auth import check_and_set_form_by_id, \
     check_and_set_form_by_id_string
+from onadata.libs.data.statistics import _chk_asarray
 
 DECIMAL_PRECISION = 2
 
@@ -172,16 +173,6 @@ def mode(a, axis=0):
         oldcounts = np.maximum(counts, oldcounts)
         oldmostfreq = mostfrequent
     return mostfrequent, oldcounts
-
-
-def _chk_asarray(a, axis):
-    if axis is None:
-        a = np.ravel(a)
-        outaxis = 0
-    else:
-        a = np.asarray(a)
-        outaxis = axis
-    return a, outaxis
 
 
 def get_median_for_field(field, xform):
