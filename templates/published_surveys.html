@@ -3,6 +3,7 @@
 {% if all_forms or forms_shared_with %}
 
 {% for xform_list in xforms_list %}
+{% if xform_list.title != 'Shared Forms' %}
 <section id="{{ xform_list.id }}-forms">
   <div class="page-header">
       <h1>{{ xform_list.title }}<small>{{ xform_list.small }}</small></h1>
@@ -47,7 +48,8 @@
 </table>
   <hr />
     </section>
-    {% endif %}
+{% endif %}
+{% endif %}
     {% endfor %}
 
     {% endif %}
