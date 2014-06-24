@@ -59,7 +59,9 @@
           </ul>
           {% else %}
           <ul class="nav">
-            <li><a href="http://kform.prod.kobotoolbox.org/#/forms">{% trans "Forms" %}</a></li>
+            {% if koboform_forms_url %}
+            <li><a href="{{ koboform_forms_url }}">{% trans "Forms" %}</a></li>
+            {% endif %}
             <!-- <li class="active"><a href="#overview">Overview</a></li> -->
             <!--<li><a href="{% url "onadata.apps.main.views.form_gallery" %}">{% trans "Forms" %}</a></li>-->
               {% if user.is_superuser or user.is_staff %}
