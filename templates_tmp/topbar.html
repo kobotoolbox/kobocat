@@ -8,8 +8,8 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </a>
-      <a class="brand" href="/" title="onadata"><img alt="onadata"
-          src="{{STATIC_URL}}images/onadata_logo_white.png" /></a>
+      <a class="brand" href="/" title="KoBoCAT"><img alt="KoBoCAT"
+          src="{{STATIC_URL}}images/kobocat_logo.png" style="height: 34px" /></a>
       <div class="nav-collapse collapse">
           {% if form_view %}
           <ul class="nav">
@@ -59,12 +59,17 @@
           </ul>
           {% else %}
           <ul class="nav">
-            {% if koboform_url %}
-            <li class="navbutton"><a href="{{ koboform_url }}">{% trans "Forms" %}</a></li>
+            {% if koboform_forms_url %}
+            <li><a href="{{ koboform_forms_url }}">{% trans "Forms" %}</a></li>
             {% endif %}
-            {% if user.is_superuser or user.is_staff %}
-            <li class="navbutton navbutton--admin"><a href="{% url "onadata.apps.main.views.members_list" %}">{% trans "People" %}</a></li>
-            {% endif %}
+            <!-- <li class="active"><a href="#overview">Overview</a></li> -->
+            <!--<li><a href="{% url "onadata.apps.main.views.form_gallery" %}">{% trans "Forms" %}</a></li>-->
+              {% if user.is_superuser or user.is_staff %}
+            <!--<li><a href="{% url "onadata.apps.main.views.members_list" %}">{% trans "People" %}</a></li>-->
+              {% endif %}
+            <!-- <li><a href="/resources/">{% trans "Resources" %}</a></li> -->
+            <!--<li><a href="{% url "onadata.apps.main.views.syntax" %}">{% trans "Syntax" %}</a></li>-->
+            <!--<li><a href="{% url "onadata.apps.main.views.support" %}">{% trans "Support" %}</a></li>-->
           </ul>
           <ul class="nav pull-right">
             {% if user.is_authenticated %}
