@@ -38,17 +38,13 @@
 {% endblock %}
 
 {% block content %}
-{% if SITE_READ_ONLY%}
-<h1>{% blocktrans %}We're down for maintenance. We will be back shortly.{% endblocktrans %}</h1>
-{% endif %}
 <div id="ona-tagline">
-    <h1>Collect, Analyze and Share Data.
-    </h1>
-    <p>Use mobile phones and the web to quickly collect, analyze and share data securely. Whether you are mapping, monitoring or enumerating - Ona is your trusted solution.</p>
+    <h1>KoBo Coordinated Assessment Tool</h1>
+    <p>KoBoCAT was built using the latest technologies for the most demanding situations. KoBoCAT is used by humanitarian actors for rapid post-disaster assements, project evaluations, or any other form of data collection.</p>
 </div>
 <div class="row">
     <div class="col-md-8">
-        <img src="{{STATIC_URL}}images/onadata-computer.png" width="497" height="363"/>
+        <img src="{{STATIC_URL}}images/kobocat_photo.png" width="497" height="363"/>
     </div>
     <div class="col-md-4">
         {% url "auth_login" as login_url %}
