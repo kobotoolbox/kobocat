@@ -59,14 +59,12 @@
           </ul>
           {% else %}
           <ul class="nav">
-            <!-- <li class="active"><a href="#overview">Overview</a></li> -->
-            <li><a href="{% url "onadata.apps.main.views.form_gallery" %}">{% trans "Forms" %}</a></li>
-              {% if user.is_superuser or user.is_staff %}
-            <li><a href="{% url "onadata.apps.main.views.members_list" %}">{% trans "People" %}</a></li>
-              {% endif %}
-            <!-- <li><a href="/resources/">{% trans "Resources" %}</a></li> -->
-            <li><a href="{% url "onadata.apps.main.views.syntax" %}">{% trans "Syntax" %}</a></li>
-            <li><a href="{% url "onadata.apps.main.views.support" %}">{% trans "Support" %}</a></li>
+            {% if koboform_url %}
+            <li class="navbutton"><a href="{{ koboform_url }}">{% trans "Forms" %}</a></li>
+            {% endif %}
+            {% if user.is_superuser or user.is_staff %}
+            <li class="navbutton navbutton--admin"><a href="{% url "onadata.apps.main.views.members_list" %}">{% trans "People" %}</a></li>
+            {% endif %}
           </ul>
           <ul class="nav pull-right">
             {% if user.is_authenticated %}

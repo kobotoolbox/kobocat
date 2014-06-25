@@ -1,13 +1,20 @@
 {% extends 'base.html' %}
 {% load humanize %}
+
+{% block additional-headers %}
+  <!-- a temporary way to hide the kobocat deprecated features -->
+  <style type="text/css">
+  .kc-hide { display: none !important; }
+  </style>
+{% endblock %}
+
 {% block content %}
 {% load i18n %}
-
   <section id="profile">
     <div class="page-header">
       <!-- <img src='{{ content_user.profile.gravatar }}' alt='gravatar' width='40' height='40' style='float:left; padding-right:10px;' /> -->
     <div id="mfeedback">&nbsp;</div>
-	<h3>
+	<h3 class="kc-hide">
 	  <div style='vertical-align: middle'>
 	  <img src='{{ content_user.profile.gravatar }}' alt='gravatar' width='20' height='20' />
 	  <a href="{% url "user_profile" content_user.username %}">{{ content_user.username }}</a> ({% trans "Owner" %}) /
@@ -75,7 +82,7 @@
               </li>
             </ul>
           </div>
-          <div class="btn-group">
+          <div class="btn-group kc-hide">
             <a class="btn" href="{% url "download_jsonform" content_user.username xform.id_string %}"><i class="icon-file"></i><font color=#000> {% trans "JSONForm" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
@@ -89,7 +96,7 @@
     </div>
     <br>
         </ul>
-        <p>
+        <p class="kc-hide">
             {% trans "License" %}:
             {% if can_edit %}
                 {% for field in form_license_form %}
@@ -283,7 +290,7 @@
       </div>
     </div>
       <br/>
-        <div class="clearfix bordered">
+        <div class="clearfix bordered kc-hide">
                 <h3 data-toggle="collapse" class="toggler" data-target="#source_tab">{% trans "Source" %}</h3>
                 <div id='source_tab' class="collapse">
                 <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
@@ -333,7 +340,7 @@
         </div>
         {% if is_owner %}
         <br/>
-        <div class="clearfix bordered">
+        <div class="clearfix bordered kc-hide">
             <h3 data-toggle="collapse" class="toggler" data-target="#restservice_tab">{% trans "Rest Services" %}</h3>
             <div id='restservice_tab' class="collapse">
             </div>
@@ -386,7 +393,7 @@
             </div>
         </div>
         <br/>
-        <div class="clearfix bordered">
+        <div class="clearfix bordered kc-hide">
             <h3 data-toggle="collapse" class="toggler" data-target="#map_tab">{% trans "Mapbox Layer" %}</h3>
             <div id='map_tab' class="collapse">
             {% if mapbox_layer %}
@@ -408,7 +415,7 @@
             </div>
         </div>
         <br/>
-        <div class="clearfix bordered">
+        <div class="clearfix bordered kc-hide">
                 <h3 data-toggle="collapse" class="toggler" data-target="#sms_tab">{% trans "SMS Support" %} (<acronym title="SMS Support is in beta stage now. Please use carefully as API and IDs might change.">beta</acronym>)</h3>
                 <div id='sms_tab' class="collapse">
                 <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
@@ -511,7 +518,7 @@
         </div>
         </div>
         <br/>
-        <div>
+        <div class="kc-hide">
             <h3>{% trans "bamboo" %}</h3>
             {% if xform.bamboo_dataset %}
                 {% blocktrans with dataset=xform.bamboo_dataset %}bamboo dataset: <strong><a href="http://bamboo.io/datasets/{{ dataset }}/info">{{ dataset }}</a></strong>{% endblocktrans %}
