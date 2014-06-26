@@ -135,3 +135,12 @@ def deploy(deployment_name, branch='master'):
 
     run("sudo %s restart" % env.celeryd)
     run("sudo /usr/local/bin/uwsgi --reload %s" % env.pid)
+
+
+def restart(deployment_name):
+    setup_env(deployment_name)
+    with cd(env.code_src):
+        run('find . -name "*.pyc" -exec rm -rf {} \;')
+        run('find . -type d -empty -delete')
+    run("sudo %s restart" % env.celeryd)
+    run("sudo /usr/local/bin/uwsgi --reload %s" % env.pid)
