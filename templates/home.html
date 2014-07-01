@@ -35,13 +35,14 @@
         font-size: 18px;
     }
     </style>
+    {% if koboform_autoredirect %}
+    <script type="text/javascript">
+    window.location = "{{koboform_url}}/accounts/login/?next=/kobocat";
+    </script>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
-
-<script type="text/javascript">
-window.location = "{{koboform_url}}/accounts/login/?next=/kobocat";
-</script>
 
 <div id="ona-tagline">
     <h1>KoBo Coordinated Assessment Tool</h1>
