@@ -16,9 +16,7 @@ body {
   background: #E9EDF0;
 }
 
-.navbar-fixed-top {
-  /*top:50px;*/
-  /*opacity: 0.3;*/
+.navbar-fixed-top.hidden {
   display: none;
 }
 
@@ -100,4 +98,52 @@ section {
     height: 27px;
     margin-top: 5px;
     margin-right: 6px;
+}
+
+/* ==========================================================================
+   Top level menu
+   ========================================================================== */
+
+.top-level-menu {
+    width: 230px;
+    position: fixed;
+    top: 40px;
+    bottom: 0;
+    left: -230px;
+    background-color: #444;
+    transition: left 150ms;
+    z-index: 15;
+}
+
+.top-level-menu.is-active {
+    left: 0;
+}
+
+.top-level-menu ul {
+  margin:0;
+  padding:0;
+  list-style: none;
+}
+/* Top level menu items
+   -------------------------------------------------------------------------- */
+
+.top-level-menu__item > a {
+    height: 40px;
+    padding-right: 12px;
+    padding-left: 12px;
+    display: block;
+    font-size: 14px;
+    line-height: 40px;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.top-level-menu__item > a:hover,
+.top-level-menu__item > a:focus {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.top-level-menu__item.is-active > a {
+    color: white;
+    background-color: black;
 }

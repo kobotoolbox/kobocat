@@ -10,8 +10,40 @@
   </div>
 </header>
 
+<section class="top-level-menu">
+  <ul>
+    <li class="top-level-menu__item">
+      <a href="{{ koboform_url }}">
+        <i class="header-bar__page-icon fa fa-fw fa-file-text-o"></i>
+        {% trans "Forms" %}
+      </a>
+    </li>
 
-<div class="navbar navbar-fixed-top" data-dropdown="dropdown" >
+<!--     <li class="top-level-menu__item">
+      <a href="#">
+        <i class="header-bar__page-icon fa fa-fw fa-folder"></i>
+        Question Library
+      </a>
+    </li>
+ -->
+    <li class="top-level-menu__item">
+      <a href="/">
+        <i class="header-bar__page-icon fa fa-fw fa-globe"></i>
+        KoboCat
+      </a>
+    </li>
+
+    <li class="top-level-menu__item">
+      <a href="{% url "auth_logout" %}">
+        <i class="header-bar__page-icon  fa  fa-fw  fa-sign-out"></i> 
+        {% trans "Sign out" %}
+      </a>
+    </li>
+
+  </ul>
+</section>
+
+<div class="navbar navbar-fixed-top hidden" data-dropdown="dropdown" >
   <div class="navbar-inner{% if form_view %} navbar-inner-map{% endif %}">
     <div class="container">
       <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
