@@ -5,7 +5,7 @@
 {% load i18n %}
 <script type="text/javascript" src="https://www.dropbox.com/static/api/1/dropbox.js" id="dropboxjs" data-app-key="0jxhquu5po7r0an"></script>
 <section id="profile">
-  <div class="row">
+  <div class="row-fluid">
     <div class="span5">
         <h1>{% blocktrans %}Publish a Form <small>Upload XLSForm</small>{% endblocktrans %}</h1>
         {% url "tutorial" as tutorial_url %}
@@ -52,8 +52,8 @@
     </div>
     <div class="span6 profile">
         <div class="bordered">
-        <div class="row">
-        <div class="span1">
+        <div class="row-fluid">
+        <div class="span4">
             {% if not profile.gravatar_exists %}
                 <a style="display: inline-block;" title="{% trans "Click to change your avatar" %}" href="https://secure.gravatar.com/site/login" id="gravatar">
             {% endif %}
@@ -62,7 +62,7 @@
                </a>
             {% endif %}
         </div>
-        <div class="span4">
+        <div class="span8">
             <h3 class="short">
                 <a href="{% url "public_profile" content_user.username %}">{{ content_user.username }}</a>
                 {% if profile.name %}
@@ -72,25 +72,25 @@
             <span><a href="{% url "public_profile" content_user.username %}">{% trans "View Profile Page" %}</a></span>
         </div>
         </div>
-        <div class="row">
-        <div class="span1">
+        <div class="row-fluid">
+        <div class="span3">
             <h4>{{ all_forms|intcomma }}</h4>
         </div>
-        <div class="span2">
+        <div class="span4">
             <h4>{{ num_forms|intcomma }}</h4>
         </div>
-        <div class="span2">
+        <div class="span4">
             <h4>{{ user_instances|intcomma }}</h4>
         </div>
         </div>
-        <div class="row">
-        <div class="span1">
+        <div class="row-fluid">
+        <div class="span3">
             <small>{% trans "FORMS" %}</small>
         </div>
-        <div class="span2">
+        <div class="span4">
             <small>{% trans "SHARED FORMS" %}</small>
         </div>
-        <div class="span2">
+        <div class="span4">
             <small>{% trans "SUBMISSIONS" %}</small>
         </div>
         </div>
