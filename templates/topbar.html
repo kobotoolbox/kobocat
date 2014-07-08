@@ -18,24 +18,29 @@
         {% trans "Forms" %}
       </a>
     </li>
-
-<!--     <li class="top-level-menu__item">
-      <a href="#">
-        <i class="header-bar__page-icon fa fa-fw fa-folder"></i>
+    <li class="top-level-menu__item">
+      <a href="{{ koboform_url }}#/library/questions">
+        <i class="header-bar__page-icon  fa  fa-fw  fa-folder"></i>
         Question Library
       </a>
     </li>
- -->
     <li class="top-level-menu__item">
       <a href="/">
         <i class="header-bar__page-icon fa fa-fw fa-globe"></i>
-        KoboCat
+        Projects
+      </a>
+    </li>
+
+    <li class="top-level-menu__item">
+      <a href="/{{ user.username }}/settings">
+        <i class="header-bar__page-icon fa fa-fw fa-globe"></i>
+        Settings
       </a>
     </li>
 
     <li class="top-level-menu__item">
       <a href="{% url "auth_logout" %}">
-        <i class="header-bar__page-icon  fa  fa-fw  fa-sign-out"></i> 
+        <i class="header-bar__page-icon  fa  fa-fw  fa-sign-out"></i>
         {% trans "Sign out" %}
       </a>
     </li>
