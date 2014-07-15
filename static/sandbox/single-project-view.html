@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Sandbox page</title>
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="//netdna.bootstrapcdn.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/screen.css?v=2809679b01" rel="stylesheet">
+    <link href="/static/css/ona-screen-overrides.css" rel="stylesheet">
+    <!-- TEMP -->
+    <link href="/static/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/font-awesome.min.css" rel="stylesheet">
+    <!-- END TEMP -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+    <!--[if lte IE 8]>
+      <link href="//netdna.bootstrapcdn.com/font-awesome/3.0/css/font-awesome-ie7.css" rel="stylesheet">
+    <![endif]-->
+    <link href="/static/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet">
+
+    <link href="/static/css/kobo-branding.css" rel="stylesheet">
+    <link href="/static/css/published_forms.css" rel="stylesheet">
+
+    <!-- NEW SANDBOX STYLES -->
+    <link href="/static/sandbox/kobo-single-project.css" rel="stylesheet">
+    <!-- END NEW SANDBOX STYLES -->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/bootstrap/docs/assets/ico/bootstrap-apple-57x57.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/bootstrap/docs/assets/ico/bootstrap-apple-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/bootstrap/docs/assets/ico/bootstrap-apple-114x114.png">
+  </head>
+
+  <body style="padding-top: 20px !important">
+  <header class="header-bar">
+    <div class="container__wide">
+      <span class="header-bar__top-level-menu-button">
+        <i class="fa fa-bars fa-lg fa-inverse"></i>
+      </span>
+      <h1 class="header-bar__title"><span class="header-bar__title-text">Projects</span></h1>
+      <a href="/"><span class="header-bar__top-logo pull-right"></span></a>
+    </div>
+  </header>
+
+  <section class="top-level-menu">
+    <ul>
+      <li class="top-level-menu__item">
+        <a href="{{ koboform_url }}"><i class="header-bar__page-icon fa fa-fw fa-file-text-o"></i>Forms</a>
+      </li>
+      <li class="top-level-menu__item">
+        <a href="{{ koboform_url }}#/library/questions"><i class="header-bar__page-icon  fa  fa-fw  fa-folder"></i>Question Library</a>
+      </li>
+      <li class="top-level-menu__item">
+        <a href="/"><i class="header-bar__page-icon fa fa-fw fa-globe"></i>Projects</a>
+      </li>
+
+      <li class="top-level-menu__item">
+        <a href="/{{ user.username }}/settings"><i class="header-bar__page-icon fa fa-fw fa-globe"></i>Settings</a>
+      </li>
+      <li class="top-level-menu__item">
+        <a href="{% url "auth_logout" %}"><i class="header-bar__page-icon  fa  fa-fw  fa-sign-out"></i>Sign out</a>
+      </li>
+    </ul>
+  </section>
+
+  <!-- TEMP -->
+  <div class="container__fixed">
+    <div class="container__wide">
+    <div class="form__settings" style="display: none;">
+      <label>Form ID</label>
+      <span title="Unique form name" class="poshytip">?</span>
+      <div class="form__settings-formid"><span class="form-id editable editable-click">new_form</span></div>
+
+      <div class="form__settings-fields bleeding-edge">
+        <div>
+        <label class="">Version</label>
+        <span title="Version of the form" class="poshytip">?</span>
+        <span class="editable  editable-click">Standard mode</span>
+        </div>
+        <div>
+        <label class="">Automatic ID</label>
+        <span title="Choose Statistics mode for question IDs like A01, A02, etc." class="poshytip">?</span>
+        <span class="editable  editable-click">Standard mode</span>
+        </div>
+        <div>
+        <label class="">Default Language</label>
+        <span title="The default language in which the form is written - optional" class="poshytip">?</span>
+        <span class="editable  editable-click">English</span>
+        </div>
+      </div>
+
+    </div>
+    </div>
+  </div>
+  <!-- END TEMP -->
+
+  <div class="sub-header-bar">
+    <div class="container__wide">
+      <a class="single-project__settings"><i class="fa fa-cog"></i> Project Settings</a>
+    </div>
+  </div>
+
+  <header class="single-project__header">
+      <hgroup class="container">
+        <h1>Peacebuilding Survey 2014</h1>
+        <p class="single-project__toggle-documents">
+          <i class="fa fa-paperclip"></i> <i class="fa fa-caret-right"></i> Perceptions Survey in North Kivu etc.
+        </p>
+        <div class="single-project__documents">
+          <div class="single-project__documents-label">
+            Background Documents
+          </div>
+
+          <div class="single-project__document">
+            <i class="fa fa-trash-o"></i> methodology.pdf
+          </div>
+          <div class="single-project__document">
+            <i class="fa fa-trash-o"></i> sampling-test.pdf
+          </div>
+
+          <button class="single-project__button">+ Add Document</button>
+
+        </div>
+      </hgroup>
+  </header>
+
+  <div class="container-fluid container__wide main single-project__dashboard">
+    <div class="dashboard__left">
+      <div class="dashboard__submissions">
+        <h2 class="dashboard__group-label">
+          Submissions (2,320)
+        </h2>
+        <a class="dashboard__button dashboard__button-view">
+          <i class="fa fa-trash-o"></i> 
+          <span>View data in table</span>
+        </a>
+        <a class="dashboard__button dashboard__button-analyze">
+          <i class="fa fa-trash-o"></i> 
+          <span>Analyze data</span>
+        </a>
+        <a class="dashboard__button dashboard__button-download-data">
+          <i class="fa fa-trash-o"></i> 
+          <span>Download data</span>
+        </a>
+      </div>
+      <div class="dashboard__photos">
+        <h2 class="dashboard__group-label">
+          Photos
+        </h2>
+
+        <a class="dashboard__button dashboard__button-view-gallery">
+          <i class="fa fa-trash-o"></i> 
+          <span>View gallery</span>
+        </a>
+        <a class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
+          <i class="fa fa-trash-o"></i> 
+          <span>Download all photos</span>
+        </a>
+
+      </div>
+      <div class="dashboard__form">
+        <h2 class="dashboard__group-label">
+          Form
+        </h2>
+        <div class="dashboard__form-contents">
+          <div class="dashboard__form-name">
+            c_peacebuilding_survey_2014-2015_nomadoma_longish_textish
+          </div>
+          <a class="dashboard__formbutton dashboard__formbutton-download">
+            <i class="fa fa-trash-o"></i>
+
+          </a>
+          <a class="dashboard__formbutton dashboard__formbutton-preview">
+            <i class="fa fa-trash-o"></i>
+            <span>Preview</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="dashboard__right">
+      <div class="dashboard__gps">
+        <h2 class="dashboard__group-label">
+          GPS Points
+        </h2>
+        <a class="dashboard__button dashboard__button-view-on-map">
+          <i class="fa fa-trash-o"></i> 
+          <span>View on map</span>
+        </a>
+        <a class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
+          <i class="fa fa-trash-o"></i> 
+          <span>Download GPS points</span>
+        </a>
+      </div>
+      <div class="dashboard__add-data">
+        <h2 class="dashboard__group-label">
+          Add Data
+        </h2>
+        <a class="dashboard__button dashboard__button-twoline dashboard__button-enter-data">
+          <i class="fa fa-trash-o"></i> 
+          <span>Enter data in browser</span>
+        </a>
+        <a class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect">
+          <i class="fa fa-trash-o"></i> 
+          <span>How to collect data on mobile device?</span>
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+    <p>
+      Powered by <a href="http://www.kobotoolbox.org">KoBoToolbox</a> | <a href="https://github.com/kobotoolbox/kobocat">Github code</a> (BSD License)
+    </p>
+    </div>
+  </footer>
+
+
+    <!-- Le javascript -->
+    <script src="/static/bower_components/jquery/jquery.min.js"></script>
+    <script src="/static/bower_components/jquery/jquery-migrate.min.js"></script>
+    <script src="/static/js/jquery.tablesorter.min.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.js"></script>
+    <script src="/static/bootstrap/js/bootstrapx-clickover.js"></script>
+    <script src="/static/bootstrap/js/bootstrapx-clickover-btns.js"></script>
+    <script src="/static/js/application.js?v=201307251039"></script>
+    <!--  -->
+    <script src="/static/js/kobo-branding.js"></script>
+
+  </body>
+</html>
