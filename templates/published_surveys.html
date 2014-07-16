@@ -1,6 +1,15 @@
 {% load humanize %}
 {% load i18n %}
 
+<form action="." method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="uploadform" id="url">
+    <table class="uploadform__table">
+      {{ form.as_p }}
+    </table>
+    <input type="submit" class="uploadform__publish" value="{% trans 'Publish' %}" />
+  </div>
+</form>
 
 {% if all_forms or forms_shared_with %}
 
