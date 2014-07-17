@@ -13,10 +13,6 @@
     <link href="//netdna.bootstrapcdn.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/screen.css?v=2809679b01" rel="stylesheet">
     <link href="/static/css/ona-screen-overrides.css" rel="stylesheet">
-    <!-- TEMP -->
-    <link href="/static/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/font-awesome.min.css" rel="stylesheet">
-    <!-- END TEMP -->
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
     <!--[if lte IE 8]>
       <link href="//netdna.bootstrapcdn.com/font-awesome/3.0/css/font-awesome-ie7.css" rel="stylesheet">
@@ -27,6 +23,7 @@
     <link href="/static/css/published_forms.css" rel="stylesheet">
 
     <!-- NEW SANDBOX STYLES -->
+    <link href="/static/sandbox/ios-switches.css" rel="stylesheet">
     <link href="/static/sandbox/kobo-single-project.css" rel="stylesheet">
     <!-- END NEW SANDBOX STYLES -->
 
@@ -69,40 +66,91 @@
     </ul>
   </section>
 
-  <!-- TEMP -->
-  <div class="container__fixed">
-    <div class="container__wide">
-    <div class="form__settings" style="display: none;">
-      <label>Form ID</label>
-      <span title="Unique form name" class="poshytip">?</span>
-      <div class="form__settings-formid"><span class="form-id editable editable-click">new_form</span></div>
-
-      <div class="form__settings-fields bleeding-edge">
-        <div>
-        <label class="">Version</label>
-        <span title="Version of the form" class="poshytip">?</span>
-        <span class="editable  editable-click">Standard mode</span>
-        </div>
-        <div>
-        <label class="">Automatic ID</label>
-        <span title="Choose Statistics mode for question IDs like A01, A02, etc." class="poshytip">?</span>
-        <span class="editable  editable-click">Standard mode</span>
-        </div>
-        <div>
-        <label class="">Default Language</label>
-        <span title="The default language in which the form is written - optional" class="poshytip">?</span>
-        <span class="editable  editable-click">English</span>
-        </div>
-      </div>
-
-    </div>
-    </div>
-  </div>
-  <!-- END TEMP -->
-
+  <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
   <div class="sub-header-bar">
     <div class="container__wide">
-      <a class="single-project__settings"><i class="fa fa-cog"></i> Project Settings</a>
+      <a class="single-project__toggle-settings"><i class="fa fa-cog"></i> Project Settings</a>
+    <div class="single-project__settings hidden">
+      <div class="settings__left">
+        <div class="settings__general">
+          <h2 class="settings__group-label">
+            General Form Settings
+          </h2>
+
+          <div class="settings__form-item">
+            <label class="settings__form-label">
+              Accept Submissions
+            </label>
+            <label><input type="checkbox" class="ios-switch" checked><div class="switch"></div></label>
+          </div>
+
+          <div class="settings__form-item">
+            <label class="settings__form-label">
+              Existing Form Files
+            </label>
+            <ul class="settings__files">
+              <li>
+                <div>happy.png</div>
+                <a class="settings__files-download"><i class="fa fa-download"></i></a>
+                <a class="settings__files-delete"><i class="fa fa-trash-o"></i></a>
+              </li>
+              <li class="even">
+                <div>happy.png</div>
+                <a class="settings__files-download"><i class="fa fa-download"></i></a>
+                <a class="settings__files-delete"><i class="fa fa-trash-o"></i></a>
+              </li>
+              <li>
+                <div>file_with_super_very_really_quite_long_filename_multiple_lines.png</div>
+                <a class="settings__files-download"><i class="fa fa-download"></i></a>
+                <a class="settings__files-delete"><i class="fa fa-trash-o"></i></a>
+              </li>
+            </ul>            
+          </div>
+
+          <button class="single-project__button">+ Add Document</button>
+        </div>  <!-- END .settings__general -->
+
+        <div class="settings__delete-project">
+          <h2 class="settings__group-label">
+            Delete project with all data and its form
+          </h2>
+
+          <button class="single-project__button single-project__button-delete">Delete</button>
+        </div>
+
+      </div>
+
+      <div class="settings__right">
+        <h2 class="settings__group-label">
+          How would you like to share your project
+        </h2>
+
+        <div class="settings__form-item">
+          <label class="settings__form-label">
+            Share Data Publicly
+          </label>
+          <label><input type="checkbox" class="ios-switch" ><div class="switch"></div></label>
+        </div>
+
+        <div class="settings__form-item">
+          <label class="settings__form-label">
+            Share Project Publicly
+          </label>
+          <label><input type="checkbox" class="ios-switch" checked><div class="switch"></div></label>
+        </div>
+
+        <div class="settings__form-item">
+          <label class="settings__form-label">
+            Share project with other users
+          </label>
+          <p>Your form is not shared with any other users</p>
+        </div>
+
+        <button class="single-project__button">+ Add Document</button>
+
+      </div>
+    </div>
+
     </div>
   </div>
 
@@ -110,9 +158,9 @@
       <hgroup class="container">
         <h1>Peacebuilding Survey 2014</h1>
         <p class="single-project__toggle-documents">
-          <i class="fa fa-paperclip"></i> <i class="fa fa-caret-right"></i> Perceptions Survey in North Kivu etc.
+          <i class="fa fa-paperclip"></i> <i class="doctoggle__caret fa fa-caret-right"></i> Perceptions Survey in North Kivu etc.
         </p>
-        <div class="single-project__documents">
+        <div class="single-project__documents hidden">
           <div class="single-project__documents-label">
             Background Documents
           </div>
@@ -130,6 +178,10 @@
       </hgroup>
   </header>
 
+  <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
+
+  <!-- NEW SANDBOX HTML CONTAINER -->
+  <!-- Note: class .single-project__dashboard should be in same div as .main -->
   <div class="container-fluid container__wide main single-project__dashboard">
     <div class="dashboard__left">
       <div class="dashboard__submissions">
@@ -137,17 +189,24 @@
           Submissions (2,320)
         </h2>
         <a class="dashboard__button dashboard__button-view">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-table"></i> 
           <span>View data in table</span>
         </a>
         <a class="dashboard__button dashboard__button-analyze">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-bar-chart-o"></i> 
           <span>Analyze data</span>
         </a>
         <a class="dashboard__button dashboard__button-download-data">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-download"></i> 
           <span>Download data</span>
         </a>
+        <div class="dashboard__download__drop hidden">
+          <a href="#" class="download__drop-button">XLS</a>
+          <a href="#" class="download__drop-button">XML</a>
+          <a href="#" class="download__drop-button">CSV</a>
+          <a href="#" class="download__drop-button">Google Spreadsheet</a>
+        </div>
+
       </div>
       <div class="dashboard__photos">
         <h2 class="dashboard__group-label">
@@ -155,11 +214,11 @@
         </h2>
 
         <a class="dashboard__button dashboard__button-view-gallery">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-eye"></i> 
           <span>View gallery</span>
         </a>
         <a class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-download"></i> 
           <span>Download all photos</span>
         </a>
 
@@ -173,11 +232,15 @@
             c_peacebuilding_survey_2014-2015_nomadoma_longish_textish
           </div>
           <a class="dashboard__formbutton dashboard__formbutton-download">
-            <i class="fa fa-trash-o"></i>
-
+            <i class="fa fa-download"></i>
           </a>
+          <div class="dashboard__form-drop hidden">
+            <a href="#" class="download__form-drop-button">XLS</a>
+            <a href="#" class="download__form-drop-button">XML</a>
+          </div>
+
           <a class="dashboard__formbutton dashboard__formbutton-preview">
-            <i class="fa fa-trash-o"></i>
+            <i class="fa fa-eye"></i>
             <span>Preview</span>
           </a>
         </div>
@@ -189,11 +252,11 @@
           GPS Points
         </h2>
         <a class="dashboard__button dashboard__button-view-on-map">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-map-marker"></i> 
           <span>View on map</span>
         </a>
         <a class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-download"></i> 
           <span>Download GPS points</span>
         </a>
       </div>
@@ -202,11 +265,11 @@
           Add Data
         </h2>
         <a class="dashboard__button dashboard__button-twoline dashboard__button-enter-data">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-plus"></i> 
           <span>Enter data in browser</span>
         </a>
         <a class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect">
-          <i class="fa fa-trash-o"></i> 
+          <i class="fa fa-mobile"></i> 
           <span>How to collect data on mobile device?</span>
         </a>
       </div>
@@ -214,6 +277,7 @@
     </div>
 
   </div>
+  <!-- END NEW SANDBOX HTML CONTAINER -->
 
   <footer class="footer">
     <div class="container">
@@ -234,6 +298,35 @@
     <script src="/static/js/application.js?v=201307251039"></script>
     <!--  -->
     <script src="/static/js/kobo-branding.js"></script>
+
+  <!-- NEW SANDBOX JQUERY CALLS -->
+    <script>
+    $(document).ready(function() {
+      $(document).on("click", ".single-project__toggle-documents", function () {
+        $('.single-project__documents').toggleClass('hidden');
+        $(this).toggleClass('active');
+        $('.doctoggle__caret').toggleClass('fa-caret-right');
+        $('.doctoggle__caret').toggleClass('fa-caret-down');
+      });
+
+      $(document).on("click", ".single-project__toggle-settings", function () {
+        $('.single-project__settings').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("click", ".dashboard__button-download-data", function () {
+        $('.dashboard__download__drop').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("click", ".dashboard__formbutton-download", function () {
+        $('.dashboard__form-drop').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+    }); 
+    </script>
+  <!-- END NEW SANDBOX JQUERY CALLS -->
 
   </body>
 </html>

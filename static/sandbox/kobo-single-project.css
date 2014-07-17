@@ -24,18 +24,132 @@
 .single-project__header .container {
   max-width: 984px;
 }
-.single-project__header .fa-caret-right {
+
+.single-project__header .fa-caret-right, 
+.single-project__header .fa-caret-down {
   opacity: 0.2;
   margin-left: 4px;
   margin-right: 4px;
 }
 
-.single-project__settings {
+/* settings for single project */
+
+.single-project__toggle-settings {
   color: #333;
   font-weight: 600;
   font-family: 'Lato';
   line-height: 40px;
-  margin-left: 12px;
+  margin-left: 14px;
+  cursor: pointer;
+}
+
+.single-project__toggle-settings:hover, 
+.single-project__toggle-settings.active {
+  color: #5DB0EC;
+  text-decoration: none;
+}
+
+.single-project__toggle-settings i {
+  margin-right: 6px;
+}
+
+.single-project__settings {
+  position: absolute;
+  width: 800px;
+  background-color: white;
+  border:2px solid #E9EDF0;
+  border-top-color: white;
+  top:48px;
+}
+
+.settings__left {
+  width: 49%;
+  border-right: 1px solid #D9DDE1;
+  float: left;
+}
+
+.settings__right {
+  width: 44%;
+  float: left;
+   margin-left: 3%;
+}
+
+.settings__general {
+  padding:20px;
+}
+
+h2.settings__group-label {
+  font-family: 'Lato';
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 0px;
+}
+
+label.settings__form-label {
+  font-weight: 600;
+  font-family: 'Lato';
+}
+
+.settings__form-item {
+  margin-bottom: 25px;
+}
+
+.settings__form-item input[type="checkbox"] + label {
+  display: inline;
+  margin-left: 10px;
+}
+
+ul.settings__files {
+  list-style: none;
+  margin:0;
+  padding:0;
+}
+
+ul.settings__files li {
+  padding:4px 10px;
+  background: #F1F3F5;
+  position: relative;
+  line-height: 15px;
+  color: #787878;
+}
+
+ul.settings__files li.even {
+    background: white;
+}
+
+ul.settings__files li div {
+    font-size: 11px;
+    width: 88%;
+    word-wrap: break-word;
+}
+
+a.settings__files-download {
+  position: absolute;
+  bottom: 5px;
+  right: 30px;
+  color: #4A5C6E;
+}
+
+a.settings__files-delete {
+  position: absolute;
+  bottom: 5px;
+  right: 10px;  
+  color: #D08B8C;
+}
+
+.settings__delete-project {
+  border-top: 1px solid #D9DDE1;
+  padding:20px;
+}
+
+/* Documents area of single project */
+
+.single-project__toggle-documents {
+  cursor: pointer;
+}
+
+.single-project__toggle-documents.active i.fa-paperclip {
+  color: #5DB0EC;
 }
 
 .single-project__documents {
@@ -63,12 +177,20 @@ button.single-project__button {
     padding: 5px;
     text-align: center;
     width: 150px;
-    margin-top:20px;
+    margin-top:10px;
     font-family: 'Lato';
 }
 
 button.single-project__button:hover {
-    background-color: #5ccf88;
+    opacity: 0.8;
+}
+
+button.single-project__button-delete {
+    background: #DC6561;
+    border-bottom-color: #C65657;
+    margin-bottom: 20px;
+    margin-top: -10px;
+    width: 100px;
 }
 
 /* Dashboard area of single project */
@@ -78,8 +200,9 @@ button.single-project__button:hover {
 }
 
 .dashboard__left {
-  width: 68%;
+  width: 72%;
   float: left;
+  margin-left: 1%;
 }
 
 .dashboard__right {
@@ -97,6 +220,7 @@ h2.dashboard__group-label {
   width: 55%;
   float: left;
   margin-right: 5%;
+  position: relative;
 }
 
 .dashboard__photos {
@@ -121,9 +245,10 @@ a.dashboard__button {
     text-align: center;
     margin-right: 1px;
     padding-top: 6px;
+    cursor: pointer;
 }
 
-a.dashboard__button:hover {
+a.dashboard__button:hover, a.dashboard__button.active {
   border-color: #5DB0EC;
   color: #5DB0EC;
   background-color: white;
@@ -173,10 +298,12 @@ a.dashboard__formbutton {
   width: 4%;
   text-align: center;
   color: #D8DBDE;
+  cursor: pointer;
 }
 
-a.dashboard__formbutton:hover {
+a.dashboard__formbutton:hover, a.dashboard__formbutton.active {
   color: #3FA2EE;
+  text-decoration: none;
 }
 
 a.dashboard__formbutton i {
@@ -191,8 +318,102 @@ a.dashboard__formbutton-preview {
 a.dashboard__formbutton-preview span {
   display: block;
   text-align: center;
-  margin-top: -4px;
-  font-size: 11px;
+  margin-top: -6px;
+  font-size: 10px;
   font-weight: 600;
   font-family: 'Lato';
+}
+
+/* Submissions Download dropdown */
+
+.dashboard__download__drop {
+  position: absolute;
+  right: 2px;
+  top: 120px;
+  width: 124px;
+  border: 1px solid #E7E8E9;
+  background: white;
+  z-index: 5; 
+}
+.dashboard__download__drop:before {
+  content: '';
+  position: absolute;
+  left: 23px;
+  top: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #E7E8E9; 
+}
+
+.download__drop-button {
+  border: none;
+  background: white;
+  color: #3f3f3f;
+  display: block;
+  width: 110px;
+  text-align: left;
+  padding: 4px;
+  padding-left: 10px;
+  font-weight: 600;
+  margin-top: 1px; 
+  font-size: 11px;
+  font-family: 'Lato';
+}
+
+.download__drop-button:hover {
+  background: #5DB0EC;
+  color: white; 
+  text-decoration: none;
+}
+
+/* Form Download Dropdown */
+
+.dashboard__form-contents {
+  position: relative;
+}
+
+
+.dashboard__form-drop {
+  position: absolute;
+  right: 72px;
+  top: 40px;
+  width: 44px;
+  border: 1px solid #E7E8E9;
+  background: white;
+  z-index: 5; 
+}
+
+.dashboard__form-drop:before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #E7E8E9; 
+}
+
+.download__form-drop-button {
+  border: none;
+  background: white;
+  color: #3f3f3f;
+  display: block;
+  width: 30px;
+  text-align: left;
+  padding: 4px;
+  padding-left: 10px;
+  font-weight: 600;
+  margin-top: 1px; 
+  font-size: 11px;
+  font-family: 'Lato';
+}
+
+.download__form-drop-button:hover {
+  background: #5DB0EC;
+  color: white; 
+  text-decoration: none;
 }
