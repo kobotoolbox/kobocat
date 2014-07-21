@@ -73,6 +73,7 @@
     <div class="single-project__settings hidden">
       <div class="settings__left">
         <div class="settings__general">
+          <span title="Set here your general form settings" class="poshytip">?</span>
           <h2 class="settings__group-label">
             General Form Settings
           </h2>
@@ -297,6 +298,7 @@
     <script src="/static/bootstrap/js/bootstrapx-clickover-btns.js"></script>
     <script src="/static/js/application.js?v=201307251039"></script>
     <!--  -->
+    <script src="/static/js/jquery.poshytip.js"></script>
     <script src="/static/js/kobo-branding.js"></script>
 
   <!-- NEW SANDBOX JQUERY CALLS -->
@@ -322,6 +324,16 @@
       $(document).on("click", ".dashboard__formbutton-download", function () {
         $('.dashboard__form-drop').toggleClass('hidden');
         $(this).toggleClass('active');
+      });
+
+      // question mark poshytip effect
+      $('span.poshytip').poshytip({
+          className: 'tip__bottomarrow',
+          showTimeout: 1,
+          alignTo: 'target',
+          alignX: 'right',
+          alignY: 'inner-bottom',
+          liveEvents: true
       });
 
     }); 
