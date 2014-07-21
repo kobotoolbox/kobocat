@@ -29,6 +29,10 @@
 	text-align: center;
 }
 
+.published_forms__cell--isactive, .published_forms__header--isactive {
+	display: none;
+}
+
 .published_forms__cell--isactive .ikn-active:before {
 	font-style: normal;
 	content: 'true';

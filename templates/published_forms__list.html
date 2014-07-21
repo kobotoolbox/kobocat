@@ -82,7 +82,7 @@
           {% endif %}
         </td>
         <td class="published_forms__cell published_forms__cell--isactive">
-          <i class="ikn-active {% if xform.downloadable %}ikn-active--inactive{% endif %}"></i>
+          <i class="ikn-active {% if not xform.downloadable %}ikn-active--inactive{% endif %}"></i>
         </td>
         </td>
         <td class="published_forms__cell published_forms__cell--misc">
