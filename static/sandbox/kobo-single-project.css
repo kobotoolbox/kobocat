@@ -143,16 +143,44 @@ a.settings__files-delete {
   padding:20px;
 }
 
+/* Project title */
+
+.single-project__header input#title {
+  font-size: 2em;
+  border-radius: 0;
+  font-family: 'Lato';
+  line-height: 2em;
+  margin:0px;
+  padding:0px;
+  height: 35px;
+  font-weight: 600;
+}
 /* Documents area of single project */
+.single-project__toggle-description {
+  display: inline;
+}
+
+.single-project__toggle-description input {
+  width: 90%;
+  border-radius: 0;
+  vertical-align: baseline;
+  border:none;
+  font-family: 'Lato';
+  font-size: 14px;
+  box-shadow: none;
+}
 
 .single-project__toggle-documents {
-  cursor: pointer;
+  margin-top: 1em;
 }
 
 .single-project__toggle-documents.active i.fa-paperclip {
   color: #5DB0EC;
 }
 
+.single-project__toggle-documents .doctoggle__caret {
+    cursor: pointer;
+}
 .single-project__documents {
   padding:10px 5px;
 }
@@ -167,7 +195,8 @@ a.settings__files-delete {
   margin-right: 20px;
 }
 
-button.single-project__button {
+button.single-project__button, 
+input.single-project__button {
     background: none repeat scroll 0 0 #39bf6e;
     border-color: #227040;
     border-style: none none solid;
@@ -287,7 +316,7 @@ a.dashboard__button-twoline span {
   width: 89%;
 }
 
-.dashboard__form-name {
+.dashboard__form-formid {
   width: 82%;
   color: #666;
   display: inline-block;
