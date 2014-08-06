@@ -244,9 +244,11 @@
     <div class="dashboard__left">
       <div class="dashboard__submissions">
         <h2 class="dashboard__group-label">
-          Submissions (2,320)
+          Submissions ({{ xform.submission_count|intcomma }})
         </h2>
-        <a class="dashboard__button dashboard__button-view">
+        {% if xform.shared_data or can_view %}
+        {% if not xform.encrypted and xform.submission_count > 0 %}
+        <a title="{% trans "View Submitted Data" %}" href="{% url "onadata.apps.viewer.views.data_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view">
           <i class="fa fa-table"></i> 
           <span>View data in table</span>
         </a>
@@ -258,24 +260,31 @@
           <i class="fa fa-download"></i> 
           <span>Download data</span>
         </a>
-        <div class="dashboard__download__drop hidden">
-          <a href="#" class="download__drop-button">XLS</a>
-          <a href="#" class="download__drop-button">XML</a>
-          <a href="#" class="download__drop-button">CSV</a>
-          <a href="#" class="download__drop-button">Google Spreadsheet</a>
-        </div>
 
+        <div class="dashboard__download__drop hidden">
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}" class="download__drop-button">XLS</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}" class="download__drop-button">CSV</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" class="download__drop-button">GDOCS</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" class="download__drop-button">SAV ZIP</a>
+        </div>
+        {% else %}
+        <span class="label label-warning">{% trans "NO DATA" %}</span>
+        {% endif %}
+        {% endif %}
       </div>
+
       <div class="dashboard__photos">
         <h2 class="dashboard__group-label">
           Photos
         </h2>
 
-        <a class="dashboard__button dashboard__button-view-gallery">
+        <a title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-gallery">
           <i class="fa fa-eye"></i> 
           <span>View gallery</span>
         </a>
-        <a class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
+        <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
           <i class="fa fa-download"></i> 
           <span>Download all photos</span>
         </a>
@@ -320,22 +329,25 @@
       </div>
     </div>
     <div class="dashboard__right">
+      {% if xform.has_instances_with_geopoints %}
       <div class="dashboard__gps">
-        <h2 class="dashboard__group-label">
-          GPS Points
-        </h2>
-        <a class="dashboard__button dashboard__button-view-on-map">
+        <h2 class="dashboard__group-label">GPS Points</h2>
+
+        <a title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-on-map">
           <i class="fa fa-map-marker"></i> 
           <span>View on map</span>
         </a>
-        <a class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
+
+        <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}" class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
           <i class="fa fa-download"></i> 
           <span>Download GPS points</span>
         </a>
-      </div>
+     </div>
+     {% endif %}
+
+      {% if can_edit %}
       <div class="dashboard__add-data">
         <h2 class="dashboard__group-label">Add Data</h2>
-        {% if can_edit %}
 
         <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-enter-data">
           <i class="fa fa-plus"></i> 
@@ -345,10 +357,9 @@
           <i class="fa fa-mobile"></i> 
           <span>How to collect data on mobile device?</span>
         </a>
-        {% endif %}
 
         <div class="modal hide fade" id="popupmodal" style="width: auto; left:36%; margin-left: auto; margin-right: auto;" tabindex="-1" role="dialog">
-             <div class="modal-header">
+            <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h3>{%  trans "Mobile Form" %}</h3>
             </div>
@@ -367,11 +378,13 @@
         </div>
 
       </div>
+      {% endif %}
+
     </div>
 
 <!-- END NEW SINGLE PROJECT VIEW -->
 
-  <section id="profile">
+  <section id="profile" class="kc-hide">
     <div class="page-header kc-hide">
       <!-- <img src='{{ content_user.profile.gravatar }}' alt='gravatar' width='40' height='40' style='float:left; padding-right:10px;' /> -->
       <div id="mfeedback">&nbsp;</div>
@@ -559,12 +572,12 @@
             {% endif %}
         </p>
         <p><a id="data-license_info" style="display:none" href="">{% trans "License information" %}</a></p>
-	    <div class="btn-group" style="margin-bottom: 9px">
-				{% if xform.has_instances_with_geopoints %}
-			<a class="btn btn-info" rel="tooltip" title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}">
-				<i class="icon-map-marker icon-white"></i> {% trans "Map" %}
-			</a>
-		        {% endif %}
+        <div class="btn-group" style="margin-bottom: 9px">
+	   			{% if xform.has_instances_with_geopoints %}
+    		  	<a class="btn btn-info" rel="tooltip" title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}">
+    				<i class="icon-map-marker icon-white"></i> {% trans "Map" %}
+    			 </a>
+          {% endif %}
             <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}">
               <i class="icon-camera icon-white"></i> {% trans "Photos" %}
             </a>

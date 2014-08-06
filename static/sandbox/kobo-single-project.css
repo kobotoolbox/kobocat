@@ -258,7 +258,8 @@ h2.dashboard__group-label {
   float: left;
 }
 
-.dashboard__form, .dashboard__add-data {
+.dashboard__form, 
+.dashboard__gps + .dashboard__add-data {
   clear: both;
   padding-top: 10px;
 }
@@ -308,6 +309,10 @@ a.dashboard__button-download-data span {
 a.dashboard__button-twoline span {
   line-height: 10px;
   margin-top: 0px;
+}
+
+.dashboard__button-download-all-photos span {
+  padding:0px 5px;  
 }
 
 .dashboard__form-contents {
