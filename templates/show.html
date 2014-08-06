@@ -252,7 +252,7 @@
           <i class="fa fa-table"></i> 
           <span>View data in table</span>
         </a>
-        <a class="dashboard__button dashboard__button-analyze">
+        <a href="{% url "onadata.apps.viewer.views.stats_tables" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-analyze">
           <i class="fa fa-bar-chart-o"></i> 
           <span>Analyze data</span>
         </a>
