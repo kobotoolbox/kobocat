@@ -30,14 +30,14 @@
               <label class="settings__form-label">
                 {% trans "Accept Submissions" %}
               </label>
-              <label><input type="checkbox" class="ios-switch" {% if xform.downloadable %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
+              <label><input id="active-form" type="checkbox" class="ios-switch" {% if xform.downloadable %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
             </div>
 
             <div class="settings__form-item">
               <label class="settings__form-label">Existing Form Files</label>
               <ul class="settings__files">
                 {% for media in media_upload %}
-                  <li>
+                  <li class="{% cycle 'odd' 'even' %}">
                     <div>{{ media.data_value }}</div>
                     <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
                     {% if can_edit %}
@@ -45,20 +45,12 @@
                     {% endif %}
                   </li>
                 {% endfor %}
-                <li class="even">
-                  <div>static-example-happy.png</div>
-                  <a class="settings__files-download"><i class="fa fa-download"></i></a>
-                  <a class="settings__files-delete"><i class="fa fa-trash-o"></i></a>
-                </li>
-                <li>
-                  <div>file_with_super_very_really_quite_long_filename_multiple_lines.png</div>
-                  <a class="settings__files-download"><i class="fa fa-download"></i></a>
-                  <a class="settings__files-delete"><i class="fa fa-trash-o"></i></a>
-                </li>
               </ul>            
 
               {% if can_edit %}
-              <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+              <button class="single-project__button single-project__add-media">+ Add Document</button>
+
+              <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
                   {% csrf_token %}
                   <ul class="nav nav-tabs">
                       <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
@@ -67,19 +59,18 @@
                   <div class="tab-content">
                       <div class="tab-pane active" id="media_upload">
                           <input type="file" multiple="" name="media" id="id_media">
-                          <input type="submit" class="btn" value="{% trans 'Upload' %}" />
+                          <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
                       </div>
                       <div class="tab-pane" id="media_url_add">
                           <label for="id_media">Media url:</label>
                           <input type="text" name="media_url" id="id_media_url">
-                          <input type="submit" class="btn" value="{% trans 'Save Media URL' %}" />
+                          <input type="submit" class="single-project__button" value="{% trans 'Save Media URL' %}" />
                       </div>
                   </div>
               </form>
               {% endif %}
             </div>
 
-            <button class="single-project__button">+ Add Document</button>
           </div>  <!-- END .settings__general -->
 
           <div class="settings__delete-project">
@@ -90,7 +81,6 @@
                 {% trans "Delete" %}
             </button>
 
-            <!-- <button class="single-project__button single-project__button-delete">Delete</button> -->
           </div>
 
         </div>
@@ -105,14 +95,14 @@
               Share Data Publicly
             </label>
 
-            <label><input type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" ><div class="switch"></div></label>
+            <label><input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" ><div class="switch"></div></label>
           </div>
 
           <div class="settings__form-item">
             <label class="settings__form-label">
               Share Project Publicly
             </label>
-            <label><input type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
+            <label><input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
           </div>
 
           <div class="settings__form-item">
@@ -177,13 +167,10 @@
       <hgroup class="container">
         <form>
             {% csrf_token %}
-            <input type="text" id="title" class="input-xxlarge present" disabled="" value="{{ xform.title }}" />
-            <div class="kc-hide">
+            <input type="text" id="title" class="input-xxlarge present" value="{{ xform.title }}" />
             {% if can_edit %}
-                <a id="title_edit" data-id="title" href="" class="btn small bind-edit">{% trans "edit" %}</a>
-                <a id="title_save" data-id="title" style="display:none" href="" class="btn small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+              <a id="title_save" data-id="title" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
             {% endif %}
-            </div>
         </form>
 
         <div class="single-project__toggle-documents">
@@ -191,15 +178,12 @@
           <form class="single-project__toggle-description">
             {% csrf_token %}
             <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% else %}{% trans "None" %}{% endif %}"/>
-            <div class="kc-hide">
               {% if can_edit %}
-                  <a id="description_edit" data-id="description" href="" class="btn small bind-edit">{% trans "edit" %}</a>
-                  <a id="description_save" data-id="description" style="display:none" href="" class="btn small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+                <a id="description_save" data-id="description" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
               {% endif %}
-            </div>
           </form>
         </div>
-        <div class="single-project__documents">
+        <div class="single-project__documents hidden">
           <div class="single-project__documents-label">{% trans "Background Documents" %}</div>
 
           {% for doc in supporting_docs %}
@@ -211,24 +195,18 @@
               </p>
           {% endfor %}
 
-<!--           <div class="single-project__document">
-            <a href=""><i class="fa fa-trash-o"></i></a> <a href="">methodology.pdf</a>
-          </div>
-          <div class="single-project__document">
-            <i class="fa fa-trash-o"></i> sampling-test.pdf
-          </div>
- -->
           {% if can_edit %}
-              <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
-                  {% csrf_token %}
-                  <table>
-                      {{ doc_form.as_table }}
-                  </table>
-                  <input type="submit" class="btn" value="{% trans 'Upload' %}" />
-              </form>
+            <button class="single-project__button single-project__add-bg-doc">+ Add Document</button>
+
+            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__bg-doc-upload hidden">
+                {% csrf_token %}
+                <table>
+                    {{ doc_form.as_table }}
+                </table>
+                <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
+            </form>
           {% endif %}
 
-          <button class="single-project__button">+ Add Document</button>
 
         </div>
       </hgroup>
@@ -758,85 +736,82 @@
     <script type="text/javascript" src="{{STATIC_URL}}js/form_actions.js"></script>
   {% endif %}
 
+
 <script type="text/javascript">
 
 $(document).ready(function() {
 
-        $('.btn').tooltip();
+    $('.btn').tooltip();
 
-		// SMS documentation switcher
-		$('#sms_support_api').change(function() {
-			$('.sms_support_api_doc').each(function (){
-				$(this).toggle(false);
-			});
-			var selected = $(this).val();
-			$('#sms_support_api_doc_' + selected).toggle(true);
-		});
+    // SMS documentation switcher
+    $('#sms_support_api').change(function() {
+      $('.sms_support_api_doc').each(function (){
+        $(this).toggle(false);
+      });
+      var selected = $(this).val();
+      $('#sms_support_api_doc_' + selected).toggle(true);
+    });
 
-        // Typeahead, fetch usernames for permission assign
-        $('#autocomplete').typeahead(
-            {
-                source: function (query, process){
-                    return $.get('/typeahead_usernames/', {query: query}, function(data){
-                        return process(data);
-                    });
-                }
+    // Typeahead, fetch usernames for permission assign
+    $('#autocomplete').typeahead(
+        {
+            source: function (query, process){
+                return $.get('/typeahead_usernames/', {query: query}, function(data){
+                    return process(data);
+                });
             }
-        );
-        //-- end
+        }
+    );
+    //-- end
 
-                $(document).on("click", ".showqr", function () {
-                  div_target = $(this).attr('data-target')
-                  url = $(this).attr('href')
-                  $(div_target+" .img_holder").load(url)
+    $(document).on("click", ".showqr", function () {
+      div_target = $(this).attr('data-target')
+      url = $(this).attr('href')
+      $(div_target+" .img_holder").load(url)
+    });
 
-                });
+    {% if xform.shared_data %}
+      $('#data-shared-private').hide();
+    {% else %}
+      $('#data-shared-public').hide();
+    {% endif %}
+    {% if xform.shared %}
+      $('#form-shared-private').hide();
+    {% else %}
+      $('#form-shared-public').hide();
+    {% endif %}
+    {% if not xform.encrypted %}
+      $('#form-encrypted').hide();
+      $('#data-encrypted').hide();
+    {% endif %}
 
-              {% if xform.shared_data %}
-                $('#data-shared-private').hide();
-              {% else %}
-                $('#data-shared-public').hide();
-              {% endif %}
-              {% if xform.shared %}
-                $('#form-shared-private').hide();
-              {% else %}
-                $('#form-shared-public').hide();
-              {% endif %}
-              {% if not xform.encrypted %}
-                $('#form-encrypted').hide();
-                $('#data-encrypted').hide();
-              {% endif %}
-            {% if user.is_authenticated %}
-                $.each(['form-shared', 'data-shared', 'active-form'], function(inx, el) {
-                    var cb = $('#' + el + ':checkbox');
-                    cb.iphoneStyle({
-                    onChange: function() {
-                        // a callback func
-                        var c = function(){}
-                        privacyEdit(cb.data('url'), el.split('-')[0]);
-                        $('#' + el + '-public').toggle();
-                        $('#' + el + '-private').toggle();
-
-                    }
-                    });
-                    });
-              // add click event to all public (x)forms
-              $('a.clonexls').click(function(){
-                el = $(this);
-                clone_xlsform(el.data('url'), el.data('username'), el.data('id'));
-                return false;
-              });
-            {% endif %}
+    // toggle fields
+    {% if user.is_authenticated %}
+        $.each(['form-shared', 'data-shared', 'active-form'], function(inx, el) {
+            var cb = $('#' + el + ':checkbox');
+            cb.change(function() {
+              privacyEdit(cb.data('url'), el.split('-')[0]);
+              // legacy
+              $('#' + el + '-public').toggle();
+              $('#' + el + '-private').toggle();
             });
+        });
+      // add click event to all public (x)forms
+      $('a.clonexls').click(function(){
+        el = $(this);
+        clone_xlsform(el.data('url'), el.data('username'), el.data('id'));
+        return false;
+      });
+    {% endif %}
+    });
 
-        // REST Service
-            $(document).ready(function() {
-                $.get('{% url "onadata.apps.restservice.views.add_service" content_user.username xform.id_string %}', function(data){
-                    $('#restservice_tab').html(data);
-                });
-            });
-
-        </script>
+  // REST Service
+  $(document).ready(function() {
+      $.get('{% url "onadata.apps.restservice.views.add_service" content_user.username xform.id_string %}', function(data){
+          $('#restservice_tab').html(data);
+      });
+  });
+</script>
 
     <!-- NEW SANDBOX JQUERY CALLS -->
     <script type="text/javascript">
@@ -863,15 +838,32 @@ $(document).ready(function() {
         $(this).toggleClass('active');
       });
 
-      // question mark poshytip effect
-      $('span.poshytip').poshytip({
-          className: 'tip__bottomarrow',
-          showTimeout: 1,
-          alignTo: 'target',
-          alignX: 'right',
-          alignY: 'inner-bottom',
-          liveEvents: true
+      $(document).on("click", ".single-project__add-media", function () {
+        $('.single-project__media-upload').toggleClass('hidden');
+        $(this).toggleClass('active');
       });
+
+      $(document).on("focus", "input#title", function () {
+        $('a#title_save').removeClass('hidden');
+      });
+      $(document).on("focus", "input#description", function () {
+        $('a#description_save').removeClass('hidden');
+      });
+
+      $(document).on("click", ".single-project__add-bg-doc", function () {
+        $('.single-project__bg-doc-upload').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      // question mark poshytip effect
+      // $('span.poshytip').poshytip({
+      //     className: 'tip__bottomarrow',
+      //     showTimeout: 1,
+      //     alignTo: 'target',
+      //     alignX: 'right',
+      //     alignY: 'inner-bottom',
+      //     liveEvents: true
+      // });
 
     }); 
     </script>

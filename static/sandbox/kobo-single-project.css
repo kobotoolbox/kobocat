@@ -32,6 +32,21 @@
   margin-right: 4px;
 }
 
+/* Project title */
+
+.single-project__header input#title {
+  font-size: 2em;
+  border-radius: 0;
+  font-family: 'Lato';
+  line-height: 1em;
+  margin:0px;
+  padding:0px;
+  height: 35px;
+  font-weight: 600;
+  border:none;
+  box-shadow: none;
+}
+
 /* settings for single project */
 
 .single-project__toggle-settings {
@@ -143,18 +158,6 @@ a.settings__files-delete {
   padding:20px;
 }
 
-/* Project title */
-
-.single-project__header input#title {
-  font-size: 2em;
-  border-radius: 0;
-  font-family: 'Lato';
-  line-height: 2em;
-  margin:0px;
-  padding:0px;
-  height: 35px;
-  font-weight: 600;
-}
 /* Documents area of single project */
 .single-project__toggle-description {
   display: inline;
@@ -196,7 +199,8 @@ a.settings__files-delete {
 }
 
 button.single-project__button, 
-input.single-project__button {
+input.single-project__button, 
+a.single-project__button {
     background: none repeat scroll 0 0 #39bf6e;
     border-color: #227040;
     border-style: none none solid;
@@ -209,10 +213,16 @@ input.single-project__button {
     width: 150px;
     margin-top:10px;
     font-family: 'Lato';
+    opacity:1;
 }
 
-button.single-project__button:hover {
+button.single-project__button:hover, 
+a.single-project__button:hover {
     opacity: 0.8;
+}
+
+.single-project__button.active {
+  opacity:0.6;
 }
 
 button.single-project__button-delete {
@@ -221,6 +231,10 @@ button.single-project__button-delete {
     margin-bottom: 20px;
     margin-top: -10px;
     width: 100px;
+}
+
+.single-project__media-upload ul.nav-tabs {
+    padding-left:0px;
 }
 
 /* Dashboard area of single project */
