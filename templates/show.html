@@ -725,13 +725,12 @@
 
 {% block styles %}
 {{ block.super }}
- <link href="{{STATIC_URL}}css/iphone-btn-style.css" rel="stylesheet"/>
+ <!-- <link href="{{STATIC_URL}}css/iphone-btn-style.css" rel="stylesheet"/> -->
 {% endblock %}
 
 {% block javascript %}
 {{ block.super }}
-
-<script type="text/javascript" src="{{STATIC_URL}}js/iphone-style-checkboxes.js"></script>
+<script src="/static/js/jquery.poshytip.js"></script>
   {% if user.is_authenticated %}
     <script type="text/javascript" src="{{STATIC_URL}}js/form_actions.js"></script>
   {% endif %}
@@ -856,14 +855,14 @@ $(document).ready(function() {
       });
 
       // question mark poshytip effect
-      // $('span.poshytip').poshytip({
-      //     className: 'tip__bottomarrow',
-      //     showTimeout: 1,
-      //     alignTo: 'target',
-      //     alignX: 'right',
-      //     alignY: 'inner-bottom',
-      //     liveEvents: true
-      // });
+      $('span.poshytip').poshytip({
+          className: 'tip__bottomarrow',
+          showTimeout: 1,
+          alignTo: 'target',
+          alignX: 'right',
+          alignY: 'inner-bottom',
+          liveEvents: true
+      });
 
     }); 
     </script>

@@ -81,6 +81,7 @@
   width: 49%;
   border-right: 1px solid #D9DDE1;
   float: left;
+  min-height: 550px;
 }
 
 .settings__right {
@@ -99,6 +100,7 @@ h2.settings__group-label {
   font-size: 18px;
   font-weight: 600;
   margin-top: 0px;
+  line-height: 1.2em;
 }
 
 label.settings__form-label {
@@ -476,7 +478,6 @@ span.poshytip {
     font-size: 15px;
     font-weight: 600;
     padding: 2px 4px;
-    margin-top:10px;
 }
 
 /* ==========================================================================
