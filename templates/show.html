@@ -8,11 +8,6 @@
   .kc-hide { display: none !important; }
   </style>
 
-  <!-- NEW SANDBOX STYLES -->
-  <link href="/static/sandbox/ios-switches.css" rel="stylesheet">
-  <link href="/static/sandbox/kobo-single-project.css" rel="stylesheet">
-  <!-- END NEW SANDBOX STYLES -->
-
   <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
   <div class="sub-header-bar">
     <div class="container__wide">
@@ -725,6 +720,10 @@
 
 {% block styles %}
 {{ block.super }}
+  <!-- NEW SANDBOX STYLES -->
+  <link href="/static/css/ios-switches.css" rel="stylesheet">
+  <link href="/static/css/kobo-single-project.css" rel="stylesheet">
+  <!-- END NEW SANDBOX STYLES -->
  <!-- <link href="{{STATIC_URL}}css/iphone-btn-style.css" rel="stylesheet"/> -->
 {% endblock %}
 
