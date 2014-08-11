@@ -199,7 +199,7 @@
             </div>
           </form>
         </div>
-        <div class="single-project__documents hidden">
+        <div class="single-project__documents">
           <div class="single-project__documents-label">{% trans "Background Documents" %}</div>
 
           {% for doc in supporting_docs %}
@@ -211,13 +211,13 @@
               </p>
           {% endfor %}
 
-          <div class="single-project__document">
+<!--           <div class="single-project__document">
             <a href=""><i class="fa fa-trash-o"></i></a> <a href="">methodology.pdf</a>
           </div>
           <div class="single-project__document">
             <i class="fa fa-trash-o"></i> sampling-test.pdf
           </div>
-
+ -->
           {% if can_edit %}
               <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
                   {% csrf_token %}
