@@ -238,7 +238,7 @@
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}" class="download__drop-button">XLS</a>
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}" class="download__drop-button">CSV</a>
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
-          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" class="download__drop-button">GDOCS</a>
+          <!-- <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" class="download__drop-button">GDOCS</a> -->
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" class="download__drop-button">SAV ZIP</a>
         </div>
@@ -248,6 +248,7 @@
         {% endif %}
       </div>
 
+      {% if images %}
       <div class="dashboard__photos">
         <h2 class="dashboard__group-label">
           Photos
@@ -261,8 +262,9 @@
           <i class="fa fa-download"></i> 
           <span>Download all photos</span>
         </a>
-
       </div>
+      {% endif %}
+
       <div class="dashboard__form">
         <h2 class="dashboard__group-label">
           Form

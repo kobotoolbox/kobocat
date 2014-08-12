@@ -523,3 +523,11 @@ span.poshytip {
   border-right: 6px solid transparent; 
   border-top:6px solid #5DB0EC;   
 }
+
+/* Data table */
+
+.backgrid th, .backgrid td {
+    line-height: 20px;
+    max-width: 120px;
+    white-space: normal;
+}
