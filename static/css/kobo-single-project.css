@@ -526,8 +526,17 @@ span.poshytip {
 
 /* Data table */
 
-.backgrid th, .backgrid td {
-    line-height: 20px;
-    max-width: 120px;
+.data-table-container table.table {
+    clear: both;
+    display: block;
+    max-width: 977px;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.data-table-container table.table th, 
+.data-table-container table.table td {
+    word-wrap:break-word;
+    max-width: 160px;
     white-space: normal;
 }
