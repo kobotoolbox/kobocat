@@ -41,6 +41,10 @@ body {
   margin:0 auto;
 }
 
+/* bootstrap hack for error msgs*/
+.container__wide .span12 {
+  width: auto;
+}
 .main {
   background: white;
   padding:20px;
