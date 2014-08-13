@@ -855,6 +855,22 @@ $(document).ready(function() {
         $(this).toggleClass('active');
       });
 
+      $(document).click(function(event) { 
+          if(!$(event.target).closest('.dashboard__submissions').length) {
+            if($('.dashboard__download__drop').is(":visible")) {
+              $('.dashboard__download__drop').addClass('hidden');
+              $('.dashboard__button-download-data').removeClass('active');
+            }
+          }
+
+          if(!$(event.target).closest('.dashboard__form-contents').length) {
+            if($('.dashboard__form-drop').is(":visible")) {
+              $('.dashboard__form-drop').addClass('hidden');
+              $('.dashboard__formbutton-download').removeClass('active');
+            }
+          }        
+      });
+
       // question mark poshytip effect
       $('span.poshytip').poshytip({
           className: 'tip__bottomarrow',

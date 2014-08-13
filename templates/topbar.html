@@ -5,8 +5,8 @@
     <span class="header-bar__top-level-menu-button">
       <i class="fa fa-bars fa-lg fa-inverse"></i>
     </span>
-    <h1 class="header-bar__title"><span class="header-bar__title-text">Projects</span></h1>
-    <a href="/"><span class="header-bar__top-logo pull-right"></span></a>
+    <h1 class="header-bar__title"><a href="/"><span class="header-bar__title-text">{% trans "Projects" %}</span></a></h1>
+    <span class="header-bar__top-logo pull-right"></span>
   </div>
 </header>
 
@@ -21,20 +21,20 @@
     <li class="top-level-menu__item">
       <a href="{{ koboform_url }}#/library/questions">
         <i class="header-bar__page-icon  fa  fa-fw  fa-folder"></i>
-        Question Library
+        {% trans "Question Library" %}
       </a>
     </li>
     <li class="top-level-menu__item">
       <a href="/">
         <i class="header-bar__page-icon fa fa-fw fa-globe"></i>
-        Projects
+        {% trans "Projects" %}
       </a>
     </li>
 
     <li class="top-level-menu__item">
       <a href="/{{ user.username }}/settings">
-        <i class="header-bar__page-icon fa fa-fw fa-globe"></i>
-        Settings
+        <i class="header-bar__page-icon fa fa-fw fa-cog"></i>
+        {% trans "Settings" %}
       </a>
     </li>
 

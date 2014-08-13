@@ -151,3 +151,21 @@ section {
     color: white;
     background-color: black;
 }
+
+
+/* Data tables - temporarily here */
+
+.data-table-container table.table {
+    clear: both;
+    display: block;
+    max-width: 977px;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.data-table-container table.table th, 
+.data-table-container table.table td {
+    word-wrap:break-word;
+    max-width: 160px;
+    white-space: normal;
+}
