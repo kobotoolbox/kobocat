@@ -316,14 +316,14 @@ a.dashboard__button span {
 }
 
 a.dashboard__button-download-data span {
-    border-bottom: 2px dotted #4A5C6E;
+    border-bottom: 1px dotted #4A5C6E;
     margin-left: 15px;
     margin-right: 15px;
     padding-bottom: 2px;
 }
 
 a.dashboard__button-download-data:hover span {
-    border-bottom: 2px dotted #5DB0EC;
+    border-bottom: 1px dotted #5DB0EC;
 }
 
 .dashboard__submissions a.dashboard__button {
@@ -374,7 +374,7 @@ a.dashboard__formbutton {
 
 .dashboard__formbutton-download i {
     vertical-align: middle;
-    border-bottom: 2px dotted;
+    border-bottom: 1px dotted;
     padding-bottom: 2px;
 }
 
@@ -407,7 +407,7 @@ a.dashboard__formbutton-preview span {
 .dashboard__download__drop {
   position: absolute;
   left: 240px;
-  top: 122px;
+  top: 124px;
   width: 124px;
   border: 1px solid #E7E8E9;
   background: white;
@@ -456,7 +456,7 @@ a.dashboard__formbutton-preview span {
 .dashboard__form-drop {
   position: absolute;
   right: 84px;
-  top: 40px;
+  top: 45px;
   width: 44px;
   border: 1px solid #E7E8E9;
   background: white;
