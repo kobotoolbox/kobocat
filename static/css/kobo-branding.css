@@ -165,7 +165,9 @@ section {
 
 .data-table-container table.table th, 
 .data-table-container table.table td {
+    font-size:12px;
+    padding: 4px 0px 4px 12px;
     word-wrap:break-word;
-    max-width: 160px;
-    white-space: normal;
+    max-width: 185px;
+    text-align:left;
 }
