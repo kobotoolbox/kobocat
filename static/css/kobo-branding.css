@@ -73,7 +73,7 @@ section {
     padding: 12px 11px;
 }
 
-.header-bar__title {
+.header-bar__title, .header-bar__support {
     margin-top: 0;
     margin-right: 10px;
     margin-bottom: 0;
@@ -81,6 +81,15 @@ section {
     font-size: 14px;
     font-weight: 600;
     font-family: 'Lato';
+}
+
+.header-bar__support {
+  margin-right: 30px;
+  color: white;
+}
+
+.header-bar__support:hover {
+  color: #1e8fde;
 }
 
 .header-bar__title-text { color: white; }
@@ -117,6 +126,7 @@ section {
     background-color: #444;
     transition: left 150ms;
     z-index: 15;
+    font-family: 'Lato';
 }
 
 .top-level-menu.is-active {
@@ -140,6 +150,7 @@ section {
     line-height: 40px;
     text-decoration: none;
     color: rgba(255, 255, 255, 0.8);
+    font-family: 'Lato';
 }
 
 .top-level-menu__item > a:hover,
@@ -149,9 +160,8 @@ section {
 
 .top-level-menu__item.is-active > a {
     color: white;
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.5);
 }
-
 
 /* Data tables - temporarily here */
 

@@ -868,7 +868,15 @@ $(document).ready(function() {
               $('.dashboard__form-drop').addClass('hidden');
               $('.dashboard__formbutton-download').removeClass('active');
             }
-          }        
+          }
+
+          if(!$(event.target).closest('.sub-header-bar').length) {
+            if($('.single-project__settings').is(":visible")) {
+              $('.single-project__settings').addClass('hidden');
+              $('.single-project__toggle-settings').removeClass('active');
+            }
+          }
+
       });
 
       // question mark poshytip effect
