@@ -172,7 +172,7 @@
           <i class="fa fa-paperclip"></i> <i class="doctoggle__caret fa fa-caret-right"></i> 
           <form class="single-project__toggle-description">
             {% csrf_token %}
-            <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% else %}{% trans "None" %}{% endif %}"/>
+            <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% endif %}" placeholder="Add a description to your project"/>
               {% if can_edit %}
                 <a id="description_save" data-id="description" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
               {% endif %}
