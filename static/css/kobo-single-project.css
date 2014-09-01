@@ -333,6 +333,7 @@ a.dashboard__button-download-data:hover span {
 a.dashboard__button-twoline span {
   line-height: 10px;
   margin-top: 0px;
+  letter-spacing: -0.01em;
 }
 
 .dashboard__button-download-all-photos span {
