@@ -333,6 +333,7 @@ a.dashboard__button-download-data:hover span {
 a.dashboard__button-twoline span {
   line-height: 10px;
   margin-top: 0px;
+  letter-spacing: -0.01em;
 }
 
 .dashboard__button-download-all-photos span {
@@ -549,4 +550,62 @@ span.poshytip {
   border-left: 6px solid transparent;
   border-right: 6px solid transparent; 
   border-top:6px solid #5DB0EC;   
+}
+
+/* ==========================================================================
+   QR Code popup
+   ========================================================================== */
+
+.modal-body {
+  max-height: 600px;
+}
+
+.modal-body, .modal-body p, 
+.modal-body h3, .modal-body h4, .modal-body a {
+  font-family: 'Lato';
+} 
+
+.qrcode__android {
+  position: relative;
+  width: 389px;
+  float: right;
+  height: 193px;
+  background: url('/static/images/qr_android_screenshot.png') left top no-repeat;
+  margin-bottom: 35px;
+  margin-left: 50px;
+}
+
+.qrcode__android span {
+    position: absolute;
+    top: 166px;
+    left: 63px;
+    font-size: 9px;
+    width: 257px;
+    line-height: 12px;
+    overflow: hidden;
+}
+
+.qr__divider {
+    border-top: 1px solid #d9dde1;
+    clear: both;
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.qr__divider span {
+    background: none repeat scroll 0 0 #d9dde1;
+    border-radius: 20px;
+    font-size: 19px;
+    left: 48%;
+    margin-top: -22px;
+    padding: 12px 10px 10px;
+    position: absolute;
+    text-transform: uppercase;
+}
+
+#popupmodal .img_holder {
+  width: 389px;
+  float: right;
+  height: 130px;
+  margin-left: 50px;
 }

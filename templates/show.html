@@ -172,7 +172,7 @@
           <i class="fa fa-paperclip"></i> <i class="doctoggle__caret fa fa-caret-right"></i> 
           <form class="single-project__toggle-description">
             {% csrf_token %}
-            <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% else %}{% trans "None" %}{% endif %}"/>
+            <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% endif %}" placeholder="Add a description to your project"/>
               {% if can_edit %}
                 <a id="description_save" data-id="description" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
               {% endif %}
@@ -328,27 +328,33 @@
           <i class="fa fa-plus"></i> 
           <span>Enter data in browser</span>
         </a>
-        <a data-toggle="modal" data-target="#popupmodal" href="{% url "get_qrcode" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect">
+        <a data-toggle="modal" data-target="#popupmodal" href="{% url "get_qrcode" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect showqr">
           <i class="fa fa-mobile"></i> 
           <span>How to collect data on mobile device?</span>
         </a>
 
-        <div class="modal hide fade" id="popupmodal" style="width: auto; left:36%; margin-left: auto; margin-right: auto;" tabindex="-1" role="dialog">
+        <div class="modal hide fade" id="popupmodal" style="width: 60%; left:20%; margin-left: auto; margin-right: auto;" tabindex="-1" role="dialog">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h3>{%  trans "Mobile Form" %}</h3>
+                <h3>{%  trans "How to Collect Data on a Mobile Device" %}</h3>
             </div>
-            <div class="modal-body" style="text-align: center;">
-                 <div class="img_holder"/> </div>
-            </div>
-            <div class="modal-footer" style="text-align: center;">
+            <div class="modal-body">
+                <div class="qrcode__android">
+                  <span>{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}</span>
+                </div>
+                <h4>{%  trans "Collect Data on Your Android Devide with KoBoCollect" %}</h4>
+                <p>{%  trans "To start collecting data with our KoBoCollect Android app you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
 
-                {%  trans "DOWNLOAD " %}
-                <a class="btn" href="http://scan.me/apps/" target="_blank">
-                    <i class="icon-qrcode"></i>
-                {%  trans " Scan - QR Reader" %}
-                </a>
+                <p><a href="{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}">{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}</a></p>
 
+                <p><strong><a target="_blank" href="http://www.kobotoolbox.org/support/userguide/kobocollect">Click here</a>  to read more about getting started with KoBoCollect</strong></p>
+                <p class="qr__divider"><span>or</span></p>
+                <div class="img_holder"> </div>
+                <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
+                <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
+                <p><a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a> <br/>
+                (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
+                </p>
             </div>
         </div>
 
@@ -765,9 +771,9 @@ $(document).ready(function() {
     //-- end
 
     $(document).on("click", ".showqr", function () {
-      div_target = $(this).attr('data-target')
-      url = $(this).attr('href')
-      $(div_target+" .img_holder").load(url)
+      div_target = $(this).attr('data-target');
+      url = $(this).attr('href');
+      $(div_target+" .img_holder").load(url);
     });
 
     {% if xform.shared_data %}
@@ -868,7 +874,15 @@ $(document).ready(function() {
               $('.dashboard__form-drop').addClass('hidden');
               $('.dashboard__formbutton-download').removeClass('active');
             }
-          }        
+          }
+
+          if(!$(event.target).closest('.sub-header-bar').length) {
+            if($('.single-project__settings').is(":visible")) {
+              $('.single-project__settings').addClass('hidden');
+              $('.single-project__toggle-settings').removeClass('active');
+            }
+          }
+
       });
 
       // question mark poshytip effect
