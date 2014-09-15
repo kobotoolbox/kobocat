@@ -219,8 +219,6 @@
         <h2 class="dashboard__group-label">
           Submissions ({{ xform.submission_count|intcomma }})
         </h2>
-        {% if xform.shared_data or can_view %}
-        {% if not xform.encrypted and xform.submission_count > 0 %}
         <a title="{% trans "View Submitted Data" %}" href="{% url "onadata.apps.viewer.views.data_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view">
           <i class="fa fa-table"></i> 
           <span>View data in table</span>
@@ -242,10 +240,6 @@
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" class="download__drop-button">SAV ZIP</a>
         </div>
-        {% else %}
-        <span class="label label-warning">{% trans "NO DATA" %}</span>
-        {% endif %}
-        {% endif %}
       </div>
 
       {# if images|length #}
