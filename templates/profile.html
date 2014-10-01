@@ -27,8 +27,19 @@
 
 {% block below-content %}
   {% if show_dashboard %} 
-    
+
   <div class="container-fluid container__wide projects__advanced">
+    {% if all_forms or forms_shared_with %}
+    {% else %}
+      <div class="projects__empty">
+      <p>{% trans "You currently have no projects yet." %}</p>
+      <p>{% trans "You can create a project by deploying one of your forms." %}</p>
+      {% if koboform_url %}
+      <p><a href="{{koboform_url}}/">{% trans "Click here to go to your forms list." %}</a></p>
+      {% endif %}
+      </div>
+    {% endif %}
+
     <h3>Advanced Users: <a class="projects__toggle-advanced">Upload your XLS form here directly</a></h3>
     <div class="projects__advanced-xls hidden">
       <form action="." method="post" enctype="multipart/form-data">

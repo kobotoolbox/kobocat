@@ -53,7 +53,6 @@ body {
 
 .main.user_profile.container-fluid {
   padding:0px;
-  border:1px solid #D0D4D8;
 }
 
 section {
@@ -251,11 +250,15 @@ section {
 
 table.published_forms__table {
   margin:0px;
+  border:1px solid #D0D4D8;
 }
+
+table.published_forms__table tbody tr {
+  border-top: 2px solid #E9ECEE; 
+}
+
 table.published_forms__table tbody tr:nth-child(odd) {
   background: #F1F3F5;
-  border-top: 2px solid #E9ECEE; 
-  border-bottom: 2px solid #E9ECEE; 
 }
 
 table.published_forms__table tbody td, 
@@ -298,4 +301,11 @@ td.published_forms__cell--project a:hover {
 
 .projects__advanced-xls {
   margin:0px 150px;
+}
+
+.projects__empty p {
+  font-weight: 600;
+  font-size: 1.1em;
+  text-align: center;
+  font-family: 'Lato';  
 }

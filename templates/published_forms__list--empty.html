@@ -1,18 +1,3 @@
 {% load humanize %}
 {% load i18n %}
 
-<table class="published_forms__table published_forms__table--empty">
-  <tbody>
-    <tr class="published_forms__form published_forms__form--placeholder">
-      <td clsas="published_forms__cell published_forms__cell--fullwidth">
-        {% trans "You have no forms" %}
-        {% if koboform_url %}
-        <br>
-        <a href="{{koboform_url}}/#/builder/new" class="btn btn--newform">
-          {% trans "Start a new form" %}
-        </a>
-        {% endif %}
-      </td>
-    </tr>
-  </tbody>
-</table>

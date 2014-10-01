@@ -21,18 +21,12 @@
       <section id="{{ xform_list.id }}-forms" class="published_forms">
         {% if xform_list.xforms %}
           {% include 'published_forms__list.html' %}
-        {% else %}
-          {% include 'published_forms__list--empty.html' %}
         {% endif %}
       </section>
     {% else %}
       <!-- not displaying '{{ xform_list.id }}' form list -->
     {% endif %}
   {% endfor %}
-{% else %}
-  <section id="{{ xform_list.id }}-forms" class="published_forms">
-    {% include 'published_forms__list--empty.html' %}
-  </section>
 {% endif %}
 
 <!-- <div class="modal hide fade" id="popupmodal" style="width: auto; left:36%; margin-left: auto; margin-right: auto;" tabindex="-1" role="dialog">
