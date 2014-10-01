@@ -55,7 +55,7 @@
 
     {% endif %}
 
-    <div class="container-fluid container__wide main">
+    <div class="container-fluid container__wide main {{ request.resolver_match.url_name }}">
       {% block message %}
         {% if message or messages or message_list %}
           {% include "message.html" %}
@@ -68,6 +68,8 @@
     </div>
 
     {% include "footer.html" %}
+
+    {% block below-content %}{% endblock %}
 
     {% block javascript %}
 
