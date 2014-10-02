@@ -309,3 +309,9 @@ td.published_forms__cell--project a:hover {
   text-align: center;
   font-family: 'Lato';  
 }
+
+/* Map margin override */
+
+#map_canvas {
+  margin-top: -15px;
+}
