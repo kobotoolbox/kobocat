@@ -523,7 +523,7 @@ span.poshytip {
   float: right;
   height: 193px;
   background: url('/static/images/qr_android_screenshot.png') left top no-repeat;
-  margin-bottom: 35px;
+  margin-top: 15px;
   margin-left: 50px;
 }
 
@@ -563,6 +563,7 @@ span.poshytip {
   width: 48%;
   float: right;
   text-align: center;
+  margin-top:-15px;
 }
 
 #popupmodal .img_holder img {
