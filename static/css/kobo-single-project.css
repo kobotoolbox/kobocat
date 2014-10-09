@@ -509,6 +509,7 @@ span.poshytip {
 
 .modal-body {
   max-height: 600px;
+  min-height: 580px;
 }
 
 .modal-body, .modal-body p, 
@@ -540,7 +541,7 @@ span.poshytip {
     border-top: 1px solid #d9dde1;
     clear: both;
     position: relative;
-    margin-bottom: 30px;
+    margin: 45px 0px;
 }
 
 .qr__divider span {
@@ -554,9 +555,17 @@ span.poshytip {
     text-transform: uppercase;
 }
 
+#popupmodal .qrcode__text {
+  width: 50%;
+}
+
 #popupmodal .img_holder {
-  width: 389px;
+  width: 48%;
   float: right;
-  height: 130px;
-  margin-left: 50px;
+  text-align: center;
+}
+
+#popupmodal .img_holder img {
+  max-height: 230px;
+  max-width: 230px;
 }

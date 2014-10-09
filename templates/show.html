@@ -328,7 +328,7 @@
           <span>How to collect data on mobile device?</span>
         </a>
 
-        <div class="modal hide fade" id="popupmodal" style="width: 60%; left:20%; margin-left: auto; margin-right: auto;" tabindex="-1" role="dialog">
+        <div class="modal hide fade" id="popupmodal" style="width: 820px; left:50%; margin-left: -410px;" tabindex="-1" role="dialog">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h3>{%  trans "How to Collect Data on a Mobile Device" %}</h3>
@@ -344,8 +344,8 @@
 
                 <p><strong><a target="_blank" href="http://support.kobotoolbox.org/customer/portal/articles/1653782-collecting-data-with-kobocollect-on-android">Click here</a>  to read more about getting started with KoBoCollect</strong></p>
                 <p class="qr__divider"><span>or</span></p>
-                <div class="img_holder"> </div>
-                <div style="width: 50%;">
+                <div class="qrcode__code img_holder"> </div>
+                <div class="qrcode__text">
                   <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
                   <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
                   <p><a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a> <br/>
