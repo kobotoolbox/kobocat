@@ -51,6 +51,10 @@ body {
   max-width: 984px;
 }
 
+.main.user_profile.container-fluid {
+  padding:0px;
+}
+
 section {
   padding:0px;
 }
@@ -138,6 +142,7 @@ section {
   padding:0;
   list-style: none;
 }
+
 /* Top level menu items
    -------------------------------------------------------------------------- */
 
@@ -180,4 +185,133 @@ section {
     word-wrap:break-word;
     max-width: 185px;
     text-align:left;
+}
+
+/* Top level menu items
+   -------------------------------------------------------------------------- */
+
+.sub-header-bar {
+  background-color: #fff;
+  border-bottom: 1px solid #e3e8ec;
+  height: 40px;
+  left: 0;
+  padding: 5px 4px;
+  position: fixed;
+  top: 40px;
+  transition: width 150ms ease 0s, left 150ms ease 0s;
+  width: 100%;
+  z-index: 6;
+}
+
+/* Stylesheet for Single Project Header */
+
+.single-project__header, .projects-list__header {
+  margin-bottom: 30px;
+  background-color: white;
+  padding:20px 0px;
+  padding-top: 70px;
+  font-family: 'Lato';
+}
+
+.projects-list__header {
+  padding-top:50px;
+  margin-top:-20px;
+}
+
+.single-project__header .container, 
+.projects-list__header .container {
+  max-width: 984px;
+}
+
+.single-project__header .fa-caret-right, 
+.single-project__header .fa-caret-down {
+  opacity: 0.2;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+/* Project title */
+
+.single-project__header input#title, 
+.projects-list__header h1 {
+  font-size: 2em;
+  border-radius: 0;
+  font-family: 'Lato';
+  line-height: 1em;
+  margin:0px;
+  padding:0px;
+  height: 35px;
+  font-weight: 600;
+  border:none;
+  box-shadow: none;
+}
+
+/* Projects table */
+
+table.published_forms__table {
+  margin:0px;
+  border:1px solid #D0D4D8;
+}
+
+table.published_forms__table tbody tr {
+  border-top: 2px solid #E9ECEE; 
+}
+
+table.published_forms__table tbody tr:nth-child(odd) {
+  background: #F1F3F5;
+}
+
+table.published_forms__table tbody td, 
+table.published_forms__table thead th {
+  padding:12px;
+  text-align: right;
+  font-family: 'Lato';
+}
+table.published_forms__table thead th.published_forms__header--projects,
+table.published_forms__table tbody td.published_forms__cell--project {
+  text-align: left;
+  padding:12px 20px;
+}
+
+td.published_forms__cell--project a {
+  color: #333;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+td.published_forms__cell--project a:hover {
+  color: #1e8fde;
+}
+
+.projects__advanced {
+  background: white;
+  padding: 20px 0px;
+  margin-top: 30px;
+  max-width: 984px;
+  text-align: left;
+}
+
+.projects__advanced h3 {
+  text-align: center;
+}
+
+.projects__advanced h3 a {
+  cursor: pointer;
+}
+
+.projects__advanced-xls {
+  margin:0px 150px;
+}
+
+.projects__empty p {
+  font-weight: 600;
+  font-size: 1.1em;
+  text-align: center;
+  font-family: 'Lato';  
+}
+
+/* Map margin override */
+
+#map_canvas {
+  margin-top: -15px;
 }

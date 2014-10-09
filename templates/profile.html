@@ -1,8 +1,20 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
+{% block additional-headers %}
+{% load i18n %}
+  {% if show_dashboard %} 
+  <header class="projects-list__header">
+    <hgroup class="container">
+          <h1>{%  trans "Projects" %}</h1>
+    </hgroup>
+  </header>
+  {% endif %}
+{% endblock %}
+
+<div class="projects__list">
 {% block content %}
-  {% if show_dashboard %}
+  {% if show_dashboard %} 
     {% include "published_surveys.html" %}
   {% else %}
     <!-- user is not logged in -->
@@ -11,7 +23,38 @@
     </script>
   {% endif %}
 {% endblock %}
+</div>
 
+{% block below-content %}
+  {% if show_dashboard %} 
+
+  <div class="container-fluid container__wide projects__advanced">
+    {% if all_forms or forms_shared_with %}
+    {% else %}
+      <div class="projects__empty">
+      <p>{% trans "You currently have no projects yet." %}</p>
+      <p>{% trans "You can create a project by deploying one of your forms." %}</p>
+      {% if koboform_url %}
+      <p><a href="{{koboform_url}}/">{% trans "Click here to go to your forms list." %}</a></p>
+      {% endif %}
+      </div>
+    {% endif %}
+
+    <h3>Advanced Users: <a class="projects__toggle-advanced">Upload your XLS form here directly</a></h3>
+    <div class="projects__advanced-xls hidden">
+      <form action="." method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="uploadform" id="url">
+          <table class="uploadform__table">
+            {{ form.as_p }}
+          </table>
+          <input type="submit" class="uploadform__publish" value="{% trans 'Publish' %}" />
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
 <!--
   <script type="text/javascript">$('#gravatar').tooltip();</script>
   <script type="text/javascript" src="{{STATIC_URL}}js/jquery.dataTables.js"></script>
@@ -70,3 +113,20 @@
 */
   </script>
 -->
+
+{% block javascript %}
+{{ block.super }}
+<!-- NEW SANDBOX JQUERY CALLS -->
+<script type="text/javascript">
+$(document).ready(function() {
+
+  $(document).on("click", ".projects__toggle-advanced", function () {
+    $('.projects__advanced-xls').toggleClass('hidden');
+    $(this).toggleClass('active');
+  });
+
+}); 
+</script>
+<!-- END NEW SANDBOX JQUERY CALLS -->
+
+{% endblock %}
