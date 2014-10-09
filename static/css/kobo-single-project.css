@@ -509,6 +509,7 @@ span.poshytip {
 
 .modal-body {
   max-height: 600px;
+  min-height: 580px;
 }
 
 .modal-body, .modal-body p, 
@@ -522,7 +523,7 @@ span.poshytip {
   float: right;
   height: 193px;
   background: url('/static/images/qr_android_screenshot.png') left top no-repeat;
-  margin-bottom: 35px;
+  margin-top: 15px;
   margin-left: 50px;
 }
 
@@ -540,7 +541,7 @@ span.poshytip {
     border-top: 1px solid #d9dde1;
     clear: both;
     position: relative;
-    margin-bottom: 30px;
+    margin: 45px 0px;
 }
 
 .qr__divider span {
@@ -554,9 +555,18 @@ span.poshytip {
     text-transform: uppercase;
 }
 
+#popupmodal .qrcode__text {
+  width: 50%;
+}
+
 #popupmodal .img_holder {
-  width: 389px;
+  width: 48%;
   float: right;
-  height: 130px;
-  margin-left: 50px;
+  text-align: center;
+  margin-top:-15px;
+}
+
+#popupmodal .img_holder img {
+  max-height: 230px;
+  max-width: 230px;
 }
