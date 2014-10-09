@@ -337,16 +337,16 @@
                 <div class="qrcode__android">
                   <span>{{ BASE_URL }}{% url "user_profile" content_user.username %}</span>
                 </div>
-                <h4>{%  trans "Collect Data on Your Android Devide with KoBoCollect" %}</h4>
-                <p>{%  trans "To start collecting data with our KoBoCollect Android app you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
+                <h4>{%  trans "Collect data on your Android device with KoBoCollect" %}</h4>
+                <p>{%  trans "To start collecting data with our <a href="https://play.google.com/store/apps/details?id=org.koboc.collect.android">KoBoCollect Android app</a> you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
 
-                <p><a href="{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}">{{ BASE_URL }}{% url "user_profile" content_user.username %}</a></p>
+                <p>{{ BASE_URL }}{% url "user_profile" content_user.username %}</p>
 
                 <p><strong><a target="_blank" href="http://support.kobotoolbox.org/customer/portal/articles/1653782-collecting-data-with-kobocollect-on-android">Click here</a>  to read more about getting started with KoBoCollect</strong></p>
                 <p class="qr__divider"><span>or</span></p>
                 <div class="qrcode__code img_holder"> </div>
                 <div class="qrcode__text">
-                  <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
+                  <h4>{%  trans "Collect data on any device in your browser" %}</h4>
                   <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
                   <p><a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a> <br/>
                   (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
