@@ -509,7 +509,7 @@ span.poshytip {
 
 .modal-body {
   max-height: 600px;
-  min-height: 580px;
+  /*min-height: 580px;*/
 }
 
 .modal-body, .modal-body p, 
