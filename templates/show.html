@@ -299,6 +299,7 @@
       </div>
     </div>
     <div class="dashboard__right">
+      {% if xform.has_instances_with_geopoints %}
       <div class="dashboard__gps">
         <h2 class="dashboard__group-label">GPS Points</h2>
 
@@ -312,6 +313,7 @@
           <span>Download GPS points</span>
         </a>
      </div>
+     {% endif %}
 
       {% if can_edit %}
       <div class="dashboard__add-data">
