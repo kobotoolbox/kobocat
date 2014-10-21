@@ -6,8 +6,8 @@
   font-style: normal;
   font-weight: normal;
   src:  local('Open Sans'), local('OpenSans'), 
-        url('/static/kobo/fonts/open-sans/opensans-regular.woff2') format('woff2'),
-        url('/static/kobo/fonts/open-sans/opensans-regular.woff') format('woff');
+        url('/static/fonts/open-sans/opensans-regular.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-regular.woff') format('woff');
 }
 
 /* Open Sans Semibold */
@@ -16,8 +16,8 @@
   font-style: normal;
   font-weight: 600;
   src:  local('Open Sans Semibold'), local('OpenSans-Semibold'), 
-        url('/static/kobo/fonts/open-sans/opensans-semibold.woff2') format('woff2'),
-        url('/static/kobo/fonts/open-sans/opensans-semibold.woff') format('woff');
+        url('/static/fonts/open-sans/opensans-semibold.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-semibold.woff') format('woff');
 }
 
 /* Open Sans Regular Italic */
@@ -25,8 +25,8 @@
   font-family: 'Open Sans';
   font-style: italic;
   font-weight: normal;
-  src:  url('/static/kobo/fonts/open-sans/opensans-italic.woff2') format('woff2'),
-        url('/static/kobo/fonts/open-sans/opensans-italic.woff') format('woff');
+  src:  url('/static/fonts/open-sans/opensans-italic.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-italic.woff') format('woff');
 }
 
 /* Open Sans Semibold Italic */
@@ -34,17 +34,24 @@
   font-family: 'Open Sans';
   font-style: italic;
   font-weight: 600;
-  src:  url('/static/kobo/fonts/open-sans/opensans-semibolditalic.woff2') format('woff2'),
-        url('/static/kobo/fonts/open-sans/opensans-semibolditalic.woff') format('woff');
+  src:  url('/static/fonts/open-sans/opensans-semibolditalic.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-semibolditalic.woff') format('woff');
 }
 
 
-html, button, input, select, textarea, body {
+html, button, input, select, textarea, body, 
+h1, h2, h3, h4, h5, h6 {
+  -webkit-font-smoothing: antialiased;
   font-family: 'Open Sans';
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
 }
 
 .modal-body, .modal-body p, 
 .modal-body h3, .modal-body h4, .modal-body a {
+  -webkit-font-smoothing: antialiased;
   font-family: 'Open Sans';
 } 
 
@@ -300,6 +307,8 @@ table.published_forms__table thead th {
 
 table.published_forms__table thead th {
   font-weight: 600;
+  font-size: 13px;
+  color: #666;
 }
 
 table.published_forms__table thead th.published_forms__header--projects,
@@ -311,7 +320,6 @@ table.published_forms__table tbody td.published_forms__cell--project {
 td.published_forms__cell--project a {
   color: #333;
   font-weight: 600;
-  font-size: 1.1em;
 }
 
 td.published_forms__cell--project a:hover {
@@ -340,7 +348,7 @@ td.published_forms__cell--project a:hover {
 
 .projects__empty p {
   font-weight: 600;
-  font-size: 1.1em;
+  font-size: 16px;
   text-align: center;
 }
 
