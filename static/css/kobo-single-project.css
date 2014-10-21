@@ -3,7 +3,6 @@
 .single-project__toggle-settings {
   color: #333;
   font-weight: 600;
-  font-family: 'Lato';
   line-height: 40px;
   margin-left: 14px;
   cursor: pointer;
@@ -47,7 +46,6 @@
 }
 
 h2.settings__group-label {
-  font-family: 'Lato';
   font-size: 18px;
   font-weight: 600;
   margin-top: 0px;
@@ -56,7 +54,6 @@ h2.settings__group-label {
 
 label.settings__form-label {
   font-weight: 600;
-  font-family: 'Lato';
 }
 
 .settings__form-item {
@@ -121,7 +118,6 @@ a.settings__files-delete {
   border-radius: 0;
   vertical-align: baseline;
   border:none;
-  font-family: 'Lato';
   font-size: 14px;
   box-shadow: none;
 }
@@ -165,7 +161,6 @@ a.single-project__button {
     text-align: center;
     width: 150px;
     margin-top:10px;
-    font-family: 'Lato';
     opacity:1;
 }
 
@@ -208,7 +203,6 @@ button.single-project__button-delete {
 }
 
 h2.dashboard__group-label {
-  font-family: 'Lato';
   font-size: 18px;
   font-weight: 600;
 }
@@ -259,7 +253,6 @@ a.dashboard__button i {
 
 a.dashboard__button span {
     font-weight: 600;
-    font-family: 'Lato';
     font-size: 11px;
     display: block;
     line-height: 14px;
@@ -303,7 +296,6 @@ a.dashboard__button-twoline span {
   display: inline-block;
   overflow: hidden;
   font-weight: 600;
-  font-family: 'Lato';
   color: #8E8E8E;
   font-size: 12px;
   vertical-align: sub;
@@ -351,7 +343,6 @@ a.dashboard__formbutton-preview span {
   margin-top: -6px;
   font-size: 10px;
   font-weight: 600;
-  font-family: 'Lato';
 }
 
 /* Submissions Download dropdown */
@@ -389,7 +380,6 @@ a.dashboard__formbutton-preview span {
   font-weight: 600;
   margin-top: 1px; 
   font-size: 11px;
-  font-family: 'Lato';
 }
 
 .download__drop-button:hover {
@@ -439,7 +429,6 @@ a.dashboard__formbutton-preview span {
   font-weight: 600;
   margin-top: 1px; 
   font-size: 11px;
-  font-family: 'Lato';
 }
 
 .download__form-drop-button:hover {
@@ -509,13 +498,7 @@ span.poshytip {
 
 .modal-body {
   max-height: 600px;
-  /*min-height: 580px;*/
 }
-
-.modal-body, .modal-body p, 
-.modal-body h3, .modal-body h4, .modal-body a {
-  font-family: 'Lato';
-} 
 
 .qrcode__android {
   position: relative;
