@@ -43,7 +43,7 @@
 
 :root input[type="checkbox"].ios-switch + div:before,
 :root input[type="checkbox"].ios-switch + div:after {
-  font: 600 40%/2.5 'Lato';
+  font: 600 40%/2.5 'Open Sans';
   text-transform: uppercase;
 }
 

@@ -1,16 +1,59 @@
 @import "normalize.css";
 
+/* Open Sans Regular */
 @font-face {
-  font-family: 'Lato';
-  font-style:   normal;
-  font-weight:  normal;
-  src: url('/static/fonts/Lato-Regular.eot'); /* IE9 Compat Modes */
-  src: local('Lato Regular'), local('Lato-Regular'),
-       url('/static/fonts/Lato-Regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('/static/fonts/Lato-Regular.woff') format('woff'), /* Modern Browsers */
-       url('/static/fonts/Lato-Regular.ttf')  format('truetype'), /* Safari, Android, iOS */
-       url('/static/fonts/Lato-Regular.svg#48e70b8825d557df57af3e4f7d4c31be') format('svg'); /* Legacy iOS */
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: normal;
+  src:  local('Open Sans'), local('OpenSans'), 
+        url('/static/fonts/open-sans/opensans-regular.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-regular.woff') format('woff');
 }
+
+/* Open Sans Semibold */
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 600;
+  src:  local('Open Sans Semibold'), local('OpenSans-Semibold'), 
+        url('/static/fonts/open-sans/opensans-semibold.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-semibold.woff') format('woff');
+}
+
+/* Open Sans Regular Italic */
+@font-face {
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: normal;
+  src:  url('/static/fonts/open-sans/opensans-italic.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-italic.woff') format('woff');
+}
+
+/* Open Sans Semibold Italic */
+@font-face {
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 600;
+  src:  url('/static/fonts/open-sans/opensans-semibolditalic.woff2') format('woff2'),
+        url('/static/fonts/open-sans/opensans-semibolditalic.woff') format('woff');
+}
+
+
+html, button, input, select, textarea, body, 
+h1, h2, h3, h4, h5, h6 {
+  -webkit-font-smoothing: antialiased;
+  font-family: 'Open Sans';
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+}
+
+.modal-body, .modal-body p, 
+.modal-body h3, .modal-body h4, .modal-body a {
+  -webkit-font-smoothing: antialiased;
+  font-family: 'Open Sans';
+} 
 
 body {
   background: #E9EDF0;
@@ -84,7 +127,6 @@ section {
     display: inline-block;
     font-size: 14px;
     font-weight: 600;
-    font-family: 'Lato';
 }
 
 .header-bar__support {
@@ -130,7 +172,6 @@ section {
     background-color: #444;
     transition: left 150ms;
     z-index: 15;
-    font-family: 'Lato';
 }
 
 .top-level-menu.is-active {
@@ -155,7 +196,6 @@ section {
     line-height: 40px;
     text-decoration: none;
     color: rgba(255, 255, 255, 0.8);
-    font-family: 'Lato';
 }
 
 .top-level-menu__item > a:hover,
@@ -210,7 +250,6 @@ section {
   background-color: white;
   padding:20px 0px;
   padding-top: 70px;
-  font-family: 'Lato';
 }
 
 .projects-list__header {
@@ -236,7 +275,6 @@ section {
 .projects-list__header h1 {
   font-size: 2em;
   border-radius: 0;
-  font-family: 'Lato';
   line-height: 1em;
   margin:0px;
   padding:0px;
@@ -265,8 +303,14 @@ table.published_forms__table tbody td,
 table.published_forms__table thead th {
   padding:12px;
   text-align: right;
-  font-family: 'Lato';
 }
+
+table.published_forms__table thead th {
+  font-weight: 600;
+  font-size: 13px;
+  color: #666;
+}
+
 table.published_forms__table thead th.published_forms__header--projects,
 table.published_forms__table tbody td.published_forms__cell--project {
   text-align: left;
@@ -276,7 +320,6 @@ table.published_forms__table tbody td.published_forms__cell--project {
 td.published_forms__cell--project a {
   color: #333;
   font-weight: 600;
-  font-size: 1.1em;
 }
 
 td.published_forms__cell--project a:hover {
@@ -305,9 +348,8 @@ td.published_forms__cell--project a:hover {
 
 .projects__empty p {
   font-weight: 600;
-  font-size: 1.1em;
+  font-size: 16px;
   text-align: center;
-  font-family: 'Lato';  
 }
 
 /* Map margin override */
