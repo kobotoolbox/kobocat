@@ -357,3 +357,13 @@ td.published_forms__cell--project a:hover {
 #map_canvas {
   margin-top: -15px;
 }
+
+/* Colors */
+
+.color--red {
+    color: red;
+}
+
+.color--green {
+    color: green;
+}
