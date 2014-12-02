@@ -62,3 +62,18 @@ MONGO_DATABASE = {
 }
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'mlfs33^s1l4xf6a36$0#j%dd*sisfo6HOktYXB9y'
+
+# Caching
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache',
+        'LOCATION': '127.0.0.1:11211',
+    }
+}
+
+MIDDLEWARE_CLASSES += ('django.middleware.cache.UpdateCacheMiddleware',
+                       'django.middleware.common.CommonMiddleware',
+                       'django.middleware.cache.FetchFromCacheMiddleware',)
+
+CACHE_MIDDLEWARE_SECONDS = 3600  # 1 hour
+CACHE_MIDDLEWARE_KEY_PREFIX = ''

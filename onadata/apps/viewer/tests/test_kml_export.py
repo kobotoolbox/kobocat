@@ -8,6 +8,7 @@ from onadata.apps.viewer.views import kml_export
 
 
 class TestKMLExport(TestBase):
+
     def _publish_survey(self):
         self.this_directory = os.path.dirname(__file__)
         xls_path = self._fixture_path("gps", "gps.xls")
@@ -25,7 +26,8 @@ class TestKMLExport(TestBase):
             kwargs={'username': self.user.username, 'id_string': id_string})
         response = self.client.get(url)
         instances = Instance.objects.filter(
-            user=self.user, xform__id_string=id_string, geom__isnull=False
+            xform__user=self.user, xform__id_string=id_string,
+            geom__isnull=False
         ).order_by('id')
 
         self.assertEqual(instances.count(), 2)

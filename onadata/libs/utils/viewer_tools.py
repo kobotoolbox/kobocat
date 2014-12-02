@@ -23,6 +23,10 @@ class MyError(Exception):
     pass
 
 
+class EnketoError(Exception):
+    pass
+
+
 def image_urls_for_form(xform):
     return sum([
         image_urls(s) for s in xform.instances.all()
@@ -193,20 +197,42 @@ def enketo_url(form_url, id_string, instance_xml=None,
             pass
         else:
             if 'message' in response:
-                raise Exception(response['message'])
+                raise EnketoError(response['message'])
     return False
 
 
 def create_attachments_zipfile(attachments):
     # create zip_file
-    tmp = NamedTemporaryFile(delete=False)
-    z = zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, allowZip64=True)
-    for attachment in attachments:
-        default_storage = get_storage_class()()
-        if default_storage.exists(attachment.media_file.name):
-            try:
-                z.write(attachment.full_filepath, attachment.media_file.name)
-            except Exception, e:
-                report_exception("Create attachment zip exception", e)
-    z.close()
-    return tmp.name
+    tmp = NamedTemporaryFile()
+    with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
+        for attachment in attachments:
+            default_storage = get_storage_class()()
+
+            if default_storage.exists(attachment.media_file.name):
+                try:
+                    with default_storage.open(attachment.media_file.name) as f:
+                        z.writestr(attachment.media_file.name, f.read())
+                except Exception, e:
+                    report_exception("Create attachment zip exception", e)
+
+    return tmp
+
+
+def _get_form_url(request, username, protocol='https'):
+    if settings.TESTING_MODE:
+        http_host = settings.TEST_HTTP_HOST
+        username = settings.TEST_USERNAME
+    else:
+        http_host = request.META.get('HTTP_HOST', 'ona.io')
+
+    return '%s://%s/%s' % (protocol, http_host, username)
+
+
+def get_enketo_edit_url(request, instance, return_url):
+    form_url = _get_form_url(request,
+                             request.user.username,
+                             settings.ENKETO_PROTOCOL)
+    url = enketo_url(
+        form_url, instance.xform.id_string, instance_xml=instance.xml,
+        instance_id=instance.uuid, return_url=return_url)
+    return url

@@ -1,3 +1,5 @@
+import reversion
+
 from datetime import datetime
 
 from django.contrib.gis.db import models
@@ -16,7 +18,7 @@ from onadata.apps.logger.xform_instance_parser import XFormInstanceParser,\
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
     DELETEDAT, GEOLOCATION, ID, MONGO_STRFTIME, NOTES, SUBMISSION_TIME, TAGS,\
-    UUID, XFORM_ID_STRING
+    UUID, XFORM_ID_STRING, SUBMITTED_BY
 from onadata.libs.utils.model_tools import set_uuid
 
 
@@ -33,8 +35,23 @@ class FormInactiveError(Exception):
 def get_id_string_from_xml_str(xml_str):
     xml_obj = clean_and_parse_xml(xml_str)
     root_node = xml_obj.documentElement
+    id_string = root_node.getAttribute(u"id")
 
-    return root_node.getAttribute(u"id")
+    if len(id_string) == 0:
+        # may be hidden in submission/data/id_string
+        elems = root_node.getElementsByTagName('data')
+
+        for data in elems:
+            for child in data.childNodes:
+                id_string = data.childNodes[0].getAttribute('id')
+
+                if len(id_string) > 0:
+                    break
+
+            if len(id_string) > 0:
+                break
+
+    return id_string
 
 
 def submission_time():
@@ -45,8 +62,6 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
     if created:
         xform = XForm.objects.select_related().select_for_update()\
             .get(pk=instance.xform.pk)
-        if xform.num_of_submissions == -1:
-            xform.num_of_submissions = 0
         xform.num_of_submissions += 1
         xform.last_submission_time = instance.date_created
         xform.save()
@@ -84,6 +99,7 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
             profile.save()
 
 
+@reversion.register
 class Instance(models.Model):
     json = JSONField(default={}, null=False)
     xml = models.TextField()
@@ -167,6 +183,8 @@ class Instance(models.Model):
 
         doc[SUBMISSION_TIME] = self.date_created.strftime(MONGO_STRFTIME)
         doc[XFORM_ID_STRING] = self._parser.get_xform_id_string()
+        doc[SUBMITTED_BY] = self.user.username\
+            if self.user is not None else None
         self.json = doc
 
     def _set_parser(self):
@@ -184,9 +202,6 @@ class Instance(models.Model):
             if uuid is not None:
                 self.uuid = uuid
         set_uuid(self)
-
-    def _set_xform(self, id_string):
-        self.xform = XForm.objects.get(id_string=id_string, user=self.user)
 
     def get(self, abbreviated_xpath):
         self._set_parser()
@@ -248,12 +263,6 @@ class Instance(models.Model):
             del kwargs['force']
 
         self._check_active(force)
-
-        try:
-            self._set_xform(get_id_string_from_xml_str(self.xml))
-        except XForm.DoesNotExist:
-            if not force:
-                raise XForm.DoesNotExist
 
         self._set_geom()
         self._set_json()

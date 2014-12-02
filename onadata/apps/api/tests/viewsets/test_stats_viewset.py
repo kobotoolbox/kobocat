@@ -22,7 +22,7 @@ class TestStatsViewSet(TestBase):
             'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
 
     @patch('onadata.apps.logger.models.instance.submission_time')
-    def test_form_list(self, mock_time):
+    def test_submissions_stats(self, mock_time):
         self._set_mock_time(mock_time)
         self._publish_transportation_form()
         self._make_submissions()
@@ -31,14 +31,22 @@ class TestStatsViewSet(TestBase):
         response = view(request)
         self.assertEqual(response.status_code, 200)
         formid = self.xform.pk
-        data = {
-            u'transportation_2011_07_25':
-            'http://testserver/api/v1/stats/submissions/bob/%s' % formid
-        }
-        self.assertDictEqual(response.data, data)
+        data = [{
+            'id': formid,
+            'id_string': u'transportation_2011_07_25',
+            'url': 'http://testserver/api/v1/stats/submissions/%s' % formid
+        }]
+        self.assertEqual(response.data, data)
+
+        view = SubmissionStatsViewSet.as_view({'get': 'retrieve'})
+        request = self.factory.get('/', **self.extra)
+        response = view(request, pk=formid)
+        self.assertEqual(response.status_code, 400)
+        data = {u'detail': u'Expecting `group` and `name` query parameters.'}
+        self.assertEqual(response.data, data)
+
         request = self.factory.get('/?group=_xform_id_string', **self.extra)
-        response = view(request)
-        response = view(request, owner='bob', formid=formid)
+        response = view(request, pk=formid)
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.data, list)
         data = {
@@ -46,13 +54,57 @@ class TestStatsViewSet(TestBase):
         }
         self.assertDictContainsSubset(data, response.data[0])
 
+    def test_form_list_select_one_choices_multi_language(self):
+        paths = [os.path.join(
+            self.this_directory, 'fixtures', 'good_eats_multilang', x)
+            for x in ['good_eats_multilang.xls', '1.xml']]
+        self._publish_xls_file_and_set_xform(paths[0])
+        self._make_submission(paths[1])
+        view = SubmissionStatsViewSet.as_view({'get': 'retrieve'})
+        formid = self.xform.pk
+        request = self.factory.get('/?group=rating',
+                                   **self.extra)
+        response = view(request, pk=formid)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.data, list)
+        data = [{'count': 1, 'rating': u'Nothing Special'}]
+        self.assertEqual(data, response.data)
+
+    def test_form_list_select_one_choices(self):
+        self._tutorial_form_submission()
+        view = SubmissionStatsViewSet.as_view({'get': 'retrieve'})
+        formid = self.xform.pk
+        request = self.factory.get('/?group=gender', **self.extra)
+        response = view(request, pk=formid)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.data, list)
+        data = [
+            {'count': 2, 'gender': u'Female'},
+            {'count': 1, 'gender': u'Male'}
+        ]
+        self.assertEqual(sorted(data), sorted(response.data))
+
     def test_anon_form_list(self):
         self._publish_transportation_form()
         self._make_submissions()
         view = SubmissionStatsViewSet.as_view({'get': 'list'})
         request = self.factory.get('/')
         response = view(request)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])
+
+    def _tutorial_form_submission(self):
+        tutorial_folder = os.path.join(
+            os.path.dirname(__file__),
+            '..', 'fixtures', 'forms', 'tutorial')
+        self._publish_xls_file_and_set_xform(os.path.join(tutorial_folder,
+                                                          'tutorial.xls'))
+        instance_paths = [os.path.join(tutorial_folder, 'instances', i)
+                          for i in ['1.xml', '2.xml', '3.xml']]
+        for path in instance_paths:
+            create_instance(self.user.username, open(path), [])
+
+        self.assertEqual(self.xform.instances.count(), 3)
 
     def _contributions_form_submissions(self):
         count = XForm.objects.count()
@@ -73,48 +125,48 @@ class TestStatsViewSet(TestBase):
 
     def test_median_api(self):
         self._contributions_form_submissions()
-        view = StatsViewSet.as_view({'get': 'list'})
+        view = StatsViewSet.as_view({'get': 'retrieve'})
         request = self.factory.get('/?method=median', **self.extra)
         formid = self.xform.pk
-        response = view(request, owner='bob', formid=formid)
+        response = view(request, pk=formid)
         data = {u'age': 28.5, u'amount': 1100.0}
         self.assertDictContainsSubset(data, response.data)
 
     def test_mean_api(self):
         self._contributions_form_submissions()
-        view = StatsViewSet.as_view({'get': 'list'})
+        view = StatsViewSet.as_view({'get': 'retrieve'})
         request = self.factory.get('/?method=mean', **self.extra)
         formid = self.xform.pk
-        response = view(request, owner='bob', formid=formid)
+        response = view(request, pk=formid)
         data = {u'age': 28.17, u'amount': 1455.0}
         self.assertDictContainsSubset(data, response.data)
 
     def test_mode_api(self):
         self._contributions_form_submissions()
-        view = StatsViewSet.as_view({'get': 'list'})
+        view = StatsViewSet.as_view({'get': 'retrieve'})
         request = self.factory.get('/?method=mode', **self.extra)
         formid = self.xform.pk
-        response = view(request, owner='bob', formid=formid)
+        response = view(request, pk=formid)
         data = {u'age': 24, u'amount': 430.0}
         self.assertDictContainsSubset(data, response.data)
 
     def test_range_api(self):
         self._contributions_form_submissions()
-        view = StatsViewSet.as_view({'get': 'list'})
+        view = StatsViewSet.as_view({'get': 'retrieve'})
         request = self.factory.get('/?method=range', **self.extra)
         formid = self.xform.pk
-        response = view(request, owner='bob', formid=formid)
+        response = view(request, pk=formid)
         data = {u'age': {u'range': 10, u'max': 34, u'min': 24},
                 u'amount': {u'range': 2770, u'max': 3200, u'min': 430}}
         self.assertDictContainsSubset(data, response.data)
 
     def test_bad_field(self):
         self._contributions_form_submissions()
-        view = StatsViewSet.as_view({'get': 'list'})
+        view = StatsViewSet.as_view({'get': 'retrieve'})
         request = self.factory.get('/?method=median&field=INVALID',
                                    **self.extra)
         formid = self.xform.pk
-        response = view(request, owner='bob', formid=formid)
+        response = view(request, pk=formid)
         self.assertEqual(response.status_code, 400)
 
     def test_all_stats_api(self):
@@ -124,12 +176,15 @@ class TestStatsViewSet(TestBase):
         response = view(request)
         self.assertEqual(response.status_code, 200)
         formid = self.xform.pk
-        data = {
-            u'contributions':
-            'http://testserver/api/v1/stats/bob/%s' % formid
-        }
-        self.assertDictContainsSubset(data, response.data)
-        response = view(request, owner='bob', formid=formid)
+        data = [{
+            u'id': formid,
+            u'id_string': u'contributions',
+            u'url': u'http://testserver/api/v1/stats/%s' % formid
+        }]
+        self.assertEqual(data, response.data)
+
+        view = StatsViewSet.as_view({'get': 'retrieve'})
+        response = view(request, pk=formid)
         data = {}
         data['age'] = {
             'mean': 28.17,
@@ -140,7 +195,7 @@ class TestStatsViewSet(TestBase):
             'range': 10
         }
         request = self.factory.get('/?field=age', **self.extra)
-        age_response = view(request, owner='bob', formid=formid)
+        age_response = view(request, pk=formid)
         self.assertEqual(data, age_response.data)
         data['amount'] = {
             'mean': 1455,
@@ -152,37 +207,11 @@ class TestStatsViewSet(TestBase):
         }
         self.assertDictContainsSubset(data, response.data)
 
-    @patch('onadata.apps.logger.models.instance.submission_time')
-    def test_same_id_string_form_different_users(self, mock_time):
-        self._set_mock_time(mock_time)
+    def test_wrong_stat_function_api(self):
+        self._contributions_form_submissions()
+        view = StatsViewSet.as_view({'get': 'retrieve'})
+        request = self.factory.get('/?method=modes', **self.extra)
+        formid = self.xform.pk
+        response = view(request, pk=formid)
 
-        # as bob
-        self._publish_transportation_form()
-
-        # as demo user
-        self._create_user_and_login('demo')
-        self.extra = {
-            'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
-
-        self._publish_transportation_form()
-        self._make_submissions()
-        view = SubmissionStatsViewSet.as_view({'get': 'list'})
-        request = self.factory.get('/', **self.extra)
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
-        formid = self.xform.id_string
-        data = {
-            u'transportation_2011_07_25':
-            'http://testserver/api/v1/stats/submissions/demo/%s'
-            % self.xform.pk
-        }
-        self.assertDictEqual(response.data, data)
-        request = self.factory.get('/?group=_xform_id_string', **self.extra)
-        response = view(request)
-        response = view(request, owner='bob', formid=formid)
-        self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.data, list)
-        data = {
-            u'count': 4
-        }
-        self.assertDictContainsSubset(data, response.data[0])
+        self.assertEquals(response.status_code, 200)

@@ -202,6 +202,18 @@
                 </li>
             </ul>
           </div>
+          <br/>
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'external' %}" rel="tooltip" data-original-title="{% trans 'xls reports' %}" target="_blank"><i class="icon-download-alt"></i> <font color=#000>{% trans "xls reports" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'external' %}"/>
+                </li>
+            </ul>
+          </div>
         </div>
         <h4>{% trans "Submissions:" %} {{ xform.submission_count|intcomma }}</h4>
         <br>
@@ -341,7 +353,7 @@
         {% endif %}
         <br/>
         <div class="clearfix bordered">
-            <h3 data-toggle="collapse" class="toggler" data-target="#media_tab">{% blocktrans %}Media &nbsp;<small>jpeg/png/mp3/wav/3gp allowed</small>{% endblocktrans %}</h3>
+            <h3 data-toggle="collapse" class="toggler" data-target="#media_tab">{% blocktrans %}Media &nbsp;<small>jpeg/png/mp3/wav/3gp/csv/zip allowed</small>{% endblocktrans %}</h3>
             <div id='media_tab' class="collapse">
             {% for media in media_upload %}
               <p><a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}">{{ media.data_value }}</a>
@@ -353,11 +365,34 @@
             {% if can_edit %}
             <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <table>
-                <tbody><tr><th><label for="id_media">Media upload:</label></th><td><input type="file" multiple="" name="media" id="id_media"></td></tr>
-                </tbody>
-                </table>
-                <input type="submit" class="btn" value="{% trans 'Upload' %}" />
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
+                    <li><a href="#media_url_add" data-toggle="tab">Media Upload</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="media_upload">
+                        <table>
+                        <tbody>
+                            <tr>
+                                <th><label for="id_media">Media upload:</label></th>
+                                <td><input type="file" multiple="" name="media" id="id_media"></td>
+                            </tr>
+                        </tbody>
+                        </table>
+                        <input type="submit" class="btn" value="{% trans 'Upload' %}" />
+                    </div>
+                    <div class="tab-pane" id="media_url_add">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th><label for="id_media">Media url:</label></th>
+                                    <td><input type="text" name="media_url" id="id_media_url"></td>
+                                </tr>
+                        </tbody>
+                        </table>
+                        <input type="submit" class="btn" value="{% trans 'Save Media URL' %}" />
+                    </div>
+                </div>
             </form>
             {% endif %}
             </div>
@@ -380,6 +415,61 @@
                 {{ mapbox_layer_form.as_table }}
                 </table>
                 <input type="submit" class="btn" value="{% trans 'Upload' %}" />
+            </form>
+            {% endif %}
+            </div>
+        </div>
+        <br/>
+        <div class="clearfix bordered">
+            <h3 data-toggle="collapse" class="toggler" data-target="#external_tab">{% trans "XLS Reports (beta)" %}</h3>
+            <div id='external_tab' class="collapse">
+            {% if can_edit %}
+            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#add_external" data-toggle="tab">{% trans "Add Template" %}</a></li>
+                    <li><a href="#template_upload" data-toggle="tab">{% trans "Template Upload" %}</a></li>
+                    <li><a href="#template_list" data-toggle="tab">{% trans "Uploaded Templates" %}</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="add_external">
+                        <table>
+                		    {{ external_export_form.as_table }}
+                	    </table>
+                	    <input type="submit" class="btn" value="{% trans 'Add Template URL' %}" />
+                    </div>
+                    <div class="tab-pane" id="template_upload">
+                        <table>
+                            <tbody>
+				                <tr>
+                                    <th><label for="id_template_name">{% trans "Template Name:" %}</label></th>
+                                    <td><input type="text" name="template_upload_name" id="id_template_name"></td>
+                                </tr>
+                                <tr>
+                                    <th><label for="id_external_url">{% trans "Template Server:" %}</label></th>
+                                    <td><input type="text" name="external_url" id="id_external_url"></td>
+                                </tr>
+                                <tr>
+                                    <th><label for="id_xls_template">{% trans "Template File:" %}</label></th>
+                                    <td><input type="file" multiple="" name="xls_template" id="id_xls_template"></td>
+                                </tr>
+                        </tbody>
+                        </table>
+                        <input type="submit" class="btn" value="{% trans 'Upload template' %}" />
+                    </div>
+                    <div class="tab-pane" id="template_list">
+                             <table>
+                                {% for meta in external_export %}
+                                        <tr>
+                                        <td><a href="{{ meta.external_export_template }}">{{ meta.external_export_name }}</a></td>
+                                        {% if can_edit %}
+                                            <td><a href="{% url "onadata.apps.main.views.delete_metadata" content_user.username xform.id_string meta.id %}?external_del=false" class="btn btn-mini btn-danger"> {% trans "Delete" %} </a></td>
+                                        {% endif %}
+                                        </tr>
+                                {% endfor %}
+                            </table>
+                    </div>
+                </div>
             </form>
             {% endif %}
             </div>
@@ -628,6 +718,19 @@ $(document).ready(function() {
                 $('#data-encrypted').hide();
               {% endif %}
             {% if user.is_authenticated %}
+                $.each(['form-shared', 'data-shared', 'active-form'], function(inx, el) {
+                    var cb = $('#' + el + ':checkbox');
+                    cb.iphoneStyle({
+                    onChange: function() {
+                        // a callback func
+                        var c = function(){}
+                        privacyEdit(cb.data('url'), el.split('-')[0]);
+                        $('#' + el + '-public').toggle();
+                        $('#' + el + '-private').toggle();
+
+                    }
+                    });
+                    });
               // add click event to all public (x)forms
               $('a.clonexls').click(function(){
                 el = $(this);

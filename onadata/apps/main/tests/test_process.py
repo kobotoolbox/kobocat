@@ -7,6 +7,7 @@ import re
 
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django_digest.test import Client as DigestClient
 from django.core.files.uploadedfile import UploadedFile
 from xlrd import open_workbook
 from xml.dom import minidom, Node
@@ -14,7 +15,6 @@ from xml.dom import minidom, Node
 from onadata.apps.main.models import MetaData
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.xform import XFORM_TITLE_LENGTH
-from onadata.apps.logger.views import submission
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.libs.utils.common_tags import UUID, SUBMISSION_TIME
@@ -74,7 +74,7 @@ class TestProcess(TestBase):
         with open(path) as f:
             post_data = {'xml_submission_file': f, 'uuid': self.xform.uuid}
             url = '/submission'
-            self.response = self.anon.post(url, post_data)
+            self.response = self.client.post(url, post_data)
 
     def test_publish_xlsx_file(self):
         self._publish_xlsx_file()
@@ -92,8 +92,7 @@ class TestProcess(TestBase):
 
     def test_url_upload(self):
         if self._internet_on(url="http://google.com"):
-            xls_url = 'http://formhub.org' \
-                      '/formhub_u/forms/tutorial/form.xls'
+            xls_url = 'https://ona.io/examples/forms/tutorial/form.xls'
             pre_count = XForm.objects.count()
             response = self.client.post('/%s/' % self.user.username,
                                         {'xls_url': xls_url})
@@ -148,7 +147,7 @@ class TestProcess(TestBase):
             path = os.path.join(self.this_directory, path)
         with open(path) as xls_file:
             post_data = {'xls_file': xls_file}
-            return self.anon.post('/%s/' % self.user.username, post_data)
+            return self.client.post('/%s/' % self.user.username, post_data)
 
     def _publish_file(self, xls_path, strict=True):
         """
@@ -176,38 +175,31 @@ class TestProcess(TestBase):
 
     def _check_formList(self):
         url = '/%s/formList' % self.user.username
-        response = self.anon.get(url)
+        client = DigestClient()
+        client.set_authorization('bob', 'bob')
+        response = client.get(url)
         self.download_url = \
-            'http://testserver/%s/forms/transportation_2011_07_25/form.xml'\
-            % self.user.username
+            'http://testserver/%s/forms/%s/form.xml'\
+            % (self.user.username, self.xform.pk)
         self.manifest_url = \
-            'http://testserver/%s/xformsManifest/transportation_2011_07_25'\
-            % self.user.username
+            'http://testserver/%s/xformsManifest/%s'\
+            % (self.user.username, self.xform.pk)
         md5_hash = md5(self.xform.xml).hexdigest()
-        expected_content = """<?xml version='1.0' encoding='UTF-8' ?>
-
-<xforms xmlns="http://openrosa.org/xforms/xformsList">
-
-  <xform>
-    <formID>transportation_2011_07_25</formID>
-    <name>transportation_2011_07_25</name>
-    <majorMinorVersion/>
-    <version/>
-    <hash>md5:%(hash)s</hash>
-    <descriptionText></descriptionText>
-    <downloadUrl>%(download_url)s</downloadUrl>
-    <manifestUrl>%(manifest_url)s</manifestUrl>
-  </xform>
-
-</xforms>
-""" % {'download_url': self.download_url, 'manifest_url': self.manifest_url,
-            'hash': md5_hash}
+        expected_content = """<?xml version="1.0" encoding="utf-8"?>
+<xforms xmlns="http://openrosa.org/xforms/xformsList"><xform><formID>transportation_2011_07_25</formID><name>transportation_2011_07_25</name><majorMinorVersion></majorMinorVersion><version></version><hash>md5:%(hash)s</hash><descriptionText>transportation_2011_07_25</descriptionText><downloadUrl>%(download_url)s</downloadUrl><manifestUrl>%(manifest_url)s</manifestUrl></xform></xforms>"""  # noqa
+        expected_content = expected_content % {
+            'download_url': self.download_url,
+            'manifest_url': self.manifest_url,
+            'hash': md5_hash
+        }
         self.assertEqual(response.content, expected_content)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(response.has_header('Date'))
 
     def _download_xform(self):
-        response = self.anon.get(self.download_url)
+        client = DigestClient()
+        client.set_authorization('bob', 'bob')
+        response = client.get(self.download_url)
         response_doc = minidom.parseString(response.content)
 
         xml_path = os.path.join(self.this_directory, "fixtures",
@@ -450,10 +442,10 @@ class TestProcess(TestBase):
         self.assertEquals(self.user.xforms.count(), 0)
 
     def test_405_submission(self):
-        url = reverse(submission)
+        url = reverse('submissions')
         response = self.client.get(url)
         self.assertContains(
-            response, "405 Error: Method Not Allowed", status_code=405)
+            response, "Method 'GET' not allowed", status_code=405)
 
     def test_publish_bad_xls_with_unicode_in_error(self):
         """
@@ -481,10 +473,6 @@ class TestProcess(TestBase):
                                   data_value='screenshot.png')
         # assert checksum string has been generated, hash length > 1
         self.assertTrue(len(md.hash) > 16)
-        md.data_file.storage.delete(md.data_file.name)
-        md = MetaData.objects.get(xform=self.xform,
-                                  data_value='screenshot.png')
-        self.assertEqual(len(md.hash), 0)
 
     def test_uuid_injection_in_cascading_select(self):
         """Test that the uuid is injected in the right instance node for
@@ -551,10 +539,20 @@ class TestProcess(TestBase):
 
     def test_truncate_xform_title_to_255(self):
         self._publish_transportation_form()
+        title = "a" * (XFORM_TITLE_LENGTH + 1)
         groups = re.match(
             r"(.+<h:title>)([^<]+)(</h:title>.*)",
             self.xform.xml, re.DOTALL).groups()
         self.xform.xml = "{0}{1}{2}".format(
-            groups[0], "a" * (XFORM_TITLE_LENGTH + 1), groups[2])
+            groups[0], title, groups[2])
+        self.xform.title = title
         self.xform.save()
         self.assertEqual(self.xform.title, "a" * XFORM_TITLE_LENGTH)
+
+    def test_multiple_submissions_by_different_users(self):
+        """
+        We had a problem when two users published the same form that the
+        CSV export would break.
+        """
+        TestProcess.test_process(self)
+        TestProcess.test_process(self, "doug", "doug")

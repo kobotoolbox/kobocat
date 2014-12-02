@@ -1,8 +1,10 @@
 import csv
-from datetime import datetime
+from datetime import datetime, date
 import json
 import os
 import re
+import six
+from urlparse import urlparse
 from zipfile import ZipFile
 
 from bson import json_util
@@ -12,21 +14,26 @@ from django.core.files.temp import NamedTemporaryFile
 from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
 from django.shortcuts import render_to_response
-from openpyxl.shared.date_time import SharedDate
+from openpyxl.date_time import SharedDate
 from openpyxl.workbook import Workbook
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
 from savReaderWriter import SavWriter
+from json2xlsclient.client import Client
 
 from onadata.apps.logger.models import Attachment, Instance, XForm
+from onadata.apps.main.models.meta_data import MetaData
+from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.models.parsed_instance import\
     _is_invalid_for_mongo, _encode_for_mongo, dict_for_mongo,\
     _decode_from_mongo
 from onadata.libs.utils.viewer_tools import create_attachments_zipfile,\
     image_urls
-from onadata.libs.utils.common_tags import ID, XFORM_ID_STRING, STATUS,\
-    ATTACHMENTS, GEOLOCATION, BAMBOO_DATASET_ID, DELETEDAT, USERFORM_ID,\
-    INDEX, PARENT_INDEX, PARENT_TABLE_NAME, SUBMISSION_TIME, UUID, TAGS, NOTES
+from onadata.libs.utils.common_tags import (
+    ID, XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION, BAMBOO_DATASET_ID,
+    DELETEDAT, USERFORM_ID, INDEX, PARENT_INDEX, PARENT_TABLE_NAME,
+    SUBMISSION_TIME, UUID, TAGS, NOTES)
+from onadata.libs.exceptions import J2XException
 
 
 # this is Mongo Collection where we will store the parsed submissions
@@ -40,11 +47,27 @@ MULTIPLE_SELECT_BIND_TYPE = u"select"
 GEOPOINT_BIND_TYPE = u"geopoint"
 
 
+def encode_if_str(row, key, encode_dates=False):
+    val = row.get(key)
+
+    if isinstance(val, six.string_types):
+        return val.encode('utf-8')
+
+    if encode_dates and isinstance(val, datetime):
+        return val.strftime('%Y-%m-%dT%H:%M:%S%z').encode('utf-8')
+
+    if encode_dates and isinstance(val, date):
+        return val.strftime('%Y-%m-%d').encode('utf-8')
+
+    return val
+
+
 def question_types_to_exclude(_type):
     return _type in QUESTION_TYPES_TO_EXCLUDE
 
 
 class DictOrganizer(object):
+
     def set_dict_iterator(self, dict_iterator):
         self._dict_iterator = dict_iterator
 
@@ -138,9 +161,11 @@ def dict_to_joined_export(data, index, indices, name):
                 if key in [TAGS]:
                     output[name][key] = ",".join(val)
                 elif key in [NOTES]:
-                    output[name][key] = "\r\n".join(val)
+                    output[name][key] = "\r\n".join(
+                        [v['note'] for v in val])
                 else:
                     output[name][key] = val
+
     return output
 
 
@@ -233,15 +258,18 @@ class ExportBuilder(object):
                     # if its a select multiple, make columns out of its choices
                     if child.bind.get(u"type") == MULTIPLE_SELECT_BIND_TYPE\
                             and self.SPLIT_SELECT_MULTIPLES:
-                        current_section['elements'].extend(
-                            [{
-                                'title': ExportBuilder.format_field_title(
-                                    c.get_abbreviated_xpath(),
-                                    field_delimiter),
-                                'xpath': c.get_abbreviated_xpath(),
+                        for c in child.children:
+                            _xpath = c.get_abbreviated_xpath()
+                            _title = ExportBuilder.format_field_title(
+                                _xpath, field_delimiter)
+                            choice = {
+                                'title': _title,
+                                'xpath': _xpath,
                                 'type': 'string'
                             }
-                                for c in child.children])
+
+                            if choice not in current_section['elements']:
+                                current_section['elements'].append(choice)
                         _append_xpaths_to_section(
                             current_section_name, select_multiples,
                             child.get_abbreviated_xpath(),
@@ -303,7 +331,8 @@ class ExportBuilder(object):
                         xpath, selection) for selection in data.split()]
             if not cls.BINARY_SELECT_MULTIPLES:
                 row.update(dict(
-                    [(choice, choice in selections) for choice in choices]))
+                    [(choice, choice in selections if selections else None)
+                     for choice in choices]))
             else:
                 YES = 1
                 NO = 0
@@ -383,12 +412,6 @@ class ExportBuilder(object):
         return row
 
     def to_zipped_csv(self, path, data, *args):
-        def encode_if_str(row, key):
-            val = row.get(key)
-            if isinstance(val, basestring):
-                return val.encode('utf-8')
-            return val
-
         def write_row(row, csv_writer, fields):
             csv_writer.writerow(
                 [encode_if_str(row, field) for field in fields])
@@ -557,15 +580,9 @@ class ExportBuilder(object):
         csv_builder.export_to(path)
 
     def to_zipped_sav(self, path, data, *args):
-        def encode_if_str(row, key):
-            val = row.get(key)
-            if isinstance(val, basestring):
-                return val.encode('utf-8')
-            return val
-
         def write_row(row, csv_writer, fields):
             sav_writer.writerow(
-                [encode_if_str(row, field) for field in fields])
+                [encode_if_str(row, field, True) for field in fields])
 
         sav_defs = {}
 
@@ -633,6 +650,7 @@ class ExportBuilder(object):
                             self.pre_process_row(child_row, section),
                             sav_writer, fields)
             index += 1
+
         for section_name, sav_def in sav_defs.iteritems():
             sav_def['sav_writer'].closeSavFile(
                 sav_def['sav_writer'].fh, mode='wb')
@@ -670,7 +688,8 @@ def generate_export(export_type, extension, username, id_string,
         Export.SAV_ZIP_EXPORT: 'to_zipped_sav',
     }
 
-    xform = XForm.objects.get(user__username=username, id_string=id_string)
+    xform = XForm.objects.get(
+        user__username__iexact=username, id_string__iexact=id_string)
 
     # query mongo for the cursor
     records = query_mongo(username, id_string, filter_query)
@@ -685,6 +704,7 @@ def generate_export(export_type, extension, username, id_string,
 
     # get the export function by export type
     func = getattr(export_builder, export_type_func_map[export_type])
+
     func.__call__(
         temp_file.name, records, username, id_string, filter_query)
 
@@ -789,7 +809,6 @@ def generate_attachments_zip_export(
     from onadata.apps.viewer.models.export import Export
     xform = XForm.objects.get(user__username=username, id_string=id_string)
     attachments = Attachment.objects.filter(instance__xform=xform)
-    zip_file = create_attachments_zipfile(attachments)
     basename = "%s_%s" % (id_string,
                           datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     filename = basename + "." + extension
@@ -799,13 +818,21 @@ def generate_attachments_zip_export(
         id_string,
         export_type,
         filename)
-
     storage = get_storage_class()()
-    temp_file = open(zip_file)
-    export_filename = storage.save(
-        file_path,
-        File(temp_file, file_path))
-    temp_file.close()
+    zip_file = None
+
+    try:
+        zip_file = create_attachments_zipfile(attachments)
+
+        try:
+            temp_file = open(zip_file.name)
+            export_filename = storage.save(
+                file_path,
+                File(temp_file, file_path))
+        finally:
+            temp_file.close()
+    finally:
+        zip_file and zip_file.close()
 
     dir_name, basename = os.path.split(export_filename)
 
@@ -872,7 +899,7 @@ def kml_export_data(id_string, user):
     from onadata.apps.viewer.models.data_dictionary import DataDictionary
     dd = DataDictionary.objects.get(id_string=id_string, user=user)
     instances = Instance.objects.filter(
-        user=user, xform__id_string=id_string, geom__isnull=False
+        xform__user=user, xform__id_string=id_string, geom__isnull=False
     ).order_by('id')
     data_for_template = []
 
@@ -910,3 +937,123 @@ def kml_export_data(id_string, user):
                          '</table>' % (img_url, ''.join(table_rows))})
 
     return data_for_template
+
+
+def _get_records(instances):
+    records = []
+    for instance in instances:
+        record = instance.get_dict()
+        # Get the keys
+        for key in record:
+            if '/' in key:
+                # replace with _
+                record[key.replace('/', '_')]\
+                    = record.pop(key)
+        records.append(record)
+
+    return records
+
+
+def _get_server_from_metadata(xform, meta, token):
+    report_templates = MetaData.external_export(xform)
+
+    if meta:
+        try:
+            int(meta)
+        except ValueError:
+            raise Exception(u"Invalid metadata pk {0}".format(meta))
+
+        # Get the external server from the metadata
+        result = report_templates.get(pk=meta)
+        server = result.external_export_url
+        name = result.external_export_name
+    elif token:
+        server = token
+        name = None
+    else:
+        # Take the latest value in the metadata
+        if not report_templates:
+            raise Exception(
+                u"Could not find the template token: Please upload template.")
+
+        server = report_templates[0].external_export_url
+        name = report_templates[0].external_export_name
+
+    return server, name
+
+
+def generate_external_export(
+    export_type, username, id_string, export_id=None,  token=None,
+        filter_query=None, meta=None):
+
+    xform = XForm.objects.get(
+        user__username__iexact=username, id_string__iexact=id_string)
+    user = User.objects.get(username=username)
+
+    server, name = _get_server_from_metadata(xform, meta, token)
+
+    # dissect the url
+    parsed_url = urlparse(server)
+
+    token = parsed_url.path[5:]
+
+    ser = parsed_url.scheme + '://' + parsed_url.netloc
+
+    records = _get_records(Instance.objects.filter(
+        xform__user=user, xform__id_string=id_string))
+
+    status_code = 0
+    if records and server:
+
+        try:
+
+            client = Client(ser)
+            response = client.xls.create(token, json.dumps(records))
+
+            if hasattr(client.xls.conn, 'last_response'):
+                status_code = client.xls.conn.last_response.status_code
+        except Exception as e:
+            raise J2XException(
+                u"J2X client could not generate report. Server -> {0},"
+                u" Error-> {1}".format(server, e)
+            )
+    else:
+        if not server:
+            raise J2XException(u"External server not set")
+        elif not records:
+            raise J2XException(
+                u"No record to export. Form -> {0}".format(id_string)
+            )
+
+    # get or create export object
+    if export_id:
+        export = Export.objects.get(id=export_id)
+    else:
+        export = Export.objects.create(xform=xform, export_type=export_type)
+
+    export.export_url = response
+    if status_code == 201:
+        export.internal_status = Export.SUCCESSFUL
+        export.filename = name + '-' + response[5:] if name else response[5:]
+        export.export_url = ser + response
+    else:
+        export.internal_status = Export.FAILED
+
+    export.save()
+
+    return export
+
+
+def upload_template_for_external_export(server, file_obj):
+
+    try:
+        client = Client(server)
+        response = client.template.create(template_file=file_obj)
+
+        if hasattr(client.template.conn, 'last_response'):
+            status_code = client.template.conn.last_response.status_code
+    except Exception as e:
+        response = str(e)
+        status_code = 500
+
+    return str(status_code) + '|' + response

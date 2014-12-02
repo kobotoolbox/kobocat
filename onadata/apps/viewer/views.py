@@ -6,14 +6,17 @@ from time import strftime, strptime
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
 from django.core.files.storage import get_storage_class
+from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseForbidden,\
-    HttpResponseRedirect, HttpResponseNotFound, HttpResponseBadRequest,\
-    HttpResponse
-from django.shortcuts import render_to_response, get_object_or_404, redirect
-from django.template import RequestContext
+from django.http import (
+    HttpResponseForbidden, HttpResponseRedirect, HttpResponseNotFound,
+    HttpResponseBadRequest, HttpResponse)
+from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
@@ -22,13 +25,14 @@ from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.logger.views import download_jsonform
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.apps.viewer.models.export import Export
-from onadata.apps.viewer.pandas_mongo_bridge import NoRecordsFoundError
 from onadata.apps.viewer.tasks import create_async_export
+from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.utils.common_tags import SUBMISSION_TIME
-from onadata.libs.utils.export_tools import generate_export,\
-    should_create_new_export
-from onadata.libs.utils.export_tools import kml_export_data
-from onadata.libs.utils.export_tools import newset_export_for
+from onadata.libs.utils.export_tools import (
+    generate_export,
+    should_create_new_export,
+    kml_export_data,
+    newset_export_for)
 from onadata.libs.utils.image_tools import image_url
 from onadata.libs.utils.google import google_export_xls, redirect_uri
 from onadata.libs.utils.log import audit_log, Actions
@@ -42,14 +46,45 @@ from xls_writer import XlsWriter
 from onadata.libs.utils.chart_tools import build_chart_data
 
 
+def _set_submission_time_to_query(query, request):
+    query[SUBMISSION_TIME] = {}
+    try:
+        if request.GET.get('start'):
+            query[SUBMISSION_TIME]['$gte'] = format_date_for_mongo(
+                request.GET['start'])
+        if request.GET.get('end'):
+            query[SUBMISSION_TIME]['$lte'] = format_date_for_mongo(
+                request.GET['end'])
+    except ValueError:
+        return HttpResponseBadRequest(
+            _("Dates must be in the format YY_MM_DD_hh_mm_ss"))
+
+    return query
+
+
 def encode(time_str):
     time = strptime(time_str, "%Y_%m_%d_%H_%M_%S")
     return strftime("%Y-%m-%d %H:%M:%S", time)
 
 
+def format_date_for_mongo(x):
+    return datetime.strptime(x, '%y_%m_%d_%H_%M_%S')\
+        .strftime('%Y-%m-%dT%H:%M:%S')
+
+
+def instances_for_export(dd, start=None, end=None):
+    if start and not end:
+        return dd.instances.filter(date_created__gte=start)
+    elif end and not start:
+        return dd.instances.filter(date_created__lte=end)
+    elif start and end:
+        return dd.instances.filter(date_created__gte=start,
+                                   date_created__lte=end)
+
+
 def dd_for_params(id_string, owner, request):
     start = end = None
-    dd = DataDictionary.objects.get(id_string=id_string,
+    dd = DataDictionary.objects.get(id_string__iexact=id_string,
                                     user=owner)
     if request.GET.get('start'):
         try:
@@ -60,8 +95,6 @@ def dd_for_params(id_string, owner, request):
                     HttpResponseBadRequest(
                         _(u'Start time format must be YY_MM_DD_hh_mm_ss'))
                     ]
-        dd.instances_for_export = \
-            lambda d: d.instances.filter(date_created__gte=start)
     if request.GET.get('end'):
         try:
             end = encode(request.GET['end'])
@@ -71,12 +104,9 @@ def dd_for_params(id_string, owner, request):
                     HttpResponseBadRequest(
                         _(u'End time format must be YY_MM_DD_hh_mm_ss'))
                     ]
-        dd.instances_for_export = \
-            lambda d: d.instances.filter(date_created__lte=end)
-    if start and end:
-        dd.instances_for_export = \
-            lambda d: d.instances.filter(date_created__lte=end,
-                                         date_created__gte=start)
+    if start or end:
+        dd.instances_for_export = instances_for_export(dd, start, end)
+
     return [True, dd]
 
 
@@ -94,44 +124,42 @@ def average(values):
 
 
 def map_view(request, username, id_string, template='map.html'):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
-    context = RequestContext(request)
-    context.content_user = owner
-    context.xform = xform
-    context.profile, created = UserProfile.objects.get_or_create(user=owner)
+    data = {'content_user': owner, 'xform': xform}
+    data['profile'], created = UserProfile.objects.get_or_create(user=owner)
 
-    context.form_view = True
-    context.jsonform_url = reverse(download_jsonform,
+    data['form_view'] = True
+    data['jsonform_url'] = reverse(download_jsonform,
                                    kwargs={"username": username,
                                            "id_string": id_string})
-    context.enketo_edit_url = reverse('edit_data',
+    data['enketo_edit_url'] = reverse('edit_data',
                                       kwargs={"username": username,
                                               "id_string": id_string,
                                               "data_id": 0})
-    context.enketo_add_url = reverse('enter_data',
+    data['enketo_add_url'] = reverse('enter_data',
                                      kwargs={"username": username,
                                              "id_string": id_string})
 
-    context.enketo_add_with_url = reverse('add_submission_with',
+    data['enketo_add_with_url'] = reverse('add_submission_with',
                                           kwargs={"username": username,
                                                   "id_string": id_string})
-    context.mongo_api_url = reverse('mongo_view_api',
+    data['mongo_api_url'] = reverse('mongo_view_api',
                                     kwargs={"username": username,
                                             "id_string": id_string})
-    context.delete_data_url = reverse('delete_data',
+    data['delete_data_url'] = reverse('delete_data',
                                       kwargs={"username": username,
                                               "id_string": id_string})
-    context.mapbox_layer = MetaData.mapbox_layer_upload(xform)
+    data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
     audit = {
         "xform": xform.id_string
     }
     audit_log(Actions.FORM_MAP_VIEWED, request.user, owner,
               _("Requested map on '%(id_string)s'.")
               % {'id_string': xform.id_string}, audit, request)
-    return render_to_response(template, context_instance=context)
+    return render(request, template, data)
 
 
 def map_embed_view(request, username, id_string):
@@ -149,7 +177,7 @@ def add_submission_with(request, username, id_string):
 
     def geopoint_xpaths(username, id_string):
         d = DataDictionary.objects.get(
-            user__username=username, id_string=id_string)
+            user__username__iexact=username, id_string__iexact=id_string)
         return [e.get_abbreviated_xpath()
                 for e in d.get_survey_elements()
                 if e.bind.get(u'type') == u'geopoint']
@@ -182,7 +210,7 @@ def add_submission_with(request, username, id_string):
     r = requests.post(url, data=payload,
                       auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
 
-    return HttpResponse(r.text, mimetype='application/json')
+    return HttpResponse(r.text, content_type='application/json')
 
 
 def thank_you_submission(request, username, id_string):
@@ -190,8 +218,8 @@ def thank_you_submission(request, username, id_string):
 
 
 def data_export(request, username, id_string, export_type):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     helper_auth_helper(request)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
@@ -213,26 +241,12 @@ def data_export(request, username, id_string, export_type):
     # we always re-generate if a filter is specified
     if should_create_new_export(xform, export_type) or query or\
             'start' in request.GET or 'end' in request.GET:
-        format_date_for_mongo = lambda x, datetime: datetime.strptime(
-            x, '%y_%m_%d_%H_%M_%S').strftime('%Y-%m-%dT%H:%M:%S')
         # check for start and end params
         if 'start' in request.GET or 'end' in request.GET:
             if not query:
                 query = '{}'
-            query = json.loads(query)
-            query[SUBMISSION_TIME] = {}
-            try:
-                if request.GET.get('start'):
-                    query[SUBMISSION_TIME]['$gte'] = format_date_for_mongo(
-                        request.GET['start'], datetime)
-                if request.GET.get('end'):
-                    query[SUBMISSION_TIME]['$lte'] = format_date_for_mongo(
-                        request.GET['end'], datetime)
-            except ValueError:
-                return HttpResponseBadRequest(
-                    _("Dates must be in the format YY_MM_DD_hh_mm_ss"))
-            else:
-                query = json.dumps(query)
+            query = json.dumps(
+                _set_submission_time_to_query(json.loads(query), request))
         try:
             export = generate_export(
                 export_type, extension, username, id_string, None, query)
@@ -260,24 +274,33 @@ def data_export(request, username, id_string, export_type):
     if not export.filename:
         # tends to happen when using newset_export_for.
         return HttpResponseNotFound("File does not exist!")
+
     # get extension from file_path, exporter could modify to
     # xlsx if it exceeds limits
     path, ext = os.path.splitext(export.filename)
     ext = ext[1:]
     if request.GET.get('raw'):
         id_string = None
+
     response = response_with_mimetype_and_name(
         Export.EXPORT_MIMES[ext], id_string, extension=ext,
         file_path=export.filepath)
+
     return response
 
 
+@login_required
 @require_POST
 def create_export(request, username, id_string, export_type):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
+
+    if export_type == Export.EXTERNAL_EXPORT:
+        # check for template before trying to generate a report
+        if not MetaData.external_export(xform=xform):
+            return HttpResponseForbidden(_(u'No XLS Template set.'))
 
     query = request.POST.get("query")
     force_xlsx = request.POST.get('xls') != 'true'
@@ -295,11 +318,13 @@ def create_export(request, username, id_string, export_type):
 
     binary_select_multiples = getattr(settings, 'BINARY_SELECT_MULTIPLES',
                                       False)
-
+    # external export option
+    meta = request.POST.get("meta")
     options = {
         'group_delimiter': group_delimiter,
         'split_select_multiples': split_select_multiples,
-        'binary_select_multiples': binary_select_multiples
+        'binary_select_multiples': binary_select_multiples,
+        'meta': meta.replace(",", "") if meta else None
     }
 
     try:
@@ -356,34 +381,55 @@ def export_list(request, username, id_string, export_type):
         token = _get_google_token(request, redirect_url)
         if isinstance(token, HttpResponse):
             return token
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
+
+    if export_type == Export.EXTERNAL_EXPORT:
+        # check for template before trying to generate a report
+        if not MetaData.external_export(xform=xform):
+            return HttpResponseForbidden(_(u'No XLS Template set.'))
+    # Get meta and token
+    export_token = request.GET.get('token')
+    export_meta = request.GET.get('meta')
+    options = {
+        'meta': export_meta,
+        'token': export_token,
+    }
 
     if should_create_new_export(xform, export_type):
         try:
             create_async_export(
-                xform, export_type, query=None, force_xlsx=True)
+                xform, export_type, query=None, force_xlsx=True,
+                options=options)
         except Export.ExportTypeError:
             return HttpResponseBadRequest(
                 _("%s is not a valid export type" % export_type))
 
-    context = RequestContext(request)
-    context.username = owner.username
-    context.xform = xform
-    # TODO: better output e.g. Excel instead of XLS
-    context.export_type = export_type
-    context.export_type_name = Export.EXPORT_TYPE_DICT[export_type]
-    exports = Export.objects.filter(xform=xform, export_type=export_type)\
-        .order_by('-created_on')
-    context.exports = exports
-    return render_to_response('export_list.html', context_instance=context)
+    metadata = MetaData.objects.filter(xform=xform,
+                                       data_type="external_export")\
+        .values('id', 'data_value')
+
+    for m in metadata:
+        m['data_value'] = m.get('data_value').split('|')[0]
+
+    data = {
+        'username': owner.username,
+        'xform': xform,
+        'export_type': export_type,
+        'export_type_name': Export.EXPORT_TYPE_DICT[export_type],
+        'exports': Export.objects.filter(
+            xform=xform, export_type=export_type).order_by('-created_on'),
+        'metas': metadata
+    }
+
+    return render(request, 'export_list.html', data)
 
 
 def export_progress(request, username, id_string, export_type):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
 
@@ -428,6 +474,9 @@ def export_progress(request, username, id_string, export_type):
                     export.export_url = url
                     export.save()
                     status['url'] = url
+            if export.export_type == Export.EXTERNAL_EXPORT \
+                    and export.export_url is None:
+                status['url'] = url
         # mark as complete if it either failed or succeeded but NOT pending
         if export.status == Export.SUCCESSFUL \
                 or export.status == Export.FAILED:
@@ -435,12 +484,12 @@ def export_progress(request, username, id_string, export_type):
         statuses.append(status)
 
     return HttpResponse(
-        json.dumps(statuses), mimetype='application/json')
+        json.dumps(statuses), content_type='application/json')
 
 
 def export_download(request, username, id_string, export_type, filename):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     helper_auth_helper(request)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
@@ -448,7 +497,8 @@ def export_download(request, username, id_string, export_type, filename):
     # find the export entry in the db
     export = get_object_or_404(Export, xform=xform, filename=filename)
 
-    if export_type == Export.GDOC_EXPORT and export.export_url is not None:
+    if (export_type == Export.GDOC_EXPORT or export_type == Export.EXTERNAL_EXPORT) \
+            and export.export_url is not None:
         return HttpResponseRedirect(export.export_url)
 
     ext, mime_type = export_def_from_filename(export.filename)
@@ -479,10 +529,11 @@ def export_download(request, username, id_string, export_type, filename):
     return response
 
 
+@login_required
 @require_POST
 def delete_export(request, username, id_string, export_type):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
 
@@ -515,53 +566,60 @@ def delete_export(request, username, id_string, export_type):
 
 
 def zip_export(request, username, id_string):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     helper_auth_helper(request)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
     if request.GET.get('raw'):
         id_string = None
+
     attachments = Attachment.objects.filter(instance__xform=xform)
-    zip_file = create_attachments_zipfile(attachments)
-    audit = {
-        "xform": xform.id_string,
-        "export_type": Export.ZIP_EXPORT
-    }
-    audit_log(
-        Actions.EXPORT_CREATED, request.user, owner,
-        _("Created ZIP export on '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-    # log download as well
-    audit_log(
-        Actions.EXPORT_DOWNLOADED, request.user, owner,
-        _("Downloaded ZIP export on '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-    if request.GET.get('raw'):
-        id_string = None
-    response = response_with_mimetype_and_name('zip', id_string,
-                                               file_path=zip_file,
-                                               use_local_filesystem=True)
+    zip_file = None
+
+    try:
+        zip_file = create_attachments_zipfile(attachments)
+        audit = {
+            "xform": xform.id_string,
+            "export_type": Export.ZIP_EXPORT
+        }
+        audit_log(
+            Actions.EXPORT_CREATED, request.user, owner,
+            _("Created ZIP export on '%(id_string)s'.") %
+            {
+                'id_string': xform.id_string,
+            }, audit, request)
+        # log download as well
+        audit_log(
+            Actions.EXPORT_DOWNLOADED, request.user, owner,
+            _("Downloaded ZIP export on '%(id_string)s'.") %
+            {
+                'id_string': xform.id_string,
+            }, audit, request)
+        if request.GET.get('raw'):
+            id_string = None
+
+        response = response_with_mimetype_and_name('zip', id_string)
+        response.write(FileWrapper(zip_file))
+        response['Content-Length'] = zip_file.tell()
+        zip_file.seek(0)
+    finally:
+        zip_file and zip_file.close()
+
     return response
 
 
 def kml_export(request, username, id_string):
     # read the locations from the database
-    context = RequestContext(request)
-    context.message = "HELLO!!"
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     helper_auth_helper(request)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
-    context.data = kml_export_data(id_string, user=owner)
+    data = {'data': kml_export_data(id_string, user=owner)}
     response = \
-        render_to_response("survey.kml", context_instance=context,
-                           mimetype="application/vnd.google-earth.kml+xml")
+        render(request, "survey.kml", data,
+               content_type="application/vnd.google-earth.kml+xml")
     response['Content-Disposition'] = \
         disposition_ext_and_date(id_string, 'kml')
     audit = {
@@ -581,6 +639,7 @@ def kml_export(request, username, id_string):
         {
             'id_string': xform.id_string,
         }, audit, request)
+
     return response
 
 
@@ -595,18 +654,22 @@ def google_xls_export(request, username, id_string):
             token = ts.token
     elif request.session.get('access_token'):
         token = request.session.get('access_token')
+
     if token is None:
         request.session["google_redirect_url"] = reverse(
             google_xls_export,
             kwargs={'username': username, 'id_string': id_string})
         return HttpResponseRedirect(redirect_uri)
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
+
     valid, dd = dd_for_params(id_string, owner, request)
     if not valid:
         return dd
+
     ddw = XlsWriter()
     tmp = NamedTemporaryFile(delete=False)
     ddw.set_file(tmp)
@@ -625,18 +688,20 @@ def google_xls_export(request, username, id_string):
         {
             'id_string': xform.id_string,
         }, audit, request)
+
     return HttpResponseRedirect(url)
 
 
 def data_view(request, username, id_string):
-    owner = get_object_or_404(User, username=username)
-    xform = get_object_or_404(XForm, id_string=id_string, user=owner)
+    owner = get_object_or_404(User, username__iexact=username)
+    xform = get_object_or_404(XForm, id_string__iexact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
 
-    context = RequestContext(request)
-    context.owner = owner
-    context.xform = xform
+    data = {
+        'owner': owner,
+        'xform': xform
+    }
     audit = {
         "xform": xform.id_string,
     }
@@ -646,7 +711,8 @@ def data_view(request, username, id_string):
         {
             'id_string': xform.id_string,
         }, audit, request)
-    return render_to_response("data_view.html", context_instance=context)
+
+    return render(request, "data_view.html", data)
 
 
 def attachment_url(request, size='medium'):
@@ -668,6 +734,7 @@ def attachment_url(request, size='medium'):
     else:
         if media_url:
             return redirect(media_url)
+
     return HttpResponseNotFound(_(u'Error: Attachment not found'))
 
 
@@ -679,7 +746,6 @@ def instance(request, username, id_string):
             request.session.get('public_link') == xform.uuid):
         return HttpResponseForbidden(_(u'Not shared.'))
 
-    context = RequestContext(request)
     audit = {
         "xform": xform.id_string,
     }
@@ -689,12 +755,13 @@ def instance(request, username, id_string):
         {
             'id_string': xform.id_string,
         }, audit, request)
-    return render_to_response('instance.html', {
+
+    return render(request, 'instance.html', {
         'username': username,
         'id_string': id_string,
         'xform': xform,
         'can_edit': can_edit
-    }, context_instance=context)
+    })
 
 
 def charts(request, username, id_string):
@@ -706,7 +773,6 @@ def charts(request, username, id_string):
             request.session.get('public_link') == xform.uuid):
         return HttpResponseForbidden(_(u'Not shared.'))
 
-    context = RequestContext(request)
     try:
         lang_index = int(request.GET.get('lang', 0))
     except ValueError:
@@ -726,11 +792,11 @@ def charts(request, username, id_string):
     else:
         template = 'charts.html'
 
-    return render_to_response(template, {
+    return render(request, template, {
         'xform': xform,
         'summaries': summaries,
         'page': page + 1
-    }, context_instance=context)
+    })
 
 
 def stats_tables(request, username, id_string):
@@ -741,8 +807,4 @@ def stats_tables(request, username, id_string):
             request.session.get('public_link') == xform.uuid):
         return HttpResponseForbidden(_(u'Not shared.'))
 
-    context = RequestContext(request)
-
-    return render_to_response('stats_tables.html', {
-        'xform': xform
-    }, context_instance=context)
+    return render(request, 'stats_tables.html', {'xform': xform})

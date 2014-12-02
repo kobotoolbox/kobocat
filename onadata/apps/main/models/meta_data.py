@@ -1,8 +1,29 @@
-from hashlib import md5
+import mimetypes
 import os
+import requests
 
+from contextlib import closing
+from django.core.exceptions import ValidationError
+from django.core.files.temp import NamedTemporaryFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.validators import URLValidator
 from django.db import models
+from django.conf import settings
+from hashlib import md5
 from onadata.apps.logger.models import XForm
+
+CHUNK_SIZE = 1024
+
+urlvalidate = URLValidator()
+
+
+def is_valid_url(uri):
+    try:
+        urlvalidate(uri)
+    except ValidationError:
+        return False
+
+    return True
 
 
 def upload_to(instance, filename):
@@ -42,17 +63,92 @@ def type_for_form(xform, data_type):
     return MetaData.objects.filter(xform=xform, data_type=data_type)
 
 
+def create_media(media):
+    """Download media link"""
+    if is_valid_url(media.data_value):
+        filename = media.data_value.split('/')[-1]
+        data_file = NamedTemporaryFile()
+        content_type = mimetypes.guess_type(filename)
+        with closing(requests.get(media.data_value, stream=True)) as r:
+            for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+                if chunk:
+                    data_file.write(chunk)
+        data_file.seek(os.SEEK_SET, os.SEEK_END)
+        size = os.path.getsize(data_file.name)
+        data_file.seek(os.SEEK_SET)
+        media.data_value = filename
+        media.data_file = InMemoryUploadedFile(
+            data_file, 'data_file', filename, content_type,
+            size, charset=None)
+
+        return media
+
+    return None
+
+
+def media_resources(media_list, download=False):
+    """List of MetaData objects of type media
+
+    @param media_list - list of MetaData objects of type `media`
+    @param download - boolean, when True downloads media files when
+                      media.data_value is a valid url
+
+    return a list of MetaData objects
+    """
+    data = []
+    for media in media_list:
+        if media.data_file.name == '' and download:
+            media = create_media(media)
+
+            if media:
+                data.append(media)
+        else:
+            data.append(media)
+
+    return data
+
+
 class MetaData(models.Model):
     xform = models.ForeignKey(XForm)
     data_type = models.CharField(max_length=255)
     data_value = models.CharField(max_length=255)
-    data_file = models.FileField(upload_to=upload_to, null=True)
-    data_file_type = models.CharField(max_length=255, null=True)
+    data_file = models.FileField(upload_to=upload_to, blank=True, null=True)
+    data_file_type = models.CharField(max_length=255, blank=True, null=True)
+    file_hash = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        app_label = 'main'
+        unique_together = ('xform', 'data_type', 'data_value')
+
+    def save(self, *args, **kwargs):
+        self._set_hash()
+        super(MetaData, self).save(*args, **kwargs)
 
     @property
     def hash(self):
-        if self.data_file.storage.exists(self.data_file.name):
-            return u'%s' % md5(self.data_file.read()).hexdigest()
+        if self.file_hash is not None and self.file_hash != '':
+            return self.file_hash
+        else:
+            return self._set_hash()
+
+    def _set_hash(self):
+        if not self.data_file:
+            return None
+
+        file_exists = self.data_file.storage.exists(self.data_file.name)
+
+        if (file_exists and self.data_file.name != '') \
+                or (not file_exists and self.data_file):
+            try:
+                self.data_file.seek(os.SEEK_SET)
+            except IOError:
+                return u''
+            else:
+                self.file_hash = u'md5:%s' \
+                    % md5(self.data_file.read()).hexdigest()
+
+                return self.file_hash
+
         return u''
 
     @staticmethod
@@ -94,19 +190,30 @@ class MetaData(models.Model):
         return type_for_form(xform, data_type)
 
     @staticmethod
-    def media_upload(xform, data_file=None):
+    def media_upload(xform, data_file=None, download=False):
         data_type = 'media'
         if data_file:
-            if data_file.content_type in ['image/jpeg', 'image/png',
-                                          'audio/mpeg', 'video/3gpp',
-                                          'audio/wav',
-                                          'audio/x-m4a', 'audio/mp3']:
+            allowed_types = settings.SUPPORTED_MEDIA_UPLOAD_TYPES
+            content_type = data_file.content_type \
+                if data_file.content_type in allowed_types else \
+                mimetypes.guess_type(data_file.name)[0]
+            if content_type in allowed_types:
                 media = MetaData(data_type=data_type, xform=xform,
                                  data_value=data_file.name,
                                  data_file=data_file,
-                                 data_file_type=data_file.content_type)
+                                 data_file_type=content_type)
                 media.save()
-        return type_for_form(xform, data_type)
+        return media_resources(type_for_form(xform, data_type), download)
+
+    @staticmethod
+    def media_add_uri(xform, uri):
+        """Add a uri as a media resource"""
+        data_type = 'media'
+
+        if is_valid_url(uri):
+            media = MetaData(data_type=data_type, xform=xform,
+                             data_value=uri)
+            media.save()
 
     @staticmethod
     def mapbox_layer_upload(xform, data=None):
@@ -130,5 +237,33 @@ class MetaData(models.Model):
         else:
             return None
 
-    class Meta:
-        app_label = 'main'
+    @staticmethod
+    def external_export(xform, data_value=None):
+        data_type = 'external_export'
+
+        if data_value:
+            result = MetaData(data_type=data_type, xform=xform,
+                              data_value=data_value)
+            result.save()
+            return result
+
+        return MetaData.objects.filter(xform=xform, data_type=data_type)\
+            .order_by('-id')
+
+    @property
+    def external_export_url(self):
+        parts = self.data_value.split('|')
+
+        return parts[1] if len(parts) > 1 else None
+
+    @property
+    def external_export_name(self):
+        parts = self.data_value.split('|')
+
+        return parts[0] if len(parts) > 1 else None
+
+    @property
+    def external_export_template(self):
+        parts = self.data_value.split('|')
+
+        return parts[1].replace('xls', 'templates') if len(parts) > 1 else None

@@ -1,66 +1,72 @@
 # pybamboo has deps in common but on newer versions.
 # on top so those will be overwritten
 pybamboo==0.5.8.1
-pytz==2013.8
+pytz==2014.7
 
-Django<1.6
-django-guardian==1.1.1
-django-registration==1.0
-django-templated-email==0.4.1
+Django>=1.6,<1.7
+django-guardian==1.2.4
+django-registration-redux==1.1
+django-templated-email==0.4.9
 gdata==2.0.18
-httplib2==0.8
+httplib2==0.9
 mock==1.0.1
-httmock==1.2.1
+httmock==1.2.2
 modilabs-python-utils==0.1.5
-Pillow==2.2.1
+Pillow==2.5.3
 poster==0.8.1
-psycopg2==2.5.1
-pymongo==2.6.3
-lxml==3.2.4
-#pyxform==0.9.20
+psycopg2==2.5.4
+pymongo==2.7.2
+lxml==3.4.0
+#-e git+https://github.com/onaio/pyxform.git@onaio#egg=pyxform
 # kobo fork supports csvs with utf, character escaping, etc.
 -e git+https://github.com/kobotoolbox/pyxform.git@b347b09c75a3b385004935a702d707964079e288#egg=pyxform-dev
-
-South==0.8.2
-xlrd==0.9.2
+South==1.0
+django-reversion==1.8.4
+xlrd==0.9.3
 xlwt==0.7.5
-openpyxl==1.7.0
-celery==3.0.23
-django-celery==3.0.23
+openpyxl==2.0.5
+celery==3.1.16
+django-celery==3.1.16
+librabbitmq==1.5.2
 -e git+https://github.com/jbalogh/django-nose.git#egg=django-nose
 python-digest==1.7
 django-digest==1.13
+-e git+https://github.com/onaio/python-json2xlsclient.git#egg=j2xclient
 
 # new export code relies on
 pandas>=0.12.0
-requests==2.0.1
+requests==2.4.1
 elaphe==0.5.6
 
 # sms support
-dict2xml==1.1
+dict2xml==1.3
 
 # api support
-djangorestframework==2.3.8
+djangorestframework==2.4.3
+djangorestframework-csv==1.3.3
 
 # cors
-django-cors-headers==0.12
-Markdown==2.3.1
+django-cors-headers==0.13
+Markdown==2.5
 django-filter==0.7
 
 # captcha
 recaptcha-client==1.0.6
 unicodecsv==0.9.4
-dpath==1.2-45
+dpath==1.2-70
 
 # tagging
-django-taggit==0.11.2
+django-taggit==0.12.1
 
 # oath2 support
-django-oauth-toolkit==0.5.0
+django-oauth-toolkit==0.7.2
 
 # spss
 https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#egg=savreaderwriter
 
 # JSON data type support
-jsonfield
-django-db-readonly
+jsonfield<1.0
+django-db-readonly==0.3.2
+
+# memcached support
+pylibmc==1.3.0

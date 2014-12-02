@@ -17,9 +17,10 @@ from pyxform.question import Question
 
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.utils.common_tags import ID, XFORM_ID_STRING, STATUS,\
     ATTACHMENTS, GEOLOCATION, UUID, SUBMISSION_TIME, NA_REP,\
-    BAMBOO_DATASET_ID, DELETEDAT, TAGS, NOTES
+    BAMBOO_DATASET_ID, DELETEDAT, TAGS, NOTES, SUBMITTED_BY
 from onadata.libs.utils.export_tools import question_types_to_exclude
 
 
@@ -73,13 +74,9 @@ def get_prefix_from_xpath(xpath):
             '%s cannot be prefixed, it returns %s' % (xpath, str(parts)))
 
 
-class NoRecordsFoundError(Exception):
-    pass
-
-
 class AbstractDataFrameBuilder(object):
     IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ID, ATTACHMENTS, GEOLOCATION,
-                       BAMBOO_DATASET_ID, DELETEDAT]
+                       BAMBOO_DATASET_ID, DELETEDAT, SUBMITTED_BY]
     # fields NOT within the form def that we want to include
     ADDITIONAL_COLUMNS = [UUID, SUBMISSION_TIME, TAGS, NOTES]
     BINARY_SELECT_MULTIPLES = False
@@ -501,7 +498,8 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
         d = {}
 
         # check for lists
-        if type(value) is list and len(value) > 0 and key != NOTES:
+        if type(value) is list and len(value) > 0 \
+                and key != NOTES and key != ATTACHMENTS:
             for index, item in enumerate(value):
                 # start at 1
                 index += 1
@@ -544,6 +542,8 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             # safe to simply assign
             if key == NOTES:
                 d[key] = u"\r\n".join(value)
+            elif key == ATTACHMENTS:
+                d[key] = []
             else:
                 d[key] = value
         return d

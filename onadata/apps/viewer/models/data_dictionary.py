@@ -2,6 +2,8 @@ import os
 import re
 
 from django.db import models
+from django.db.models.signals import post_save
+from guardian.shortcuts import assign_perm, get_perms_for_model
 from pyxform import SurveyElementBuilder
 from pyxform.builder import create_survey_from_xls
 from pyxform.question import Question
@@ -32,7 +34,7 @@ class ColumnRename(models.Model):
 
 def upload_to(instance, filename, username=None):
     if instance:
-        username = instance.user.username
+        username = instance.xform.user.username
     return os.path.join(
         username,
         'xls',
@@ -171,6 +173,28 @@ class DataDictionary(XForm):
 
     def get_survey_elements(self):
         return self.survey.iter_descendants()
+
+    def get_survey_element(self, name_or_xpath):
+        element = self.get_element(name_or_xpath)
+        name = (element and element['name']) or name_or_xpath
+
+        for field in self.get_survey_elements():
+            if field.name == name:
+                return field
+
+        return None
+
+    def get_choice_label(self, field, choice_value, lang='English'):
+        for choice in field.children:
+            if choice.name == choice_value:
+                label = choice.label
+
+                if isinstance(label, dict):
+                    label = label.get(lang, choice.label.values()[0])
+
+                return label
+
+        return choice_value
 
     def get_mongo_field_names_dict(self):
         """
@@ -389,3 +413,11 @@ class DataDictionary(XForm):
     def get_survey_elements_of_type(self, element_type):
         return [e for e in self.get_survey_elements()
                 if e.type == element_type]
+
+
+def set_object_permissions(sender, instance=None, created=False, **kwargs):
+    if created:
+        for perm in get_perms_for_model(XForm):
+            assign_perm(perm.codename, instance.user, instance)
+post_save.connect(set_object_permissions, sender=DataDictionary,
+                  dispatch_uid='xform_object_permissions')

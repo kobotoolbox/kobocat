@@ -1,9 +1,12 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import os
 import unittest
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.libs.utils.chart_tools import build_chart_data_for_field,\
     build_chart_data, utc_time_string_for_javascript, calculate_ranges
+from onadata.apps.logger.models import XForm
 
 
 def find_field_by_name(dd, field_name):
@@ -12,6 +15,7 @@ def find_field_by_name(dd, field_name):
 
 
 class TestChartTools(TestBase):
+
     def setUp(self):
         super(TestChartTools, self).setUp()
         # create an xform
@@ -32,26 +36,51 @@ class TestChartTools(TestBase):
         self.assertEqual(data['field_type'], 'datetime')
         self.assertEqual(data['data_type'], 'time_based')
 
-    def test_build_chart_data_for_field_on_select_one(self):
-        dd = self.xform.data_dictionary()
-        field = find_field_by_name(dd, 'gender')
+    def test_build_chart_data_for_fields_with_accents(self):
+        xls_path = os.path.join(
+            self.this_directory, "fixtures",
+            "sample_accent.xlsx")
+        response = self._publish_xls_file(xls_path)
+
+        self.assertEquals(response.status_code, 200)
+
+        xform = XForm.objects.all()[0]
+        self.assertEqual(xform.title, "sample_accent")
+
+        dd = xform.data_dictionary()
+        field = find_field_by_name(dd, u'tête')
         data = build_chart_data_for_field(self.xform, field)
-        self.assertEqual(data['field_name'], 'gender')
+        self.assertEqual(data['field_name'], u'words_with_accents-tête')
+
+        field = find_field_by_name(dd, u'té')
+        data = build_chart_data_for_field(self.xform, field)
+        self.assertEqual(data['field_name'], u'words_with_accents-té')
+
+        field = find_field_by_name(dd, u'père')
+        data = build_chart_data_for_field(self.xform, field)
+        self.assertEqual(data['field_name'], u'words_with_accents-père')
+
+    def test_build_chart_data_for_field_on_select_one(self):
+        field_name = 'gender'
+        dd = self.xform.data_dictionary()
+        field = find_field_by_name(dd, field_name)
+        data = build_chart_data_for_field(self.xform, field)
+        self.assertEqual(data['field_name'], field_name)
         self.assertEqual(data['field_type'], 'select one')
         self.assertEqual(data['data_type'], 'categorized')
         # map the list to a dict
-        values = dict([(d['gender'], d['count'], ) for d in data['data']])
-        self.assertEqual(values, {
-            'male': 1,
-            'female': 1
-        })
+        for d in data['data']:
+            genders = d[field_name]
+            count = d['count']
+            self.assertEqual(type(genders), list)
+            self.assertEqual(count, 1)
 
     def test_build_chart_data_for_field_on_grouped_field(self):
         dd = self.xform.data_dictionary()
         field = find_field_by_name(dd, 'a_text')
         data = build_chart_data_for_field(self.xform, field)
         self.assertEqual(data['field_name'], 'a_group-a_text')
-        self.assertEqual(data['field_xpath'], 'a_group/a_text')
+        self.assertEqual(data['field_xpath'], 'a_text')
         self.assertEqual(data['field_type'], 'text')
         self.assertEqual(data['data_type'], 'categorized')
 
@@ -106,8 +135,40 @@ class TestChartTools(TestBase):
         data = build_chart_data_for_field(self.xform, field, language_index=1)
         self.assertEqual(data['field_label'], 'submit_date')
 
+    def test_build_chart_data_with_nonexisting_field_xpath(self):
+        # make the 3rd submission that doesnt have a date
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "..",
+                            "apps", "api", "tests", "fixtures", "forms",
+                            "tutorial", "instances", "3.xml")
+        self._make_submission(path)
+        dd = self.xform.data_dictionary()
+        field = find_field_by_name(dd, 'date')
+        field.name = 'informed_consent/pas_denfants_elig/q7b'
+
+        data = build_chart_data_for_field(self.xform, field)
+        # create a list with comparisons to the dict values
+        values = [d['date'] is not None for d in data['data']]
+        self.assertTrue(all(values))
+
+    def test_build_chart_data_with_field_name_with_lengh_65(self):
+        # make the 3rd submission that doesnt have a date
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "..",
+                            "apps", "api", "tests", "fixtures", "forms",
+                            "tutorial", "instances", "3.xml")
+        self._make_submission(path)
+        dd = self.xform.data_dictionary()
+        field = find_field_by_name(dd, 'date')
+        field.name = 'a' * 65
+
+        data = build_chart_data_for_field(self.xform, field)
+        self.assertEqual(data['field_name'], field.name)
+
+    def mock_get_abbreviated_xpath(self):
+        return 'informed_consent/pas_denfants_elig/date'
+
 
 class TestChartUtilFunctions(unittest.TestCase):
+
     def test_utc_time_string_for_javascript(self):
         time_str = '2014-01-16T12:07:23.322+03'
         expected_time_str = '2014-01-16T12:07:23.322+0300'

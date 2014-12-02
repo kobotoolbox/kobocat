@@ -1,54 +1,96 @@
-import json
-from django import forms
-from django.http import HttpResponseBadRequest
+from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils import six
 from django.utils.translation import ugettext as _
-from rest_framework import permissions
+from django.core.exceptions import PermissionDenied
+
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.reverse import reverse
-from rest_framework.viewsets import ViewSet
-from taggit.forms import TagField
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.exceptions import ParseError
+from rest_framework.settings import api_settings
 
-from onadata.apps.api.tools import get_accessible_forms, get_xform
-from onadata.apps.logger.models import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.api.viewsets.xform_viewset import custom_response_handler
+from onadata.apps.api.tools import add_tags_to_instance
+from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.models.instance import Instance
+from onadata.libs.renderers import renderers
+from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
+    AnonymousUserPublicFormsMixin)
+from onadata.apps.api.permissions import XFormPermissions
+from onadata.libs.serializers.data_serializer import (
+    DataSerializer, DataListSerializer, DataInstanceSerializer)
+from onadata.libs import filters
+from onadata.libs.utils.viewer_tools import (
+    EnketoError,
+    get_enketo_edit_url)
 
 
-class DataViewSet(ViewSet):
+SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
+
+
+class DataViewSet(AnonymousUserPublicFormsMixin, ModelViewSet):
+
     """
 This endpoint provides access to submitted data in JSON format. Where:
 
-* `owner` - is organization or user whom the data belongs to
-* `formid` - the form unique identifier
+* `pk` - the form unique identifier
 * `dataid` - submission data unique identifier
+* `owner` - username of the owner(user/organization) of the data point
 
 ## GET JSON List of data end points
-This is a json list of the data end points of `owner` forms
- and/or including public forms and forms shared with `owner`.
+
+Lists the data endpoints accessible to requesting user, for anonymous access
+a list of public data endpoints is returned.
+
 <pre class="prettyprint">
 <b>GET</b> /api/v1/data
-<b>GET</b> /api/v1/data/<code>{owner}</code></pre>
+</pre>
 
 > Example
 >
->       curl -X GET https://ona.io/api/v1/data/modilabs
+>       curl -X GET https://example.com/api/v1/data
 
 > Response
 >
->        {
->            "dhis2form": "https://ona.io/api/v1/data/modilabs/4240",
->            "exp_one": "https://ona.io/api/v1/data/modilabs/13789",
->            "userone": "https://ona.io/api/v1/data/modilabs/10417",
->        }
+>        [{
+>            "id": 4240,
+>            "id_string": "dhis2form"
+>            "title": "dhis2form"
+>            "description": "dhis2form"
+>            "url": "https://example.com/api/v1/data/4240"
+>         },
+>            ...
+>        ]
+
+## Download data in `csv` format
+<pre class="prettyprint">
+<b>GET</b> /api/v1/data.csv</pre>
+>
+>       curl -O https://example.com/api/v1/data.csv
+
+## GET JSON List of data end points filter by owner
+
+Lists the data endpoints accessible to requesting user, for the specified
+`owner` as a query parameter.
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/data?<code>owner</code>=<code>owner_username</code>
+</pre>
+
+> Example
+>
+>       curl -X GET https://example.com/api/v1/data?owner=ona
 
 ## Get Submitted data for a specific form
 Provides a list of json submitted data for a specific form.
 <pre class="prettyprint">
-<b>GET</b> /api/v1/data/<code>{owner}</code>/<code>{formid}</code></pre>
+<b>GET</b> /api/v1/data/<code>{pk}</code></pre>
 > Example
 >
->       curl -X GET https://ona.io/api/v1/data/modilabs/22845
+>       curl -X GET https://example.com/api/v1/data/22845
 
 > Response
 >
@@ -88,19 +130,17 @@ Provides a list of json submitted data for a specific form.
 
 ## Get a single data submission for a given form
 
-Get a single specific submission json data providing `formid`
+Get a single specific submission json data providing `pk`
  and `dataid` as url path parameters, where:
 
-* `owner` - is organization or user whom the data belongs to
-* `formid` - is the identifying number for a specific form
+* `pk` - is the identifying number for a specific form
 * `dataid` - is the unique id of the data, the value of `_id` or `_uuid`
 
 <pre class="prettyprint">
-<b>GET</b> /api/v1/data/<code>{owner}</code>/<code>{formid}</code>/<code>\
-{dataid}</code></pre>
+<b>GET</b> /api/v1/data/<code>{pk}</code>/<code>{dataid}</code></pre>
 > Example
 >
->       curl -X GET https://ona.io/api/v1/data/modilabs/22845/4503
+>       curl -X GET https://example.com/api/v1/data/22845/4503
 
 > Response
 >
@@ -140,20 +180,23 @@ Get a single specific submission json data providing `formid`
 ## Query submitted data of a specific form
 Provides a list of json submitted data for a specific form. Use `query`
 parameter to apply form data specific, see
-<a href="http://www.mongodb.org/display/DOCS/Querying.">
-http://www.mongodb.org/display/DOCS/Querying</a>.
+<a href="http://docs.mongodb.org/manual/reference/operator/query/">
+http://docs.mongodb.org/manual/reference/operator/query/</a>.
 
 For more details see
 <a href="https://github.com/modilabs/formhub/wiki/Formhub-Access-Points-(API)#
 api-parameters">
 API Parameters</a>.
 <pre class="prettyprint">
-<b>GET</b> /api/v1/data/<code>{owner}</code>/<code>{formid}</code>\
-?query={"field":"value"}</pre>
+<b>GET</b> /api/v1/data/<code>{pk}</code>?query={"field":"value"}</b>
+<b>GET</b> /api/v1/data/<code>{pk}</code>?query={"field":{"op": "value"}}"</b>
+</pre>
 > Example
 >
->       curl -X GET  https://ona.io/api/v1/data/modilabs/22845\
-?query={"kind": "monthly"}
+>       curl -X GET 'https://example.com/api/v1/data/22845?query={"kind": \
+"monthly"}'
+>       curl -X GET 'https://example.com/api/v1/data/22845?query={"date": \
+{"gt$": "2014-09-29T01:02:03+0000"}}'
 
 > Response
 >
@@ -199,15 +242,12 @@ should be a comma separated list of tags.
 <pre class="prettyprint">
 <b>GET</b> /api/v1/data?<code>tags</code>=<code>tag1,tag2</code></pre>
 <pre class="prettyprint">
-<b>GET</b> /api/v1/data/<code>{owner}</code>?<code>tags</code>=<code>tag1,tag2
-</code></pre>
-<pre class="prettyprint">
-<b>GET</b> /api/v1/data/<code>{owner}</code>/<code>{formid}</code>?<code>tags\
+<b>GET</b> /api/v1/data/<code>{pk}</code>?<code>tags\
 </code>=<code>tag1,tag2</code></pre>
 
 > Example
 >
->       curl -X GET https://ona.io/api/v1/data/modilabs/22845?tags=monthly
+>       curl -X GET https://example.com/api/v1/data/22845?tags=monthly
 
 ## Tag a submission data point
 
@@ -219,8 +259,7 @@ Examples
 - `animal, fruit denim` - comma delimited
 
 <pre class="prettyprint">
-<b>POST</b> /api/v1/data/<code>{owner}</code>/<code>{formid}</code>/<code>\
-{dataid}</code>/labels</pre>
+<b>POST</b> /api/v1/data/<code>{pk}</code>/<code>{dataid}</code>/labels</pre>
 
 Payload
 
@@ -229,154 +268,287 @@ Payload
 ## Delete a specific tag from a submission
 
 <pre class="prettyprint">
-<b>DELETE</b> /api/v1/data/<code>{owner}</code>/<code>{formid}</code>/<code>\
+<b>DELETE</b> /api/v1/data/<code>{pk}</code>/<code>\
 {dataid}</code>/labels/<code>tag_name</code></pre>
 
 > Request
 >
 >       curl -X DELETE \
-https://ona.io/api/v1/data/modilabs/28058/20/labels/tag1
+https://example.com/api/v1/data/28058/20/labels/tag1
 or to delete the tag "hello world"
 >
 >       curl -X DELETE \
-https://ona.io/api/v1/data/modilabs/28058/20/labels/hello%20world
+https://example.com/api/v1/data/28058/20/labels/hello%20world
 >
 > Response
 >
 >        HTTP 200 OK
+
+## Get list of public data endpoints
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/data/public
+</pre>
+
+> Example
+>
+>       curl -X GET https://example.com/api/v1/data/public
+
+> Response
+>
+>        [{
+>            "id": 4240,
+>            "id_string": "dhis2form"
+>            "title": "dhis2form"
+>            "description": "dhis2form"
+>            "url": "https://example.com/api/v1/data/4240"
+>         },
+>            ...
+>        ]
+
+## Get enketo edit link for a submission instance
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/data/<code>{pk}</code>/<code>{dataid}</code>/enketo
+</pre>
+
+> Example
+>
+>       curl -X GET https://example.com/api/v1/data/28058/20/enketo?return_url=url
+
+> Response
+>       {"url": "https://hmh2a.enketo.formhub.org"}
+>
+>
+
+## Delete a specific submission instance
+
+Delete a specific submission in a form
+
+<pre class="prettyprint">
+<b>DELETE</b> /api/v1/data/<code>{pk}</code>/<code>{dataid}</code>
+</pre>
+
+> Example
+>
+>       curl -X DELETE https://example.com/api/v1/data/28058/20
+
+> Response
+>
+>       HTTP 204 No Content
+>
+>
 """
-    permission_classes = [permissions.IsAuthenticated, ]
-    lookup_field = 'owner'
-    lookup_fields = ('owner', 'formid', 'dataid')
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [
+        renderers.XLSRenderer,
+        renderers.XLSXRenderer,
+        renderers.CSVRenderer,
+        renderers.CSVZIPRenderer,
+        renderers.SAVZIPRenderer,
+        renderers.SurveyRenderer
+    ]
+
+    filter_backends = (filters.AnonDjangoObjectPermissionFilter,
+                       filters.XFormOwnerFilter)
+    serializer_class = DataSerializer
+    permission_classes = (XFormPermissions,)
+    lookup_field = 'pk'
+    lookup_fields = ('pk', 'dataid')
     extra_lookup_fields = None
+    public_data_endpoint = 'public'
 
-    queryset = Instance.objects.all()
+    queryset = XForm.objects.all()
 
-    def _get_formlist_data_points(self, request, owner=None):
-        xforms = get_accessible_forms(owner)
-        # filter by tags if available.
-        tags = self.request.QUERY_PARAMS.get('tags', None)
-        if tags and isinstance(tags, basestring):
-            tags = tags.split(',')
-            xforms = xforms.filter(tags__name__in=tags).distinct()
-        rs = {}
-        for xform in xforms.distinct():
-            point = {u"%s" % xform.id_string:
-                     reverse("data-list", kwargs={
-                             "formid": xform.pk,
-                             "owner": xform.user.username},
-                             request=request)}
-            rs.update(point)
-        return rs
+    def get_serializer_class(self):
+        pk_lookup, dataid_lookup = self.lookup_fields
+        pk = self.kwargs.get(pk_lookup)
+        dataid = self.kwargs.get(dataid_lookup)
+        if pk is not None and dataid is None \
+                and pk != self.public_data_endpoint:
+            serializer_class = DataListSerializer
+        elif pk is not None and dataid is not None:
+            serializer_class = DataInstanceSerializer
+        else:
+            serializer_class = \
+                super(DataViewSet, self).get_serializer_class()
 
-    def _get_form_data(self, xform, **kwargs):
-        query = kwargs.get('query', {})
-        query = query if query is not None else {}
-        if xform:
-            query[ParsedInstance.USERFORM_ID] =\
-                u'%s_%s' % (xform.user.username, xform.id_string)
-        query = json.dumps(query) if isinstance(query, dict) else query
-        margs = {
-            'query': query,
-            'fields': kwargs.get('fields', None),
-            'sort': kwargs.get('sort', None)
-        }
-        cursor = ParsedInstance.query_mongo_minimal(**margs)
-        records = list(record for record in cursor)
-        return records
+        return serializer_class
 
-    def list(self, request, owner=None, formid=None, dataid=None, **kwargs):
-        xform = None
-        query = {}
-        tags = self.request.QUERY_PARAMS.get('tags', None)
-        owner = owner or (
-            not request.user.is_anonymous() and request.user.username)
-        data = not formid and not dataid and not tags and\
-            self._get_formlist_data_points(request, owner)
+    def get_object(self, queryset=None):
+        obj = super(DataViewSet, self).get_object(queryset)
+        pk_lookup, dataid_lookup = self.lookup_fields
+        pk = self.kwargs.get(pk_lookup)
+        dataid = self.kwargs.get(dataid_lookup)
 
-        if formid:
-            xform = get_xform(formid, request)
-            query[ParsedInstance.USERFORM_ID] = u'%s_%s' % (
-                xform.user.username, xform.id_string)
-
-        if xform and dataid and dataid == 'labels':
-            return Response(list(xform.tags.names()))
-
-        if dataid:
+        if pk is not None and dataid is not None:
             try:
-                query.update({'_id': int(dataid)})
+                int(dataid)
             except ValueError:
-                return HttpResponseBadRequest(_("Invalid _id"))
+                raise ParseError(_(u"Invalid dataid %(dataid)s"
+                                   % {'dataid': dataid}))
 
-        rquery = request.QUERY_PARAMS.get('query', None)
-        if rquery:
-            rquery = json.loads(rquery)
-            query.update(rquery)
+            obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
 
-        if tags:
-            query['_tags'] = {'$all': tags.split(',')}
+        return obj
 
-        if xform:
-            data = self._get_form_data(xform, query=query)
+    def _get_public_forms_queryset(self):
+        return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
 
-        if not xform and not data:
-            xforms = get_accessible_forms(owner)
-            query[ParsedInstance.USERFORM_ID] = {
-                '$in': [
-                    u'%s_%s' % (form.user.username, form.id_string)
-                    for form in xforms]
-            }
-            data = self._get_form_data(xform, query=query)
+    def _filtered_or_shared_qs(self, qs, pk):
+        filter_kwargs = {self.lookup_field: pk}
+        qs = qs.filter(**filter_kwargs)
 
-        if dataid and len(data):
-            data = data[0]
+        if not qs:
+            filter_kwargs['shared_data'] = True
+            qs = XForm.objects.filter(**filter_kwargs)
 
-        return Response(data)
+            if not qs:
+                raise Http404(_(u"No data matches with given query."))
+
+        return qs
+
+    def filter_queryset(self, queryset, view=None):
+        qs = super(DataViewSet, self).filter_queryset(queryset)
+        pk = self.kwargs.get(self.lookup_field)
+        tags = self.request.QUERY_PARAMS.get('tags', None)
+
+        if tags and isinstance(tags, six.string_types):
+            tags = tags.split(',')
+            qs = qs.filter(tags__name__in=tags).distinct()
+
+        if pk:
+            try:
+                int(pk)
+            except ValueError:
+                if pk == self.public_data_endpoint:
+                    qs = self._get_public_forms_queryset()
+                else:
+                    raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+            else:
+                qs = self._filtered_or_shared_qs(qs, pk)
+
+        return qs
 
     @action(methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
-    def labels(self, request, owner, formid, dataid, **kwargs):
-        class TagForm(forms.Form):
-            tags = TagField()
-
-        owner = owner is None and (
-            not request.user.is_anonymous() and request.user.username)
-
-        get_xform(formid, request, owner)
-        status = 400
-        instance = get_object_or_404(ParsedInstance, instance__pk=int(dataid))
+    def labels(self, request, *args, **kwargs):
+        http_status = status.HTTP_400_BAD_REQUEST
+        instance = self.get_object()
 
         if request.method == 'POST':
-            form = TagForm(request.DATA)
+            if add_tags_to_instance(request, instance):
+                http_status = status.HTTP_201_CREATED
 
-            if form.is_valid():
-                tags = form.cleaned_data.get('tags', None)
-
-                if tags:
-                    for tag in tags:
-                        instance.instance.tags.add(tag)
-                    instance.save()
-                    status = 201
-
+        tags = instance.tags
         label = kwargs.get('label', None)
 
         if request.method == 'GET' and label:
-            data = [
-                tag['name'] for tag in
-                instance.instance.tags.filter(name=label).values('name')]
+            data = [tag['name'] for tag in
+                    tags.filter(name=label).values('name')]
 
         elif request.method == 'DELETE' and label:
-            count = instance.instance.tags.count()
-            instance.instance.tags.remove(label)
+            count = tags.count()
+            tags.remove(label)
 
             # Accepted, label does not exist hence nothing removed
-            if count == instance.instance.tags.count():
-                status = 202
+            http_status = status.HTTP_200_OK if count == tags.count() \
+                else status.HTTP_404_NOT_FOUND
 
-            data = list(instance.instance.tags.names())
+            data = list(tags.names())
         else:
-            data = list(instance.instance.tags.names())
+            data = list(tags.names())
 
         if request.method == 'GET':
-            status = 200
+            http_status = status.HTTP_200_OK
 
-        return Response(data, status=status)
+        return Response(data, status=http_status)
+
+    @action(methods=['GET'])
+    def enketo(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        data = {}
+        if isinstance(self.object, XForm):
+            raise ParseError(_(u"Data id not provided."))
+        elif(isinstance(self.object, Instance)):
+            if request.user.has_perm("change_xform", self.object.xform):
+                return_url = request.QUERY_PARAMS.get('return_url')
+                if not return_url:
+                    raise ParseError(_(u"return_url not provided."))
+
+                try:
+                    data["url"] = get_enketo_edit_url(
+                        request, self.object, return_url)
+                except EnketoError as e:
+                    data['detail'] = "{}".format(e)
+            else:
+                raise PermissionDenied(_(u"You do not have edit permissions."))
+
+        return Response(data=data)
+
+    def destroy(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if isinstance(self.object, XForm):
+            raise ParseError(_(u"Data id not provided."))
+        elif isinstance(self.object, Instance):
+
+            if request.user.has_perm("delete_xform", self.object.xform):
+                self.object.delete()
+            else:
+                raise PermissionDenied(_(u"You do not have delete "
+                                         u"permissions."))
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def retrieve(self, request, *args, **kwargs):
+        data_id = str(kwargs.get('dataid'))
+        _format = kwargs.get('format')
+
+        if not data_id.isdigit():
+            raise ParseError(_(u"Data ID should be an integer"))
+
+        try:
+            instance = Instance.objects.get(pk=data_id)
+            if _format == 'json' or _format is None:
+                return Response(instance.json)
+            elif _format == 'xml':
+                return Response(instance.xml)
+            else:
+                raise ParseError(
+                    _(u"'%(_format)s' format unknown or not implemented!" %
+                      {'_format': _format})
+                )
+        except Instance.DoesNotExist:
+            raise ParseError(
+                _(u"data with id '%(data_id)s' not found!" %
+                  {'data_id': data_id})
+            )
+
+    def list(self, request, *args, **kwargs):
+        lookup_field = self.lookup_field
+        lookup = self.kwargs.get(lookup_field)
+
+        if lookup_field not in kwargs.keys():
+            self.object_list = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(self.object_list, many=True)
+
+            return Response(serializer.data)
+
+        if lookup == self.public_data_endpoint:
+            self.object_list = self._get_public_forms_queryset()
+
+            page = self.paginate_queryset(self.object_list)
+            if page is not None:
+                serializer = self.get_pagination_serializer(page)
+            else:
+                serializer = self.get_serializer(self.object_list, many=True)
+
+            return Response(serializer.data)
+
+        xform = self.get_object()
+        query = request.GET.get("query", {})
+        export_type = kwargs.get('format')
+        if export_type is None or export_type in ['json']:
+            # perform default viewset retrieve, no data export
+            return super(DataViewSet, self).list(request, *args, **kwargs)
+
+        return custom_response_handler(request, xform, query, export_type)

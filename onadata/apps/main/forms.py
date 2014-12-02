@@ -76,6 +76,7 @@ class PermissionForm(forms.Form):
 
 
 class UserProfileForm(ModelForm):
+
     class Meta:
         model = UserProfile
         exclude = ('user', 'created_by', 'num_of_submissions')
@@ -89,7 +90,7 @@ class UserProfileFormRegister(forms.Form):
     RECAPTCHA_HTML = captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY,
                                          use_ssl=settings.RECAPTCHA_USE_SSL)
 
-    name = forms.CharField(widget=forms.TextInput(), required=False,
+    name = forms.CharField(widget=forms.TextInput(), required=True,
                            max_length=255)
     city = forms.CharField(widget=forms.TextInput(), required=False,
                            max_length=255)
@@ -121,6 +122,7 @@ class UserProfileFormRegister(forms.Form):
 # order of inheritance control order of form display
 class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
                                   UserProfileFormRegister):
+
     class Meta:
         pass
 
@@ -134,7 +136,9 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
         'forms',
         'maps',
         'odk',
+        'ona',
         'people',
+        'public',
         'submit',
         'submission',
         'support',
@@ -319,3 +323,8 @@ class ActivateSMSSupportFom(forms.Form):
                                         u" characters")
 
         return sms_id_string
+
+
+class ExternalExportForm(forms.Form):
+    template_name = forms.CharField(label='Template Name', max_length=20)
+    template_token = forms.URLField(label='Template URL', max_length=100)

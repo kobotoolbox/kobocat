@@ -1,8 +1,12 @@
-from hashlib import md5
 import json
 import os
+import pytz
 import re
+import reversion
 
+from hashlib import md5
+from django.utils import timezone
+from datetime import datetime
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
@@ -10,15 +14,17 @@ from django.core.urlresolvers import reverse
 from django.db.models.signals import post_save, post_delete
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy, ugettext as _
-from guardian.shortcuts import assign_perm, get_perms_for_model
+from guardian.shortcuts import \
+    assign_perm, \
+    get_perms_for_model
 from taggit.managers import TaggableManager
 
 from onadata.apps.logger.xform_instance_parser import XLSFormError
-from onadata.apps.stats.tasks import stat_log
 from onadata.libs.models.base_model import BaseModel
 
 
 XFORM_TITLE_LENGTH = 255
+title_pattern = re.compile(r"<h:title>([^<]+)</h:title>")
 
 
 def upload_to(instance, filename):
@@ -32,6 +38,7 @@ class DuplicateUUIDError(Exception):
     pass
 
 
+@reversion.register
 class XForm(BaseModel):
     CLONED_SUFFIX = '_cloned'
     MAX_ID_LENGTH = 100
@@ -42,6 +49,7 @@ class XForm(BaseModel):
     xml = models.TextField()
 
     user = models.ForeignKey(User, related_name='xforms', null=True)
+    require_auth = models.BooleanField(default=False)
     shared = models.BooleanField(default=False)
     shared_data = models.BooleanField(default=False)
     downloadable = models.BooleanField(default=True)
@@ -75,7 +83,7 @@ class XForm(BaseModel):
     uuid_bind_location = 4
     bamboo_dataset = models.CharField(max_length=60, default=u'')
     instances_with_geopoints = models.BooleanField(default=False)
-    num_of_submissions = models.IntegerField(default=-1)
+    num_of_submissions = models.IntegerField(default=0)
 
     tags = TaggableManager()
 
@@ -88,6 +96,8 @@ class XForm(BaseModel):
         permissions = (
             ("view_xform", _("Can view associated data")),
             ("report_xform", _("Can make submissions to the form")),
+            ("move_xform", _(u"Can move form between projects")),
+            ("transfer_xform", _(u"Can transfer form ownership.")),
         )
 
     def file_name(self):
@@ -119,10 +129,24 @@ class XForm(BaseModel):
 
     def _set_title(self):
         text = re.sub(r"\s+", " ", self.xml)
-        matches = re.findall(r"<h:title>([^<]+)</h:title>", text)
+        matches = title_pattern.findall(text)
+        title_xml = matches[0][:XFORM_TITLE_LENGTH]
+
         if len(matches) != 1:
             raise XLSFormError(_("There should be a single title."), matches)
-        self.title = u"" if not matches else matches[0][:XFORM_TITLE_LENGTH]
+
+        if self.title and title_xml != self.title:
+            title_xml = self.title[:XFORM_TITLE_LENGTH]
+            if isinstance(self.xml, str):
+                self.xml = self.xml.decode('utf-8')
+            self.xml = title_pattern.sub(
+                u"<h:title>%s</h:title>" % title_xml, self.xml)
+
+        self.title = title_xml
+
+    def _set_description(self):
+        self.description = self.description \
+            if self.description and self.description != '' else self.title
 
     def _set_encrypted_field(self):
         if self.json and self.json != '':
@@ -137,6 +161,7 @@ class XForm(BaseModel):
 
     def save(self, *args, **kwargs):
         self._set_title()
+        self._set_description()
         old_id_string = self.id_string
         self._set_id_string()
         self._set_encrypted_field()
@@ -165,19 +190,30 @@ class XForm(BaseModel):
 
         super(XForm, self).save(*args, **kwargs)
 
-        for perm in get_perms_for_model(XForm):
-            assign_perm(perm.codename, self.user, self)
-
     def __unicode__(self):
         return getattr(self, "id_string", "")
 
     def submission_count(self, force_update=False):
-        if self.num_of_submissions == -1 or force_update:
+        if self.num_of_submissions == 0 or force_update:
             count = self.instances.filter(deleted_at__isnull=True).count()
             self.num_of_submissions = count
             self.save()
         return self.num_of_submissions
     submission_count.short_description = ugettext_lazy("Submission Count")
+
+    @property
+    def submission_count_for_today(self):
+        current_timzone_name = timezone.get_current_timezone_name()
+        current_timezone = pytz.timezone(current_timzone_name)
+        today = datetime.today()
+        current_date = current_timezone.localize(
+            datetime(today.year,
+                     today.month,
+                     today.day))
+        count = self.instances.filter(
+            deleted_at__isnull=True,
+            date_created=current_date).count()
+        return count
 
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""
@@ -220,13 +256,6 @@ class XForm(BaseModel):
         return cls.objects.filter(shared=True)
 
 
-def stats_forms_created(sender, instance, created, **kwargs):
-    if created:
-        stat_log.delay('formhub-forms-created', 1)
-
-post_save.connect(stats_forms_created, sender=XForm)
-
-
 def update_profile_num_submissions(sender, instance, **kwargs):
     profile_qs = User.profile.get_query_set()
     try:
@@ -242,3 +271,11 @@ def update_profile_num_submissions(sender, instance, **kwargs):
 
 post_delete.connect(update_profile_num_submissions, sender=XForm,
                     dispatch_uid='update_profile_num_submissions')
+
+
+def set_object_permissions(sender, instance=None, created=False, **kwargs):
+    if created:
+        for perm in get_perms_for_model(XForm):
+            assign_perm(perm.codename, instance.user, instance)
+post_save.connect(set_object_permissions, sender=XForm,
+                  dispatch_uid='xform_object_permissions')

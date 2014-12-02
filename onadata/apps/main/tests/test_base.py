@@ -12,9 +12,15 @@ from django.contrib.auth.models import User
 from django.test import TransactionTestCase
 from django.test.client import Client
 from django_digest.test import Client as DigestClient
+from django_digest.test import DigestAuth
+from django.contrib.auth import authenticate
 from django.utils import timezone
 
+from rest_framework.test import APIRequestFactory
+
 from onadata.apps.logger.models import XForm, Instance, Attachment
+from onadata.apps.logger.views import submission
+from onadata.apps.main.models import UserProfile
 
 
 class TestBase(TransactionTestCase):
@@ -29,6 +35,7 @@ class TestBase(TransactionTestCase):
         self.maxDiff = None
         self._create_user_and_login()
         self.base_url = 'http://testserver'
+        self.factory = APIRequestFactory()
 
     def tearDown(self):
         # clear mongo db after each test
@@ -41,6 +48,7 @@ class TestBase(TransactionTestCase):
         user, created = User.objects.get_or_create(username=username)
         user.set_password(password)
         user.save()
+
         return user
 
     def _login(self, username, password):
@@ -57,6 +65,12 @@ class TestBase(TransactionTestCase):
         self.login_username = username
         self.login_password = password
         self.user = self._create_user(username, password)
+
+        # create user profile and set require_auth to false for tests
+        profile, created = UserProfile.objects.get_or_create(user=self.user)
+        profile.require_auth = False
+        profile.save()
+
         self.client = self._login(username, password)
         self.anon = Client()
 
@@ -114,8 +128,8 @@ class TestBase(TransactionTestCase):
             'transportation', 'instances', s, s + '.xml'),
             os.path.join(self.this_directory, 'fixtures',
                          'transportation', 'instances', s, media_file))
-        attachment = Attachment.objects.all().reverse()[0]
-        self.attachment_media_file = attachment.media_file
+        self.attachment = Attachment.objects.all().reverse()[0]
+        self.attachment_media_file = self.attachment.media_file
 
     def _publish_transportation_form_and_submit_instance(self):
         self._publish_transportation_form()
@@ -129,16 +143,22 @@ class TestBase(TransactionTestCase):
             self._make_submission(path)
 
     def _make_submission(self, path, username=None, add_uuid=False,
-                         touchforms=False, forced_submission_time=None,
-                         client=None):
+                         forced_submission_time=None, auth=None, client=None):
         # store temporary file with dynamic uuid
-        client = client or self.anon
+
+        self.factory = APIRequestFactory()
+        if auth is None:
+            auth = DigestAuth('bob', 'bob')
+
         tmp_file = None
-        if add_uuid and not touchforms:
+
+        if add_uuid:
             tmp_file = NamedTemporaryFile(delete=False)
             split_xml = None
+
             with open(path) as _file:
                 split_xml = re.split(r'(<transport>)', _file.read())
+
             split_xml[1:1] = [
                 '<formhub><uuid>%s</uuid></formhub>' % self.xform.uuid
             ]
@@ -151,22 +171,28 @@ class TestBase(TransactionTestCase):
 
             if username is None:
                 username = self.user.username
-            url = '/%s/submission' % username
 
-            # touchforms submission
-            if add_uuid and touchforms:
-                post_data['uuid'] = self.xform.uuid
-            if touchforms:
-                url = '/submission'  # touchform has no username
-            self.response = client.post(url, post_data)
+            url_prefix = '%s/' % username if username else ''
+            url = '/%ssubmission' % url_prefix
+
+            request = self.factory.post(url, post_data)
+            request.user = authenticate(username=auth.username,
+                                        password=auth.password)
+
+            self.response = submission(request, username=username)
+
+            if auth and self.response.status_code == 401:
+                request.META.update(auth(request.META, self.response))
+                self.response = submission(request, username=username)
 
         if forced_submission_time:
             instance = Instance.objects.order_by('-pk').all()[0]
             instance.date_created = forced_submission_time
             instance.save()
             instance.parsed_instance.save()
+
         # remove temporary file if stored
-        if add_uuid and not touchforms:
+        if add_uuid:
             os.unlink(tmp_file.name)
 
     def _make_submission_w_attachment(self, path, attachment_path):
@@ -174,7 +200,18 @@ class TestBase(TransactionTestCase):
             a = open(attachment_path)
             post_data = {'xml_submission_file': f, 'media_file': a}
             url = '/%s/submission' % self.user.username
-            self.response = self.anon.post(url, post_data)
+            auth = DigestAuth('bob', 'bob')
+            self.factory = APIRequestFactory()
+            request = self.factory.post(url, post_data)
+            request.user = authenticate(username='bob',
+                                        password='bob')
+            self.response = submission(request,
+                                       username=self.user.username)
+
+            if auth and self.response.status_code == 401:
+                request.META.update(auth(request.META, self.response))
+                self.response = submission(request,
+                                           username=self.user.username)
 
     def _make_submissions(self, username=None, add_uuid=False,
                           should_store=True):
@@ -184,6 +221,7 @@ class TestBase(TransactionTestCase):
         :param add_uuid: add UUID to submission, default False.
         :param should_store: should submissions be save, default True.
         """
+
         paths = [os.path.join(
             self.this_directory, 'fixtures', 'transportation',
             'instances', s, s + '.xml') for s in self.surveys]
@@ -243,3 +281,14 @@ class TestBase(TransactionTestCase):
     def _set_mock_time(self, mock_time):
         current_time = timezone.now()
         mock_time.return_value = current_time
+
+    def _set_require_auth(self, auth=True):
+        profile, created = UserProfile.objects.get_or_create(user=self.user)
+        profile.require_auth = auth
+        profile.save()
+
+    def _get_digest_client(self):
+        self._set_require_auth(True)
+        client = DigestClient()
+        client.set_authorization('bob', 'bob', 'Digest')
+        return client

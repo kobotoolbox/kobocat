@@ -20,6 +20,8 @@ DATA_TYPE_MAP = {
 
 CHARTS_PER_PAGE = 20
 
+POSTGRES_ALIAS_LENGTH = 63
+
 
 timezone_re = re.compile(r'(.+)\+(\d+)')
 
@@ -49,6 +51,19 @@ def utc_time_string_for_javascript(date_string):
     return "{}+{}".format(date_time, tz)
 
 
+def get_choice_label(choices, string):
+    labels = []
+
+    if string:
+        for name in string.split(' '):
+            for choice in choices:
+                if choice['name'] == name:
+                    labels.append(choice['label'])
+                    break
+
+    return labels
+
+
 def build_chart_data_for_field(xform, field, language_index=0):
     # check if its the special _submission_time META
     if isinstance(field, basestring) and field == common_tags.SUBMISSION_TIME:
@@ -70,32 +85,51 @@ def build_chart_data_for_field(xform, field, language_index=0):
         field_xpath = field.get_abbreviated_xpath()
         field_type = field.type
 
-    result = get_form_submissions_grouped_by_field(xform, field_xpath)
-    result = sorted(result, key=lambda d: d['count'])
     data_type = DATA_TYPE_MAP.get(field_type, 'categorized')
+    field_name = field.name if not isinstance(field, basestring) else field
+
+    result = get_form_submissions_grouped_by_field(
+        xform, field_xpath, field_name)
+
+    # truncate field name to 63 characters to fix #354
+    truncated_name = field_name[0:POSTGRES_ALIAS_LENGTH]
+    truncated_name = truncated_name.encode('utf-8')
+
+    if data_type == 'categorized':
+        if result:
+            for item in result:
+                item[truncated_name] = get_choice_label(
+                    field.children, item[truncated_name])
+
+    # replace truncated field names in the result set with the field name key
+    field_name = field_name.encode('utf-8')
+    for item in result:
+        if field_name != truncated_name:
+            item[field_name] = item[truncated_name]
+            del(item[truncated_name])
+
+    result = sorted(result, key=lambda d: d['count'])
 
     # for date fields, strip out None values
     if data_type == 'time_based':
-        result = [r for r in result if r[field_xpath] is not None]
+        result = [r for r in result if r.get(field_name) is not None]
         # for each check if it matches the timezone regexp and convert for js
         for r in result:
-            if timezone_re.match(r[field_xpath]):
+            if timezone_re.match(r[field_name]):
                 try:
-                    r[field_xpath] = utc_time_string_for_javascript(
-                        r[field_xpath])
+                    r[field_name] = utc_time_string_for_javascript(
+                        r[field_name])
                 except ValueError:
                     pass
 
-    data = {
+    return {
         'data': result,
         'data_type': data_type,
         'field_label': field_label,
-        'field_xpath': field_xpath,
+        'field_xpath': field_name,
         'field_name': field_xpath.replace('/', '-'),
-        'field_type': field_type,
+        'field_type': field_type
     }
-
-    return data
 
 
 def calculate_ranges(page, items_per_page, total_items):
@@ -111,6 +145,7 @@ def calculate_ranges(page, items_per_page, total_items):
 def build_chart_data(xform, language_index=0, page=0):
     dd = xform.data_dictionary()
     # only use chart-able fields
+
     fields = filter(
         lambda f: f.type in CHART_FIELDS, [e for e in dd.survey_elements])
 

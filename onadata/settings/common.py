@@ -35,6 +35,11 @@ ADMINS = (
 )
 MANAGERS = ADMINS
 
+
+DEFAULT_FROM_EMAIL = 'noreply@ona.io'
+SHARE_PROJECT_SUBJECT = '{} Ona Project has been shared with you.'
+DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -149,6 +154,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'reversion.middleware.RevisionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'django.middleware.locale.LocaleMiddleware',
@@ -192,6 +198,7 @@ INSTALLED_APPS = (
     'django.contrib.gis',
     'registration',
     'south',
+    'reversion',
     'django_nose',
     'django_digest',
     'corsheaders',
@@ -229,14 +236,23 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-        'rest_framework.permissions.DjangoModelPermissions'
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'onadata.libs.authentication.DigestAuthentication',
         'oauth2_provider.ext.rest_framework.OAuth2Authentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
-    )
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.UnicodeJSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.JSONPRenderer',
+        'rest_framework.renderers.XMLRenderer',
+        'rest_framework_csv.renderers.CSVRenderer',
+    ),
+    'VIEW_NAME_FUNCTION': 'onadata.apps.api.tools.get_view_name',
+    'VIEW_DESCRIPTION_FUNCTION': 'onadata.apps.api.tools.get_view_description',
 }
 
 SWAGGER_SETTINGS = {
@@ -264,9 +280,10 @@ COMPRESS = True
 # extra data stored with users
 AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 
-# case insensitive usernames
+# case insensitive usernames -- DISABLED for KoBoForm compatibility
 AUTHENTICATION_BACKENDS = (
-    'onadata.apps.main.backends.ModelBackend',
+    #'onadata.apps.main.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
 
@@ -386,7 +403,7 @@ THUMB_ORDER = ['large', 'medium', 'small']
 IMG_FILE_TYPE = 'jpg'
 
 # celery
-BROKER_BACKEND = "rabbitmq"
+BROKER_BACKEND = "librabbitmq"
 BROKER_URL = 'amqp://guest:guest@localhost:5672/'
 CELERY_RESULT_BACKEND = "amqp"  # telling Celery to report results to RabbitMQ
 CELERY_ALWAYS_EAGER = False
@@ -399,6 +416,10 @@ DEFAULT_CONTENT_LENGTH = 10000000
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = ['--with-fixture-bundling']
+
+# fake endpoints for testing
+TEST_HTTP_HOST = 'testserver.com'
+TEST_USERNAME = 'bob'
 
 # re-captcha in registrations
 REGISTRATION_REQUIRE_CAPTCHA = False
@@ -416,13 +437,6 @@ BINARY_SELECT_MULTIPLES = False
 # Use 'n/a' for empty values by default on csv exports
 NA_REP = 'n/a'
 
-# legacy setting for old sites who still use a local_settings.py file and have
-# not updated to presets/
-try:
-    from local_settings import *  # nopep8
-except ImportError:
-    pass
-
 # MongoDB
 if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
     MONGO_CONNECTION_URL = (
@@ -434,6 +448,28 @@ MONGO_CONNECTION = MongoClient(
     MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
+# Set wsgi url scheme to HTTPS
+os.environ['wsgi.url_scheme'] = 'https'
+
+SUPPORTED_MEDIA_UPLOAD_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'audio/mpeg',
+    'video/3gpp',
+    'audio/wav',
+    'audio/x-m4a',
+    'audio/mp3',
+    'text/csv',
+    'application/zip'
+]
+
+# legacy setting for old sites who still use a local_settings.py file and have
+# not updated to presets/
+try:
+    from local_settings import *  # nopep8
+except ImportError:
+    pass
+
 if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
     # site templates overrides
     TEMPLATE_DIRS = (
@@ -444,5 +480,3 @@ if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
         os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
     )
 
-# Set wsgi url scheme to HTTPS
-os.environ['wsgi.url_scheme'] = 'https'

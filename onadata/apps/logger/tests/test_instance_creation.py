@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from onadata.apps.logger.models import XForm, Instance
+from onadata.apps.main.models import UserProfile
 
 
 def open_all_files(path):
@@ -39,10 +40,14 @@ def get_absolute_path(subdirectory):
         os.path.dirname(os.path.abspath(__file__)), subdirectory)
 
 
-class TestWaterSubmission(TestCase):
+class TestInstanceCreation(TestCase):
 
     def setUp(self):
         self.user = User.objects.create(username="bob")
+        profile, c = UserProfile.objects.get_or_create(user=self.user)
+        profile.require_auth = False
+        profile.save()
+
         absolute_path = get_absolute_path("forms")
         open_forms = open_all_files(absolute_path)
         self.json = '{"default_language": "default", ' \
@@ -51,7 +56,8 @@ class TestWaterSubmission(TestCase):
                     '"title": "Water_2011_03_17", "type": "survey"}'
         for path, open_file in open_forms.items():
             XForm.objects.create(
-                xml=open_file.read(), user=self.user, json=self.json)
+                xml=open_file.read(), user=self.user, json=self.json,
+                require_auth=False)
             open_file.close()
 
         self._create_water_translated_form()
@@ -63,7 +69,8 @@ class TestWaterSubmission(TestCase):
         ))
         xml = f.read()
         f.close()
-        XForm.objects.create(xml=xml, user=self.user, json=self.json)
+        self.xform = XForm.objects.create(
+            xml=xml, user=self.user, json=self.json)
 
     def test_form_submission(self):
         # no more submission to non-existent form,
@@ -73,7 +80,7 @@ class TestWaterSubmission(TestCase):
             "Water_Translated_2011_03_10_2011-03-10_14-38-28.xml"))
         xml = f.read()
         f.close()
-        Instance.objects.create(xml=xml, user=self.user)
+        Instance.objects.create(xml=xml, user=self.user, xform=self.xform)
 
     def test_data_submission(self):
         subdirectories = ["Water_2011_03_17_2011-03-17_16-29-59"]

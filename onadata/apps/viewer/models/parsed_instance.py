@@ -11,12 +11,13 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext as _
 
-from onadata.apps.stats.tasks import stat_log
-from onadata.apps.logger.models import Instance, XForm
+from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
 from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
-    SUBMISSION_TIME, MONGO_STRFTIME, BAMBOO_DATASET_ID, DELETEDAT, TAGS, NOTES
+    SUBMISSION_TIME, MONGO_STRFTIME, BAMBOO_DATASET_ID, DELETEDAT, TAGS,\
+    NOTES, SUBMITTED_BY
+
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 
@@ -25,7 +26,6 @@ from onadata.libs.utils.model_tools import queryset_iterator
 xform_instances = settings.MONGO_DB.instances
 key_whitelist = ['$or', '$and', '$exists', '$in', '$gt', '$gte',
                  '$lt', '$lte', '$regex', '$options', '$all']
-GLOBAL_SUBMISSION_STATS = u'global_submission_stats'
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
@@ -243,16 +243,17 @@ class ParsedInstance(models.Model):
             ID: self.instance.id,
             BAMBOO_DATASET_ID: self.instance.xform.bamboo_dataset,
             self.USERFORM_ID: u'%s_%s' % (
-                self.instance.user.username,
+                self.instance.xform.user.username,
                 self.instance.xform.id_string),
-            ATTACHMENTS: [a.media_file.name for a in
-                          self.instance.attachments.all()],
+            ATTACHMENTS: _get_attachments_from_instance(self.instance),
             self.STATUS: self.instance.status,
             GEOLOCATION: [self.lat, self.lng],
             SUBMISSION_TIME: self.instance.date_created.strftime(
                 MONGO_STRFTIME),
             TAGS: list(self.instance.tags.names()),
-            NOTES: self.get_notes()
+            NOTES: self.get_notes(),
+            SUBMITTED_BY: self.instance.user.username
+            if self.instance.user else None
         }
 
         if isinstance(self.instance.deleted_at, datetime.datetime):
@@ -307,27 +308,10 @@ class ParsedInstance(models.Model):
 
     # TODO: figure out how much of this code should be here versus
     # data_dictionary.py.
-    def _get_geopoint(self):
-        doc = self.to_dict()
-        xpath = self.data_dictionary.xpath_of_first_geopoint()
-        text = doc.get(xpath, u'')
-        return dict(
-            zip(
-                [u'latitude', u'longitude', u'altitude', u'accuracy'],
-                text.split()
-            )
-        )
-
     def _set_geopoint(self):
-        g = self._get_geopoint()
-        self.lat = g.get(u'latitude')
-        self.lng = g.get(u'longitude')
-        # update xform incase we have a latitude
-        xform = XForm.objects.select_related().select_for_update()\
-            .get(pk=self.instance.xform.pk)
-        if self.lat is not None and not xform.instances_with_geopoints:
-            xform.instances_with_geopoints = True
-            xform.save()
+        if self.instance.point:
+            self.lat = self.instance.point.y
+            self.lng = self.instance.point.x
 
     def save(self, async=False, *args, **kwargs):
         # start/end_time obsolete: originally used to approximate for
@@ -360,6 +344,21 @@ class ParsedInstance(models.Model):
         return notes
 
 
+def _get_attachments_from_instance(instance):
+    attachments = []
+    for a in instance.attachments.all():
+        attachment = dict()
+        attachment['download_url'] = a.media_file.url
+        attachment['mimetype'] = a.mimetype
+        attachment['filename'] = a.media_file.name
+        attachment['instance'] = a.instance.pk
+        attachment['xform'] = instance.xform.id
+        attachment['id'] = a.id
+        attachments.append(attachment)
+
+    return attachments
+
+
 def _remove_from_mongo(sender, **kwargs):
     instance_id = kwargs.get('instance').instance.id
     xform_instances.remove(instance_id)
@@ -375,16 +374,3 @@ def rest_service_form_submission(sender, **kwargs):
 
 
 post_save.connect(rest_service_form_submission, sender=ParsedInstance)
-
-
-def submission_count(sender, **kwargs):
-    parsed_instance = kwargs.get('instance')
-    created = kwargs.get('created')
-    if created:
-        stat_log.delay(GLOBAL_SUBMISSION_STATS, 1)
-        key = '%(username)s_%(xform_id_string)s_submissions'\
-            % {"username": parsed_instance.instance.xform.user.username,
-               "xform_id_string": parsed_instance.instance.xform.id_string}
-        stat_log.delay(key, 1)
-
-post_save.connect(submission_count, sender=ParsedInstance)
