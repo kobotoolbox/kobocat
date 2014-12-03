@@ -5,7 +5,7 @@
   <thead>
     <tr>
       <th class="published_forms__header published_forms__header--projects">{%  trans "Projects" %}</th>
-      <th class="published_forms__header published_forms__header--state">{%  trans "Project State" %}</th>
+      <th class="published_forms__header published_forms__header--state">{%  trans "Active" %}</th>
       <th class="published_forms__header published_forms__header--shared">{%  trans "Shared By" %}</th>
       <th class="published_forms__header published_forms__header--date">{%  trans "Date Created" %}</th>
       <th class="published_forms__header published_forms__header--modified">{%  trans "Last Modified" %}</th>
@@ -33,8 +33,8 @@
             {% endif %}
         </td>
         <td class="published_forms__cell published_forms__cell--state">
-          {% if not xform.downloadable %}Inactive{% endif %}
-          {% if xform.downloadable %}Active{% endif %}
+          {% if not xform.downloadable %}<i class="fa fa-minus-circle color--red"></i>{% endif %}
+          {% if xform.downloadable %}<i class="fa fa-check color--green"></i>{% endif %}
         </td>
         <td class="published_forms__cell published_forms__cell--shared"> 
           {% if xform_list.id == 'shared'%}
