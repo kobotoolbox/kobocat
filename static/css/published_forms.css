@@ -9,7 +9,8 @@
 	padding: 5px 12px;
 }
 
-.published_forms__cell.published_forms__cell--state {
+.published_forms__cell.published_forms__cell--state,
+.published_forms__cell.published_forms__cell--submissions {
 	text-align: center;
 }
 
