@@ -740,6 +740,7 @@
 <script src="/static/js/jquery.poshytip.js"></script>
   {% if user.is_authenticated %}
     <script type="text/javascript" src="{{STATIC_URL}}js/form_actions.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.cookie.js"></script>
   {% endif %}
 
 
@@ -828,6 +829,7 @@ $(document).ready(function() {
     <!-- NEW SANDBOX JQUERY CALLS -->
     <script type="text/javascript">
     $(document).ready(function() {
+
       $(document).on("click", ".single-project__toggle-documents .doctoggle__caret", function () {
         $('.single-project__documents').toggleClass('hidden');
         $(this).toggleClass('active');
@@ -838,6 +840,11 @@ $(document).ready(function() {
       $(document).on("click", ".single-project__toggle-settings", function () {
         $('.single-project__settings').toggleClass('hidden');
         $(this).toggleClass('active');
+        if($('.single-project__settings').is(":visible")) {
+          $.cookie('settingsBoxOpen', true);
+        } else {
+          $.cookie('settingsBoxOpen', false);
+        }
       });
 
       $(document).on("click", ".dashboard__button-download-data", function () {
@@ -886,10 +893,15 @@ $(document).ready(function() {
             if($('.single-project__settings').is(":visible")) {
               $('.single-project__settings').addClass('hidden');
               $('.single-project__toggle-settings').removeClass('active');
+              $.cookie('settingsBoxOpen', false);
             }
           }
-
       });
+
+      if ($.cookie('settingsBoxOpen') == 'true') {
+        $('.single-project__settings').removeClass('hidden');
+        $('.single-project__toggle-settings').addClass('active');
+      }
 
       // question mark poshytip effect
       $('span.poshytip').poshytip({
