@@ -17,7 +17,7 @@
   {% endif %}
 
   {% for xform_list in xforms_list %}
-    {% if xform_list.id == "published" %}
+    {% if xform_list.id == "published_or_shared" %}
       <section id="{{ xform_list.id }}-forms" class="published_forms">
         {% if xform_list.xforms %}
           {% include 'published_forms__list.html' %}

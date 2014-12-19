@@ -37,8 +37,8 @@
           {% if xform.downloadable %}<i class="fa fa-check color--green"></i>{% endif %}
         </td>
         <td class="published_forms__cell published_forms__cell--shared"> 
-          {% if xform_list.id == 'shared'%}
-            {% trans "Shared by" %} {{ xform.user.username }}
+          {% if xform.user != request.user  %}
+            {{ xform.user.username }}
           {% endif %}
         </td>
         <td class="published_forms__cell published_forms__cell--date">
