@@ -224,6 +224,9 @@ def profile(request, username):
         forms_shared_with = XForm.objects.filter(
             pk__in=shared_forms_pks).exclude(user=content_user)\
             .select_related('user')
+        # all forms to which the user has access
+        published_or_shared = XForm.objects.filter(
+            pk__in=shared_forms_pks).select_related('user')
         xforms_list = [
             {
                 'id': 'published',
@@ -236,6 +239,12 @@ def profile(request, username):
                 'xforms': forms_shared_with,
                 'title': _(u"Shared Forms"),
                 'small': _("List of forms shared with you.")
+            },
+            {
+                'id': 'published_or_shared',
+                'xforms': published_or_shared,
+                'title': _(u"Published Forms"),
+                'small': _("Export, map, and view submissions.")
             }
         ]
         data.update({
