@@ -300,7 +300,8 @@ table.published_forms__table tbody tr:nth-child(odd) {
 }
 
 table.published_forms__table tbody td, 
-table.published_forms__table thead th {
+table.published_forms__table thead th, 
+table.published_forms__table tbody td.published_forms__cell--submissions {
   padding:12px;
   text-align: right;
 }
@@ -315,6 +316,11 @@ table.published_forms__table thead th.published_forms__header--projects,
 table.published_forms__table tbody td.published_forms__cell--project {
   text-align: left;
   padding:12px 20px;
+}
+
+table.published_forms__table thead th.published_forms__header--state,
+table.published_forms__table tbody td.published_forms__cell--state {
+  text-align: center;
 }
 
 td.published_forms__cell--project a {
