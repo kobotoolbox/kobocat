@@ -21,7 +21,8 @@ def convert_csv_to_xls(csv_repr):
                 val = row.get(col, None)
                 if val:
                     sheet.write(ri+1, ci, val)
-    dict_repr = xls2json_backends.csv_to_dict(StringIO.StringIO(csv_repr.encode("utf-8")))
+    encoded_csv = csv_repr.decode("utf-8").encode("utf-8")
+    dict_repr = xls2json_backends.csv_to_dict(StringIO.StringIO(encoded_csv))
     workbook = xlwt.Workbook()
     for sheet_name in dict_repr.keys():
         # pyxform.xls2json_backends adds "_header" items for each sheet.....
