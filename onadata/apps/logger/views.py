@@ -14,7 +14,7 @@ from django.core.files.storage import get_storage_class
 from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, \
-    HttpResponseRedirect, HttpResponseForbidden
+    HttpResponseRedirect, HttpResponseForbidden, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
@@ -49,6 +49,8 @@ from onadata.libs.utils.user_auth import helper_auth_helper, has_permission,\
     has_edit_permission, HttpResponseNotAuthorized, add_cors_headers
 
 from onadata.libs.utils.viewer_tools import _get_form_url
+
+from onadata.koboform.pyxform_utils import convert_csv_to_xls
 
 
 IO_ERROR_STRINGS = [
@@ -374,6 +376,16 @@ def download_xlsform(request, username, id_string):
             {
                 "id_string": xform.id_string
             }, audit, request)
+
+        if file_path.endswith('.csv'):
+            with default_storage.open(file_path) as ff:
+                xls_io = convert_csv_to_xls(ff.read())
+                response = StreamingHttpResponse(
+                    xls_io, content_type='application/vnd.ms-excel; charset=utf-8')
+                response[
+                    'Content-Disposition'] = 'attachment; filename=%s.xls' % xform.id_string
+                return response
+
         split_path = file_path.split(os.extsep)
         extension = 'xls'
 
@@ -393,7 +405,6 @@ def download_xlsform(request, username, id_string):
                              % {'id': id_string})
 
         return HttpResponseRedirect("/%s" % username)
-
 
 def download_jsonform(request, username, id_string):
     owner = get_object_or_404(User, username__iexact=username)
