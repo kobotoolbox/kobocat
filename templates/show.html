@@ -279,6 +279,7 @@
           </div>
 
           {% if can_edit or xform.shared %}
+          <!-- clicking preview-modal triggers modal and the previewModalActivate function which loads the enketo iframe -->
           <a title="{% trans 'Preview Form' %}" href="#preview-modal" class="dashboard__formbutton dashboard__formbutton-preview" data-toggle="modal">
             <i class="fa fa-eye"></i><span>Preview</span>
           </a>
@@ -290,9 +291,7 @@
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                   <h3>{{ xform.title }} - {% trans "Preview" %}</h3>
               </div>
-              <div class="modal-body">
-                  <iframe src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></iframe>
-              </div>
+              <div class="modal-body" data-iframe-src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></div>
               <div class="modal-footer"></div>
           </div>
           {% endif %}
@@ -747,6 +746,16 @@
 
 
 <script type="text/javascript">
+
+$('.dashboard__formbutton-preview').click(function previewModalActivate(){
+  var modalWrap = $('#preview-modal').find('.modal-body');
+  if (modalWrap.data('iframeSrc')) {
+    $('<iframe>', {src: modalWrap.data('iframeSrc')}).appendTo(modalWrap);
+  } else {
+    console.error('iframeSrc not set for previewModal');
+  }
+});
+
 
 $(document).ready(function() {
 
