@@ -10,7 +10,7 @@ from fabric.operations import put
 
 DEPLOYMENTS = {}
 
-deployments_file = os.environ.get('DEPLOYMENTS_JSON', 'deployments.json')
+deployments_file = os.environ.get('DEPLOYMENTS_JSON')
 if os.path.exists(deployments_file):
     with open(deployments_file, 'r') as f:
         imported_deployments = json.load(f)
@@ -35,11 +35,12 @@ def check_key_filename(deployment_name):
 def setup_env(deployment_name):
     deployment = DEPLOYMENTS.get(deployment_name)
 
-    if 'kc_virtualenv_name' in deployment:
-        deployment['virtualenv_name'] = deployment['kc_virtualenv_name']
 
     if deployment is None:
         exit_with_error('Deployment "%s" not found.' % deployment_name)
+
+    if 'kc_virtualenv_name' in deployment:
+        deployment['virtualenv_name'] = deployment['kc_virtualenv_name']
 
     env.update(deployment)
 
@@ -70,7 +71,7 @@ def deploy_template(env):
 def reload(deployment_name, branch='master'):
     setup_env(deployment_name)
     # run("sudo %s restart" % env.celeryd)
-    run("/usr/local/bin/uwsgi --reload %s" % env.uwsgi_pid)
+    run("sudo restart uwsgi")
 
 
 def deploy(deployment_name, branch='master'):
