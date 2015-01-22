@@ -55,6 +55,7 @@ def _postgres_count_group(field, name, xform):
 
     return "SELECT %(json)s AS \"%(name)s\", COUNT(*) AS count FROM "\
            "%(table)s WHERE %(restrict_field)s=%(restrict_value)s "\
+           "AND %(exclude_deleted)s "\
            "GROUP BY %(json)s" % string_args
 
 
@@ -62,7 +63,8 @@ def _postgres_select_key(field, name, xform):
     string_args = _query_args(field, name, xform)
 
     return "SELECT %(json)s AS \"%(name)s\" FROM %(table)s WHERE "\
-           "%(restrict_field)s=%(restrict_value)s" % string_args
+           "%(restrict_field)s=%(restrict_value)s "\
+           "AND %(exclude_deleted)s" % string_args
 
 
 def _query_args(field, name, xform):
@@ -71,7 +73,8 @@ def _query_args(field, name, xform):
         'json': _json_query(field),
         'name': name,
         'restrict_field': 'xform_id',
-        'restrict_value': xform.pk}
+        'restrict_value': xform.pk,
+        'exclude_deleted': 'deleted_at IS NULL'}
 
 
 def _select_key(field, name, xform):
