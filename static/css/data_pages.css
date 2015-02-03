@@ -8,12 +8,11 @@
 
 /* Data tables - temporarily here */
 
-.data-table-container table.table {
+.data-table-container table {
     clear: both;
     display: block;
     overflow-x: auto;
-    width: 100%;
-    margin-right: 20px;
+    width: 95%;
 }
 
 .data-table-container table.table th, 
@@ -21,11 +20,11 @@
     font-size:12px;
     padding: 4px 0px 4px 12px;
     word-wrap:break-word;
-    max-width: 300px;
+    max-width: 270px;
+    text-overflow:ellipsis;
     width:auto;
     text-align:left;
 }
-
 
 /* Data instance */
 
