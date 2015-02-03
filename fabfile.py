@@ -47,10 +47,9 @@ def setup_env(deployment_name):
     check_key_filename(deployment_name)
 
     env.virtualenv = os.path.join('/home', 'ubuntu', '.virtualenvs',
-                                  env.virtualenv_name, 'bin', 'activate')
+                                  env.kc_virtualenv_name, 'bin', 'activate')
 
-    env.code_src = os.path.join(env.home, env.project)
-    env.pip_requirements_file = os.path.join(env.code_src,
+    env.pip_requirements_file = os.path.join(env.kc_path,
                                              'requirements/base.pip')
     env.template_dir = 'onadata/libs/custom_template'
     env.template_repo = os.path.join(env.home, 'kobocat-template')
@@ -76,7 +75,7 @@ def reload(deployment_name, branch='master'):
 
 def deploy(deployment_name, branch='master'):
     setup_env(deployment_name)
-    with cd(env.code_src):
+    with cd(env.kc_path):
         run("git fetch origin")
         run("git checkout origin/%s" % branch)
 
@@ -86,12 +85,12 @@ def deploy(deployment_name, branch='master'):
         run('find . -type d -empty -delete')
 
     # numpy pip install from requirements file fails
-    with kobo_workon(env.virtualenv_name):
+    with kobo_workon(env.kc_virtualenv_name):
         run("pip install numpy")
         run("pip install -r %s" % env.pip_requirements_file)
 
-    with cd(env.code_src):
-        with kobo_workon(env.virtualenv_name):
+    with cd(env.kc_path):
+        with kobo_workon(env.kc_virtualenv_name):
             run("python manage.py syncdb --all")
             run("python manage.py migrate")
             run("python manage.py collectstatic --noinput")
