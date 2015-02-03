@@ -69,7 +69,7 @@ def deploy_template(env):
 
 def reload(deployment_name, branch='master'):
     setup_env(deployment_name)
-    # run("sudo %s restart" % env.celeryd)
+    run("sudo restart celeryd")
     run("sudo restart uwsgi")
 
 
@@ -95,5 +95,5 @@ def deploy(deployment_name, branch='master'):
             run("python manage.py migrate")
             run("python manage.py collectstatic --noinput")
 
-    # run("sudo restart celeryd")
-    run("/usr/local/bin/uwsgi --reload %s" % env.uwsgi_pid)
+    run("sudo restart celeryd")
+    run("sudo restart uwsgi")
