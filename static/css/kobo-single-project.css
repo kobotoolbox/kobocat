@@ -496,8 +496,14 @@ span.poshytip {
    QR Code popup
    ========================================================================== */
 
+.modal {
+  max-height: 80%;
+  overflow-y:auto;
+}
+
 .modal-body {
-  max-height: 600px;
+  max-height: none;
+  overflow-y:none;
 }
 
 .qrcode__android {
