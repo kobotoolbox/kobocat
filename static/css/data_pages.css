@@ -12,7 +12,7 @@
     clear: both;
     display: block;
     overflow-x: auto;
-    width: 95%;
+    width: 98% !important;
 }
 
 .data-table-container table.table th, 
@@ -24,6 +24,11 @@
     text-overflow:ellipsis;
     width:auto;
     text-align:left;
+}
+
+.data-table-container table.table td.edit {
+  cursor: pointer;
+  color: #1e8fde;
 }
 
 /* Data instance */

@@ -45,7 +45,7 @@
     <script type="text/javascript" src="/static/bower_components/backgrid-filter/backgrid-filter.min.js"></script>
     <script type="text/javascript" src="/static/bower_components/backgrid-paginator/backgrid-paginator.min.js"></script>
     <script type="text/javascript" src="/static/js/xform.js"></script>
-    <script src="/static/js/data_view.js" type="text/javascript"></script>
+    <script type="text/javascript" src="/static/js/data_view.js"></script>
     <script type="text/javascript">
         var formJSONUrl = "{% url "onadata.apps.logger.views.download_jsonform" owner.username xform.id_string %}";
         var mongoAPIUrl = "{% url "onadata.apps.main.views.api" owner.username xform.id_string %}";
@@ -60,6 +60,24 @@
                 formUrl: formJSONUrl,
                 dataUrl: mongoAPIUrl
             });
+
+            var _elementFound = false;
+            $(document).bind('DOMSubtreeModified',function(e){
+                if (e.srcElement.className == 'backgrid-paginator') {
+                    if (_elementFound)
+                        return;
+                    $('.data-table-container table thead tr').prepend('<th class="renderable"> </th>');
+                    $('.data-table-container table tbody tr').prepend('<td class="renderable edit"><i class="fa fa-eye"></i> <i class="fa fa-pencil-square-o"></i></td>');
+                    _elementFound = true;
+                }
+            })
+
+            $( ".data-table-container" ).on( "click", "td.edit", function() {
+                $(this).dblclick(); 
+            });
+
+
         });
+
     </script>
 {% endblock %}
