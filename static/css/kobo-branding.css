@@ -389,7 +389,9 @@ td.published_forms__cell--project a:hover {
 /* Boostrap buttons override */
 
 button.btn, a.btn, 
-button.btn:hover, a.btn:hover {
+button.btn:hover, a.btn:hover, 
+input.btn, input.btn:hover, 
+.btn:focus {
   border-radius: 0px;
   border:none;
   font-weight: 600;
@@ -402,7 +404,10 @@ button.btn:hover, a.btn:hover {
 button.btn.btn-primary, 
 a.btn.btn-primary,
 a.btn.btn-primary:hover,
-button.btn.btn-primary:hover {
+button.btn.btn-primary:hover, 
+input.btn.btn-primary, 
+input.btn.btn-primary:hover, 
+.btn.btn-primary:focus {
   background: #39C06E;
   border-bottom:2px solid #1D8C47;
 }
@@ -410,26 +415,61 @@ button.btn.btn-primary:hover {
 button.btn.btn-danger, 
 a.btn.btn-danger,
 a.btn.btn-danger:hover,
-button.btn.btn-danger:hover {
+button.btn.btn-danger:hover,
+input.btn.btn-danger, 
+input.btn.btn-danger:hover, 
+.btn.btn-danger:focus {
   background: #DC6561;
   border-bottom-color:#C65657;
 }
 
 
 button.btn:hover, 
-a.btn:hover {
+a.btn:hover, 
+input.btn:hover {
   opacity: 0.75;
 }
 
 button.btn.btn-primary[disabled], 
 button.btn.btn-primary[disabled]:hover, 
-button.btn[disabled] {
+button.btn[disabled], input.btn[disabled] {
   background:#666;
   border-bottom:2px solid #444;
   opacity: 0.75;
   cursor: no-drop;
 }
 
+i.fa-trash-o {
+  color: #DC6561;
+}
 .modal-footer .btn+.btn {
   margin-bottom:5px;
+}
+
+/* Boostrap media queries overrides */
+@media (max-width: 979px) {
+  body {
+    padding-left: 0px;
+    padding-right: 0px;
+  }  
+
+  .single-project__header, .projects-list__header, .data-page__header {
+    padding-left:20px;
+    padding-right: 20px;
+  }
+
+  .container__wide .row {
+    margin-left: 0;
+  }
+
+}
+
+@media (min-width:768px) and (max-width: 979px) {
+  .single-project__header .container, 
+  .projects-list__header .container, 
+  .data-page__header .container {
+    width: 100% !important;
+    margin-left: 0px;
+    margin-right: 0px;
+  }
 }

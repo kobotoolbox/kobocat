@@ -67,12 +67,13 @@
                     if (_elementFound)
                         return;
                     $('.data-table-container table thead tr').prepend('<th class="renderable"> </th>');
-                    $('.data-table-container table tbody tr').prepend('<td class="renderable edit"><i class="fa fa-eye"></i> <i class="fa fa-pencil-square-o"></i></td>');
+                    $('.data-table-container table tbody tr').attr('title', 'Doube click to view submission');
+                    $('.data-table-container table tbody tr').prepend('<td class="renderable view"><i class="fa fa-eye" title="View submission"></i></i></td>');
                     _elementFound = true;
                 }
             })
 
-            $( ".data-table-container" ).on( "click", "td.edit", function() {
+            $( ".data-table-container" ).on( "click", "td.view", function() {
                 $(this).dblclick(); 
             });
 

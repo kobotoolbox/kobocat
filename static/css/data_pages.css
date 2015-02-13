@@ -26,8 +26,12 @@
     text-align:left;
 }
 
-.data-table-container table.table td.edit {
+.data-table-container table.table td.view {
   cursor: pointer;
+  color: #555;
+}
+
+.data-table-container table.table td.view:hover {
   color: #1e8fde;
 }
 

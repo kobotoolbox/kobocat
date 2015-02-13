@@ -9,6 +9,13 @@
   top:48px;
 }
 
+@media (max-width: 979px) {
+  .single-project__settings {
+    width: 90%;
+    overflow: hidden;
+  }
+}
+
 .settings__left {
   width: 49%;
   border-right: 1px solid #D9DDE1;
