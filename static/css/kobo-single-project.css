@@ -229,6 +229,27 @@ a.dashboard__button {
     cursor: pointer;
 }
 
+@media (max-width: 979px) {
+  a.dashboard__button {
+    height: 66px;
+  }
+  a.dashboard__button-download-data span {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+  }
+}
+
+@media (max-width: 450px) {
+  .dashboard__left, 
+  .dashboard__right, 
+  .dashboard__photos, 
+  .dashboard__submissions {
+    float: none;
+    clear: both;
+    width: 100%;
+  }
+}
+
 a.dashboard__button:hover, a.dashboard__button.active {
   border-color: #5DB0EC;
   color: #5DB0EC;
