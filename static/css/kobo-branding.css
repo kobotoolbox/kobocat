@@ -236,9 +236,12 @@ section {
 .sub-header-bar a {
   color: #333;
   font-weight: 600;
-  line-height: 40px;
-  margin-left: 14px;
+  line-height: 1.4em;
+  font-size: 0.95em;
+  display: block;
   cursor: pointer;
+  word-wrap: break-word;
+  padding-top:10px;
 }
 
 .sub-header-bar a:hover, 
