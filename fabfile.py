@@ -10,7 +10,7 @@ from fabric.operations import put
 
 DEPLOYMENTS = {}
 
-deployments_file = os.environ.get('DEPLOYMENTS_JSON')
+deployments_file = os.environ.get('DEPLOYMENTS_JSON', 'deployments.json')
 if os.path.exists(deployments_file):
     with open(deployments_file, 'r') as f:
         imported_deployments = json.load(f)
@@ -25,11 +25,16 @@ def exit_with_error(message):
     sys.exit(1)
 
 
-def check_key_filename(deployment_name):
-    if 'key_filename' in DEPLOYMENTS[deployment_name] and \
-       not os.path.exists(DEPLOYMENTS[deployment_name]['key_filename']):
-        exit_with_error("Cannot find required permissions file: %s" %
-                        DEPLOYMENTS[deployment_name]['key_filename'])
+def check_key_filename(deployment_configs):
+    if 'key_filename' in deployment_configs and \
+       not os.path.exists(deployment_configs['key_filename']):
+        # Maybe the path contains a ~; try expanding that before failing
+        deployment_configs['key_filename'] = os.path.expanduser(
+            deployment_configs['key_filename']
+        )
+        if not os.path.exists(deployment_configs['key_filename']):
+            exit_with_error("Cannot find required permissions file: %s" %
+                            deployment_configs['key_filename'])
 
 
 def setup_env(deployment_name):
