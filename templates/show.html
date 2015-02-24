@@ -41,7 +41,7 @@
                     {% endif %}
                   </li>
                 {% endfor %}
-              </ul>            
+              </ul>
 
               {% if can_edit %}
               <button class="single-project__button single-project__add-media">+ Add Document</button>
@@ -88,17 +88,16 @@
 
           <div class="settings__form-item">
             <label class="settings__form-label">
-              Share Data Publicly
+              Share Project Publicly
             </label>
-
-            <label><input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" ><div class="switch"></div></label>
+            <label title="{% trans "Allow anyone from the web to view this page." %}"><input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" ><div class="switch"></div></label>
           </div>
 
           <div class="settings__form-item">
             <label class="settings__form-label">
-              Share Project Publicly
+              Share Data Publicly
             </label>
-            <label><input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
+            <label title="{% trans "Allow anyone from the web to inspect this project's data." %}"><input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
           </div>
 
           <div class="settings__form-item">
@@ -172,7 +171,7 @@
         </form>
 
         <div class="single-project__toggle-documents">
-          <i class="fa fa-paperclip"></i> <i class="doctoggle__caret fa fa-caret-right"></i> 
+          <i class="fa fa-paperclip"></i> <i class="doctoggle__caret fa fa-caret-right"></i>
           <form class="single-project__toggle-description">
             {% csrf_token %}
             <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% endif %}" placeholder="Add a description to your project"/>
@@ -223,15 +222,15 @@
           Submissions ({{ xform.submission_count|intcomma }})
         </h2>
         <a title="{% trans "View Submitted Data" %}" href="{% url "onadata.apps.viewer.views.data_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view">
-          <i class="fa fa-table"></i> 
+          <i class="fa fa-table"></i>
           <span>View data in table</span>
         </a>
         <a href="{% url "onadata.apps.viewer.views.stats_tables" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-analyze">
-          <i class="fa fa-bar-chart-o"></i> 
+          <i class="fa fa-bar-chart-o"></i>
           <span>Analyze data</span>
         </a>
         <a class="dashboard__button dashboard__button-download-data">
-          <i class="fa fa-download"></i> 
+          <i class="fa fa-download"></i>
           <span>Download data</span>
         </a>
 
@@ -252,11 +251,11 @@
         </h2>
 
         <a title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-gallery">
-          <i class="fa fa-eye"></i> 
+          <i class="fa fa-eye"></i>
           <span>View gallery</span>
         </a>
         <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
-          <i class="fa fa-download"></i> 
+          <i class="fa fa-download"></i>
           <span>Download all photos</span>
         </a>
       </div>
@@ -305,12 +304,12 @@
         <h2 class="dashboard__group-label">GPS Points</h2>
 
         <a title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-on-map">
-          <i class="fa fa-map-marker"></i> 
+          <i class="fa fa-map-marker"></i>
           <span>View on map</span>
         </a>
 
         <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}" class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
-          <i class="fa fa-download"></i> 
+          <i class="fa fa-download"></i>
           <span>Download GPS points</span>
         </a>
      </div>
@@ -321,11 +320,11 @@
         <h2 class="dashboard__group-label">Add Data</h2>
 
         <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-enter-data" target="_blank">
-          <i class="fa fa-plus"></i> 
+          <i class="fa fa-plus"></i>
           <span>Enter data in browser</span>
         </a>
         <a data-toggle="modal" data-target="#popupmodal" data-href="{% url "get_qrcode" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect js-showqr">
-          <i class="fa fa-mobile"></i> 
+          <i class="fa fa-mobile"></i>
           <span>How to collect data on mobile device?</span>
         </a>
 
@@ -341,7 +340,7 @@
                 <h4>{%  trans "Collect data on your Android device with KoBoCollect" %}</h4>
                 <p>{%  trans "To start collecting data with our " %}
                   <a href="https://play.google.com/store/apps/details?id=org.koboc.collect.android">
-                    {%  trans "KoBoCollect Android app" %}</a> 
+                    {%  trans "KoBoCollect Android app" %}</a>
                     {%  trans "you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
 
                 <p><a href="{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}">{{ BASE_URL }}{% url "user_profile" content_user.username as profile_url %}{{ profile_url|slice:':-1' }}</a></p>
@@ -351,7 +350,7 @@
                 <div class="qrcode__code img_holder"> </div>
                 <div class="qrcode__text">
                   <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
-                  <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
+                  <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline:
                   <p><a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a> <br/>
                   (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
                   </p>
@@ -885,7 +884,7 @@ $(document).ready(function() {
         $(this).toggleClass('active');
       });
 
-      $(document).click(function(event) { 
+      $(document).click(function(event) {
           if(!$(event.target).closest('.dashboard__submissions').length) {
             if($('.dashboard__download__drop').is(":visible")) {
               $('.dashboard__download__drop').addClass('hidden');
@@ -924,7 +923,7 @@ $(document).ready(function() {
           liveEvents: true
       });
 
-    }); 
+    });
     </script>
     <!-- END NEW SANDBOX JQUERY CALLS -->
 
