@@ -10,9 +10,9 @@
   </style>
 
   <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
+  {% if is_owner %}
   <div class="sub-header-bar">
     <div class="container__wide">
-    {% if is_owner %}
       <a class="single-project__toggle-settings"><i class="fa fa-cog"></i> Project Settings</a>
       <div class="single-project__settings hidden">
         <div class="settings__left">
@@ -135,28 +135,8 @@
 
         </div>
       </div>
-    {% endif %}
     </div>
   </div>
-
-  <!-- Delete modal -->
-  {% if is_owner %}
-    <div id="delete-{{ xform.id_string }}" class="modal hide fade">
-        <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
-        {% csrf_token %}
-            <div class="modal-header">
-                <a data-dismiss="modal" class="close">&times;</a>
-                <h3>{% trans "Delete Confirmation" %}</h3>
-            </div>
-            <div class="modal-body">
-                <p>{% blocktrans with title=xform.title nb_sub=xform.submission_count|intcomma %}Are you sure you want to delete the form '{{ title }}'? This form has <strong>{{ nb_sub }}</strong> submissions associated with it that will also be deleted. If you are unsure about deleting this form press 'Cancel' and consider 'Archiving' the form instead.{% endblocktrans %}</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary form-submit">Delete</button>
-                <a href="#" onclick="$('#delete-{{ xform.id_string }}').modal('hide');" class="btn secondary">{% trans "Cancel" %}</a>
-            </div>
-        </form>
-    </div>
   {% endif %}
 
   <!-- Project title and background docs -->
@@ -208,6 +188,27 @@
         </div>
       </hgroup>
   </header>
+
+  <!-- Delete modal -->
+  {% if is_owner %}
+    <div id="delete-{{ xform.id_string }}" class="modal hide fade">
+        <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
+        {% csrf_token %}
+            <div class="modal-header">
+                <a data-dismiss="modal" class="close">&times;</a>
+                <h3>{% trans "Delete Confirmation" %}</h3>
+            </div>
+            <div class="modal-body">
+                <p>{% blocktrans with title=xform.title nb_sub=xform.submission_count|intcomma %}Are you sure you want to delete the form '{{ title }}'? This form has <strong>{{ nb_sub }}</strong> submissions associated with it that will also be deleted. If you are unsure about deleting this form press 'Cancel' and consider 'Archiving' the form instead.{% endblocktrans %}</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary form-submit">Delete</button>
+                <a href="#" onclick="$('#delete-{{ xform.id_string }}').modal('hide');" class="btn secondary">{% trans "Cancel" %}</a>
+            </div>
+        </form>
+    </div>
+  {% endif %}
+
   <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
 
 {% endblock %}

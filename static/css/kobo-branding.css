@@ -82,6 +82,7 @@ body {
 .container__wide {
   max-width: 1024px;
   margin:0 auto;
+  position: relative;
 }
 
 /* bootstrap hack for error msgs*/
@@ -120,7 +121,7 @@ section {
     padding: 12px 11px;
 }
 
-.header-bar__title, .header-bar__support {
+.header-bar__title {
     margin-top: 0;
     margin-right: 10px;
     margin-bottom: 0;
@@ -130,8 +131,12 @@ section {
 }
 
 .header-bar__support {
-  margin-right: 30px;
-  color: white;
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 30px;
+    color: white;
+    position: absolute;
+    right:110px;
 }
 
 .header-bar__support:hover {
@@ -157,6 +162,8 @@ section {
     height: 27px;
     margin-top: 5px;
     margin-right: 6px;
+    position: absolute;
+    right:0px;
 }
 
 /* ==========================================================================
@@ -245,11 +252,19 @@ section {
 
 /* Stylesheet for Single Project Header */
 
-.single-project__header, .projects-list__header {
+.single-project__header {
+  background: white;
+  margin-bottom:30px;
+  padding:20px 0px;
+  margin-top:-15px;
+}
+.sub-header-bar + .single-project__header, 
+.projects-list__header {
   margin-bottom: 30px;
   background-color: white;
   padding:20px 0px;
   padding-top: 70px;
+  margin-top: 0px;
 }
 
 .projects-list__header {
