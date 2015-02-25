@@ -1,0 +1,34 @@
+language: python
+python:
+- '2.7'
+addons:
+  postgresql: 9.3
+cache:
+  directories:
+  - $HOME/.pip-download-cache
+script:
+  - 
+env:
+- PIP_DOWNLOAD_CACHE=$HOME/.pip-download-cache DJANGO_DEBUG=False DJANGO_SECRET_KEY=64mSBN96GBfFQtf
+install:
+- pip install -r requirements.txt
+- python manage.py syncdb --noinput --settings=onadata.settings.common
+- python manage.py migrate --noinput --settings=onadata.settings.common
+
+# Deploy to kc.kbtdev.org, based on
+# http://docs.travis-ci.com/user/deployment/custom/
+after_success:
+- echo '*** Deploying to staging server'
+# Decrypt private key
+- openssl aes-256-cbc -K $encrypted_40a3bfcf98cf_key -iv $encrypted_40a3bfcf98cf_iv
+  -in travis_deploy_key.pem.enc -out travis_deploy_key.pem
+# Install private key
+- chmod 600 .travis/staging_deploy_key.pem
+- eval "$(ssh-agent)" # Travis documentation omits this, but without it ssh-add fails
+- ssh-add .travis/staging_deploy_key.pem
+# Execute deployment script via SSH
+- test "$TRAVIS_PULL_REQUEST" == 'false' -a "$TRAVIS_BRANCH" == 'master' && ssh -o UserKnownHostsFile=.travis/staging_known_host ubuntu@kf.kbtdev.org /home/ubuntu/scripts/kc_deploy.sh "$TRAVIS_COMMIT"
+
+notifications:
+  irc: irc.freenode.org#kobotest
+  flowdock: ad631fc562736cf87e0c4439f9518f9d
