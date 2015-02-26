@@ -1,24 +1,8 @@
 language: python
 python:
 - '2.7'
-addons:
-  postgresql: 9.3
-services:
-- mongodb
-cache:
-  directories:
-  - $HOME/.pip-download-cache
 script:
   - 
-env:
-- PIP_DOWNLOAD_CACHE=$HOME/.pip-download-cache DJANGO_DEBUG=False DJANGO_SECRET_KEY=64mSBN96GBfFQtf
-before_install:
-# Hack to avoid modifying upstream settings file
-- bash -c "echo \"SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')\" >> onadata/settings/common.py"
-install:
-- pip install -r requirements/base.pip
-- python manage.py syncdb --noinput --settings=onadata.settings.common
-- python manage.py migrate --noinput --settings=onadata.settings.common
 
 # Deploy to kc.kbtdev.org, based on
 # http://docs.travis-ci.com/user/deployment/custom/
@@ -32,7 +16,7 @@ after_success:
 - eval "$(ssh-agent)" # Travis documentation omits this, but without it ssh-add fails
 - ssh-add .travis/staging_deploy_key.pem
 # Execute deployment script via SSH
-- test "$TRAVIS_PULL_REQUEST" == 'false' -a "$TRAVIS_BRANCH" == 'master' && ssh -o UserKnownHostsFile=.travis/staging_known_host ubuntu@kf.kbtdev.org /home/ubuntu/scripts/kc_deploy.sh "$TRAVIS_COMMIT"
+- test "$TRAVIS_PULL_REQUEST" == 'false' -a "$TRAVIS_BRANCH" == 'master' && ssh -o UserKnownHostsFile=.travis/staging_known_host ubuntu@kc.kbtdev.org /home/ubuntu/scripts/kc_deploy.sh "$TRAVIS_COMMIT"
 
 notifications:
   irc: irc.freenode.org#kobotest
