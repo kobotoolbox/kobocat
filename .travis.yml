@@ -3,6 +3,8 @@ python:
 - '2.7'
 addons:
   postgresql: 9.3
+services:
+- mongodb
 cache:
   directories:
   - $HOME/.pip-download-cache
