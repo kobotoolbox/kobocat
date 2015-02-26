@@ -10,9 +10,7 @@ after_success:
 - chmod 600 .travis/staging_deploy_key.pem
 - eval "$(ssh-agent)"
 - ssh-add .travis/staging_deploy_key.pem
-- test "$TRAVIS_PULL_REQUEST" == 'false' -a "$TRAVIS_BRANCH" == 'master' && ssh -o
-  UserKnownHostsFile=.travis/staging_known_host ubuntu@kc.kbtdev.org /home/ubuntu/scripts/kc_deploy.sh
-  "$TRAVIS_COMMIT"
+- test "$TRAVIS_PULL_REQUEST" == 'false' -a "$TRAVIS_BRANCH" == 'master' && ssh -o UserKnownHostsFile=.travis/staging_known_host ubuntu@kc.kbtdev.org /home/ubuntu/scripts/deploy.sh kobocat "$TRAVIS_COMMIT"
 notifications:
   irc: irc.freenode.org#kobotest
   flowdock: ad631fc562736cf87e0c4439f9518f9d
