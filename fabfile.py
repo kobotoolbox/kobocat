@@ -84,17 +84,19 @@ def deploy_ref(deployment_name, ref):
     setup_env(deployment_name)
     with cd(env.kc_path):
         run("git fetch origin")
+        # Make sure we're not moving to an older codebase
         git_output = run('git rev-list {}..HEAD --count 2>&1'.format(ref))
         if int(git_output) > 0:
             raise Exception("The server's HEAD is already in front of the "
                 "commit to be deployed.")
+        # We want to check out a specific commit, but this does leave the HEAD
+        # detached. Perhaps consider using `git reset`.
+        run('git checkout {}'.format(ref))
+        # Report if the working directory is unclean.
         git_output = run('git status --porcelain')
         if len(git_output):
             run('git status')
-            print('The working directory is unclean. Please review the details '
-                'above and press enter to continue or interrupt to abort.')
-            raw_input('')
-        run('git checkout {}'.format(ref))
+            print('WARNING: The working directory is unclean. See above.')
 
         deploy_template(env)
 
