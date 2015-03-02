@@ -351,8 +351,12 @@
                 <div class="qrcode__code img_holder"> </div>
                 <div class="qrcode__text">
                   <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
-                  <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline:
-                  <p><a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a> <br/>
+                  <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
+                  <p>
+                    <span class="qrcode__enter-data-url">
+                      <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a>
+                    </span>
+                  <br/>
                   (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
                   </p>
                 </div>
@@ -789,7 +793,10 @@ $(document).ready(function() {
         url: url,
         method: 'get',
         success: function(html){
-          $('.img_holder', div_target).html(html);
+          var contents = $('<div>'+html+'</div>');
+          $('.img_holder', div_target).html(contents.find('img'));
+          $('.qrcode__enter-data-url').html(contents.find('a'));
+          
         }
       })
     });
