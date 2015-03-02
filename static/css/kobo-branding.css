@@ -87,8 +87,17 @@ body {
 
 /* bootstrap hack for error msgs*/
 .container__wide .span12 {
-  width: auto;
+  width: 100%;
 }
+
+.container__wide .row {
+  margin-left: -20px;
+}
+
+.container__wide .span6 {
+  max-width: 460px;
+}
+
 .main {
   background: white;
   padding:20px;
@@ -215,25 +224,6 @@ section {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Data tables - temporarily here */
-
-.data-table-container table.table {
-    clear: both;
-    display: block;
-    max-width: 977px;
-    overflow-x: auto;
-    width: 100%;
-}
-
-.data-table-container table.table th, 
-.data-table-container table.table td {
-    font-size:12px;
-    padding: 4px 0px 4px 12px;
-    word-wrap:break-word;
-    max-width: 185px;
-    text-align:left;
-}
-
 /* Top level menu items
    -------------------------------------------------------------------------- */
 
@@ -250,16 +240,32 @@ section {
   z-index: 6;
 }
 
-/* Stylesheet for Single Project Header */
-
-.single-project__header {
-  background: white;
-  margin-bottom:30px;
-  padding:20px 0px;
-  margin-top:-15px;
+.sub-header-bar a {
+  color: #333;
+  font-weight: 600;
+  line-height: 1.4em;
+  font-size: 0.95em;
+  display: block;
+  cursor: pointer;
+  word-wrap: break-word;
+  padding-top:10px;
 }
-.sub-header-bar + .single-project__header, 
-.projects-list__header {
+
+.sub-header-bar a:hover, 
+.sub-header-bar a.active {
+  color: #5DB0EC;
+  text-decoration: none;
+}
+
+.sub-header-bar a i {
+  margin-right: 6px;
+}
+
+/* Headers */
+
+.single-project__header, 
+.projects-list__header, 
+.data-page__header {
   margin-bottom: 30px;
   background-color: white;
   padding:20px 0px;
@@ -273,7 +279,8 @@ section {
 }
 
 .single-project__header .container, 
-.projects-list__header .container {
+.projects-list__header .container, 
+.data-page__header .container {
   max-width: 984px;
 }
 
@@ -287,7 +294,8 @@ section {
 /* Project title */
 
 .single-project__header input#title, 
-.projects-list__header h1 {
+.projects-list__header h1, 
+.data-page__header h1 {
   font-size: 2em;
   border-radius: 0;
   line-height: 1em;
@@ -387,4 +395,92 @@ td.published_forms__cell--project a:hover {
 
 .color--green {
     color: green;
+}
+
+/* Boostrap buttons override */
+
+button.btn, a.btn, 
+button.btn:hover, a.btn:hover, 
+input.btn, input.btn:hover, 
+.btn:focus {
+  border-radius: 0px;
+  border:none;
+  font-weight: 600;
+  text-shadow: none;
+  background: #3C95D3;
+  border-bottom:2px solid #336286;
+  color: white;
+}
+
+button.btn.btn-primary, 
+a.btn.btn-primary,
+a.btn.btn-primary:hover,
+button.btn.btn-primary:hover, 
+input.btn.btn-primary, 
+input.btn.btn-primary:hover, 
+.btn.btn-primary:focus {
+  background: #39C06E;
+  border-bottom:2px solid #1D8C47;
+}
+
+button.btn.btn-danger, 
+a.btn.btn-danger,
+a.btn.btn-danger:hover,
+button.btn.btn-danger:hover,
+input.btn.btn-danger, 
+input.btn.btn-danger:hover, 
+.btn.btn-danger:focus {
+  background: #DC6561;
+  border-bottom-color:#C65657;
+}
+
+
+button.btn:hover, 
+a.btn:hover, 
+input.btn:hover {
+  opacity: 0.75;
+}
+
+button.btn.btn-primary[disabled], 
+button.btn.btn-primary[disabled]:hover, 
+button.btn[disabled], input.btn[disabled] {
+  background:#666;
+  border-bottom:2px solid #444;
+  opacity: 0.75;
+  cursor: no-drop;
+}
+
+i.fa-trash-o {
+  color: #DC6561;
+}
+.modal-footer .btn+.btn {
+  margin-bottom:5px;
+}
+
+/* Boostrap media queries overrides */
+@media (max-width: 979px) {
+  body {
+    padding-left: 0px;
+    padding-right: 0px;
+  }  
+
+  .single-project__header, .projects-list__header, .data-page__header {
+    padding-left:20px;
+    padding-right: 20px;
+  }
+
+  .container__wide .row {
+    margin-left: 0;
+  }
+
+}
+
+@media (min-width:768px) and (max-width: 979px) {
+  .single-project__header .container, 
+  .projects-list__header .container, 
+  .data-page__header .container {
+    width: 100% !important;
+    margin-left: 0px;
+    margin-right: 0px;
+  }
 }
