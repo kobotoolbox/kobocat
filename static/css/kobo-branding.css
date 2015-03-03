@@ -86,12 +86,23 @@ body {
 }
 
 /* bootstrap hack for error msgs*/
-.container__wide .span12 {
-  width: 100%;
-}
-
 .container__wide .row {
   margin-left: -20px;
+}
+
+.container__wide .row .span12 {
+  width: 96%;
+  margin-right: 20px;
+  float: none;
+}
+
+.container__wide .alert {
+  border-radius: 0px;
+  margin-top:10px;
+}
+
+.container__wide .alert p {
+  margin-top: 0px;
 }
 
 .container__wide .span6 {

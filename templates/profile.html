@@ -121,9 +121,19 @@
 $(document).ready(function() {
 
   $(document).on("click", ".projects__toggle-advanced", function () {
-    $('.projects__advanced-xls').toggleClass('hidden');
-    $(this).toggleClass('active');
+    $('.projects__advanced-xls input#id_xls_file').trigger('click');
   });
+
+  $(document).on("change", "input#id_xls_file", function () {
+    $(this).parents("form").submit();
+  });
+
+      $("#file_select").change(function(){
+        
+        $("#upload_form_div").hide();
+        $("#loading").show();
+    });
+
 
 }); 
 </script>
