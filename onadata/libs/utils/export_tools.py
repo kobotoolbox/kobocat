@@ -908,7 +908,7 @@ def kml_export_data(id_string, user):
         if point:
             data_for_template.append({
                 'name': id_string,
-                'id': instance.id,
+                'id': instance.uuid,
                 'lat': point.y,
                 'lng': point.x,
                 })
