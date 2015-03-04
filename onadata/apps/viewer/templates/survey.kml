@@ -28,15 +28,16 @@
 		</StyleMap>
 	
 		{% for d in data %}  
-	    <Placemark>	
-	            <name>Survey Instance: {{d.id}}</name>
-                <Snippet> </Snippet>
-		              <styleUrl>#sh_red-circle</styleUrl>
-		              <Point>
-				        <coordinates>
-				        	{{d.lng}}, {{d.lat}}
-				        </coordinates>
-		      		  </Point>
+	    <Placemark>
+          <description>
+          	Survey Instance: {{d.id}}
+          </description>
+          <styleUrl>#sh_red-circle</styleUrl>
+          <Point>
+	        <coordinates>
+	        	{{d.lng}}, {{d.lat}}
+	        </coordinates>
+  		  </Point>
         </Placemark>
 {% endfor %}
 	</Document>
