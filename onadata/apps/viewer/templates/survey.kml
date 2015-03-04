@@ -31,10 +31,6 @@
 	    <Placemark>	
 	            <name>Survey Instance: {{d.id}}</name>
                 <Snippet> </Snippet>
-		              <description>
-		                 
-		    			 <![CDATA[{{d.table|safe}}]]>  
-		              </description>
 		              <styleUrl>#sh_red-circle</styleUrl>
 		              <Point>
 				        <coordinates>
