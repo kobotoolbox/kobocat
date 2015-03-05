@@ -29,7 +29,9 @@
             <span style='float:middle;'>
               <div>
                 <input type="submit" class="btn btn-primary" value="{% trans 'New Export' %}" />
-                <a href="#advanced-export-modal" role="button" class="btn" data-toggle="modal">{% trans "Advanced Export" %}</a>
+                {% if export_type == 'xls' or export_type == 'csv' %}
+                  <a href="#advanced-export-modal" role="button" class="btn" data-toggle="modal">{% trans "Advanced Export" %}</a>
+                {% endif %}
             </div>
             </span>
     </form>
