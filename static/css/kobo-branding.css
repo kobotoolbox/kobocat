@@ -86,12 +86,23 @@ body {
 }
 
 /* bootstrap hack for error msgs*/
-.container__wide .span12 {
-  width: 100%;
-}
-
 .container__wide .row {
   margin-left: -20px;
+}
+
+.container__wide .row .span12 {
+  width: 96%;
+  margin-right: 20px;
+  float: none;
+}
+
+.container__wide .alert {
+  border-radius: 0px;
+  margin-top:10px;
+}
+
+.container__wide .alert p {
+  margin-top: 0px;
 }
 
 .container__wide .span6 {
@@ -298,10 +309,10 @@ section {
 .data-page__header h1 {
   font-size: 2em;
   border-radius: 0;
-  line-height: 1em;
+  line-height: 0.9em;
   margin:0px;
   padding:0px;
-  height: 35px;
+  height: 38px;
   font-weight: 600;
   border:none;
   box-shadow: none;
@@ -482,5 +493,17 @@ i.fa-trash-o {
     width: 100% !important;
     margin-left: 0px;
     margin-right: 0px;
+  }
+}
+
+@media (min-width: 768px) {
+  input.input-xxlarge {
+    width:94%;
+  }
+}
+
+@media (max-width: 768px) {
+  input.input-xxlarge {
+    width:90%;
   }
 }
