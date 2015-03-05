@@ -12,7 +12,7 @@ from onadata.apps.stats.utils import get_form_submissions_per_day
 def stats(request, username=None, id_string=None):
     if id_string:
         xform = get_object_or_404(
-            XForm, user=request.user, id_string__iexact=id_string)
+            XForm, user=request.user, id_string__exact=id_string)
         data = {
             'xform': xform,
             'context.submission_stats': get_form_submissions_per_day(xform)

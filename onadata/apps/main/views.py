@@ -91,7 +91,7 @@ def clone_xlsform(request, username):
         form_owner = request.POST.get('username')
         id_string = request.POST.get('id_string')
         xform = XForm.objects.get(user__username__iexact=form_owner,
-                                  id_string__iexact=id_string)
+                                  id_string__exact=id_string)
         if len(id_string) > 0 and id_string[0].isdigit():
             id_string = '_' + id_string
         path = xform.xls.name
@@ -393,7 +393,7 @@ def show(request, username=None, id_string=None, uuid=None):
     data = {}
     data['cloned'] = len(
         XForm.objects.filter(user__username__iexact=request.user.username,
-                             id_string__iexact=id_string + XForm.CLONED_SUFFIX)
+                             id_string__exact=id_string + XForm.CLONED_SUFFIX)
     ) > 0
     data['public_link'] = MetaData.public_link(xform)
     data['is_owner'] = is_owner
@@ -495,7 +495,7 @@ def public_api(request, username, id_string):
 
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
 
     _DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
     exports = {'username': xform.user.username,
@@ -517,7 +517,7 @@ def public_api(request, username, id_string):
 @login_required
 def edit(request, username, id_string):
     xform = XForm.objects.get(user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     owner = xform.user
 
     if username == request.user.username or\
@@ -854,7 +854,7 @@ def form_gallery(request):
 def download_metadata(request, username, id_string, data_id):
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     owner = xform.user
     if username == request.user.username or xform.shared:
         data = get_object_or_404(MetaData, pk=data_id)
@@ -888,7 +888,7 @@ def download_metadata(request, username, id_string, data_id):
 def delete_metadata(request, username, id_string, data_id):
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     owner = xform.user
     data = get_object_or_404(MetaData, pk=data_id)
     dfs = get_storage_class()()
@@ -936,7 +936,7 @@ def delete_metadata(request, username, id_string, data_id):
 def download_media_data(request, username, id_string, data_id):
     xform = get_object_or_404(
         XForm, user__username__iexact=username,
-        id_string__iexact=id_string)
+        id_string__exact=id_string)
     owner = xform.user
     data = get_object_or_404(MetaData, id=data_id)
     dfs = get_storage_class()()
@@ -1033,7 +1033,7 @@ def form_photos(request, username, id_string):
 def set_perm(request, username, id_string):
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     owner = xform.user
     if username != request.user.username\
             and not has_permission(xform, username, request):
@@ -1179,7 +1179,7 @@ def delete_data(request, username=None, id_string=None):
 def link_to_bamboo(request, username, id_string):
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     owner = xform.user
     audit = {
         'xform': xform.id_string
@@ -1219,7 +1219,7 @@ def link_to_bamboo(request, username, id_string):
 @is_owner
 def update_xform(request, username, id_string):
     xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__iexact=id_string)
+        XForm, user__username__iexact=username, id_string__exact=id_string)
     owner = xform.user
 
     def set_form():
@@ -1370,7 +1370,7 @@ def qrcode(request, username, id_string):
 
 def enketo_preview(request, username, id_string):
     xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__iexact=id_string)
+        XForm, user__username__iexact=username, id_string__exact=id_string)
     owner = xform.user
     if not has_permission(xform, owner, request, xform.shared):
         return HttpResponseForbidden(_(u'Not shared.'))

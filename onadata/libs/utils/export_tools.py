@@ -689,7 +689,7 @@ def generate_export(export_type, extension, username, id_string,
     }
 
     xform = XForm.objects.get(
-        user__username__iexact=username, id_string__iexact=id_string)
+        user__username__iexact=username, id_string__exact=id_string)
 
     # query mongo for the cursor
     records = query_mongo(username, id_string, filter_query)
@@ -965,7 +965,7 @@ def generate_external_export(
         filter_query=None, meta=None):
 
     xform = XForm.objects.get(
-        user__username__iexact=username, id_string__iexact=id_string)
+        user__username__iexact=username, id_string__exact=id_string)
     user = User.objects.get(username=username)
 
     server, name = _get_server_from_metadata(xform, meta, token)

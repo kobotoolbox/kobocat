@@ -96,7 +96,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         obj = get_object_or_404(Instance,
                                 xform__user__username__iexact=username,
-                                xform__id_string__iexact=id_string,
+                                xform__id_string__exact=id_string,
                                 uuid=uuid)
         self.check_object_permissions(self.request, obj.xform)
 
@@ -125,7 +125,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         if formId.find('[') != -1:
             formId = _extract_id_string(formId)
 
-        xform = get_object_or_404(queryset, id_string__iexact=formId)
+        xform = get_object_or_404(queryset, id_string__exact=formId)
         self.check_object_permissions(self.request, xform)
         instances = Instance.objects.filter(xform=xform).order_by('pk')
         num_entries = self.request.GET.get('numEntries')

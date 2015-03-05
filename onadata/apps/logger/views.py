@@ -220,7 +220,7 @@ def formList(request, username):
 @require_GET
 def xformsManifest(request, username, id_string):
     xform = get_object_or_404(
-        XForm, id_string__iexact=id_string, user__username__iexact=username)
+        XForm, id_string__exact=id_string, user__username__iexact=username)
     formlist_user = xform.user
     profile, created = \
         UserProfile.objects.get_or_create(user=formlist_user)
@@ -330,7 +330,7 @@ def submission(request, username=None):
 def download_xform(request, username, id_string):
     user = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm,
-                              user=user, id_string__iexact=id_string)
+                              user=user, id_string__exact=id_string)
     profile, created =\
         UserProfile.objects.get_or_create(user=user)
 
@@ -356,7 +356,7 @@ def download_xform(request, username, id_string):
 def download_xlsform(request, username, id_string):
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     owner = User.objects.get(username__iexact=username)
     helper_auth_helper(request)
 
@@ -409,7 +409,7 @@ def download_xlsform(request, username, id_string):
 def download_jsonform(request, username, id_string):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     if request.method == "OPTIONS":
         response = HttpResponse()
         add_cors_headers(response)
@@ -434,7 +434,7 @@ def download_jsonform(request, username, id_string):
 @require_POST
 def delete_xform(request, username, id_string):
     xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
 
     # delete xform and submissions
     remove_xform(xform)
@@ -452,7 +452,7 @@ def delete_xform(request, username, id_string):
 @is_owner
 def toggle_downloadable(request, username, id_string):
     xform = XForm.objects.get(user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     xform.downloadable = not xform.downloadable
     xform.save()
     audit = {}
@@ -470,7 +470,7 @@ def toggle_downloadable(request, username, id_string):
 def enter_data(request, username, id_string):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__iexact=id_string)
+                              id_string__exact=id_string)
     if not has_edit_permission(xform, owner, request, xform.shared):
         return HttpResponseForbidden(_(u'Not shared.'))
 
@@ -508,7 +508,7 @@ def edit_data(request, username, id_string, data_id):
     context = RequestContext(request)
     owner = User.objects.get(username__iexact=username)
     xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__iexact=id_string)
+        XForm, user__username__iexact=username, id_string__exact=id_string)
     instance = get_object_or_404(
         Instance, pk=data_id, xform=xform)
     if not has_edit_permission(xform, owner, request, xform.shared):
@@ -561,7 +561,7 @@ def view_submission_list(request, username):
         return authenticator.build_challenge_response()
     id_string = request.GET.get('formId', None)
     xform = get_object_or_404(
-        XForm, id_string__iexact=id_string, user__username__iexact=username)
+        XForm, id_string__exact=id_string, user__username__iexact=username)
     if not has_permission(xform, form_user, request, xform.shared_data):
         return HttpResponseForbidden('Not shared.')
     num_entries = request.GET.get('numEntries', None)
@@ -611,7 +611,7 @@ def view_download_submission(request, username):
 
     uuid = _extract_uuid(form_id_parts[1])
     instance = get_object_or_404(
-        Instance, xform__id_string__iexact=id_string, uuid=uuid,
+        Instance, xform__id_string__exact=id_string, uuid=uuid,
         xform__user__username=username, deleted_at=None)
     xform = instance.xform
     if not has_permission(xform, form_user, request, xform.shared_data):
