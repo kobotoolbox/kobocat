@@ -25,11 +25,11 @@
               {{ xform.description }}
             </div>
             {% endif %}
-<!--             {% if xform.shared %}
+            <!--   {% if xform.shared %}
                 <span class="label label-info label-public">{%  trans "PUBLIC" %}</span>
             {% endif %} -->
             {% if xform.encrypted %}
-                <span class="label label-important icon-lock label-encrypted">&nbsp;&nbsp;{%  trans "ENCRYPTED" %}</span>
+              <span class="label label-important label-encrypted">&nbsp;{% trans "ENCRYPTED" %}&nbsp;</span>
             {% endif %}
         </td>
         <td class="published_forms__cell published_forms__cell--state">

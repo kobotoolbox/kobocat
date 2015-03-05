@@ -464,10 +464,15 @@ button.btn[disabled], input.btn[disabled] {
 i.fa-trash-o {
   color: #DC6561;
 }
+
 .modal-footer .btn+.btn {
   margin-bottom:5px;
 }
 
+.label, .badge {
+  text-shadow:none;
+  font-size: 10px;
+}
 /* Boostrap media queries overrides */
 @media (max-width: 979px) {
   body {
