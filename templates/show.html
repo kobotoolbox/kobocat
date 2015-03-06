@@ -17,9 +17,9 @@
       <div class="single-project__settings hidden">
         <div class="settings__left">
           <div class="settings__general">
-            <span title="Set here your general form settings" class="poshytip">?</span>
+            <!-- <span title="Set here your general form settings" class="poshytip">?</span> -->
             <h2 class="settings__group-label">
-              {% trans "General Form Settings" %}
+              {% trans "Form Settings" %}
             </h2>
 
             <div class="settings__form-item">
@@ -90,14 +90,20 @@
             <label class="settings__form-label">
               Share Project Publicly
             </label>
-            <label title="{% trans "Allow anyone from the web to view this page." %}"><input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" ><div class="switch"></div></label>
+            <label>
+              <input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" >
+              <div title="{% trans "Allow anyone from the web to view this page." %}" class="poshytip switch"></div>
+            </label>
           </div>
 
           <div class="settings__form-item">
             <label class="settings__form-label">
               Share Data Publicly
             </label>
-            <label title="{% trans "Allow anyone from the web to inspect this project&rsquo;s data." %}"><input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
+            <label>
+              <input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">
+              <div title="{% trans "Allow anyone from the web to inspect this project&rsquo;s data." %}" class="poshytip switch"></div>
+            </label>
           </div>
 
           <div class="settings__form-item">
@@ -888,8 +894,11 @@ $(document).ready(function() {
       });
 
       $(document).on("click", ".single-project__add-bg-doc", function () {
-        $('.single-project__bg-doc-upload').toggleClass('hidden');
-        $(this).toggleClass('active');
+        $('.single-project__documents input#id_doc').trigger('click');
+      });
+
+      $(document).on("change", "input#id_doc", function () {
+        $(this).parents("form").submit();
       });
 
       $(document).click(function(event) {
@@ -922,12 +931,14 @@ $(document).ready(function() {
       }
 
       // question mark poshytip effect
-      $('span.poshytip').poshytip({
+      $('.poshytip').poshytip({
           className: 'tip__bottomarrow',
           showTimeout: 1,
           alignTo: 'target',
           alignX: 'right',
-          alignY: 'inner-bottom',
+          alignY: 'top',
+          offsetX: -60,
+          offsetY: -5,
           liveEvents: true
       });
 
