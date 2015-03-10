@@ -432,7 +432,7 @@ td.published_forms__cell--project a:hover {
 }
 
 .map__viewby > li > a {
-  padding: 2px 4px;
+  padding: 6px 8px;
   margin: 0;
   text-align: center;
 }
@@ -442,6 +442,10 @@ td.published_forms__cell--project a:hover {
 .map__viewby > li.open > a:focus {
   background: transparent;
   color: #3F3F3F;
+}
+
+.map__viewby li.dropdown i {
+  margin-left: 8px;
 }
 
 .nav li.dropdown.open .caret, 
@@ -464,6 +468,10 @@ td.published_forms__cell--project a:hover {
   color: white;
 }
 
+ul.dropdown-menu-right {
+  top:-5%;
+  left: 105%;
+}
 /* Colors */
 
 .color--red {
