@@ -22,7 +22,33 @@
     var customMapBoxTileLayer = {label: '{{mapbox_layer.map_name}}', url: '{{mapbox_layer.link}}'};
   </script>
   {% endif %}
-  <div class="map__back" style="position:absolute;top:50px; right:60px;background:#F8F8F8;padding:8px;box-shadow:0 0 8px rgba(0, 0, 0, 0.4);border:1px solid #888;z-index:10;border-radius:5px;font-size:12px;"><a href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}">back to project</a></div>
+  <div class="map__back"><a href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}">back to project</a></div>
+
+  <ul class="nav pull-right map__viewby">
+    <li class="hidden"><a href="#" class="dropdown-toggle">{% trans "Data" %}</a></li>
+    <li class="dropdown hidden">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+        <b class="caret"></b>
+      </a>
+      <ul class="dropdown-menu">
+        <li>
+            <a href="{% url "csv_export" content_user.username xform.id_string %}">
+                {% trans "csv" %}
+            </a>
+        </li>
+        <li>
+            <a href="{% url "xls_export" content_user.username xform.id_string %}">
+                {% trans "xls" %}
+            </a>
+        </li>
+        <li>
+            <a href="{% url "onadata.apps.viewer.views.kml_export" content_user.username xform.id_string %}">
+                 {% trans "kml" %}
+            </a>
+        </li>
+      </ul>
+    </li>
+  </ul>
 
   <div id="progress-modal" class="modal hide fade" data-backdrop="static">
       <div class="progress progress-info progress-striped">
