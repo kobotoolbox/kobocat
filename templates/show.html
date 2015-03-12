@@ -181,7 +181,7 @@
           {% if can_edit %}
             <button class="single-project__button single-project__add-bg-doc">+ Add Document</button>
 
-            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__bg-doc-upload hidden">
+            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__bg-doc-upload hidden-form">
                 {% csrf_token %}
                 <table>
                     {{ doc_form.as_table }}
