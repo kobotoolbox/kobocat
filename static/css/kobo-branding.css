@@ -256,10 +256,11 @@ section {
   font-weight: 600;
   line-height: 1.4em;
   font-size: 0.95em;
-  display: block;
+  display: inline-block;
   cursor: pointer;
   word-wrap: break-word;
   padding-top:10px;
+  margin-right: 10px;
 }
 
 .sub-header-bar a:hover, 
@@ -392,12 +393,85 @@ td.published_forms__cell--project a:hover {
   text-align: center;
 }
 
-/* Map margin override */
+/* Map overrides */
 
 #map_canvas {
   margin-top: -15px;
 }
 
+#map_canvas .leaflet-top {
+  z-index: 14;
+}
+
+.map__back {
+  position:absolute;
+  top:50px; 
+  right:60px;
+  background:#F8F8F8;
+  padding:8px;
+  box-shadow:0 0 8px rgba(0, 0, 0, 0.4);
+  border:1px solid #888;
+  z-index:10;
+  border-radius:5px;
+  font-size:12px;
+}
+
+.map__viewby {
+  position: absolute;
+  left: 50px;
+  top: 50px;
+  background: white;
+  z-index: 20;
+  border-radius: 10px;
+  box-shadow:0 0 8px rgba(0, 0, 0, 0.4);
+  border:1px solid #888;
+  z-index:10;
+  padding:0;
+  margin: 0px;
+  font-size: 12px;
+}
+
+.map__viewby > li > a {
+  padding: 6px 8px;
+  margin: 0;
+  text-align: center;
+}
+
+.map__viewby > li > a:hover, 
+.map__viewby > li > a:focus, 
+.map__viewby > li.open > a:focus {
+  background: transparent;
+  color: #3F3F3F;
+}
+
+.map__viewby li.dropdown i {
+  margin-left: 8px;
+}
+
+.nav li.dropdown.open .caret, 
+.nav li.dropdown.open.active .caret, 
+.nav li.dropdown.open a:hover .caret, 
+.nav li.dropdown.open a:focus .caret {
+  border-top-color: #3F3F3F;
+  border-bottom-color: #3F3F3F;
+}
+
+.map__viewby ul.questions li {
+  text-align: left;
+}
+
+.map__viewby .dropdown-menu li > a:hover, 
+.map__viewby .dropdown-menu .active > a, 
+.map__viewby .dropdown-menu .active > a:hover {
+  background-image: none;
+  background: #61B1EA;
+  color: white;
+}
+
+ul.dropdown-menu-right {
+  top:-5%;
+  left: 105%;
+}
 /* Colors */
 
 .color--red {
