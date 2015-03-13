@@ -473,6 +473,15 @@ i.fa-trash-o {
   text-shadow:none;
   font-size: 10px;
 }
+
+/* below used to fix a bug with safari/windows */
+.hidden-form {
+  visibility: hidden;
+  opacity: 0;
+  height: 0px;
+  overflow: hidden;
+}
+
 /* Boostrap media queries overrides */
 @media (max-width: 979px) {
   body {
