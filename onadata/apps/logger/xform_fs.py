@@ -46,10 +46,10 @@ class XFormInstanceFS(object):
         if not filepath.endswith(".xml"):
             return False
         with open(filepath, 'r') as ff:
-            fxml = ff.read()
-            if not fxml.strip().startswith('<?xml'):
-                return False
-        return True
+            fxml = ff.read().strip()
+            if 'http://opendatakit.org/submissions' in fxml:
+                return True
+        return False
 
     def __str__(self):
         return "<XForm XML: %s>" % self.xform_id
