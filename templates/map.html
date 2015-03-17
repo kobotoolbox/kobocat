@@ -56,7 +56,7 @@
       </div>
   </div>
   <div id="map_canvas"></div>
-  <div id="enketo-modal" class="modal hide enketo-modal"></div>
+  
   <div id="delete-modal" class="modal hide fade">
       <div class="modal-header">
         <a data-dismiss="modal" class="close">&times;</a>
@@ -96,6 +96,7 @@
     var userName = "{{ content_user }}";
     var modalVisible = null;
     var idToDelete = null;
+    var dataModal;
 
     $(document).ready(function(){
         // Initalize Map on load
@@ -151,22 +152,22 @@
   }
 
   function displayDataModal(feature_id) {
-    var modalElem = $("#enketo-modal");
-
+    // var modalElem = $("#enketo-modal");
     // restore non-iframe style
-    modalElem.css('overflow', 'auto');
-
+    // modalElem.css('overflow', 'auto');
     // hide modal if exist
-    exitModal(modalElem);
+    // exitModal(modalElem);
 
-    addModalCloseButton(modalElem);
+    // addModalCloseButton(modalElem);
 
     // set temporary content
-    var tempContent = $("<h3>Loading...</h3>");
-    modalElem.append(tempContent);
+    // var tempContent = $("<h3>Loading...</h3>");
+    // modalElem.append(tempContent);
 
     // launch the modal
-    modalElem.modal();
+    // modalElem.modal();
+
+    dataModal = vex.open({content: '<div id="enketo-modal"></div>'});
 
     // launch data async retrieval
     $.getJSON(mongoAPIUrl, {'query': '{"_id":' + feature_id + '}'})
@@ -176,9 +177,10 @@
                 content = JSONSurveyToHTML(data[0]);
             else
                 content = $("<p>An unexpected error occurred</p>");
+
             // replace content in modal
+            modalElem = $('#enketo-modal');
             modalElem.empty();
-            addModalCloseButton(modalElem);
             modalElem.append(content);
 
             // sub-modals
@@ -190,6 +192,7 @@
             $('button.edit-submission').click(function () {
                 var data_id = $(this).data('id');
                 var url = enketoEditUrl + data_id;
+                console.log(url);
                 displayEnketoModal(url);
             });
 
@@ -268,16 +271,30 @@
         return;
       }
     });
-    addModalCloseButton($("#enketo-modal"), addedPoint);
+    // addModalCloseButton($("#enketo-modal"), addedPoint);
       $("#enketo-modal").append(aFrame);
       $("#enketo-modal").css('overflow', 'hidden');
-    $("#enketo-modal").modal();
+    // $("#enketo-modal").modal();
   }
 
   function requestDataDeletion(feature_id) {
-    $('#enketo-modal').modal('hide');
+    vex.close(dataModal.data().vex.id);
     idToDelete = feature_id;
-    $('#delete-modal').modal();
+    // vex.open({
+    //   content: '<div id="delete-modal">Are you sure you want to delete this?</div>'
+    // });
+    vex.dialog.confirm({
+      message: 'Are you absolutely sure you want to delete this?',
+      callback: function(value) {
+        if (value !== false) {
+          deleteData();
+        }
+        return console.log(value);
+      }
+    });
+
+
+    // $('#delete-modal').modal();
   }
 
   function deleteData(){
@@ -289,7 +306,6 @@
                alert("{% trans 'BAD REQUEST' %}");
           });
         idToDelete = null;
-        $('#delete-modal').modal('hide');
   }
 
   $(document).ready(function() {

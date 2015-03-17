@@ -36,6 +36,8 @@
     <link href="{{STATIC_URL}}css/kobo-branding.css" rel="stylesheet">
     <link href="{{STATIC_URL}}css/published_forms.css" rel="stylesheet">
     <link href="{{STATIC_URL}}css/data_pages.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}css/vex.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}css/vex-theme-kobo.css" rel="stylesheet">
     {% endblock %}
     <!-- spot to insert stuff for google maps -->
     {% block additional-headers %}{% endblock %}
@@ -86,6 +88,9 @@
     <script src="{{STATIC_URL}}bootstrap/js/bootstrapx-clickover.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrapx-clickover-btns.js"></script>
     <script src="{{STATIC_URL}}js/application.js?v=201307251039"></script>
+    <script src="{{STATIC_URL}}js/vex.combined.min.js"></script>
+    <script>vex.defaultOptions.className = 'vex-theme-kobo';</script>
+
     <!--  -->
     <script src="{{STATIC_URL}}js/kobo-branding.js"></script>
 
