@@ -91,6 +91,8 @@
     enketoEditUrl = enketoEditUrl.slice(0, enketoEditUrl.length -1);
     var mongoAPIUrl = "{{ mongo_api_url }}";
     var deleteAPIUrl = "{{ delete_data_url }}";
+    console.log(enketoEditUrl);
+    console.log(deleteAPIUrl);
     var language_code = "{{LANGUAGE_CODE}}";
     var attachmentsBaseUrl = "{% url "onadata.apps.viewer.views.attachment_url" %}";
     var userName = "{{ content_user }}";
@@ -152,21 +154,7 @@
   }
 
   function displayDataModal(feature_id) {
-    // var modalElem = $("#enketo-modal");
-    // restore non-iframe style
-    // modalElem.css('overflow', 'auto');
-    // hide modal if exist
-    // exitModal(modalElem);
-
-    // addModalCloseButton(modalElem);
-
-    // set temporary content
-    // var tempContent = $("<h3>Loading...</h3>");
-    // modalElem.append(tempContent);
-
     // launch the modal
-    // modalElem.modal();
-
     dataModal = vex.open({content: '<div id="enketo-modal"></div>'});
 
     // launch data async retrieval
@@ -192,7 +180,6 @@
             $('button.edit-submission').click(function () {
                 var data_id = $(this).data('id');
                 var url = enketoEditUrl + data_id;
-                console.log(url);
                 displayEnketoModal(url);
             });
 
@@ -257,9 +244,9 @@
       aFrame.attr('vspace', 0);
       aFrame.attr('hspace', 0);
 
-      // event fired when src attr changes
-      aFrame.load(function(){
-        // first time is the real load.
+    // event fired when src attr changes
+    aFrame.load(function(){
+      // first time is the real load.
       if (modalVisible === null) {
         modalVisible = true;
         return;
@@ -271,36 +258,35 @@
         return;
       }
     });
-    // addModalCloseButton($("#enketo-modal"), addedPoint);
-      $("#enketo-modal").append(aFrame);
-      $("#enketo-modal").css('overflow', 'hidden');
-    // $("#enketo-modal").modal();
+
+    $("#enketo-modal").append(aFrame);
+    $("#enketo-modal").css('overflow', 'hidden');
   }
 
   function requestDataDeletion(feature_id) {
     vex.close(dataModal.data().vex.id);
     idToDelete = feature_id;
-    // vex.open({
-    //   content: '<div id="delete-modal">Are you sure you want to delete this?</div>'
-    // });
+    vex.dialog.buttons.YES.text = 'Delete';
+    vex.dialog.buttons.YES.className = 'vex-dialog-button-delete';
+    console.log(vex.dialog.buttons);
     vex.dialog.confirm({
-      message: 'Are you absolutely sure you want to delete this?',
+      message: 'Are you sure you want to delete this record? If you are unsure about deleting this record press \'Cancel\'.',
       callback: function(value) {
         if (value !== false) {
           deleteData();
         }
-        return console.log(value);
+        return true;
       }
     });
 
-
-    // $('#delete-modal').modal();
   }
 
   function deleteData(){
       $.post(deleteAPIUrl, {'id': idToDelete})
             .success(function(data){
               highlightRefresh();
+              console.log(data);
+              console.log(idToDelete);
             })
             .error(function(){
                alert("{% trans 'BAD REQUEST' %}");
