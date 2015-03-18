@@ -57,20 +57,6 @@
   </div>
   <div id="map_canvas"></div>
   
-  <div id="delete-modal" class="modal hide fade">
-      <div class="modal-header">
-        <a data-dismiss="modal" class="close">&times;</a>
-        <h3>{% trans "Delete Confirmation" %}</h3>
-      </div>
-      <div class="modal-body">
-        <p>{% trans "Are you sure you want to delete this record. If you are unsure about deleting this record press 'Cancel'." %}</p>
-      </div>
-      <div class="modal-footer">
-        <a href="#" onclick="deleteData();" class="btn btn-primary">{% trans "Delete" %}</a>
-        <a href="#" onclick="$('#delete-modal').modal('hide');" class="btn secondary">{% trans "Cancel" %}</a>
-      </div>
-  </div>
-
 {% block javascript %}
 {{ block.super }}
 <script type="text/javascript" src="/static/js/json2.js"></script>
@@ -85,30 +71,28 @@
 <script type="text/javascript" src="/static/js/formManagers.js?ts=201303251542"></script>
 <script type="text/javascript" src="/static/js/jquery.ba-bbq.min.js"></script>
 <script type="text/javascript">
-    var formJSONUrl = "{{ jsonform_url }}";
-    var enketoAddUrl = "{{ enketo_add_url }}";
-    var enketoEditUrl = "{{ enketo_edit_url }}";
-    enketoEditUrl = enketoEditUrl.slice(0, enketoEditUrl.length -1);
-    var mongoAPIUrl = "{{ mongo_api_url }}";
-    var deleteAPIUrl = "{{ delete_data_url }}";
-    console.log(enketoEditUrl);
-    console.log(deleteAPIUrl);
-    var language_code = "{{LANGUAGE_CODE}}";
-    var attachmentsBaseUrl = "{% url "onadata.apps.viewer.views.attachment_url" %}";
-    var userName = "{{ content_user }}";
-    var modalVisible = null;
-    var idToDelete = null;
-    var dataModal;
+  var formJSONUrl = "{{ jsonform_url }}";
+  var enketoAddUrl = "{{ enketo_add_url }}";
+  var enketoEditUrl = "{{ enketo_edit_url }}";
+  enketoEditUrl = enketoEditUrl.slice(0, enketoEditUrl.length -1);
+  var mongoAPIUrl = "{{ mongo_api_url }}";
+  var deleteAPIUrl = "{{ delete_data_url }}";
+  var language_code = "{{LANGUAGE_CODE}}";
+  var attachmentsBaseUrl = "{% url "onadata.apps.viewer.views.attachment_url" %}";
+  var userName = "{{ content_user }}";
+  var modalVisible = null;
+  var idToDelete = null;
+  var dataModal;
 
-    $(document).ready(function(){
-        // Initalize Map on load
-        initialize();
+  $(document).ready(function(){
+      // Initalize Map on load
+      initialize();
+      $('#selectLanguage').live('change', function() {
+          $('.language').hide();
+          $('.' + $(this).val()).show();
+      });
+  });
 
-        $('#selectLanguage').live('change', function() {
-            $('.language').hide();
-            $('.' + $(this).val()).show();
-        });
-    });
   function setMapHeight(){
     var newHeight = $(window).height()-
         $('.navbar-inner').height()
@@ -207,21 +191,9 @@
 
   function exitModal(modalElem, addedPoint) {
     $(modalElem).empty();
-    modalElem.css('overflow', 'auto');
-    $(modalElem).modal('hide');
+    vex.close(dataModal.data().vex.id);
     cleanUpMap(addedPoint);
     modalVisible = null;
-  }
-
-  function addModalCloseButton(modalElem, addedPoint) {
-        var modalHeader = $('<div>').addClass('modal-header').attr('style', 'border-bottom: none');
-      var closeButton = $("<button />");
-      closeButton.addClass('close').attr('data-dismiss', 'modal').html('&times;');
-      closeButton.click(function () {
-        exitModal($(this).parent(), addedPoint);
-      });
-        modalHeader.append(closeButton);
-      modalElem.append(modalHeader);
   }
 
   function displayEnketoModal(url, addedPoint) {
@@ -260,7 +232,7 @@
     });
 
     $("#enketo-modal").append(aFrame);
-    $("#enketo-modal").css('overflow', 'hidden');
+    // $("#enketo-modal").css('overflow', 'hidden');
   }
 
   function requestDataDeletion(feature_id) {
@@ -268,9 +240,8 @@
     idToDelete = feature_id;
     vex.dialog.buttons.YES.text = 'Delete';
     vex.dialog.buttons.YES.className = 'vex-dialog-button-delete';
-    console.log(vex.dialog.buttons);
     vex.dialog.confirm({
-      message: 'Are you sure you want to delete this record? If you are unsure about deleting this record press \'Cancel\'.',
+      message: '{% trans "Are you sure you want to delete this record? If you are unsure about deleting this record press <strong>Cancel</strong>." %}',
       callback: function(value) {
         if (value !== false) {
           deleteData();
@@ -278,24 +249,23 @@
         return true;
       }
     });
-
   }
 
   function deleteData(){
       $.post(deleteAPIUrl, {'id': idToDelete})
             .success(function(data){
+              map.removeLayer(activeMarker);
+              activeMarker = null;
               highlightRefresh();
-              console.log(data);
-              console.log(idToDelete);
+              idToDelete = null;
             })
             .error(function(){
                alert("{% trans 'BAD REQUEST' %}");
           });
-        idToDelete = null;
   }
 
   $(document).ready(function() {
-        $(window).resize(setMapHeight);
+      $(window).resize(setMapHeight);
       setMapHeight();
       $('#progress-modal').modal({
           keyboard: false
