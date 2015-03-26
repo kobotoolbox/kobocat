@@ -49,12 +49,6 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
-.modal-body, .modal-body p, 
-.modal-body h3, .modal-body h4, .modal-body a {
-  -webkit-font-smoothing: antialiased;
-  font-family: 'Open Sans';
-} 
-
 body {
   background: #E9EDF0;
 }
@@ -519,6 +513,17 @@ input.btn.btn-danger:hover,
   border-bottom-color:#C65657;
 }
 
+button.btn.btn-transparent, 
+a.btn.btn-transparent,
+a.btn.btn-transparent:hover,
+button.btn.btn-transparent:hover,
+input.btn.btn-transparent, 
+input.btn.btn-transparent:hover, 
+.btn.btn-transparent:focus {
+  background: transparent;
+  border-bottom-color:transparent;
+  color: #777;
+}
 
 button.btn:hover, 
 a.btn:hover, 

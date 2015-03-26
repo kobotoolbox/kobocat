@@ -6,7 +6,6 @@
   <!-- a temporary way to hide the kobocat deprecated features -->
   <style type="text/css">
   .kc-hide { display: none !important; }
-  .img_holder { text-align: center; }
   </style>
 
   <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
@@ -73,7 +72,7 @@
             <h2 class="settings__group-label">
               Delete project with all data and its form
             </h2>
-            <button data-toggle="modal" href="#delete-{{ xform.id_string }}" data-backdrop="true" data-keyboard="true" class="single-project__button single-project__button-delete">
+            <button data-backdrop="true" data-keyboard="true" class="single-project__button single-project__button-delete">
                 {% trans "Delete" %}
             </button>
 
@@ -195,24 +194,25 @@
       </hgroup>
   </header>
 
-  <!-- Delete modal -->
+  <!-- Delete form (in vex window) -->
   {% if is_owner %}
-    <div id="delete-{{ xform.id_string }}" class="modal hide fade">
+  <div class="kc-hide">
+    <div id="delete-form">
         <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
         {% csrf_token %}
-            <div class="modal-header">
-                <a data-dismiss="modal" class="close">&times;</a>
+            <div class="vex-header">
                 <h3>{% trans "Delete Confirmation" %}</h3>
             </div>
-            <div class="modal-body">
+            <div class="vex-kobo-body">
                 <p>{% blocktrans with title=xform.title nb_sub=xform.submission_count|intcomma %}Are you sure you want to delete the form '{{ title }}'? This form has <strong>{{ nb_sub }}</strong> submissions associated with it that will also be deleted. If you are unsure about deleting this form press 'Cancel' and consider 'Archiving' the form instead.{% endblocktrans %}</p>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary form-submit">Delete</button>
-                <a href="#" onclick="$('#delete-{{ xform.id_string }}').modal('hide');" class="btn secondary">{% trans "Cancel" %}</a>
+            <div class="vex-footer">
+                <a href="#" onclick="vex.close(vexDelete.data().vex.id)" class="btn btn-transparent">{% trans "Cancel" %}</a>
+                <button class="btn btn-danger form-submit">Delete</button>
             </div>
         </form>
     </div>
+  </div>
   {% endif %}
 
   <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
@@ -285,20 +285,18 @@
           </div>
 
           {% if can_edit or xform.shared %}
-          <!-- clicking preview-modal triggers modal and the previewModalActivate function which loads the enketo iframe -->
-          <a title="{% trans 'Preview Form' %}" href="#preview-modal" class="dashboard__formbutton dashboard__formbutton-preview" data-toggle="modal">
+          <!-- trigger preview vex window and the previewModalActivate function which loads the enketo iframe -->
+          <a title="{% trans 'Preview Form' %}" class="dashboard__formbutton dashboard__formbutton-preview">
             <i class="fa fa-eye"></i><span>Preview</span>
           </a>
           {% endif %}
 
           {% if can_edit or xform.shared %}
-          <div id="preview-modal" class="modal hide fade">
-              <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                  <h3>{{ xform.title }} - {% trans "Preview" %}</h3>
-              </div>
-              <div class="modal-body" data-iframe-src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></div>
-              <div class="modal-footer"></div>
+          <div class="kc-hide">
+            <div id="preview-vex">
+                <div class="vex-header"><h3>{{ xform.title }} - {% trans "Preview" %}</h3></div>
+                <div class="vex-kobo-body" data-iframe-src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></div>
+            </div>
           </div>
           {% endif %}
 
@@ -330,43 +328,44 @@
           <i class="fa fa-plus"></i>
           <span>Enter data in browser</span>
         </a>
-        <a data-toggle="modal" data-target="#popupmodal" data-href="{% url "get_qrcode" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect js-showqr">
+        <a data-href="{% url "get_qrcode" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect js-showqr">
           <i class="fa fa-mobile"></i>
           <span>How to collect data on mobile device?</span>
         </a>
 
-        <div class="modal hide fade" id="popupmodal" style="width: 820px; left:50%; margin-left: -410px;" tabindex="-1" role="dialog">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h3>{%  trans "How to Collect Data on a Mobile Device" %}</h3>
-            </div>
-            <div class="modal-body">
-                <div class="qrcode__android">
-                  <span>{{ BASE_URL }}{% url "user_profile" content_user.username %}</span>
-                </div>
-                <h4>{%  trans "Collect data on your Android device with KoBoCollect" %}</h4>
-                <p>{%  trans "To start collecting data with our " %}
-                  <a href="https://play.google.com/store/apps/details?id=org.koboc.collect.android">
-                    {%  trans "KoBoCollect Android app" %}</a>
-                    {%  trans "you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
+        <div class="kc-hide">
+          <div id="popupmodal" tabindex="-1" role="dialog">
+              <div class="vex-header">
+                  <h3>{%  trans "How to Collect Data on a Mobile Device" %}</h3>
+              </div>
+              <div class="vex-kobo-body">
+                  <div class="qrcode__android">
+                    <span>{{ BASE_URL }}{% url "user_profile" content_user.username %}</span>
+                  </div>
+                  <h4>{%  trans "Collect data on your Android device with KoBoCollect" %}</h4>
+                  <p>{%  trans "To start collecting data with our " %}
+                    <a href="https://play.google.com/store/apps/details?id=org.koboc.collect.android">
+                      {%  trans "KoBoCollect Android app" %}</a>
+                      {%  trans "you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
 
-                <p><a href="{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}">{{ BASE_URL }}{% url "user_profile" content_user.username as profile_url %}{{ profile_url|slice:':-1' }}</a></p>
+                  <p><a href="{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}">{{ BASE_URL }}{% url "user_profile" content_user.username as profile_url %}{{ profile_url|slice:':-1' }}</a></p>
 
-                <p><strong><a target="_blank" href="http://support.kobotoolbox.org/customer/portal/articles/1653782-collecting-data-with-kobocollect-on-android">Click here</a>  to read more about getting started with KoBoCollect</strong></p>
-                <p class="qr__divider"><span>or</span></p>
-                <div class="qrcode__code img_holder"> </div>
-                <div class="qrcode__text">
-                  <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
-                  <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
-                  <p>
-                    <span class="qrcode__enter-data-url">
-                      <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a>
-                    </span>
-                  <br/>
-                  (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
-                  </p>
-                </div>
-            </div>
+                  <p><strong><a target="_blank" href="http://support.kobotoolbox.org/customer/portal/articles/1653782-collecting-data-with-kobocollect-on-android">Click here</a>  to read more about getting started with KoBoCollect</strong></p>
+                  <p class="qr__divider"><span>or</span></p>
+                  <div class="qrcode__code js-img_holder"></div>
+                  <div class="qrcode__text">
+                    <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
+                    <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
+                    <p>
+                      <span class="qrcode__enter-data-url">
+                        <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a>
+                      </span>
+                    <br/>
+                    (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
+                    </p>
+                  </div>
+              </div>
+          </div>
         </div>
 
       </div>
@@ -758,12 +757,18 @@
 <script type="text/javascript">
 
 $('.dashboard__formbutton-preview').click(function previewModalActivate(){
-  var modalWrap = $('#preview-modal').find('.modal-body');
-  if (modalWrap.data('iframeSrc') && modalWrap.children('iframe').length === 0) {
-    $('<iframe>', {src: modalWrap.data('iframeSrc')}).appendTo(modalWrap);
+  var prevWrap = $('#preview-vex .vex-kobo-body');
+  if (prevWrap.data('iframeSrc') && prevWrap.children('iframe').length === 0) {
+    $('<iframe>', {src: prevWrap.data('iframeSrc')}).appendTo(prevWrap);
   } else {
-    console.error('iframeSrc not set for previewModal');
+    console.error('iframeSrc not set for prevWrap');
   }
+
+  vex.open({
+    content: $('#preview-vex').clone(),
+    contentClassName: 'vex-content vex-content-large',
+  });
+
 });
 
 
@@ -792,7 +797,12 @@ $(document).ready(function() {
     );
     //-- end
 
+    var collect_mobile = $('#popupmodal');
     $(document).on("click", ".js-showqr", function () {
+      vex.open({
+        content: collect_mobile.clone(),
+        contentClassName: 'vex-content vex-content-large',
+      });
       div_target = $(this).attr('data-target');
       url = $(this).data('href');
       $.ajax({
@@ -800,7 +810,7 @@ $(document).ready(function() {
         method: 'get',
         success: function(html){
           var contents = $('<div>'+html+'</div>');
-          $('.img_holder', div_target).html(contents.find('img'));
+          $('.js-img_holder', div_target).html(contents.find('img'));
           $('.qrcode__enter-data-url').html(contents.find('a'));
           
         }
@@ -899,6 +909,14 @@ $(document).ready(function() {
 
       $(document).on("change", "input#id_doc", function () {
         $(this).parents("form").submit();
+      });
+
+      var delete_form = $('#delete-form');
+      $(document).on("click", ".single-project__button-delete", function () {
+      vexDelete = vex.open({
+        content: delete_form.clone(),
+        contentClassName: 'vex-content vex-content-large',
+      });
       });
 
       $(document).click(function(event) {

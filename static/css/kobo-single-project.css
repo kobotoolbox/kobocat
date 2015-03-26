@@ -506,34 +506,26 @@ span.poshytip {
    QR Code popup
    ========================================================================== */
 
-.modal {
-  max-height: 80%;
-  overflow-y:auto;
-}
-
-.modal-body {
-  max-height: none;
-  overflow-y:none;
-}
-
 .qrcode__android {
   position: relative;
-  width: 389px;
+  width: 320px;
   float: right;
-  height: 193px;
-  background: url('/static/images/qr_android_screenshot.png') left top no-repeat;
+  height: 218px;
+  background: url('/static/images/android_screen.png') left top no-repeat;
   margin-top: 15px;
   margin-left: 50px;
 }
 
 .qrcode__android span {
-    position: absolute;
-    top: 166px;
-    left: 63px;
-    font-size: 9px;
-    width: 257px;
-    line-height: 12px;
-    overflow: hidden;
+  position: absolute;
+  top: 187px;
+  left: 58px;
+  font-size: 9px;
+  width: 200px;
+  line-height: 16px;
+  overflow: hidden;
+  background: pink;
+  padding: 0px 3px;
 }
 
 .qr__divider {
@@ -541,6 +533,7 @@ span.poshytip {
     clear: both;
     position: relative;
     margin: 45px 0px;
+    margin-bottom:25px;
 }
 
 .qr__divider span {
@@ -556,16 +549,35 @@ span.poshytip {
 
 #popupmodal .qrcode__text {
   width: 50%;
+  float: left;
 }
 
-#popupmodal .img_holder {
+#popupmodal .qrcode__code {
   width: 48%;
   float: right;
   text-align: center;
-  margin-top:-15px;
+  min-height: 230px;
 }
 
-#popupmodal .img_holder img {
-  max-height: 230px;
-  max-width: 230px;
+#popupmodal .qrcode__code img {
+  height: auto;
+  width: 230px;
+  max-width: 90%;
+  max-height: auto;
 }
+
+@media (max-width: 480px) {
+  .qrcode__android {
+    margin: 0px auto;
+    float: none;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  #popupmodal .qrcode__text, 
+  #popupmodal .qrcode__code {
+    float: none;
+    width: 100%;
+  }
+}
+
