@@ -229,26 +229,6 @@ a.dashboard__button {
     cursor: pointer;
 }
 
-@media (max-width: 979px) {
-  a.dashboard__button {
-    height: 66px;
-  }
-  a.dashboard__button-download-data span {
-    margin-left: 5px !important;
-    margin-right: 5px !important;
-  }
-}
-
-@media (max-width: 450px) {
-  .dashboard__left, 
-  .dashboard__right, 
-  .dashboard__photos, 
-  .dashboard__submissions {
-    float: none;
-    clear: both;
-    width: 100%;
-  }
-}
 
 a.dashboard__button:hover, a.dashboard__button.active {
   border-color: #5DB0EC;
@@ -359,8 +339,8 @@ a.dashboard__formbutton-preview span {
 
 .dashboard__download__drop {
   position: absolute;
-  left: 240px;
-  top: 124px;
+  right: 2%;
+  bottom: -115px;
   width: 124px;
   border: 1px solid #E7E8E9;
   background: white;
@@ -579,5 +559,68 @@ span.poshytip {
     float: none;
     width: 100%;
   }
+
+  .settings__left, 
+  .settings__right {
+    clear: both;
+    width:auto;
+    border:none;
+    min-height: 0px;
+    margin-left:0px;
+    
+  }
+
+  .settings__right {
+    border-top:1px solid #D9DDE1;
+    padding:15px;
+  }
+
+  .single-project__settings {
+    overflow: scroll;
+    height:auto;
+    min-height:200px;
+    max-height: 400px;
+  }
+
+  .settings__general, 
+  .settings__delete {
+    padding:15px;
+  }
+
+  button.single-project__button-delete {
+    margin-bottom:0px;
+  }
 }
 
+@media (max-width: 979px) {
+  a.dashboard__button {
+    height: 66px;
+  }
+  a.dashboard__button-download-data span {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard__left, 
+  .dashboard__right, 
+  .dashboard__photos, 
+  .dashboard__submissions {
+    float: none;
+    clear: both;
+    width: 100%;
+  }
+  a.dashboard__button {
+    height: 54px;
+  }
+  .dashboard__form-formid {
+    width:75%;
+  }
+  a.dashboard__formbutton-download {
+    width:10%;
+  }
+  .dashboard__download__drop {
+    bottom: -190px;
+  }
+}

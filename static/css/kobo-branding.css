@@ -49,6 +49,10 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
+h3 {
+  line-height: 1em;
+}
+
 body {
   background: #E9EDF0;
 }
@@ -598,5 +602,21 @@ i.fa-trash-o {
 @media (max-width: 768px) {
   input.input-xxlarge {
     width:90%;
+  }
+}
+
+/* mobile */
+@media (max-width: 480px) {
+  .sub-header-bar > .container__wide > a:first-child {
+    margin-left: 12px;
+  }
+
+  .projects__advanced {
+    display: none;
+  }
+
+  th.footable-first-column, 
+  td.footable-first-column {
+    padding-right:0px !important;
   }
 }
