@@ -41,7 +41,7 @@ from onadata.libs.utils.logger_tools import response_with_mimetype_and_name,\
 from onadata.libs.utils.viewer_tools import create_attachments_zipfile,\
     export_def_from_filename
 from onadata.libs.utils.user_auth import has_permission, get_xform_and_perms,\
-    helper_auth_helper
+    helper_auth_helper, has_edit_permission
 from xls_writer import XlsWriter
 from onadata.libs.utils.chart_tools import build_chart_data
 
@@ -130,6 +130,8 @@ def map_view(request, username, id_string, template='map.html'):
         return HttpResponseForbidden(_(u'Not shared.'))
     data = {'content_user': owner, 'xform': xform}
     data['profile'], created = UserProfile.objects.get_or_create(user=owner)
+    # Follow the example of onadata.apps.main.views.show
+    data['can_edit'] = has_edit_permission(xform, owner, request)
 
     data['form_view'] = True
     data['jsonform_url'] = reverse(download_jsonform,
