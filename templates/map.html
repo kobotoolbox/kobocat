@@ -83,6 +83,8 @@
   var modalVisible = null;
   var idToDelete = null;
   var dataModal;
+  // Follow the example of instance.html
+  var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
 
   $(document).ready(function(){
       // Initalize Map on load
