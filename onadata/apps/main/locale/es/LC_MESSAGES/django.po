@@ -125,8 +125,8 @@ msgid "Permission denied."
 msgstr "No tiene permisos."
 
 #: main/models/user_profile.py:21
-msgid "Require Phone Authentication"
-msgstr "Requerir Autenticación de Teléfono Móvil"
+msgid "Require authentication to see forms and submit data"
+msgstr "Requerir autenticación para ver formularios y enviar datos"
 
 #: main/templates/dashboard.html:10
 msgid "Publish a Form <small>Upload XLSForm</small>"
