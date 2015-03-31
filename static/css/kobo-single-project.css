@@ -488,10 +488,10 @@ span.poshytip {
 
 .qrcode__android {
   position: relative;
-  width: 320px;
+  width: 300px;
   float: right;
   height: 218px;
-  background: url('/static/images/android_screen.png') left top no-repeat;
+  background: url('/static/images/android_screen.png') center top no-repeat;
   margin-top: 15px;
   margin-left: 50px;
 }

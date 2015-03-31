@@ -335,10 +335,16 @@
 
 
 .vex.vex-theme-kobo {
-  padding-top: 120px;
-  padding-bottom: 120px;
+  padding-top: 100px;
+  padding-bottom: 40px;
 }
 
+@media (max-width: 568px) {
+  .vex.vex-theme-kobo {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+}
 .vex.vex-theme-kobo.vex-closing .vex-content {
   animation: vex-flyout 0.5s;
   -webkit-animation: vex-flyout 0.5s;
@@ -377,11 +383,6 @@
 }
 
 .vex.vex-theme-kobo .vex-close {
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  -ms-border-radius: 5px;
-  -o-border-radius: 5px;
-  border-radius: 5px;
   position: absolute;
   top: 0;
   right: 0;
@@ -389,11 +390,6 @@
 }
 
 .vex.vex-theme-kobo .vex-close:before {
-  -webkit-border-radius: 15px;
-  -moz-border-radius: 15px;
-  -ms-border-radius: 15px;
-  -o-border-radius: 15px;
-  border-radius: 15px;
   position: absolute;
   content: "\00D7";
   font-size: 26px;
@@ -402,15 +398,16 @@
   height: 30px;
   width: 30px;
   text-align: center;
-  top: 3px;
-  right: 3px;
+  top: 7px;
+  right: 7px;
   color: #bbbbbb;
-  background: white;
+  background: transparent;
 }
 
-.vex.vex-theme-kobo .vex-close:hover:before, .vex.vex-theme-kobo .vex-close:active:before {
-  color: #777777;
-  background: #e0e0e0;
+.vex.vex-theme-kobo .vex-close:hover:before, 
+.vex.vex-theme-kobo .vex-close:active:before {
+  color: #333;
+  background: transparent;
 }
 
 .vex.vex-theme-kobo .vex-dialog-form .vex-dialog-message {
@@ -528,19 +525,20 @@
   width: 650px;
 }
 
-.vex.vex-theme-kobo .vex-content-large .vex-close:before {
-  top: 10px;
-  right: 10px;
+/*.vex.vex-theme-kobo .vex-content-large .vex-close:before {
+  top: 7px;
+  right: 7px;
 }
-
+*/
 .vex-header {
   border-bottom:1px solid #eee;
   padding-bottom: 3px;
   margin-top:-8px;
+  margin-bottom: 15px;
 }
 
 .vex-header h3 {
-  margin:0;
+  margin:0.5em 0;
   padding:0;
   line-height: 1em;
 }
@@ -558,7 +556,7 @@
 .vex-content iframe {
   width: 100%;
   border: none;
-  height: 600px;
+  height: 500px;
   margin:5px 0px;
 }
 

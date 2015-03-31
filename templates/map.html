@@ -203,6 +203,7 @@
     }
 
       $("#enketo-modal").empty();
+      $("#enketo-modal").prepend('<div class="vex-header"><h3>Editing submission</h3></div>');
       $("#enketo-modal").on('hidden', function() {
         exitModal($(this), addedPoint);
       });
