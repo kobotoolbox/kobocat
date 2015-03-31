@@ -47,6 +47,8 @@ class XFormInstanceFS(object):
             return False
         with open(filepath, 'r') as ff:
             fxml = ff.read().strip()
+            if fxml.startswith('<?xml'):
+                return True
             if 'http://opendatakit.org/submissions' in fxml:
                 return True
         return False
