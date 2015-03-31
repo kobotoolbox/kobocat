@@ -54,6 +54,7 @@ from onadata.libs.utils.user_auth import check_and_set_user_and_form
 from onadata.libs.utils.user_auth import check_and_set_user
 from onadata.libs.utils.user_auth import get_xform_and_perms
 from onadata.libs.utils.user_auth import has_permission
+from onadata.libs.utils.user_auth import has_edit_permission
 from onadata.libs.utils.user_auth import helper_auth_helper
 from onadata.libs.utils.user_auth import set_profile_data
 from onadata.libs.utils.log import audit_log, Actions
@@ -1147,7 +1148,9 @@ def set_perm(request, username, id_string):
 def delete_data(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
     response_text = u''
-    if not xform:
+    if not xform or not has_edit_permission(
+        xform, owner, request, xform.shared
+    ):
         return HttpResponseForbidden(_(u'Not shared.'))
 
     data_id = request.POST.get('id')
