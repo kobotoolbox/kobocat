@@ -63,7 +63,8 @@
 
             var _elementFound = false;
             $(document).bind('DOMSubtreeModified',function(e){
-                if (e.srcElement.className == 'backgrid-paginator') {
+                if ((e.target && e.target.className == 'backgrid-paginator' )
+                    || (e.srcElement && e.srcElement.className == 'backgrid-paginator')) {
                     if (_elementFound)
                         return;
                     $('.data-table-container table thead tr').prepend('<th class="renderable"> </th>');
