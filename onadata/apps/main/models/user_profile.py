@@ -24,7 +24,10 @@ class UserProfile(models.Model):
     description = models.CharField(max_length=255, blank=True)
     require_auth = models.BooleanField(
         default=False,
-        verbose_name=ugettext_lazy("Require Phone Authentication"))
+        verbose_name=ugettext_lazy(
+            "Require authentication to see forms and submit data"
+        )
+    )
     address = models.CharField(max_length=255, blank=True)
     phonenumber = models.CharField(max_length=30, blank=True)
     created_by = models.ForeignKey(User, null=True, blank=True)

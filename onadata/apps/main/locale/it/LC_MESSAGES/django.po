@@ -126,7 +126,8 @@ msgid "Permission denied."
 msgstr "Autorizzazione negata. "
 
 #: main/models/user_profile.py:21
-msgid "Require Phone Authentication"
+msgid "Require authentication to see forms and submit data"
+# TODO: re-translate; original text was "Require Phone Authentication"
 msgstr "Richiedi Autenticazione "
 
 #: main/templates/dashboard.html:10

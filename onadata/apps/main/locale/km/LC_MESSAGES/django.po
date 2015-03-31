@@ -123,7 +123,8 @@ msgid "Permission denied."
 msgstr "មិនមាន​សិទ្ធិ"
 
 #: main/models/user_profile.py:21
-msgid "Require Phone Authentication"
+msgid "Require authentication to see forms and submit data"
+# TODO: re-translate; original text was "Require Phone Authentication"
 msgstr "ទាមទារ​ការ​ផ្ទៀងផ្ទាត់​តាម​ទូរស័ព្ទ"
 
 #: main/templates/dashboard.html:10
