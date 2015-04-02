@@ -364,11 +364,11 @@
 }
 
 .vex.vex-theme-kobo .vex-content {
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  -ms-border-radius: 5px;
-  -o-border-radius: 5px;
-  border-radius: 5px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  -ms-border-radius: 6px;
+  -o-border-radius: 6px;
+  border-radius: 6px;
   background: #FFF;
   color: #333;
   padding: 1em;
@@ -376,6 +376,7 @@
   margin: 0 auto;
   max-width: 100%;
   width: 550px;
+  border:2px solid #5CB5EB;
 }
 
 .vex.vex-theme-kobo .vex-content h1, .vex.vex-theme-kobo .vex-content h2, .vex.vex-theme-kobo .vex-content h3, .vex.vex-theme-kobo .vex-content h4, .vex.vex-theme-kobo .vex-content h5, .vex.vex-theme-kobo .vex-content h6, .vex.vex-theme-kobo .vex-content p, .vex.vex-theme-kobo .vex-content ul, .vex.vex-theme-kobo .vex-content li {
