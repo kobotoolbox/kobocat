@@ -123,7 +123,7 @@
             '<% _.each(languages, function (lang) { %>' +
               '<label class="radio">' +
                 '<input type="radio" name="display_language" value="<%= lang["name"] %>" <% if(lang["name"] === selected_language) { %>checked="checked"<% } %> />' +
-              'Show in <%= lang["label"] %></label>' +
+              'Show <%= lang["label"] %></label>' +
             '<% }) %>'),
 
         events: {
@@ -145,10 +145,10 @@
             // if languages.length is 0, add a default language as `Show Labels`
             var languages = [];
             if(this.model.get('languages').length === 0) {
-                languages = [{name: '', label: "Show Labels"}]
+                languages = [{name: '', label: "Labels"}]
             } else {
                 languages = this.model.get('languages').map(function (lang) {
-                    return {name: lang, label: lang}
+                    return {name: lang, label: 'in ' + lang}
                 });
             }
             this.$('.controls')
