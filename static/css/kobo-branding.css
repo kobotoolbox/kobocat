@@ -49,11 +49,9 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
-.modal-body, .modal-body p, 
-.modal-body h3, .modal-body h4, .modal-body a {
-  -webkit-font-smoothing: antialiased;
-  font-family: 'Open Sans';
-} 
+h3 {
+  line-height: 1em;
+}
 
 body {
   background: #E9EDF0;
@@ -273,6 +271,10 @@ section {
   margin-right: 6px;
 }
 
+.sub-header-bar > .container__wide > a:first-child {
+  margin-left: 12px;
+}
+
 /* Headers */
 
 .single-project__header, 
@@ -456,8 +458,27 @@ td.published_forms__cell--project a:hover {
   border-bottom-color: #3F3F3F;
 }
 
+.map__viewby ul.questions {
+  max-width: 300px;
+  min-width: 250px;
+  max-height: 400px;
+  overflow: auto;
+}
+
 .map__viewby ul.questions li {
   text-align: left;
+  max-width: 300px;
+  border-bottom: 1px solid #DDD;
+}
+
+.map__viewby ul.questions li:last-child {
+  border-bottom: none;
+}
+
+.map__viewby ul.questions li a {
+  white-space: normal;
+  padding:4px 15px;
+  line-height: 1.6em;
 }
 
 .map__viewby .dropdown-menu li > a:hover, 
@@ -519,6 +540,18 @@ input.btn.btn-danger:hover,
   border-bottom-color:#C65657;
 }
 
+button.btn.btn-transparent, 
+a.btn.btn-transparent,
+a.btn.btn-transparent:hover,
+button.btn.btn-transparent:hover,
+input.btn.btn-transparent, 
+input.btn.btn-transparent:hover, 
+.btn.btn-transparent:focus {
+  background: transparent;
+  border-bottom-color:transparent;
+  color: #777;
+  box-shadow: none;
+}
 
 button.btn:hover, 
 a.btn:hover, 
@@ -593,5 +626,18 @@ i.fa-trash-o {
 @media (max-width: 768px) {
   input.input-xxlarge {
     width:90%;
+  }
+}
+
+/* mobile */
+@media (max-width: 480px) {
+
+  .projects__advanced {
+    display: none;
+  }
+
+  th.footable-first-column, 
+  td.footable-first-column {
+    padding-right:0px !important;
   }
 }

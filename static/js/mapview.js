@@ -63,6 +63,9 @@ var currentLanguageIdx = -1;
 var customMapBoxTileLayer;
 var legendsContainer;
 
+// Clicked marker
+var activeMarker;
+
 var mapview = function() {
     return {
         isHttps: function(){
@@ -439,6 +442,7 @@ function _buildMarkerLayer(geoJSON)
             var marker = L.circleMarker(latlng, circleStyle);
             latLngArray.push(latlng);
             marker.on('click', function(e) {
+                activeMarker = marker;
                 displayDataModal(feature.id);
             });
             return marker;
