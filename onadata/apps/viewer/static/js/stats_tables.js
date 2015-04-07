@@ -278,7 +278,7 @@
             });
 
             // determine column type based on field type
-            var columnDef = {name: field.get('name'), label: "Answers", editable: false, cell: "string"}
+            var columnDef = {name: field.get('xpath'), label: "Answers", editable: false, cell: "string"}
             if(field.isA(FH.types.INTEGER || field.isA(FH.types.DECIMAL))) {
                 columnDef.sortValue = function(model, fieldId) {
                     var func = FH.ParseFunctionMapping[field.get(FH.constants.TYPE)];
