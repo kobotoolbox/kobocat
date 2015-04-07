@@ -202,12 +202,12 @@ urlpatterns = patterns(
         "/(?P<metadata>[\d+^/.]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^(?P<username>\w+)/xformsMedia/(?P<pk>[\d+^/]+)"
-        "/(?P<metadata>[\d+^/.]+)\.(?P<format>[a-z]+[0-9]*)$",
+        "/(?P<metadata>[\d+^/.]+)\.(?P<format>[a-z0-9]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^xformsMedia/(?P<pk>[\d+^/]+)/(?P<metadata>[\d+^/.]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^xformsMedia/(?P<pk>[\d+^/]+)/(?P<metadata>[\d+^/.]+)\."
-        "(?P<format>[a-z]+[0-9]*)$",
+        "(?P<format>[a-z0-9]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^(?P<username>\w+)/submission$",
         XFormSubmissionApi.as_view({'post': 'create', 'head': 'create'}),
