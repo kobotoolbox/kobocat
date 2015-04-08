@@ -43,7 +43,12 @@ def _save_thumbnails(image, path, size, suffix):
             get_dimensions(image.size, float(size)), Image.ANTIALIAS)
     except ZeroDivisionError:
         pass
-    image.save(nm.name)
+    try:
+        image.save(nm.name)
+    except IOError:
+        # e.g. `IOError: cannot write mode P as JPEG`, which gets raised when
+        # someone uploads an image in an indexed-color format like GIF
+        image.convert('RGB').save(nm.name)
     default_storage.save(
         get_path(path, suffix), ContentFile(nm.read()))
     nm.close()
