@@ -487,6 +487,7 @@ td.published_forms__cell--project a:hover {
   background-image: none;
   background: #61B1EA;
   color: white;
+  cursor: pointer;
 }
 
 ul.dropdown-menu-right {
