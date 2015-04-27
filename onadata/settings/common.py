@@ -92,8 +92,12 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 STATIC_URL = '/static/'
 
 # Enketo URL
-ENKETO_API_URL_PARTIAL= os.environ.get('ENKETO_API_URL_PARTIAL', '/api_v1')
-ENKETO_SURVEY_URL_PARTIAL= os.environ.get('ENKETO_SURVEY_URL_PARTIAL', '/survey')
+ENKETO_API_URL_PARTIAL= os.environ.get('ENKETO_API_URL_PARTIAL', '/api_v1') # FIXME: This is a very ugly variable name...
+ENKETO_OFFLINE_SURVEYS= os.environ.get('ENKETO_OFFLINE_SURVEYS').lower() == 'true'
+if ENKETO_OFFLINE_SURVEYS:
+    ENKETO_SURVEY_URL_PARTIAL= os.environ.get('ENKETO_SURVEY_URL_PARTIAL', '/survey/offline')
+else:
+    ENKETO_SURVEY_URL_PARTIAL= os.environ.get('ENKETO_SURVEY_URL_PARTIAL', '/survey')
 ENKETO_INSTANCE_URL_PARTIAL= os.environ.get('ENKETO_INSTANCE_URL_PARTIAL', '/instance')
 ENKETO_PREVIEW_URL_PARTIAL= os.environ.get('ENKETO_PREVIEW_URL_PARTIAL', '/webform/preview')
 ENKETO_INSTANCE_IFRAME_URL_PARTIAL= os.environ.get('ENKETO_INSTANCE_IFRAME_URL_PARTIAL', '/instance/iframe')
