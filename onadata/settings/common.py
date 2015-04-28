@@ -93,7 +93,8 @@ STATIC_URL = '/static/'
 
 # Enketo URL
 ENKETO_API_URL_PARTIAL= os.environ.get('ENKETO_API_URL_PARTIAL', '/api_v1') # FIXME: This is a very ugly variable name...
-ENKETO_OFFLINE_SURVEYS= os.environ.get('ENKETO_OFFLINE_SURVEYS').lower() == 'true'
+ENKETO_OFFLINE_SURVEYS= ('/api/v2' in ENKETO_API_URL_PARTIAL) and \
+        (os.environ.get('ENKETO_OFFLINE_SURVEYS').lower() == 'true')
 if ENKETO_OFFLINE_SURVEYS:
     ENKETO_SURVEY_URL_PARTIAL= os.environ.get('ENKETO_SURVEY_URL_PARTIAL', '/survey/offline')
 else:
