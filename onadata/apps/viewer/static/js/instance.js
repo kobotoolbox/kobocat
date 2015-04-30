@@ -302,10 +302,10 @@ function updateButtons(data){
 
 
      //Make Delete Button visible and add link
-    var deletebutton = $('a.btn-danger');
+    var deletebutton = $('#data a.btn-danger');
     deletebutton.removeClass('disabled');
     deletebutton.attr('href', '#del/' + data['_id']);
-    $('a.btn-primary').attr('href', '#delete/' + data['_id']);
+    $('#delete-modal a.btn-danger').attr('href', '#delete/' + data['_id']);
 
     // Add a note section
     $("#instance_id").val(data['_id']);
