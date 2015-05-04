@@ -275,6 +275,10 @@
         <div class="dashboard__form-contents">
           <div class="dashboard__form-formid">
             {{ xform.id_string }}
+            {% if xform.can_be_replaced and xform.user ==  user  %}
+              <a class="dashboard__formbutton dashboard__formbutton-refresh poshytip-small" title="{% trans "Replace the form with a new XLSForm file. This can only be done if no data has yet been collected." %}"><i class="fa fa-refresh"></i></a>
+            {% endif %}
+
           </div>
           <a class="dashboard__formbutton dashboard__formbutton-download">
             <i class="fa fa-download"></i>
@@ -296,6 +300,23 @@
             <div id="preview-vex">
                 <div class="vex-header"><h3>{{ xform.title }} - {% trans "Preview" %}</h3></div>
                 <div class="vex-kobo-body" data-iframe-src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if xform.can_be_replaced and xform.user ==  user  %}
+          <div class="kc-hide">
+            <div id="xls-update">
+              <div class="vex-header"><h3>{% trans "Update XLS" %}</h3></div>
+              <div id="replace-{{ xform.id_string }}">
+                  <form action="{% url "onadata.apps.main.views.update_xform" xform.user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="vex-kobo-body">
+                      <input type="file" name="xls_file" id="id_xls_file" />
+                      <input type="submit" class="btn large btn-primary" value="{% trans "Update" %}" data-original-title="" />
+                    </div>
+                  </form>
+              </div>
             </div>
           </div>
           {% endif %}
@@ -919,6 +940,13 @@ $(document).ready(function() {
       });
       });
 
+      $(document).on("click", ".dashboard__formbutton-refresh", function () {
+        vexRefresh = vex.open({
+          content: $('#xls-update').clone(),
+          contentClassName: 'vex-content'
+        });
+      });
+
       $(document).click(function(event) {
           if(!$(event.target).closest('.dashboard__submissions').length) {
             if($('.dashboard__download__drop').is(":visible")) {
@@ -956,6 +984,18 @@ $(document).ready(function() {
           alignX: 'right',
           alignY: 'top',
           offsetX: -60,
+          offsetY: -5,
+          liveEvents: true
+      });
+
+      // smaller parent poshytip
+      $('.poshytip-small').poshytip({
+          className: 'tip__bottomarrow multiline',
+          showTimeout: 1,
+          alignTo: 'target',
+          alignX: 'right',
+          alignY: 'top',
+          offsetX: -25,
           offsetY: -5,
           liveEvents: true
       });
