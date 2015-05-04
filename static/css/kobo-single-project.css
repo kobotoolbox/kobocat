@@ -335,6 +335,10 @@ a.dashboard__formbutton-preview span {
   font-weight: 600;
 }
 
+a.dashboard__formbutton-refresh {
+  color: #B74B4B;
+  margin-left: 10px;
+}
 /* Submissions Download dropdown */
 
 .dashboard__download__drop {
@@ -468,6 +472,10 @@ span.poshytip {
 .tip__bottomarrow {
   margin-top: -10px;
   margin-left: -4px;
+}
+
+.tip__bottomarrow.multiline {
+  width:300px;
 }
 
 .tip__bottomarrow:before {
