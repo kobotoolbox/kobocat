@@ -326,18 +326,17 @@ function loadResponseDataCallback()
         // add language selector
         if(formJSONMngr.supportedLanguages.length > 1)
         {
-            $('<li />').html(
-                $('<a />', { text: gettext("Language"), href: '#'}).addClass("language-label")
-            ).appendTo(navContainer);
 
             dropDownContainer = _createElementAndSetAttrs('li', {"class":"dropdown language-picker"});
             dropdownCaretLink = _createElementAndSetAttrs('a', {"href":"#", "class":"dropdown-toggle",
                 "data-toggle":"dropdown"});
-            dropdownCaret = _createElementAndSetAttrs('b', {"class":"caret"});
+            dropdownCaret = _createElementAndSetAttrs('span', {"class":"language-label"}, gettext("Language"));
+            dropdownCaretIcon = _createElementAndSetAttrs('i', {"class":"fa fa-caret-right"});
             dropdownCaretLink.appendChild(dropdownCaret);
+            dropdownCaretLink.appendChild(dropdownCaretIcon);
             dropDownContainer.appendChild(dropdownCaretLink);
 
-            var languageUlContainer = _createElementAndSetAttrs("ul", {"class":"dropdown-menu"});
+            var languageUlContainer = _createElementAndSetAttrs("ul", {"class":"dropdown-menu-right dropdown-menu"});
 
             // create links for select one questions
             selectOneQuestions = formJSONMngr.getSelectOneQuestions();
@@ -425,7 +424,7 @@ function setLanguage(idx)
     if(idx != currentLanguageIdx)
     {
         var newLanguage = getLanguageAt(idx);
-        $('a.language-label').html(newLanguage);
+        $('span.language-label').html(newLanguage);
         currentLanguageIdx = idx;
         /// hide all language spans
         $('span.language').hide();
