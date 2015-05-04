@@ -4,13 +4,16 @@
   <div class="container__wide">
     <span class="header-bar__top-logo pull-right"></span>
     <a href="http://support.kobotoolbox.org/" class="header-bar__support pull-right" target="_blank" title="Visit our self-help pages or ask a support question (opens in new tab)">Support</a>
-    <span class="header-bar__top-level-menu-button">
-      <i class="fa fa-bars fa-lg fa-inverse"></i>
-    </span>
+    {% if user.is_authenticated %}
+      <span class="header-bar__top-level-menu-button">
+        <i class="fa fa-bars fa-lg fa-inverse"></i>
+      </span>
+    {% endif %}
     <h1 class="header-bar__title"><a href="/"><span class="header-bar__title-text">{% trans "Projects" %}</span></a></h1>
   </div>
 </header>
 
+{% if user.is_authenticated %}
 <section class="top-level-menu">
   <ul>
     <li class="top-level-menu__item">
@@ -50,6 +53,7 @@
 
   </ul>
 </section>
+{% endif %}
 
 <div class="navbar navbar-fixed-top hidden" data-dropdown="dropdown" >
   <div class="navbar-inner{% if form_view %} navbar-inner-map{% endif %}">
