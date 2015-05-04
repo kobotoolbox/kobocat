@@ -941,7 +941,6 @@ $(document).ready(function() {
       });
 
       $(document).on("click", ".dashboard__formbutton-refresh", function () {
-        console.log($('#xls-update'));
         vexRefresh = vex.open({
           content: $('#xls-update').clone(),
           contentClassName: 'vex-content'
