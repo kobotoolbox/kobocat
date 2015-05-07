@@ -103,7 +103,7 @@ ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
 ENKETO_API_ROOT= os.environ.get('ENKETO_API_ROOT') or os.environ.get('ENKETO_API_URL_PARTIAL') or '/api_v1' # TODO: Remove backward compatibility with "ENKETO_API_URL_PARTIAL".
 ENKETO_API_ENDPOINT_PREVIEW= os.environ.get('ENKETO_API_ENDPOINT_PREVIEW') or os.environ.get('ENKETO_PREVIEW_URL_PARTIAL') or '/webform/preview' # TODO: Remove backward compatibility with "ENKETO_PREVIEW_URL_PARTIAL".
 ENKETO_OFFLINE_SURVEYS= ('/api/v2' in ENKETO_API_ROOT) and \
-        (os.environ.get('ENKETO_OFFLINE_SURVEYS').lower() == 'true') # Offline surveys are only possible in API v2.
+        (os.environ.get('ENKETO_OFFLINE_SURVEYS', '').lower() == 'true') # Offline surveys are only possible in API v2.
 ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
         else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 
