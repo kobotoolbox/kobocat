@@ -277,12 +277,18 @@ section {
 
 /* Headers */
 
+ 
 .single-project__header, 
 .projects-list__header, 
 .data-page__header {
   margin-bottom: 30px;
   background-color: white;
   padding:20px 0px;
+  margin-top: -20px;
+}
+
+.sub-header-bar + .single-project__header, 
+.sub-header-bar + .data-page__header {
   padding-top: 70px;
   margin-top: 0px;
 }
