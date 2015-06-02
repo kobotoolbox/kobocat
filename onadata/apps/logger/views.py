@@ -53,7 +53,7 @@ from onadata.libs.utils.viewer_tools import _get_form_url
 
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from pyxform import survey_from
-from pyxform.spss.spss import survey_to_spss_label_zip
+from pyxform.spss import survey_to_spss_label_zip
 from wsgiref.util import FileWrapper
 
 
@@ -475,7 +475,7 @@ def download_spss_labels(request, username, form_id_string):
 
     survey= survey_from.xls(filelike_obj=xlsform_io)
     zip_filename= '{}_spss_labels.zip'.format(xform.id_string)
-    zip_io= survey_to_spss_label_zip(survey)
+    zip_io= survey_to_spss_label_zip(survey, xform.id_string)
 
     response = StreamingHttpResponse(FileWrapper(zip_io),
                                      content_type='application/zip; charset=utf-8')
