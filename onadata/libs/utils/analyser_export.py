@@ -9,6 +9,7 @@ import tempfile
 import io
 import shutil
 import copy
+import os
 from zipfile import (
     ZipFile,
     ZIP_DEFLATED,
@@ -23,6 +24,16 @@ from openpyxl.writer.excel import save_virtual_workbook
 NAMESPACES= {'xmlns': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 
 
+def get_worksheet_indices(workbook_file):
+    workbook_etree= etree.parse(workbook_file)
+    worksheet_indices= dict()
+    for sheet_element in workbook_etree.findall('.//xmlns:sheet', NAMESPACES):
+        sheet_name= sheet_element.attrib['name']
+        sheet_index= sheet_element.attrib['sheetId']
+        worksheet_indices[sheet_name]= sheet_index
+    return worksheet_indices
+
+
 # Adapted from http://stackoverflow.com/a/9919409/1877326
 def xls_as_xlsx(xls_file):
     # first open using xlrd
@@ -30,17 +41,17 @@ def xls_as_xlsx(xls_file):
 
     # Create the destination workbook, deleting and auto-generated worksheets.
     destination_workbook = openpyxl.Workbook() # TODO: Would like to figure out how to make appends work with a "write_only" workbook.
-    for wksht_nm in destination_workbook.sheetnames:
+    for wksht_nm in destination_workbook.get_sheet_names():
         worksheet= destination_workbook.get_sheet_by_name(wksht_nm)
         destination_workbook.remove_sheet(worksheet)
 
     worksheet_names= ['survey', 'choices']
-    for wksht_nm in worksheet_names:
+    for wksht_nm in source_workbook.sheet_names():
         source_worksheet= source_workbook.sheet_by_name(wksht_nm)
         destination_worksheet= destination_workbook.create_sheet(title=wksht_nm)
 
         for row in xrange(source_worksheet.nrows):
-            destination_worksheet.append( (source_worksheet.cell_value(row, col) for col in xrange(source_worksheet.ncols)) )
+            destination_worksheet.append( [source_worksheet.cell_value(row, col) for col in xrange(source_worksheet.ncols)] )
 
     return io.BytesIO(save_virtual_workbook(destination_workbook))
 
@@ -120,14 +131,19 @@ def insert_xlsform_worksheets(analyser_shared_strings, analyser_survey_worksheet
         with survey_zipfile.open('xl/sharedStrings.xml') as shared_strings_file:
             new_string_indices= dict()
             splice_shared_strings(shared_strings_file, analyser_shared_strings, new_string_indices)
+        # Identify the desired worksheet indices.
+        with survey_zipfile.open('xl/workbook.xml') as workbook_file:
+            worksheet_indices= get_worksheet_indices(workbook_file)
         # Copy over the "survey" sheet.
-        with survey_zipfile.open('xl/worksheets/sheet1.xml') as source_survey_worksheet_file:
+        survey_sheet_path= 'xl/worksheets/sheet' + worksheet_indices['survey'] + '.xml'
+        with survey_zipfile.open(survey_sheet_path) as source_survey_worksheet_file:
             # Create a tempfile that supports seeking.
             with tempfile.TemporaryFile('w+') as source_survey_worksheet_tempfile:
                 source_survey_worksheet_tempfile.write(source_survey_worksheet_file.read())
                 source_survey_worksheet_tempfile.seek(0)
                 copy_cells(source_survey_worksheet_tempfile, analyser_survey_worksheet_file_path, new_string_indices)
         # Copy over the "choices" sheet.
+        choices_sheet_path= 'xl/worksheets/sheet' + worksheet_indices['choices'] + '.xml'
         with survey_zipfile.open('xl/worksheets/sheet2.xml') as source_choices_worksheet_file:
             # Create a tempfile that supports seeking.
             with tempfile.TemporaryFile('w+') as source_choices_worksheet_tempfile:
@@ -147,10 +163,34 @@ def insert_data_sheet(analyser_shared_strings, analyser_data_sheet_file_path, da
                 data_worksheet_tempfile.seek(0)
                 copy_cells(data_worksheet_tempfile, analyser_data_sheet_file_path, new_string_indices)
 
-def generate_analyser(analyser_file_xlsx, data_file_xlsx, survey_file_xls):
-    # Unzip the analyser in preparation for modifications.
+def generate_analyser(survey_file_xls, data_file_xlsx, analyser_file_xlsx=None):
+    '''
+    Generate a KoBo Excel Data Analyser pre-populated with survey contents and
+    data.
+
+    :param survey_file_xls: An XLS-formatted XLSForm containing the "survey" and
+        "choices" (if present) sheet to be inserted into the analyser. Expected
+        to be a file-like object that supports the :py:func:`read()` method.
+    :param data_file_xlsx: An XLSX file containing the data to be inserted into
+        the analyser's "uncleaned_data" sheet. Per the interface of
+        :py:class:`zipfile.ZipFile`, this can be either a local path string or a
+        file-like object.
+    :param analyser_file_xlsx: The analyser template file, pre-configured with
+        sheet names and reserved empty sheets. Per the interface of
+        :py:class:zipfile.ZipFile, this can be either a local path string or a
+        file-like object.
+    :rtype: io.BytesIO
+    '''
+    # Use the default analyser template if none was provided.
+    if not analyser_file_xlsx:
+        this_scripts_directory= os.path.dirname(__file__)
+        analyser_filename= 'KoBoToolbox_Excel_Data_Analyser_1.23_TEMPLATE.xlsx'
+        analyser_file_xlsx= os.path.join(this_scripts_directory, analyser_filename)
+
+    # Create a directory for temporary storage.
     temp_directory_path= tempfile.mkdtemp(prefix='analyser_temp_')
     try:
+        # Unzip the analyser in preparation for customization.
         with ZipFile(analyser_file_xlsx) as analyser_zipfile:
             analyser_zipfile.extractall(temp_directory_path)
             zip_contents= [f.filename for f in analyser_zipfile.filelist]
@@ -173,18 +213,10 @@ def generate_analyser(analyser_file_xlsx, data_file_xlsx, survey_file_xls):
         with ZipFile(xlsx_out, 'w', compression=ZIP_DEFLATED) as zipfile_out:
             for file_path in zip_contents:
                 zipfile_out.write(temp_directory_path + '/' + file_path, file_path)
+        xlsx_out.seek(0)
 
     finally:
-        # Clean up temporary files.
+        # Clean the temporary directory.
         shutil.rmtree(temp_directory_path)
 
-    xlsx_out.seek(0)
     return xlsx_out
-
-if __name__ == '__main__':
-    analyser_file_xlsx= '/home/esmail/Downloads/KoBoToolbox_Excel_Data_Analyser_1.23_TEMPLATE.xlsx'
-    data_file_xlsx= '/home/esmail/Downloads/uga_14_v6_2015_03_02_14_34_38.xlsx'
-    survey_file= open('/home/esmail/Downloads/uga_14_v6.xls')
-    xlsx_out= generate_analyser(analyser_file_xlsx, data_file_xlsx, survey_file)
-    with open('/home/esmail/Downloads/generated_analyser.xlsx', 'wb') as f:
-        f.write(xlsx_out.read())

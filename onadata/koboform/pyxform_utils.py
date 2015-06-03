@@ -29,6 +29,7 @@ def convert_csv_to_xls(csv_repr):
         if not re.match(r".*_header$", sheet_name):
             cur_sheet = workbook.add_sheet(sheet_name)
             _add_contents_to_sheet(cur_sheet, dict_repr[sheet_name])
+    # TODO: As XLS files are binary, I believe this should be `io.BytesIO()`.
     string_io = StringIO.StringIO()
     workbook.save(string_io)
     string_io.seek(0)
