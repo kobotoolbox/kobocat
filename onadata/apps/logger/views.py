@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import os
 import tempfile
+import io
 
 import pytz
 
@@ -51,6 +52,9 @@ from onadata.libs.utils.user_auth import helper_auth_helper, has_permission,\
 from onadata.libs.utils.viewer_tools import _get_form_url
 
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
+from pyxform import survey_from
+from pyxform.spss import survey_to_spss_label_zip
+from wsgiref.util import FileWrapper
 
 
 IO_ERROR_STRINGS = [
@@ -429,6 +433,54 @@ def download_jsonform(request, username, id_string):
         response.content = xform.json
     return response
 
+# FIXME: This overloaded interface (returns `BytesIO`/`HttpResponse`) is ...not great.
+def _get_xlsform(request, username, form_id_string):
+    xform = get_object_or_404(XForm,
+                              user__username__iexact=username,
+                              id_string__exact=form_id_string)
+    owner = User.objects.get(username__iexact=username)
+    helper_auth_helper(request)
+
+    if not has_permission(xform, owner, request, xform.shared):
+        return HttpResponseForbidden('Not shared.')
+
+    file_path = xform.xls.name
+    default_storage = get_storage_class()()
+
+    if file_path != '' and default_storage.exists(file_path):
+        with default_storage.open(file_path) as xlsform_file:
+            if file_path.endswith('.csv'):
+                xlsform_io = convert_csv_to_xls(xlsform_file.read())
+            else:
+                xlsform_io= io.BytesIO(xlsform_file.read())
+
+        return xlsform_io
+
+    else:
+        messages.add_message(request, messages.WARNING,
+                             _(u'No XLS file for your form '
+                               u'<strong>%(id)s</strong>')
+                             % {'id': form_id_string})
+
+        return HttpResponseRedirect("/%s" % username)
+
+def download_spss_labels(request, username, form_id_string):
+    xform = get_object_or_404(XForm,
+                              user__username__iexact=username,
+                              id_string__exact=form_id_string)
+    xlsform_io= _get_xlsform(request, username, form_id_string)
+    # FIXME: Really don't like this overloading...
+    if isinstance(xlsform_io, HttpResponse):
+        return xlsform_io
+
+    survey= survey_from.xls(filelike_obj=xlsform_io)
+    zip_filename= '{}_spss_labels.zip'.format(xform.id_string)
+    zip_io= survey_to_spss_label_zip(survey, xform.id_string)
+
+    response = StreamingHttpResponse(FileWrapper(zip_io),
+                                     content_type='application/zip; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename={}'.format(zip_filename)
+    return response
 
 @is_owner
 @require_POST
