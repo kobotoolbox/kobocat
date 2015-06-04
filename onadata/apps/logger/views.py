@@ -55,7 +55,8 @@ from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from pyxform import survey_from
 from pyxform.spss import survey_to_spss_label_zip
 from wsgiref.util import FileWrapper
-
+from onadata.apps.viewer.models.export import Export
+from onadata.libs.utils.analyser_export import generate_analyser
 
 IO_ERROR_STRINGS = [
     'request data read error',
@@ -480,6 +481,37 @@ def download_spss_labels(request, username, form_id_string):
     response = StreamingHttpResponse(FileWrapper(zip_io),
                                      content_type='application/zip; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename={}'.format(zip_filename)
+    return response
+
+def download_excel_analyser(request, username, form_id_string):
+    xform = get_object_or_404(XForm,
+                              user__username__iexact=username,
+                              id_string__exact=form_id_string)
+    owner = User.objects.get(username__iexact=username)
+    helper_auth_helper(request)
+
+    if not has_permission(xform, owner, request, xform.shared):
+        return HttpResponseForbidden('Not shared.')
+
+    # Get the XLSForm.
+    xlsform_io= _get_xlsform(request, username, form_id_string)
+    # FIXME: Really don't like this overloading...
+    if isinstance(xlsform_io, HttpResponse):
+        return xlsform_io
+
+    # Get the data.
+    data_export= Export.objects.filter(
+            xform=xform, export_type=Export.XLS_EXPORT).order_by('-created_on').first()
+    if not data_export:
+        raise Http404('Please generate an XLS export of your data first.')
+
+    analyser_filename= os.path.splitext(data_export.filename)[0] + '_EXCEL_ANALYSER.xlsx'
+    with get_storage_class()().open(data_export.filepath) as data_file_xlsx:
+        analyser_io= generate_analyser(xlsform_io, data_file_xlsx)
+
+    response = StreamingHttpResponse(FileWrapper(analyser_io),
+            content_type='application/vnd.ms-excel; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename={}'.format(analyser_filename)
     return response
 
 @is_owner
