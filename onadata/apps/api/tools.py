@@ -235,7 +235,10 @@ def add_xform_to_project(xform, project, creator):
 
 
 def publish_xlsform(request, user):
-    if not request.user.has_perm('can_add_xform', user.profile):
+    if not request.user.has_perm(
+        'can_add_xform',
+        UserProfile.objects.get_or_create(user=user)[0]
+    ):
         raise exceptions.PermissionDenied(
             detail=_(u"User %(user)s has no permission to add xforms to "
                      "account %(account)s" % {'user': request.user.username,

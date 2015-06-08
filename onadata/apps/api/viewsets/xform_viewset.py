@@ -26,6 +26,7 @@ from onadata.libs.serializers.clone_xform_serializer import \
     CloneXFormSerializer
 from onadata.libs.serializers.share_xform_serializer import (
     ShareXFormSerializer)
+from onadata.apps.main.models import UserProfile
 from onadata.apps.api import tools as utils
 from onadata.apps.api.permissions import XFormPermissions
 from onadata.apps.logger.models.xform import XForm
@@ -802,8 +803,10 @@ data (instance/submission per row)
         serializer = CloneXFormSerializer(data=data)
         if serializer.is_valid():
             clone_to_user = User.objects.get(username=data['username'])
-            if not request.user.has_perm('can_add_xform',
-                                         clone_to_user.profile):
+            if not request.user.has_perm(
+                'can_add_xform',
+                UserProfile.objects.get_or_create(user=clone_to_user)[0]
+            ):
                 raise exceptions.PermissionDenied(
                     detail=_(u"User %(user)s has no permission to add "
                              "xforms to account %(account)s" %

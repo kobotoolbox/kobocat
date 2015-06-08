@@ -161,7 +161,10 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         form_user = (username and get_object_or_404(User, username=username)) \
             or request.user
 
-        if not request.user.has_perm('can_add_xform', form_user.profile):
+        if not request.user.has_perm(
+            'can_add_xform',
+            UserProfile.objects.get_or_create(user=form_user)[0]
+        ):
             raise exceptions.PermissionDenied(
                 detail=_(u"User %(user)s has no permission to add xforms to "
                          "account %(account)s" %
