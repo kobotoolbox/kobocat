@@ -27,6 +27,7 @@ from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
 import sys
 
+from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.models import Attachment
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models.instance import (
@@ -130,7 +131,8 @@ def _has_edit_xform_permission(xform, user):
 
 def check_edit_submission_permissions(request_user, xform):
     if xform and request_user and request_user.is_authenticated():
-        requires_auth = xform.user.profile.require_auth
+        requires_auth = UserProfile.objects.get_or_create(user=xform.user
+            )[0].require_auth
         has_edit_perms = _has_edit_xform_permission(xform, request_user)
 
         if requires_auth and not has_edit_perms:
@@ -156,7 +158,8 @@ def check_submission_permissions(request, xform):
     :returns: None.
     :raises: PermissionDenied based on the above criteria.
     """
-    if request and (xform.user.profile.require_auth or xform.require_auth
+    profile = UserProfile.objects.get_or_create(user=xform.user)[0]
+    if request and (profile.require_auth or xform.require_auth
                     or request.path == '/submission')\
             and xform.user != request.user\
             and not request.user.has_perm('report_xform', xform):

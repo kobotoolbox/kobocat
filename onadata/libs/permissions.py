@@ -247,6 +247,9 @@ def get_object_users_with_permissions(obj, exclude=None):
             'user': user,
             'role': get_role(permissions, obj),
             'permissions': permissions} for user, permissions in
-            users_with_perms if not is_organization(user.profile)]
+            users_with_perms if not is_organization(
+                UserProfile.objects.get_or_create(user=user)[0]
+            )
+        ]
 
     return result

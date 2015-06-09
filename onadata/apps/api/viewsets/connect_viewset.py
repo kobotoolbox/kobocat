@@ -114,7 +114,7 @@ using the `window.atob();` function.
                 session.set_expiry(DEFAULT_SESSION_EXPIRY_TIME)
 
         serializer = UserProfileWithTokenSerializer(
-            instance=request.user.profile,
+            instance=UserProfile.objects.get_or_create(user=request.user)[0],
             context={"request": request})
 
         return Response(serializer.data)
