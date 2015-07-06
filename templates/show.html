@@ -78,6 +78,14 @@
 
           </div>
 
+          {% if is_owner %}
+          <div class="settings__rest-services">
+              <h2 class="settings__group-label">{% trans "Rest Services" %}</h2>
+              <div id='restservice_tab'>
+              </div>
+          </div>
+          {% endif %}
+
         </div>
 
         <div class="settings__right">
