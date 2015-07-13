@@ -129,6 +129,10 @@ var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
           else if(prev > 0 && prev != id ){
               redirect_route = '#/'  + prev;
           }
+          else {
+              // Deleting the last instance
+              redirect_route ='#data-view/';
+          }
 
           deleteData(context, id, redirect_route);
       });
@@ -136,6 +140,11 @@ var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
           //alert('Invalid route requested')
           //app.setLocation('#/');
       })
+
+      // Redirect to Data View route
+      this.get('#data-view/', function(context) {
+          window.location.href = '{% url "onadata.apps.viewer.views.data_view" username id_string %}';
+      });
 
   });
 

@@ -251,6 +251,7 @@
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
           <!-- <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" class="download__drop-button">GDOCS</a> -->
           <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
+          <a href="{% url "onadata.apps.logger.views.download_excel_analyser" content_user.username xform.id_string %}"  class="download__drop-button">Excel Analyser</a>
           <!-- a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" class="download__drop-button">SAV ZIP</a> -->
         </div>
       </div>
@@ -290,6 +291,7 @@
           <div class="dashboard__form-drop hidden">
             <a href="{% url "download_xlsform" content_user.username xform.id_string %}" class="download__form-drop-button">XLS</a>
             <a href="{% url "download_xform" content_user.username xform.id_string %}" class="download__form-drop-button">XML</a>
+            <a href="{% url "download_spss_labels" content_user.username xform.id_string %}" class="download__form-drop-button">SPSS Labels</a>
           </div>
 
           {% if can_edit or xform.shared %}
@@ -380,7 +382,7 @@
                   <div class="qrcode__code js-img_holder"> </div>
                   <div class="qrcode__text">
                     <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
-                    <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline: 
+                    <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline:
                     <p>
                       <span class="qrcode__enter-data-url">
                         <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a>
@@ -837,7 +839,7 @@ $(document).ready(function() {
           var contents = $('<div>'+html+'</div>');
           $('.js-img_holder', div_target).html(contents.find('img'));
           $('.qrcode__enter-data-url').html(contents.find('a'));
-          
+
         }
       })
     });
