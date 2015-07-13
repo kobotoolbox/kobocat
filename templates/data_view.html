@@ -39,7 +39,7 @@
     <script type="text/javascript" src="/static/bower_components/underscore/underscore-min.js"></script>
     <script type="text/javascript" src="/static/bower_components/backbone/backbone-min.js"></script>
     <script type="text/javascript" src="/static/js/json2.js"></script>
-    <script type="text/javascript" src="/static/bower_components/backgrid/lib/backgrid.min.js"></script>
+    <script type="text/javascript" src="/static/bower_components/backgrid/lib/backgrid.js"></script>
     <script type="text/javascript" src="/static/bower_components/lunr.js/lunr.min.js"></script>
     <script type="text/javascript" src="/static/bower_components/backbone-pageable/lib/backbone-pageable.min.js"></script>
     <script type="text/javascript" src="/static/bower_components/backgrid-filter/backgrid-filter.min.js"></script>
@@ -61,18 +61,27 @@
                 dataUrl: mongoAPIUrl
             });
 
-            var _elementFound = false;
-            $(document).bind('DOMSubtreeModified',function(e){
-                if ((e.target && e.target.className == 'backgrid-paginator' )
-                    || (e.srcElement && e.srcElement.className == 'backgrid-paginator')) {
-                    if (_elementFound)
-                        return;
-                    $('.data-table-container table thead tr').prepend('<th class="renderable"> </th>');
-                    $('.data-table-container table tbody tr').attr('title', 'Doube click to view submission');
-                    $('.data-table-container table tbody tr').prepend('<td class="renderable view"><i class="fa fa-eye" title="View submission"></i></i></td>');
-                    _elementFound = true;
-                }
-            })
+            dataView.form.on('load', function () {
+                var newCol = [{
+                    name: "view",
+                    xpath: "view",
+                    label: " ",
+                    editable: false,
+                    index: 0,
+                    cell: Backgrid.Cell.extend({
+                        className: 'view',
+                        template: _.template('<i class="fa fa-eye" title="View submission"></i></i>'),
+
+                        render: function () {
+                            this.$el.html(this.template());
+                            return this;
+                        }
+                    })
+                }];
+
+                dataView.dataGrid.columns.unshift(newCol);
+                dataView.form.fields.unshift(newCol);
+            });
 
             $( ".data-table-container" ).on( "click", "td.view", function() {
                 $(this).dblclick(); 

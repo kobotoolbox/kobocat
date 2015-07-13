@@ -35,6 +35,10 @@
   color: #1e8fde;
 }
 
+.data-table-container table.table th.view a {
+  display: none;
+}
+
 /* Data instance */
 
 /* Analyze data */
