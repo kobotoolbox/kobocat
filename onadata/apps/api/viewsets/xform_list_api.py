@@ -29,7 +29,6 @@ DEFAULT_CONTENT_LENGTH = getattr(settings, 'DEFAULT_CONTENT_LENGTH', 10000000)
 
 
 class XFormListApi(viewsets.ReadOnlyModelViewSet):
-    authentication_classes = (DigestAuthentication,)
     content_negotiation_class = MediaFileContentNegotiation
     filter_backends = (filters.XFormListObjectPermissionFilter,)
     queryset = XForm.objects.filter(downloadable=True)
@@ -37,6 +36,18 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
     renderer_classes = (XFormListRenderer,)
     serializer_class = XFormListSerializer
     template_name = 'api/xformsList.xml'
+
+    def __init__(self, *args, **kwargs):
+        super(XFormListApi, self).__init__(*args, **kwargs)
+        # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
+        # previously hard-coded authentication classes are included first
+        authentication_classes = [
+            DigestAuthentication,
+        ]
+        self.authentication_classes = authentication_classes + [
+            auth_class for auth_class in self.authentication_classes
+                if not auth_class in authentication_classes
+        ]
 
     def get_openrosa_headers(self):
         tz = pytz.timezone(settings.TIME_ZONE)
