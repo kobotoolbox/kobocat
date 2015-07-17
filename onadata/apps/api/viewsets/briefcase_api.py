@@ -79,7 +79,6 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
     Implements the [Briefcase Aggregate API](\
     https://code.google.com/p/opendatakit/wiki/BriefcaseAggregateAPI).
     """
-    authentication_classes = (DigestAuthentication,)
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,)
     queryset = XForm.objects.all()
     permission_classes = (permissions.IsAuthenticated,
@@ -87,6 +86,18 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
     renderer_classes = (TemplateXMLRenderer, BrowsableAPIRenderer)
     serializer_class = XFormListSerializer
     template_name = 'openrosa_response.xml'
+
+    def __init__(self, *args, **kwargs):
+        super(BriefcaseApi, self).__init__(*args, **kwargs)
+        # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
+        # previously hard-coded authentication classes are included first
+        authentication_classes = [
+            DigestAuthentication,
+        ]
+        self.authentication_classes = authentication_classes + [
+            auth_class for auth_class in self.authentication_classes
+                if not auth_class in authentication_classes
+        ]
 
     def get_object(self, queryset=None):
         formId = self.request.GET.get('formId', '')
