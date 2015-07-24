@@ -42,19 +42,22 @@ def upload_to(instance, filename):
 
 def unique_type_for_form(xform, data_type, data_value=None, data_file=None):
     result = type_for_form(xform, data_type)
+    modified = False
     if not len(result):
         result = MetaData(data_type=data_type, xform=xform)
-        result.save()
+        modified = True
     else:
         result = result[0]
     if data_value:
         result.data_value = data_value
-        result.save()
+        modified = True
     if data_file:
         if result.data_value is None or result.data_value == '':
             result.data_value = data_file.name
         result.data_file = data_file
         result.data_file_type = data_file.content_type
+        modified = True
+    if modified:
         result.save()
     return result
 
