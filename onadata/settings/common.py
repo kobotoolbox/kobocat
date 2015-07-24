@@ -224,6 +224,7 @@ INSTALLED_APPS = (
     'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
+    'onadata.apps.sheets_sync',
 )
 
 OAUTH2_PROVIDER = {
