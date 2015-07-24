@@ -513,7 +513,7 @@ def download_excel_analyser(request, username, form_id_string):
     data_export= Export.objects.filter(
             xform=xform, export_type=Export.XLS_EXPORT).order_by('-created_on').first()
     if not data_export:
-        raise Http404('Please generate an XLS export of your data first.')
+        raise Http404('Please generate an XLS export of your data before generating an Excel Analyser copy.')
 
     analyser_filename= os.path.splitext(data_export.filename)[0] + '_EXCEL_ANALYSER.xlsx'
     with get_storage_class()().open(data_export.filepath) as data_file_xlsx:
