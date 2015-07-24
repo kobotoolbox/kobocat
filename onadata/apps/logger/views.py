@@ -14,8 +14,14 @@ from django.contrib import messages
 from django.core.files.storage import get_storage_class
 from django.core.files import File
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseBadRequest, \
-    HttpResponseRedirect, HttpResponseForbidden, StreamingHttpResponse
+from django.http import (HttpResponse,
+                         HttpResponseBadRequest,
+                         HttpResponseForbidden,
+                         HttpResponseRedirect,
+                         HttpResponseServerError,
+                         Http404,
+                         StreamingHttpResponse,
+                         )
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
@@ -443,27 +449,31 @@ def _get_xlsform(request, username, form_id_string):
     helper_auth_helper(request)
 
     if not has_permission(xform, owner, request, xform.shared):
+        # FIXME: Is there not a 403 exception equivalent to `Http404`?
         return HttpResponseForbidden('Not shared.')
 
     file_path = xform.xls.name
     default_storage = get_storage_class()()
 
-    if file_path != '' and default_storage.exists(file_path):
-        with default_storage.open(file_path) as xlsform_file:
-            if file_path.endswith('.csv'):
-                xlsform_io = convert_csv_to_xls(xlsform_file.read())
-            else:
-                xlsform_io= io.BytesIO(xlsform_file.read())
+    try:
+        if file_path != '' and default_storage.exists(file_path):
+            with default_storage.open(file_path) as xlsform_file:
+                if file_path.endswith('.csv'):
+                    xlsform_io = convert_csv_to_xls(xlsform_file.read())
+                else:
+                    xlsform_io= io.BytesIO(xlsform_file.read())
 
-        return xlsform_io
+            return xlsform_io
 
-    else:
-        messages.add_message(request, messages.WARNING,
-                             _(u'No XLS file for your form '
-                               u'<strong>%(id)s</strong>')
-                             % {'id': form_id_string})
+        else:
+            messages.add_message(request, messages.WARNING,
+                                 _(u'No XLS file for your form '
+                                   u'<strong>%(id)s</strong>')
+                                 % {'id': form_id_string})
 
-        return HttpResponseRedirect("/%s" % username)
+            return HttpResponseRedirect("/%s" % username)
+    except:
+        return HttpResponseServerError('Error retrieving XLSForm.')
 
 def download_spss_labels(request, username, form_id_string):
     xform = get_object_or_404(XForm,

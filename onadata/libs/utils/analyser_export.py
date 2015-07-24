@@ -144,7 +144,7 @@ def insert_xlsform_worksheets(analyser_shared_strings, analyser_survey_worksheet
                 copy_cells(source_survey_worksheet_tempfile, analyser_survey_worksheet_file_path, new_string_indices)
         # Copy over the "choices" sheet.
         choices_sheet_path= 'xl/worksheets/sheet' + worksheet_indices['choices'] + '.xml'
-        with survey_zipfile.open('xl/worksheets/sheet2.xml') as source_choices_worksheet_file:
+        with survey_zipfile.open(choices_sheet_path) as source_choices_worksheet_file:
             # Create a tempfile that supports seeking.
             with tempfile.TemporaryFile('w+') as source_choices_worksheet_tempfile:
                 source_choices_worksheet_tempfile.write(source_choices_worksheet_file.read())
