@@ -397,9 +397,9 @@ MONGO_DATABASE = {
     'PASSWORD': ''
 }
 
-GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
-GOOGLE_CLIENT_ID = '617113120802.onadata.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '9reM29qpGFPyI8TBuB54Z4fk'
+GOOGLE_STEP2_URI = 'http://localhost:8001/gwelcome'
+GOOGLE_CLIENT_ID = '896862299299-mv5q1t7qmljc3m4f7l74n0c1nf7pdcqn.apps.googleusercontent.com'
+GOOGLE_CLIENT_SECRET = 'rRYajhQEuQszfx8jW0nfehgT'
 
 THUMB_CONF = {
     'large': {'size': 1280, 'suffix': '-large'},
