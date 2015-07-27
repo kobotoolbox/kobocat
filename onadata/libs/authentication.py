@@ -29,10 +29,17 @@ class DigestAuthentication(BaseAuthentication):
 
 class HttpsOnlyBasicAuthentication(BasicAuthentication):
     def authenticate(self, request):
-        if not request.is_secure():
+        # The parent class can discern whether basic authentication is even
+        # being attempted; if it isn't, we need to gracefully defer to other
+        # authenticators
+        user_auth = super(HttpsOnlyBasicAuthentication, self).authenticate(
+            request)
+        if user_auth is not None and not request.is_secure():
+            # Scold the user if they provided correct credentials for basic
+            # auth but didn't use HTTPS
             raise AuthenticationFailed(_(
                 u'Using basic authentication without HTTPS transmits '
                 u'credentials in clear text! You MUST connect via HTTPS '
                 u'to use basic authentication.'
             ))
-        return super(HttpsOnlyBasicAuthentication, self).authenticate(request)
+        return user_auth
