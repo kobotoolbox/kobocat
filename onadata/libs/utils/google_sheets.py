@@ -3,6 +3,7 @@ This module contains classes responsible for communicating with
 Google Data API and common spreadsheets models.
 """
 
+
 class Client(object):
 
     """An instance of this class communicates with Google Data API."""
