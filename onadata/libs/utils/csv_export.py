@@ -6,7 +6,20 @@ from onadata.libs.utils.common_tags import INDEX, PARENT_INDEX
 from onadata.libs.utils.export_builder import ExportBuilder
 
 
-class CsvExportBuilder(ExportBuilder):
+class FlatCsvExportBuilder(ExportBuilder):
+    
+    def export(self, path, data, username, id_string, filter_query):
+        # TODO resolve circular import
+        from onadata.apps.viewer.pandas_mongo_bridge import\
+            CSVDataFrameBuilder
+
+        csv_builder = CSVDataFrameBuilder(
+            username, id_string, filter_query, self.GROUP_DELIMITER,
+            self.SPLIT_SELECT_MULTIPLES, self.BINARY_SELECT_MULTIPLES)
+        csv_builder.export_to(path)
+        
+        
+class ZippedCsvExportBuilder(ExportBuilder):
     
     @classmethod
     def write_row(row, csv_writer, fields):
@@ -57,12 +70,12 @@ class CsvExportBuilder(ExportBuilder):
                 # not provided for said repeat - write test to check this
                 row = output.get(section_name, None)
                 if type(row) == dict:
-                    CsvExportBuilder.write_row(
+                    ZippedCsvExportBuilder.write_row(
                         self.pre_process_row(row, section),
                         csv_writer, fields)
                 elif type(row) == list:
                     for child_row in row:
-                        CsvExportBuilder.write_row(
+                        ZippedCsvExportBuilder.write_row(
                             self.pre_process_row(child_row, section),
                             csv_writer, fields)
             index += 1
