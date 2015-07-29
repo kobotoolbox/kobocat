@@ -38,10 +38,11 @@ class SheetsExportBuilder(ExportBuilder):
     # Map of section_names to generated_names
     worksheet_titles = {}
     
-    def login_with_auth_token(self, token):
-        if token.refresh_token is None or token.access_token is None:
-            # Failed :-(
-            return
+    def login_with_auth_token(self, token_string):
+        
+        # deserialize the token.
+        token = gdata.gauth.token_from_blob(token_string)
+        assert token.refresh_token
         
         # Refresh OAuth token if necessary.
         oauth2_token = gdata.gauth.OAuth2Token(
@@ -154,5 +155,6 @@ class SheetsExportBuilder(ExportBuilder):
         # update parent_table with the generated sheet's title
         data[PARENT_TABLE_NAME] = worksheet_titles.get(
             data.get(PARENT_TABLE_NAME))
+        print 'writing row %s' % str([data.get(f) for f in fields])
         worksheet.append_row([data.get(f) for f in fields])
     

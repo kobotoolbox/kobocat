@@ -126,20 +126,19 @@ def generate_export(export_type, extension, username, id_string,
     print 'id_string %s' % id_string
     print 'filter_query %s' % filter_query
     records = query_mongo(username, id_string, filter_query)
-
-    print 'query_mongo'
-    for record in records:
-        print record
     
     export_builder = export_type_class_map[export_type]()
     export_builder.GROUP_DELIMITER = group_delimiter
     export_builder.SPLIT_SELECT_MULTIPLES = split_select_multiples
     export_builder.BINARY_SELECT_MULTIPLES = binary_select_multiples
-    export_builder.GOOGLE_TOKEN = google_token
     export_builder.set_survey(xform.data_dictionary().survey)
      
     temp_file = NamedTemporaryFile(suffix=("." + extension))
 
+    # Login to sheets before exporting.
+    if export_type == Export.GSHEETS_EXPORT:
+        export_builder.login_with_auth_token(google_token)
+        
     # run the export
     export_builder.export(
         temp_file.name, records, username, id_string, filter_query)
