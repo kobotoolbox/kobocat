@@ -10,8 +10,7 @@ class FlatCsvExportBuilder(ExportBuilder):
     
     def export(self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
-        from onadata.apps.viewer.pandas_mongo_bridge import\
-            CSVDataFrameBuilder
+        from onadata.apps.viewer.pandas_mongo_bridge import CSVDataFrameBuilder
 
         csv_builder = CSVDataFrameBuilder(
             username, id_string, filter_query, self.GROUP_DELIMITER,
@@ -24,11 +23,9 @@ class ZippedCsvExportBuilder(ExportBuilder):
     @classmethod
     def write_row(row, csv_writer, fields):
         csv_writer.writerow(
-                [ExportBuilder.encode_if_str(row, field) for field in fields])
+            [ExportBuilder.encode_if_str(row, field) for field in fields])
             
     def export(self, path, data, *args):
-
-
         csv_defs = {}
         for section in self.sections:
             csv_file = NamedTemporaryFile(suffix=".csv")
@@ -38,15 +35,14 @@ class ZippedCsvExportBuilder(ExportBuilder):
 
         # write headers
         for section in self.sections:
-            fields = [element['title'] for element in section['elements']]\
-                + self.EXTRA_FIELDS
+            fields = ([element['title'] for element in section['elements']] + 
+                      self.EXTRA_FIELDS)
             csv_defs[section['name']]['csv_writer'].writerow(
                 [f.encode('utf-8') for f in fields])
 
-        index = 1
         indices = {}
         survey_name = self.survey.name
-        for d in data:
+        for index, d in enumerate(data, 1):
             # decode mongo section names
             joined_export = ExportBuilder.dict_to_joined_export(
                 d, index, indices, survey_name)
@@ -78,4 +74,3 @@ class ZippedCsvExportBuilder(ExportBuilder):
                         ZippedCsvExportBuilder.write_row(
                             self.pre_process_row(child_row, section),
                             csv_writer, fields)
-            index += 1
