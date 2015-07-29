@@ -8,6 +8,7 @@ django-guardian==1.2.4
 django-registration-redux==1.1
 django-templated-email==0.4.9
 gdata==2.0.18
+gspread==0.2.5
 httplib2==0.9
 mock==1.0.1
 httmock==1.2.2
