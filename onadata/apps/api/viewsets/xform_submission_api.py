@@ -128,6 +128,9 @@ Here is some example JSON, it would replace `[the JSON]` above:
 >           }
 >       }
 """
+    authentication_classes = (DigestAuthentication,
+                              BasicAuthentication,
+                              TokenAuthentication)
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,)
     model = Instance
     permission_classes = (permissions.AllowAny,)
@@ -136,25 +139,6 @@ Here is some example JSON, it would replace `[the JSON]` above:
                         BrowsableAPIRenderer)
     serializer_class = SubmissionSerializer
     template_name = 'submission.xml'
-
-    def __init__(self, *args, **kwargs):
-        super(XFormSubmissionApi, self).__init__(*args, **kwargs)
-        # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
-        # previously hard-coded authentication classes are included first
-        authentication_classes = [
-            DigestAuthentication,
-            BasicAuthentication,
-            TokenAuthentication
-        ]
-        # We include BasicAuthentication here to allow submissions using basic
-        # authentication over unencrypted HTTP. REST framework stops after the
-        # first class that successfully authenticates, so
-        # HttpsOnlyBasicAuthentication will be ignored even if included by
-        # DEFAULT_AUTHENTICATION_CLASSES.
-        self.authentication_classes = authentication_classes + [
-            auth_class for auth_class in self.authentication_classes
-                if not auth_class in authentication_classes
-        ]
 
     def create(self, request, *args, **kwargs):
         username = self.kwargs.get('username')
