@@ -56,10 +56,9 @@ class XlsExportBuilder(ExportBuilder):
             ws = work_sheets[section_name]
             ws.append(headers)
 
-        index = 1
         indices = {}
         survey_name = self.survey.name
-        for d in data:
+        for index, d in enumerate(data, 1):
             joined_export = ExportBuilder.dict_to_joined_export(
                 d, index, indices, survey_name)
             output = ExportBuilder.decode_mongo_encoded_section_names(
@@ -90,6 +89,5 @@ class XlsExportBuilder(ExportBuilder):
                         XlsExportBuilder.write_row(
                             self.pre_process_row(child_row, section),
                             ws, fields, work_sheet_titles)
-            index += 1
-
+                        
         wb.save(filename=path)
