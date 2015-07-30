@@ -61,6 +61,7 @@ django-taggit==0.12.1
 
 # oath2 support
 django-oauth-toolkit==0.7.2
+oauth2client==1.4.12
 
 # spss
 https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#egg=savreaderwriter
