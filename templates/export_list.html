@@ -29,7 +29,7 @@
             <span style='float:middle;'>
               <div>
                 <input type="submit" class="btn btn-primary" value="{% trans 'New Export' %}" />
-                {% if export_type == 'xls' or export_type == 'csv' %}
+                {% if export_type == 'xls' or export_type == 'csv' or export_type == 'gsheets' %}
                   <a href="#advanced-export-modal" role="button" class="btn" data-toggle="modal">{% trans "Advanced Export" %}</a>
                 {% endif %}
             </div>
@@ -61,9 +61,19 @@
             <option value="/" selected>/ ({% trans "Slash" %})</option>
           </select>
           <label class="checkbox">
-            <input type="checkbox" name="options[dont_split_select_multiples]" value="yes" />
-            {% trans "DONT split select multiple choice answers into separate columns" %}
+            <input type="checkbox" name="options[split_select_multiples]" />
+            {% trans "Split select multiple choice answers into separate columns" %}
           </label>
+          {% if export_type == 'gsheets' %}
+          <label class="checkbox">
+            <input type="checkbox" name="options[flatten_repeated_fields]" checked="yes" />
+            {% trans "Flatten repeated groups into a single worksheet." %}
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="options[export_xlsform]" checked="yes" />
+            {% trans "Export the XLSForm along with the survey data." %}
+          </label>
+          {% endif %}
         </div>
         {% endif %}
         <div class="modal-footer">
