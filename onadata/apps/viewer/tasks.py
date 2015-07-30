@@ -146,7 +146,7 @@ def create_gsheets_export(username, id_string, export_id, query=None,
     # catch this since it potentially stops celery
     try:
         gen_export = generate_export(
-            Export.GSHEETS_EXPORT, 'gsheets', username, id_string, export_id, query,
+            Export.GSHEETS_EXPORT, None, username, id_string, export_id, query,
             group_delimiter, split_select_multiples, binary_select_multiples,
             google_token)
     except (Exception, NoRecordsFoundError) as e:

@@ -48,7 +48,7 @@ class Export(models.Model):
     EXPORT_TYPES = [
         (XLS_EXPORT, 'Excel'),
         (CSV_EXPORT, 'CSV'),
-        (GSHEETS_EXPORT, 'GSHEETS'),
+        (GSHEETS_EXPORT, 'Google Sheets'),
         (ZIP_EXPORT, 'ZIP'),
         (KML_EXPORT, 'kml'),
         (CSV_ZIP_EXPORT, 'CSV ZIP'),

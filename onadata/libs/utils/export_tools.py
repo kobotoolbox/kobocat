@@ -131,10 +131,15 @@ def generate_export(export_type, extension, username, id_string,
     export_builder.GROUP_DELIMITER = group_delimiter
     export_builder.SPLIT_SELECT_MULTIPLES = split_select_multiples
     export_builder.BINARY_SELECT_MULTIPLES = binary_select_multiples
+    export_builder.SHEET_TITLE = "%s_%s" % (
+        id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     export_builder.set_survey(xform.data_dictionary().survey)
      
-    temp_file = NamedTemporaryFile(suffix=("." + extension))
-
+    if extension:
+        temp_file = NamedTemporaryFile(suffix=("." + extension))
+    else:
+        temp_file = NamedTemporaryFile()
+        
     # Login to sheets before exporting.
     if export_type == Export.GSHEETS_EXPORT:
         export_builder.login_with_auth_token(google_token)
@@ -144,9 +149,9 @@ def generate_export(export_type, extension, username, id_string,
         temp_file.name, records, username, id_string, filter_query)
 
     # generate filename
-    basename = "%s_%s" % (
-        id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
-    filename = basename + "." + extension
+    filename = export_builder.SHEET_TITLE
+    if extension:
+        filename = filename + "." + extension
 
     # check filename is unique
     while not Export.is_filename_unique(xform, filename):
@@ -178,6 +183,10 @@ def generate_export(export_type, extension, username, id_string,
     export.filedir = dir_name
     export.filename = basename
     export.internal_status = Export.SUCCESSFUL
+    # Get URL of the exported sheet.
+    if export_type == Export.GSHEETS_EXPORT:
+        export.export_url = export_builder.url
+        
     # dont persist exports that have a filter
     if filter_query is None:
         export.save()

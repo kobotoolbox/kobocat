@@ -42,7 +42,8 @@ class ExportBuilder(object):
         'dateTime': lambda x: datetime.strptime(x[:19], '%Y-%m-%dT%H:%M:%S')
     }
     SHEET_NAME_MAX_CHARS = 31
-
+    SHEET_TITLE = 'export'
+    
     def export(self, path, data, *args):
         raise NotImplementedError
         
