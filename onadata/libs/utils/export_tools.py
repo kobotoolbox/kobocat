@@ -128,7 +128,7 @@ def generate_export(export_type, extension, username, id_string,
     if export_type == Export.GSHEETS_EXPORT:
         config['google_token'] = google_token
 
-    export_builder = export_type_class_map[export_type](config)
+    export_builder = export_type_class_map[export_type](xform, config)
     export_builder.GROUP_DELIMITER = group_delimiter
     export_builder.SPLIT_SELECT_MULTIPLES = split_select_multiples
     export_builder.BINARY_SELECT_MULTIPLES = binary_select_multiples

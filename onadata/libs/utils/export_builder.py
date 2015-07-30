@@ -44,10 +44,9 @@ class ExportBuilder(object):
     SHEET_NAME_MAX_CHARS = 31
     SHEET_TITLE = 'export'
 
-
-    def __init__(self, config=None):
-        pass
-
+    def __init__(self, xform, config=None):
+        self.xform = xform
+    
     def export(self, path, data, *args):
         raise NotImplementedError
         

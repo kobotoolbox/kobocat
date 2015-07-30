@@ -2,12 +2,15 @@
 This module contains classes responsible for communicating with
 Google Data API and common spreadsheets models.
 """
-
 import gdata.gauth
 import gspread 
+import io
 import json
+import xlrd
     
 from django.conf import settings
+from django.core.files.storage import get_storage_class
+from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.utils.google import get_refreshed_token
 from onadata.libs.utils.export_builder import ExportBuilder
 from onadata.libs.utils.common_tags import INDEX, PARENT_INDEX, PARENT_TABLE_NAME
@@ -138,6 +141,10 @@ class SheetsExportBuilder(ExportBuilder):
         print 'SheetsExportBuilder: inserting data'
         self._insert_data(data)
 
+        # Write XLSForm data
+        print 'SheetsExportBuilder: inserting XLSForm'
+        self._insert_xlsform()
+        
         # Delete the default worksheet if it exists
         # NOTE: for some reason self.spreadsheet.worksheets() does not contain
         #       the default worksheet (Sheet1). We therefore need to fetch an 
@@ -150,6 +157,37 @@ class SheetsExportBuilder(ExportBuilder):
                 self.client.del_worksheet(ws)
 
         print 'SheetsExportBuilder: done'
+    
+    def _insert_xlsform(self):
+        """Exports XLSForm (e.g. survey, choices) to the sheet."""
+        assert self.client
+        assert self.spreadsheet
+        assert self.xform
+        
+        file_path = self.xform.xls.name
+        default_storage = get_storage_class()()
+    
+        if file_path == '' or not default_storage.exists(file_path):
+            print 'No XLS file for your form'
+            return
+        
+        with default_storage.open(file_path) as xlsform_file:
+            if file_path.endswith('.csv'):
+                xlsform_io = convert_csv_to_xls(xlsform_file.read())
+            else:
+                xlsform_io = io.BytesIO(xlsform_file.read())
+            # Open XForm and copy sheets to Google Sheets.
+            workbook = xlrd.open_workbook(file_contents=xlsform_io.read())
+            for wksht_nm in workbook.sheet_names():
+                source_worksheet = workbook.sheet_by_name(wksht_nm)
+                num_cols = source_worksheet.ncols
+                num_rows = source_worksheet.nrows
+                destination_worksheet = self.spreadsheet.add_worksheet(
+                    title=wksht_nm, rows=num_rows, cols=num_cols)
+                for row in xrange(num_rows):
+                    update_row(destination_worksheet, row + 1,
+                               [source_worksheet.cell_value(row, col) 
+                                for col in xrange(num_cols)] )            
     
     def _insert_data(self, data):
         """Writes data rows for each section."""
