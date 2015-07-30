@@ -33,7 +33,7 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
     if export_type in [Export.XLS_EXPORT, Export.CSV_EXPORT, 
                        Export.CSV_ZIP_EXPORT, Export.SAV_ZIP_EXPORT]:
         if options and "group_delimiter" in options:
-            arguments["options"] = options
+            arguments["group_delimiter"] = options["group_delimiter"]
         if options and "split_select_multiples" in options:
             arguments["split_select_multiples"] =\
                 options["split_select_multiples"]
