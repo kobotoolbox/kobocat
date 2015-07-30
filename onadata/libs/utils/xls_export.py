@@ -40,7 +40,7 @@ class XlsExportBuilder(ExportBuilder):
         work_sheet_titles = {}
         for section in self.sections:
             section_name = section['name']
-            work_sheet_title = XlsExportBuilder.get_valid_sheet_name(
+            work_sheet_title = self.get_valid_sheet_name(
                 "_".join(section_name.split("/")), work_sheet_titles.values())
             work_sheet_titles[section_name] = work_sheet_title
             work_sheets[section_name] = wb.create_sheet(
