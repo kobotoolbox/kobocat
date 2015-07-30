@@ -406,8 +406,11 @@ GOOGLE_CLIENT_PRIVATE_KEY_PATH = os.environ.get('GOOGLE_CLIENT_PRIVATE_KEY_PATH'
     os.path.join(PROJECT_ROOT, 'settings/google-private-key.p12'))
 
 def _get_google_client_private_key():
-    with open(GOOGLE_CLIENT_PRIVATE_KEY_PATH) as f:
-        return f.read()
+    try:
+        with open(GOOGLE_CLIENT_PRIVATE_KEY_PATH) as f:
+            return f.read()
+    except EnvironmentError as e:
+        print 'Could not open private key file: %s' % e
 
 GOOGLE_CLIENT_PRIVATE_KEY = _get_google_client_private_key()
 
