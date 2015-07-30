@@ -122,9 +122,6 @@ def generate_export(export_type, extension, username, id_string,
         user__username__iexact=username, id_string__exact=id_string)
 
     # query mongo for the cursor
-    print 'username %s' % username
-    print 'id_string %s' % id_string
-    print 'filter_query %s' % filter_query
     records = query_mongo(username, id_string, filter_query)
     
     export_builder = export_type_class_map[export_type]()

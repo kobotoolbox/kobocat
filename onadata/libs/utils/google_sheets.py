@@ -163,6 +163,7 @@ class SheetsExportBuilder(ExportBuilder):
                 section['elements']] + self.EXTRA_FIELDS
             # get the worksheet
             ws = self.worksheets[section_name]
+            print 'writing row %s' % str(headers)
             update_row(ws, index=1, values=headers)
             
     def _create_worksheets(self):
@@ -174,7 +175,6 @@ class SheetsExportBuilder(ExportBuilder):
                 self.worksheet_titles.values())
             self.worksheet_titles[section_name] = work_sheet_title
             num_cols = len(section['elements']) + len(self.EXTRA_FIELDS)
-            print 'adding ws %s' % work_sheet_title
             self.worksheets[section_name] = self.spreadsheet.add_worksheet(
                 title=work_sheet_title, rows=1, cols=num_cols)
 

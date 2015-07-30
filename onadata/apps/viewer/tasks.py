@@ -45,7 +45,6 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
             arguments["google_token"] = options["google_token"]
                 
         # start async export
-        print 'start async export'
         if export_type == Export.XLS_EXPORT:
             result = create_xls_export.apply_async((), arguments, countdown=10)
         elif export_type == Export.GSHEETS_EXPORT:
