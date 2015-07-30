@@ -324,11 +324,10 @@ def create_export(request, username, id_string, export_type):
         return HttpResponseBadRequest(
             _("%s is not a valid delimiter" % group_delimiter))
 
-    # default is True, so when dont_.. is yes
-    # split_select_multiples becomes False
-    split_select_multiples = request.POST.get(
-        "options[dont_split_select_multiples]", "no") == "no"
-
+    split_select_multiples = "options[split_select_multiples]" in request.POST
+    flatten_repeated_fields = "options[flatten_repeated_fields]" in request.POST
+    export_xlsform = "options[export_xlsform]" in request.POST
+    
     binary_select_multiples = getattr(settings, 'BINARY_SELECT_MULTIPLES',
                                       False)
     # external export option
@@ -337,8 +336,11 @@ def create_export(request, username, id_string, export_type):
         'group_delimiter': group_delimiter,
         'split_select_multiples': split_select_multiples,
         'binary_select_multiples': binary_select_multiples,
+        'flatten_repeated_fields': flatten_repeated_fields,
+        'export_xlsform': export_xlsform,
         'meta': meta.replace(",", "") if meta else None
     }
+    print 'options %s' % options
     if token:
         options['google_token'] = token
 

@@ -2,6 +2,7 @@
 This module contains classes responsible for communicating with
 Google Data API and common spreadsheets models.
 """
+import csv
 import gdata.gauth
 import gspread 
 import io
@@ -10,12 +11,11 @@ import xlrd
     
 from django.conf import settings
 from django.core.files.storage import get_storage_class
+from oauth2client.client import SignedJwtAssertionCredentials
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.utils.google import get_refreshed_token
 from onadata.libs.utils.export_builder import ExportBuilder
 from onadata.libs.utils.common_tags import INDEX, PARENT_INDEX, PARENT_TABLE_NAME
-from oauth2client.client import SignedJwtAssertionCredentials
-
 
 def update_row(worksheet, index, values):
     """"Adds a row to the worksheet at the specified index and populates it with values.
@@ -109,40 +109,47 @@ class SheetsExportBuilder(ExportBuilder):
     # Map of section_names to generated_names
     worksheet_titles = {}
     # The URL of the exported sheet.
-    SHEETS_BASE_URL = 'https://docs.google.com/spreadsheet/ccc?key=%s&hl'
     url = None
-
+    
+    # Configuration options
+    spreadsheet_title = None
+    flatten_repeated_fields = True
+    export_xlsform = True
+    google_token = None
+    
+    # Constants
+    SHEETS_BASE_URL = 'https://docs.google.com/spreadsheet/ccc?key=%s&hl'
+    FLATTENED_SHEET_TITLE = 'raw'
+    
     def __init__(self, xform, config):
         super(SheetsExportBuilder, self).__init__(xform, config)
-        self.GOOGLE_TOKEN = config['google_token']
-    
-    def export(self, path, data, *args):
-        self.client = SheetsClient.login_with_auth_token(self.GOOGLE_TOKEN)
-
+        self.spreadsheet_title = config['spreadsheet_title']
+        self.google_token = config['google_token']
+        self.flatten_repeated_fields = config['flatten_repeated_fields']
+        self.export_xlsform = config['export_xlsform']
+   
+    def export(self, path, data, username, id_string, filter_query):
+        self.client = SheetsClient.login_with_auth_token(self.google_token)
+        
         # Create a new sheet
         print 'SheetsExportBuilder: creating new spreadsheet'
-        self.spreadsheet = self.client.new(title=self.SHEET_TITLE)
+        self.spreadsheet = self.client.new(title=self.spreadsheet_title)
         self.url = self.SHEETS_BASE_URL % self.spreadsheet.id
         print 'SheetsExportBuilder: %s' % self.url
-
+        
         # Add Service account as editor
         self.client.add_service_account_to_spreadsheet(self.spreadsheet)
-        
-        # Add worksheets for export.
-        print 'SheetsExportBuilder: adding worksheet'
-        self._create_worksheets()
-        
-        # Write the headers
-        print 'SheetsExportBuilder: inserting headers'
-        self._insert_headers()
 
-        # Write the data
-        print 'SheetsExportBuilder: inserting data'
-        self._insert_data(data)
-
+        # Perform the actual export
+        if self.flatten_repeated_fields:
+            self.export_flattened(path, data, username, id_string, filter_query)
+        else:
+            self.export_tabular(path, data)
+         
         # Write XLSForm data
-        print 'SheetsExportBuilder: inserting XLSForm'
-        self._insert_xlsform()
+        if self.export_xlsform:
+            print 'SheetsExportBuilder: inserting XLSForm'
+            self._insert_xlsform()
         
         # Delete the default worksheet if it exists
         # NOTE: for some reason self.spreadsheet.worksheets() does not contain
@@ -156,6 +163,50 @@ class SheetsExportBuilder(ExportBuilder):
                 self.client.del_worksheet(ws)
 
         print 'SheetsExportBuilder: done'
+           
+    def export_flattened(self, path, data, username, id_string, filter_query):
+        print 'SheetsExportBuilder: exporting flattened data'
+        
+        # Build a flattened CSV
+        from onadata.apps.viewer.pandas_mongo_bridge import CSVDataFrameBuilder
+        csv_builder = CSVDataFrameBuilder(
+            username, id_string, filter_query, self.group_delimiter,
+            self.split_select_multiples, self.binary_select_multiples)
+        csv_builder.export_to(path)
+        
+        # Read CSV back in and filter n/a entries
+        rows = []
+        with open(path) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                filtered_rows = [x if x != 'n/a' else '' for x in row]
+                rows.append(filtered_rows)
+        
+        # Create a worksheet for flattened data
+        num_rows = len(rows)
+        if not num_rows:
+            return
+        num_cols = len(rows[0])
+        ws = self.spreadsheet.add_worksheet(
+            title=self.FLATTENED_SHEET_TITLE, rows=num_rows, cols=num_cols)
+     
+        # Write data row by row                      
+        for index, values in enumerate(rows, 1):
+            print 'writing row %s' % str(values) 
+            update_row(ws, index, values)
+                    
+    def export_tabular(self, path, data):        
+        # Add worksheets for export.
+        print 'SheetsExportBuilder: adding worksheet'
+        self._create_worksheets()
+        
+        # Write the headers
+        print 'SheetsExportBuilder: inserting headers'
+        self._insert_headers()
+
+        # Write the data
+        print 'SheetsExportBuilder: inserting data'
+        self._insert_data(data)
     
     def _insert_xlsform(self):
         """Exports XLSForm (e.g. survey, choices) to the sheet."""

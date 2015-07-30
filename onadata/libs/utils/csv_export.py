@@ -8,18 +8,25 @@ from onadata.libs.utils.export_builder import ExportBuilder
 
 class FlatCsvExportBuilder(ExportBuilder):
     
+    
+    def __init__(self, xform, config):
+        super(FlatCsvExportBuilder, self).__init__(xform, config)
+            
     def export(self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
         from onadata.apps.viewer.pandas_mongo_bridge import CSVDataFrameBuilder
 
         csv_builder = CSVDataFrameBuilder(
-            username, id_string, filter_query, self.GROUP_DELIMITER,
-            self.SPLIT_SELECT_MULTIPLES, self.BINARY_SELECT_MULTIPLES)
+            username, id_string, filter_query, self.group_delimiter,
+            self.split_select_multiples, self.binary_select_multiples)
         csv_builder.export_to(path)
         
         
 class ZippedCsvExportBuilder(ExportBuilder):
     
+    def __init__(self, xform, config):
+        super(FlatCsvExportBuilder, self).__init__(xform, config)
+        
     @classmethod
     def write_row(row, csv_writer, fields):
         csv_writer.writerow(

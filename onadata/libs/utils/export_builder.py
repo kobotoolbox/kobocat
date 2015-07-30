@@ -1,5 +1,6 @@
+import six
 
-from datetime import datetime
+from datetime import datetime, date
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
 
@@ -7,7 +8,7 @@ from onadata.apps.viewer.models.parsed_instance import\
     _is_invalid_for_mongo, _encode_for_mongo, _decode_from_mongo
 from onadata.libs.utils.common_tags import (
     ID, XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION, BAMBOO_DATASET_ID,
-    DELETEDAT, USERFORM_ID, INDEX, PARENT_INDEX, PARENT_TABLE_NAME,
+    DELETEDAT, INDEX, PARENT_INDEX, PARENT_TABLE_NAME,
     SUBMISSION_TIME, UUID, TAGS, NOTES)
 
 QUESTION_TYPES_TO_EXCLUDE = [
@@ -26,13 +27,10 @@ class ExportBuilder(object):
     # fields we export but are not within the form's structure
     EXTRA_FIELDS = [ID, UUID, SUBMISSION_TIME, INDEX, PARENT_TABLE_NAME,
                     PARENT_INDEX, TAGS, NOTES]
-    SPLIT_SELECT_MULTIPLES = True
-    BINARY_SELECT_MULTIPLES = False
     
     # column group delimiters
     GROUP_DELIMITER_SLASH = '/'
     GROUP_DELIMITER_DOT = '.'
-    GROUP_DELIMITER = GROUP_DELIMITER_SLASH
     GROUP_DELIMITERS = [GROUP_DELIMITER_SLASH, GROUP_DELIMITER_DOT]
     TYPES_TO_CONVERT = ['int', 'decimal', 'date']  # , 'dateTime']
     CONVERT_FUNCS = {
@@ -43,10 +41,21 @@ class ExportBuilder(object):
     }
     SHEET_NAME_MAX_CHARS = 31
     SHEET_TITLE = 'export'
-
+    
+    # Configuration options
+    group_delimiter = '/'
+    split_select_multiples = True
+    binary_select_multiples = False
+    
     def __init__(self, xform, config=None):
         self.xform = xform
-    
+        self.group_delimiter = config.get(
+            'group_delimiter', self.GROUP_DELIMITER_SLASH)
+        self.split_select_multiples = config.get(
+            'split_select_multiples', True)
+        self.binary_select_multiples = config.get(
+            'binary_select_multiples', False)
+        
     def export(self, path, data, *args):
         raise NotImplementedError
         
@@ -98,7 +107,7 @@ class ExportBuilder(object):
 
                     # if its a select multiple, make columns out of its choices
                     if child.bind.get(u"type") == MULTIPLE_SELECT_BIND_TYPE\
-                            and self.SPLIT_SELECT_MULTIPLES:
+                            and self.split_select_multiples:
                         for c in child.children:
                             _xpath = c.get_abbreviated_xpath()
                             _title = ExportBuilder.format_field_title(
@@ -152,7 +161,7 @@ class ExportBuilder(object):
         build_sections(
             main_section, self.survey, self.sections,
             self.select_multiples, self.gps_fields, self.encoded_fields,
-            self.GROUP_DELIMITER)
+            self.group_delimiter)
 
     def section_by_name(self, name):
         matches = filter(lambda s: s['name'] == name, self.sections)
@@ -186,7 +195,7 @@ class ExportBuilder(object):
         return abbreviated_xpath
     
     @classmethod
-    def split_select_multiples(cls, row, select_multiples):
+    def do_split_select_multiples(self, row, select_multiples):
         # for each select_multiple, get the associated data and split it
         for xpath, choices in select_multiples.iteritems():
             # get the data matching this xpath
@@ -196,7 +205,7 @@ class ExportBuilder(object):
                 selections = [
                     u'{0}/{1}'.format(
                         xpath, selection) for selection in data.split()]
-            if not cls.BINARY_SELECT_MULTIPLES:
+            if not self.binary_select_multiples:
                 row.update(dict(
                     [(choice, choice in selections if selections else None)
                      for choice in choices]))
@@ -257,9 +266,9 @@ class ExportBuilder(object):
             row = ExportBuilder.decode_mongo_encoded_fields(
                 row, self.encoded_fields[section_name])
 
-        if self.SPLIT_SELECT_MULTIPLES and\
+        if self.split_select_multiples and\
                 section_name in self.select_multiples:
-            row = ExportBuilder.split_select_multiples(
+            row = self.do_split_select_multiples(
                 row, self.select_multiples[section_name])
 
         if section_name in self.gps_fields:

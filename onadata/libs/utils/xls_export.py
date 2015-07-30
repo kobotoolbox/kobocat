@@ -9,6 +9,11 @@ from onadata.libs.utils.export_builder import ExportBuilder
 
 class XlsExportBuilder(ExportBuilder):
 
+    # Configuration options
+    group_delimiter = '/'
+    split_select_multiples = True
+    binary_select_multiples = False
+    
     CONVERT_FUNCS = {
         'int': lambda x: int(x),
         'decimal': lambda x: float(x),
@@ -16,6 +21,12 @@ class XlsExportBuilder(ExportBuilder):
         'dateTime': lambda x: datetime.strptime(x[:19], '%Y-%m-%dT%H:%M:%S')
     }
 
+    def __init__(self, xform, config):
+        super(XlsExportBuilder, self).__init__(xform, config)
+        self.group_delimiter = config['group_delimiter']
+        self.split_select_multiples = config['split_select_multiples']
+        self.binary_select_multiples = config['binary_select_multiples']
+        
     @classmethod
     def string_to_date_with_xls_validation(cls, date_str):
         date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()

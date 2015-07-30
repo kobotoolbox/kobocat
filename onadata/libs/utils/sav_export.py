@@ -8,6 +8,9 @@ from onadata.libs.utils.export_builder import ExportBuilder
 
 class ZippedSavExportBuilder(ExportBuilder):
     
+    def __init__(self, xform, config):
+        super(ZippedSavExportBuilder, self).__init__(xform, config)
+        
     @classmethod
     def write_row(cls, row, sav_writer, fields):
         sav_writer.writerow(

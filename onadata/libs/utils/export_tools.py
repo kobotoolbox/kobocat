@@ -102,9 +102,9 @@ class DictOrganizer(object):
 
 def generate_export(export_type, extension, username, id_string,
                     export_id=None, filter_query=None, group_delimiter='/',
-                    split_select_multiples=True,
-                    binary_select_multiples=False,
-                    google_token=None):
+                    split_select_multiples=True, binary_select_multiples=False,
+                    google_token=None, flatten_repeated_fields=True,
+                    export_xlsform=True):
     """
     Create appropriate export object given the export type
     """
@@ -124,29 +124,32 @@ def generate_export(export_type, extension, username, id_string,
     # query mongo for the cursor
     records = query_mongo(username, id_string, filter_query)
 
+    spreadsheet_title = "%s_%s" % (id_string, 
+                                   datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     config = {}
+    config['group_delimiter'] = group_delimiter
+    config['split_select_multiples'] = split_select_multiples
+    config['binary_select_multiples'] = binary_select_multiples
     if export_type == Export.GSHEETS_EXPORT:
+        config['spreadsheet_title'] = spreadsheet_title
         config['google_token'] = google_token
-
+        config['flatten_repeated_fields'] = flatten_repeated_fields
+        config['export_xlsform'] = export_xlsform
+    print 'config: %s' % config
     export_builder = export_type_class_map[export_type](xform, config)
-    export_builder.GROUP_DELIMITER = group_delimiter
-    export_builder.SPLIT_SELECT_MULTIPLES = split_select_multiples
-    export_builder.BINARY_SELECT_MULTIPLES = binary_select_multiples
-    export_builder.SHEET_TITLE = "%s_%s" % (
-        id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     export_builder.set_survey(xform.data_dictionary().survey)
      
     if extension:
         temp_file = NamedTemporaryFile(suffix=("." + extension))
     else:
-        temp_file = NamedTemporaryFile()
+        temp_file = NamedTemporaryFile(delete=False)
         
     # run the export
     export_builder.export(
         temp_file.name, records, username, id_string, filter_query)
 
     # generate filename
-    filename = export_builder.SHEET_TITLE
+    filename = spreadsheet_title
     if extension:
         filename = filename + "." + extension
 
