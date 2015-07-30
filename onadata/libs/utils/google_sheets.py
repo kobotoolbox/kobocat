@@ -112,10 +112,9 @@ class SheetsExportBuilder(ExportBuilder):
     SHEETS_BASE_URL = 'https://docs.google.com/spreadsheet/ccc?key=%s&hl'
     url = None
 
-    def __init__(self, config):
-        super(SheetsExportBuilder, self).__init__(config)
+    def __init__(self, xform, config):
+        super(SheetsExportBuilder, self).__init__(xform, config)
         self.GOOGLE_TOKEN = config['google_token']
-
     
     def export(self, path, data, *args):
         self.client = SheetsClient.login_with_auth_token(self.GOOGLE_TOKEN)
