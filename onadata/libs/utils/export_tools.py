@@ -123,8 +123,12 @@ def generate_export(export_type, extension, username, id_string,
 
     # query mongo for the cursor
     records = query_mongo(username, id_string, filter_query)
-    
-    export_builder = export_type_class_map[export_type]()
+
+    config = {}
+    if export_type == Export.GSHEETS_EXPORT:
+        config['google_token'] = google_token
+
+    export_builder = export_type_class_map[export_type](config)
     export_builder.GROUP_DELIMITER = group_delimiter
     export_builder.SPLIT_SELECT_MULTIPLES = split_select_multiples
     export_builder.BINARY_SELECT_MULTIPLES = binary_select_multiples
@@ -136,10 +140,6 @@ def generate_export(export_type, extension, username, id_string,
         temp_file = NamedTemporaryFile(suffix=("." + extension))
     else:
         temp_file = NamedTemporaryFile()
-        
-    # Login to sheets before exporting.
-    if export_type == Export.GSHEETS_EXPORT:
-        export_builder.login_with_auth_token(google_token)
         
     # run the export
     export_builder.export(
