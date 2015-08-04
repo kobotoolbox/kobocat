@@ -267,10 +267,12 @@ urlpatterns = patterns(
         'onadata.apps.logger.views.ziggy_submissions'),
 
     # static media
-    url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
-        {'document_root': settings.MEDIA_ROOT}),
     url(r'^favicon\.ico',
         RedirectView.as_view(url='/static/images/favicon.ico')))
 
-urlpatterns += patterns('django.contrib.staticfiles.views',
-                        url(r'^static/(?P<path>.*)$', 'serve'))
+if settings.DEBUG:
+  urlpatterns += patterns('', url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
+        {'document_root': settings.MEDIA_ROOT}))
+  urlpatterns += patterns('django.contrib.staticfiles.views',
+                          url(r'^static/(?P<path>.*)$', 'serve'))
+
