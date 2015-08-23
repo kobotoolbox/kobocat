@@ -66,11 +66,11 @@
           </label>
           {% if export_type == 'gsheets' %}
           <label class="checkbox">
-            <input type="checkbox" name="options[flatten_repeated_fields]" checked="yes" />
+            <input type="checkbox" name="options[flatten_repeated_fields]" />
             {% trans "Flatten repeated groups into a single worksheet." %}
           </label>
           <label class="checkbox">
-            <input type="checkbox" name="options[export_xlsform]" checked="yes" />
+            <input type="checkbox" name="options[export_xlsform]" />
             {% trans "Export the XLSForm along with the survey data." %}
           </label>
           {% endif %}
