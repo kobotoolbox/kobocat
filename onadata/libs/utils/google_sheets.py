@@ -132,10 +132,8 @@ class SheetsExportBuilder(ExportBuilder):
         self.client = SheetsClient.login_with_auth_token(self.google_token)
         
         # Create a new sheet
-        print 'SheetsExportBuilder: creating new spreadsheet'
         self.spreadsheet = self.client.new(title=self.spreadsheet_title)
         self.url = self.SHEETS_BASE_URL % self.spreadsheet.id
-        print 'SheetsExportBuilder: %s' % self.url
         
         # Add Service account as editor
         self.client.add_service_account_to_spreadsheet(self.spreadsheet)
@@ -148,25 +146,19 @@ class SheetsExportBuilder(ExportBuilder):
          
         # Write XLSForm data
         if self.export_xlsform:
-            print 'SheetsExportBuilder: inserting XLSForm'
             self._insert_xlsform()
         
         # Delete the default worksheet if it exists
         # NOTE: for some reason self.spreadsheet.worksheets() does not contain
         #       the default worksheet (Sheet1). We therefore need to fetch an 
         #       updated list here.
-        print 'SheetsExportBuilder: deleting default worksheet'
         feed = self.client.get_worksheets_feed(self.spreadsheet)
         for elem in feed.findall(gspread.ns._ns('entry')):
             ws = gspread.Worksheet(self.spreadsheet, elem)
             if ws.title == 'Sheet1':
                 self.client.del_worksheet(ws)
-
-        print 'SheetsExportBuilder: done'
            
-    def export_flattened(self, path, data, username, id_string, filter_query):
-        print 'SheetsExportBuilder: exporting flattened data'
-        
+    def export_flattened(self, path, data, username, id_string, filter_query): 
         # Build a flattened CSV
         from onadata.apps.viewer.pandas_mongo_bridge import CSVDataFrameBuilder
         csv_builder = CSVDataFrameBuilder(
@@ -192,20 +184,16 @@ class SheetsExportBuilder(ExportBuilder):
      
         # Write data row by row                      
         for index, values in enumerate(rows, 1):
-            print 'writing row %s' % str(values) 
             update_row(ws, index, values)
                     
     def export_tabular(self, path, data):        
         # Add worksheets for export.
-        print 'SheetsExportBuilder: adding worksheet'
         self._create_worksheets()
         
         # Write the headers
-        print 'SheetsExportBuilder: inserting headers'
         self._insert_headers()
 
         # Write the data
-        print 'SheetsExportBuilder: inserting data'
         self._insert_data(data)
     
     def _insert_xlsform(self):
@@ -218,7 +206,7 @@ class SheetsExportBuilder(ExportBuilder):
         default_storage = get_storage_class()()
     
         if file_path == '' or not default_storage.exists(file_path):
-            print 'No XLS file for your form'
+            # No XLS file for your form
             return
         
         with default_storage.open(file_path) as xlsform_file:
@@ -284,7 +272,6 @@ class SheetsExportBuilder(ExportBuilder):
                 section['elements']] + self.EXTRA_FIELDS
             # get the worksheet
             ws = self.worksheets[section_name]
-            print 'writing row %s' % str(headers)
             update_row(ws, index=1, values=headers)
             
     def _create_worksheets(self):
@@ -304,5 +291,4 @@ class SheetsExportBuilder(ExportBuilder):
         # update parent_table with the generated sheet's title
         data[PARENT_TABLE_NAME] = worksheet_titles.get(
             data.get(PARENT_TABLE_NAME))
-        print 'writing row %s' % str([data.get(f) for f in fields])
         worksheet.append_row([data.get(f) for f in fields])

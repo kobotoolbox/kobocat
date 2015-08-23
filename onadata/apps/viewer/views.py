@@ -340,10 +340,9 @@ def create_export(request, username, id_string, export_type):
         'export_xlsform': export_xlsform,
         'meta': meta.replace(",", "") if meta else None
     }
-    print 'options %s' % options
     if token:
         options['google_token'] = token
-
+    
     try:
         create_async_export(xform, export_type, query, force_xlsx, options)
     except Export.ExportTypeError:
