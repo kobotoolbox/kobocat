@@ -16,6 +16,13 @@ from onadata.libs.utils.google_sheets import SheetsClient
 from test_base import TestBase
 
 
+          
+class MockCell():
+    def __init__(self, row, col, value):
+        self.row = row
+        self.col = col
+        self.value = value
+  
 class TestExport(TestBase):
 
     def setUp(self):
@@ -28,52 +35,73 @@ class TestExport(TestBase):
         # Files that contain the expected spreadsheet data.
         self.fixture_dir = os.path.join(
             self.this_directory, 'fixtures', 'google_sheets_export')
-        expected_file_names = ['expected_tutorial_w_repeats.csv',
-                               'expected_children.csv']
-        self.expected_files = [open(os.path.join(self.fixture_dir, f)) 
-                               for f in expected_file_names]
-        # Temporary files that receives spreadsheet data.
-        self.result_files = [NamedTemporaryFile() for f in expected_file_names]
-        self.csv_writers = [csv.writer(f, lineterminator='\n') 
-                            for f in self.result_files]
         
+        # Create a test user and login.
         self._create_user_and_login()
+        
+        # Create a test submission.
+        path = os.path.join(self.fixture_dir, 'tutorial_w_repeats.xls')
+        self._publish_xls_file_and_set_xform(path)
+        path = os.path.join(self.fixture_dir, 'tutorial_w_repeats.xml')
         self._submission_time = parse_datetime('2013-02-18 15:54:01Z')
-
+        self._make_submission(
+            path, forced_submission_time=self._submission_time)
+        
     def _mock_worksheet(self, csv_writer):
         """Creates a mock worksheet object with append_row and insert_row 
         methods writing to csv_writer."""
         worksheet = Mock()
+        
         worksheet.append_row.side_effect = \
-            lambda values: csv_writer.writerow(values) 
+            lambda values: csv_writer.writerow(values)
+        def create_cell(r, c):
+            return MockCell(r, c, None)
+        worksheet.cell.side_effect = create_cell
+        worksheet.update_cells.side_effect = \
+            lambda cells: csv_writer.writerow([cell.value for cell in cells])
         worksheet.insert_row.side_effect = \
             lambda values, index: csv_writer.writerow(values) 
         return worksheet
         
     @patch.object(SheetsClient, 'new')
+    @patch.object(SheetsClient, 'add_service_account_to_spreadsheet')
+    @patch.object(SheetsClient, 'get_worksheets_feed')
     @patch('urllib2.urlopen')
-    def test_gsheets_export_output(self, mock_urlopen, mock_new):
+    def test_gsheets_export_output(self, mock_urlopen, mock_get_worksheets,
+                                   mock_account_add_service_account, mock_new):
+        expected_file_names = ['expected_tutorial_w_repeats.csv',
+                               'expected_children.csv',
+                               'expected_survey.csv',
+                               'expected_choices.csv']
+        expected_files = [open(os.path.join(self.fixture_dir, f)) 
+                          for f in expected_file_names]
+        # Temporary files that receives spreadsheet data.
+        result_files = [NamedTemporaryFile() for f in expected_file_names]
+        # CSV writers to write spreadsheet data.
+        csv_writers = [csv.writer(f, lineterminator='\n') for f in result_files]
+
         mock_urlopen.return_value.read.return_value = '{"access_token": "baz"}'
         mock_spreadsheet = Mock()
         mock_spreadsheet.add_worksheet.side_effect = \
-            [self._mock_worksheet(writer) for writer in self.csv_writers]
+            [self._mock_worksheet(writer) for writer in csv_writers]
         mock_new.return_value = mock_spreadsheet
         
-        path = os.path.join(self.fixture_dir, 'tutorial_w_repeats.xls')
-        self._publish_xls_file_and_set_xform(path)
-        path = os.path.join(self.fixture_dir, 'tutorial_w_repeats.xml')
-        self._make_submission(
-            path, forced_submission_time=self._submission_time)
-        # test csv
-        export = generate_export(Export.GSHEETS_EXPORT, 'gsheets', 
-                                 self.user.username, 'tutorial_w_repeats',
-                                 google_token=self.token_blob)
+        # Test Google Sheets export.
+        export = generate_export(export_type=Export.GSHEETS_EXPORT, 
+                                 extension='gsheets', 
+                                 username=self.user.username, 
+                                 id_string='tutorial_w_repeats',
+                                 split_select_multiples=True,
+                                 binary_select_multiples=False,
+                                 google_token=self.token_blob,
+                                 flatten_repeated_fields=False,
+                                 export_xlsform=True)
         storage = get_storage_class()()
         self.assertTrue(storage.exists(export.filepath))
-        path, ext = os.path.splitext(export.filename)
+        _, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.gsheets')
 
-        for result, expected in zip(self.result_files, self.expected_files):
+        for result, expected in zip(result_files, expected_files):
             result.flush()
             result.seek(0)
             expected_content = expected.read()

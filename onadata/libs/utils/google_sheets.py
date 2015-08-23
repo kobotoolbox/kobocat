@@ -17,6 +17,7 @@ from onadata.libs.utils.google import get_refreshed_token
 from onadata.libs.utils.export_builder import ExportBuilder
 from onadata.libs.utils.common_tags import INDEX, PARENT_INDEX, PARENT_TABLE_NAME
 
+
 def update_row(worksheet, index, values):
     """"Adds a row to the worksheet at the specified index and populates it with values.
     Widens the worksheet if there are more values than columns.
@@ -35,6 +36,18 @@ def update_row(worksheet, index, values):
         cell_list.append(cell)
         
     worksheet.update_cells(cell_list)
+        
+        
+def xldr_format_value(cell):
+    """A helper function to format the value of a cell.
+    The xldr stores integers as floats which means that the cell value 
+    42 in Excel is returned as 42.0 in Python. This function tries to guess
+    if the original value was an integer and returns the proper type.
+    """
+    value = cell.value
+    if cell.ctype == xlrd.XL_CELL_NUMBER and int(value) == value:
+        value = int(value)
+    return value     
         
         
 class SheetsClient(gspread.client.Client):
@@ -194,7 +207,7 @@ class SheetsExportBuilder(ExportBuilder):
         self._insert_headers()
 
         # Write the data
-        self._insert_data(data)
+        self._insert_data(data)    
     
     def _insert_xlsform(self):
         """Exports XLSForm (e.g. survey, choices) to the sheet."""
@@ -215,16 +228,17 @@ class SheetsExportBuilder(ExportBuilder):
             else:
                 xlsform_io = io.BytesIO(xlsform_file.read())
             # Open XForm and copy sheets to Google Sheets.
-            workbook = xlrd.open_workbook(file_contents=xlsform_io.read())
+            workbook = xlrd.open_workbook(file_contents=xlsform_io.read(),
+                                          formatting_info=True)
             for wksht_nm in workbook.sheet_names():
-                source_worksheet = workbook.sheet_by_name(wksht_nm)
-                num_cols = source_worksheet.ncols
-                num_rows = source_worksheet.nrows
-                destination_worksheet = self.spreadsheet.add_worksheet(
+                source_ws = workbook.sheet_by_name(wksht_nm)
+                num_cols = source_ws.ncols
+                num_rows = source_ws.nrows
+                destination_ws = self.spreadsheet.add_worksheet(
                     title=wksht_nm, rows=num_rows, cols=num_cols)
                 for row in xrange(num_rows):
-                    update_row(destination_worksheet, row + 1,
-                               [source_worksheet.cell_value(row, col) 
+                    update_row(destination_ws, row + 1,
+                               [xldr_format_value(source_ws.cell(row, col)) 
                                 for col in xrange(num_cols)] )            
     
     def _insert_data(self, data):
