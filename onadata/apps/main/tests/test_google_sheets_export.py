@@ -3,6 +3,7 @@ import os
 
 import gdata.gauth
 
+from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse
@@ -22,6 +23,7 @@ class MockCell():
         self.row = row
         self.col = col
         self.value = value
+  
   
 class TestExport(TestBase):
 
@@ -46,12 +48,12 @@ class TestExport(TestBase):
         self._submission_time = parse_datetime('2013-02-18 15:54:01Z')
         self._make_submission(
             path, forced_submission_time=self._submission_time)
-        
+
+
     def _mock_worksheet(self, csv_writer):
         """Creates a mock worksheet object with append_row and insert_row 
         methods writing to csv_writer."""
         worksheet = Mock()
-        
         worksheet.append_row.side_effect = \
             lambda values: csv_writer.writerow(values)
         def create_cell(r, c):
@@ -62,22 +64,36 @@ class TestExport(TestBase):
         worksheet.insert_row.side_effect = \
             lambda values, index: csv_writer.writerow(values) 
         return worksheet
+
+
+    def assertEqualExportFiles(self, expected_files, result_files, export):
+        for result, expected in zip(result_files, expected_files):
+            result.flush()
+            result.seek(0)
+            expected_content = expected.read()
+            # Fill in the actual export id (varies based on test order)
+            expected_content = expected_content.replace('###EXPORT_ID###', 
+                                                        str(export.id))
+            result_content = result.read()
+            self.assertEquals(result_content, expected_content)
+        
         
     @patch.object(SheetsClient, 'new')
     @patch.object(SheetsClient, 'add_service_account_to_spreadsheet')
     @patch.object(SheetsClient, 'get_worksheets_feed')
     @patch('urllib2.urlopen')
-    def test_gsheets_export_output(self, mock_urlopen, mock_get_worksheets,
-                                   mock_account_add_service_account, mock_new):
+    def test_gsheets_export_output(self, 
+                                   mock_urlopen, 
+                                   mock_get_worksheets,
+                                   mock_account_add_service_account, 
+                                   mock_new):
         expected_file_names = ['expected_tutorial_w_repeats.csv',
                                'expected_children.csv',
                                'expected_survey.csv',
                                'expected_choices.csv']
         expected_files = [open(os.path.join(self.fixture_dir, f)) 
                           for f in expected_file_names]
-        # Temporary files that receives spreadsheet data.
         result_files = [NamedTemporaryFile() for f in expected_file_names]
-        # CSV writers to write spreadsheet data.
         csv_writers = [csv.writer(f, lineterminator='\n') for f in result_files]
 
         mock_urlopen.return_value.read.return_value = '{"access_token": "baz"}'
@@ -100,11 +116,45 @@ class TestExport(TestBase):
         self.assertTrue(storage.exists(export.filepath))
         _, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.gsheets')
+        self.assertEqualExportFiles(expected_files, result_files, export)
 
-        for result, expected in zip(result_files, expected_files):
-            result.flush()
-            result.seek(0)
-            expected_content = expected.read()
-            result_content = result.read()
-            self.assertEquals(result_content, expected_content)
-                
+
+    @patch.object(SheetsClient, 'new')
+    @patch.object(SheetsClient, 'add_service_account_to_spreadsheet')
+    @patch.object(SheetsClient, 'get_worksheets_feed')
+    @patch('urllib2.urlopen')
+    def test_gsheets_export_flattened_output(self, 
+                                             mock_urlopen, 
+                                             mock_get_worksheets,
+                                             mock_account_add_service_account, 
+                                             mock_new):
+        expected_file_names = ['expected_flattened_raw.csv',
+                               'expected_survey.csv',
+                               'expected_choices.csv']
+        expected_files = [open(os.path.join(self.fixture_dir, f)) 
+                          for f in expected_file_names]
+        result_files = [NamedTemporaryFile() for f in expected_file_names]
+        csv_writers = [csv.writer(f, lineterminator='\n') for f in result_files]
+
+        mock_urlopen.return_value.read.return_value = '{"access_token": "baz"}'
+        mock_spreadsheet = Mock()
+        mock_spreadsheet.add_worksheet.side_effect = \
+            [self._mock_worksheet(writer) for writer in csv_writers]
+        mock_new.return_value = mock_spreadsheet
+        
+        # Test Google Sheets export.
+        export = generate_export(export_type=Export.GSHEETS_EXPORT, 
+                                 extension='gsheets', 
+                                 username=self.user.username, 
+                                 id_string='tutorial_w_repeats',
+                                 split_select_multiples=False,
+                                 binary_select_multiples=False,
+                                 google_token=self.token_blob,
+                                 flatten_repeated_fields=True,
+                                 export_xlsform=True)
+        storage = get_storage_class()()
+        self.assertTrue(storage.exists(export.filepath))
+        _, ext = os.path.splitext(export.filename)
+        self.assertEqual(ext, '.gsheets')
+        self.assertEqualExportFiles(expected_files, result_files, export)
+                    
