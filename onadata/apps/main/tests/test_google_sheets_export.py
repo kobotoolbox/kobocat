@@ -65,7 +65,25 @@ class TestExport(TestBase):
             lambda values, index: csv_writer.writerow(values) 
         return worksheet
 
-
+    def _mock_spreadsheet(self, csv_writers):
+        spreadsheet = Mock()
+        spreadsheet.add_worksheet.side_effect = \
+            [self._mock_worksheet(writer) for writer in csv_writers]
+        return spreadsheet
+          
+    def _setup_result_files(self, expected_file_names):
+        expected_files = [open(os.path.join(self.fixture_dir, f)) 
+                          for f in expected_file_names]
+        result_files = [NamedTemporaryFile() for f in expected_file_names]
+        csv_writers = [csv.writer(f, lineterminator='\n') for f in result_files]
+        return expected_files, result_files, csv_writers
+    
+    def assertStorageExists(self, export):
+        storage = get_storage_class()()
+        self.assertTrue(storage.exists(export.filepath))
+        _, ext = os.path.splitext(export.filename)
+        self.assertEqual(ext, '.gsheets')
+              
     def assertEqualExportFiles(self, expected_files, result_files, export):
         for result, expected in zip(result_files, expected_files):
             result.flush()
@@ -87,20 +105,13 @@ class TestExport(TestBase):
                                    mock_get_worksheets,
                                    mock_account_add_service_account, 
                                    mock_new):
-        expected_file_names = ['expected_tutorial_w_repeats.csv',
-                               'expected_children.csv',
-                               'expected_survey.csv',
-                               'expected_choices.csv']
-        expected_files = [open(os.path.join(self.fixture_dir, f)) 
-                          for f in expected_file_names]
-        result_files = [NamedTemporaryFile() for f in expected_file_names]
-        csv_writers = [csv.writer(f, lineterminator='\n') for f in result_files]
-
+        expected_files, result_files, csv_writers = self._setup_result_files(
+            ['expected_tutorial_w_repeats.csv',
+             'expected_children.csv',
+             'expected_survey.csv',
+             'expected_choices.csv'])
         mock_urlopen.return_value.read.return_value = '{"access_token": "baz"}'
-        mock_spreadsheet = Mock()
-        mock_spreadsheet.add_worksheet.side_effect = \
-            [self._mock_worksheet(writer) for writer in csv_writers]
-        mock_new.return_value = mock_spreadsheet
+        mock_new.return_value = self._mock_spreadsheet(csv_writers)
         
         # Test Google Sheets export.
         export = generate_export(export_type=Export.GSHEETS_EXPORT, 
@@ -112,10 +123,7 @@ class TestExport(TestBase):
                                  google_token=self.token_blob,
                                  flatten_repeated_fields=False,
                                  export_xlsform=True)
-        storage = get_storage_class()()
-        self.assertTrue(storage.exists(export.filepath))
-        _, ext = os.path.splitext(export.filename)
-        self.assertEqual(ext, '.gsheets')
+        self.assertStorageExists(export)
         self.assertEqualExportFiles(expected_files, result_files, export)
 
 
@@ -128,18 +136,10 @@ class TestExport(TestBase):
                                              mock_get_worksheets,
                                              mock_account_add_service_account, 
                                              mock_new):
-        expected_file_names = ['expected_flattened_raw.csv',
-                               'expected_survey.csv',
-                               'expected_choices.csv']
-        expected_files = [open(os.path.join(self.fixture_dir, f)) 
-                          for f in expected_file_names]
-        result_files = [NamedTemporaryFile() for f in expected_file_names]
-        csv_writers = [csv.writer(f, lineterminator='\n') for f in result_files]
-
+        expected_files, result_files, csv_writers = self._setup_result_files(
+            ['expected_flattened_raw.csv'])
         mock_urlopen.return_value.read.return_value = '{"access_token": "baz"}'
-        mock_spreadsheet = Mock()
-        mock_spreadsheet.add_worksheet.side_effect = \
-            [self._mock_worksheet(writer) for writer in csv_writers]
+        mock_spreadsheet = self._mock_spreadsheet(csv_writers)
         mock_new.return_value = mock_spreadsheet
         
         # Test Google Sheets export.
@@ -151,10 +151,7 @@ class TestExport(TestBase):
                                  binary_select_multiples=False,
                                  google_token=self.token_blob,
                                  flatten_repeated_fields=True,
-                                 export_xlsform=True)
-        storage = get_storage_class()()
-        self.assertTrue(storage.exists(export.filepath))
-        _, ext = os.path.splitext(export.filename)
-        self.assertEqual(ext, '.gsheets')
+                                 export_xlsform=False)
+        self.assertStorageExists(export)
         self.assertEqualExportFiles(expected_files, result_files, export)
                     
