@@ -19,6 +19,7 @@ from django.http import (HttpResponse,
                          HttpResponseForbidden,
                          HttpResponseRedirect,
                          HttpResponseServerError,
+                         HttpResponseNotFound,
                          Http404,
                          StreamingHttpResponse,
                          )
@@ -512,8 +513,20 @@ def download_excel_analyser(request, username, form_id_string):
     # Get the data.
     data_export= Export.objects.filter(
             xform=xform, export_type=Export.XLS_EXPORT).order_by('-created_on').first()
-    if not data_export:
-        raise Http404('Please generate an XLS export of your data before generating an Excel Analyser copy.')
+    if not data_export or not data_export.filename:
+        if not data_export:
+            err_msg = _(u'Please generate an XLS export of your data before generating an Excel Analyser copy.')
+        elif data_export.status == Export.PENDING:
+            err_msg = _(u'Please wait for your XLS export to be generated '
+                        u'before trying to generate an Excel Analyser copy.');
+        elif data_export.status == Export.FAILED:
+            err_msg = _(u'Last attempt for XLS export creation failed. An XLS export of your data must '
+                        u'have been successfully generated before trying to generate an Excel Analyser copy.')
+        else:
+            err_msg = _(u'Unknown XLS export state. '
+                        u'Please generate an XLS export of your data before generating an Excel Analyser copy.')
+        return HttpResponseNotFound(loader.render_to_string('404_xls_analyzer_error.html', {'error_message': err_msg},
+                                                            RequestContext(request)))
 
     analyser_filename= os.path.splitext(data_export.filename)[0] + '_EXCEL_ANALYSER.xlsx'
     with get_storage_class()().open(data_export.filepath) as data_file_xlsx:
