@@ -54,3 +54,18 @@ class SqlLogging:
                     query['time'], " ".join(query['sql'].split()))
 
         return response
+
+
+class BrokenClientMiddleware(object):
+    """
+    ODK Collect sends HTTP-violating localized date strings, e.g.
+    'mar., 25 ao\xfbt 2015 07:11:56 GMT+00:00', which wreak havoc on oauthlib.
+    This middleware detects and discards HTTP_DATE headers that contain invalid
+    characters.
+    """
+    def process_request(self, request):
+        if 'HTTP_DATE' in request.META:
+            try:
+                request.META['HTTP_DATE'].decode()
+            except UnicodeDecodeError:
+                del request.META['HTTP_DATE']

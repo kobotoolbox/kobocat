@@ -166,6 +166,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'django.middleware.locale.LocaleMiddleware',
     'onadata.libs.utils.middleware.LocaleMiddlewareWithTweaks',
+    # BrokenClientMiddleware must come before AuthenticationMiddleware
+    'onadata.libs.utils.middleware.BrokenClientMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
