@@ -226,6 +226,7 @@ INSTALLED_APPS = (
     'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
+    'onadata.apps.sheets_sync',
 )
 
 OAUTH2_PROVIDER = {
@@ -399,9 +400,23 @@ MONGO_DATABASE = {
     'PASSWORD': ''
 }
 
-GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
-GOOGLE_CLIENT_ID = '617113120802.onadata.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '9reM29qpGFPyI8TBuB54Z4fk'
+GOOGLE_STEP2_URI = 'http://localhost:8001/gwelcome'
+GOOGLE_CLIENT_ID = '896862299299-mv5q1t7qmljc3m4f7l74n0c1nf7pdcqn.apps.googleusercontent.com'
+GOOGLE_CLIENT_SECRET = 'rRYajhQEuQszfx8jW0nfehgT'
+GOOGLE_CLIENT_EMAIL = os.environ.get('GOOGLE_CLIENT_EMAIL',
+    '896862299299-c651sc4ne7t9v23bk70s7m70b37h9e3k@developer.gserviceaccount.com')
+GOOGLE_CLIENT_PRIVATE_KEY_PATH = os.environ.get('GOOGLE_CLIENT_PRIVATE_KEY_PATH',
+    os.path.join(PROJECT_ROOT, 'settings/google-private-key.p12'))
+
+def _get_google_client_private_key():
+    try:
+        with open(GOOGLE_CLIENT_PRIVATE_KEY_PATH) as f:
+            return f.read()
+    except EnvironmentError as e:
+        print 'Could not open private key file: %s' % e
+
+GOOGLE_CLIENT_PRIVATE_KEY = _get_google_client_private_key()
+
 
 THUMB_CONF = {
     'large': {'size': 1280, 'suffix': '-large'},

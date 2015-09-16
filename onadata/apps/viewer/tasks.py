@@ -30,9 +30,8 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
         'export_id': export.id,
         'query': query,
     }
-    if export_type in [Export.XLS_EXPORT, Export.GDOC_EXPORT,
-                       Export.CSV_EXPORT, Export.CSV_ZIP_EXPORT,
-                       Export.SAV_ZIP_EXPORT]:
+    if export_type in [Export.XLS_EXPORT, Export.CSV_EXPORT, 
+                       Export.CSV_ZIP_EXPORT, Export.SAV_ZIP_EXPORT]:
         if options and "group_delimiter" in options:
             arguments["group_delimiter"] = options["group_delimiter"]
         if options and "split_select_multiples" in options:
@@ -43,7 +42,7 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
                 options["binary_select_multiples"]
 
         # start async export
-        if export_type in [Export.XLS_EXPORT, Export.GDOC_EXPORT]:
+        if export_type == Export.XLS_EXPORT:
             result = create_xls_export.apply_async((), arguments, countdown=10)
         elif export_type == Export.CSV_EXPORT:
             result = create_csv_export.apply_async(
@@ -56,6 +55,23 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
                 (), arguments, countdown=10)
         else:
             raise Export.ExportTypeError
+    elif export_type == Export.GSHEETS_EXPORT:
+        if options and "group_delimiter" in options:
+            arguments["group_delimiter"] = options["group_delimiter"]
+        if options and "split_select_multiples" in options:
+            arguments["split_select_multiples"] =\
+                options["split_select_multiples"]
+        if options and "binary_select_multiples" in options:
+            arguments["binary_select_multiples"] =\
+                options["binary_select_multiples"]
+        if options and "google_token" in options:
+            arguments["google_token"] = options["google_token"]
+        if options and "flatten_repeated_fields" in options:
+            arguments["flatten_repeated_fields"] =\
+                options["flatten_repeated_fields"]
+        if options and "export_xlsform" in options:
+            arguments["export_xlsform"] = options["export_xlsform"]
+        result = create_gsheets_export.apply_async((), arguments, countdown=10)
     elif export_type == Export.ZIP_EXPORT:
         # start async export
         result = create_zip_export.apply_async(
@@ -125,6 +141,44 @@ def create_xls_export(username, id_string, export_id, query=None,
     else:
         return gen_export.id
 
+@task()
+def create_gsheets_export(
+    username, id_string, export_id, query=None, group_delimiter='/', 
+    split_select_multiples=True, binary_select_multiples=False, 
+    google_token=None, flatten_repeated_fields=True, export_xlsform=True):
+    # we re-query the db instead of passing model objects according to
+    # http://docs.celeryproject.org/en/latest/userguide/tasks.html#state
+    try:
+        export = Export.objects.get(id=export_id)
+    except Export.DoesNotExist:
+        # no export for this ID return None.
+        return None
+    
+    # though export is not available when for has 0 submissions, we
+    # catch this since it potentially stops celery
+    try:
+        gen_export = generate_export(
+            Export.GSHEETS_EXPORT, None, username, id_string, export_id, query,
+            group_delimiter, split_select_multiples, binary_select_multiples,
+            google_token, flatten_repeated_fields, export_xlsform)
+    except (Exception, NoRecordsFoundError) as e:
+        export.internal_status = Export.FAILED
+        export.save()
+        # mail admins
+        details = {
+            'export_id': export_id,
+            'username': username,
+            'id_string': id_string
+        }
+        report_exception("Google Sheets Export Exception: Export ID - "
+                         "%(export_id)s, /%(username)s/%(id_string)s"
+                         % details, e, sys.exc_info())
+        # Raise for now to let celery know we failed
+        # - doesnt seem to break celery`
+        raise
+    else:
+        return gen_export.id
+    
 
 @task()
 def create_csv_export(username, id_string, export_id, query=None,

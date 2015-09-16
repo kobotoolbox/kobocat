@@ -34,7 +34,7 @@ from onadata.libs.utils.export_tools import (
     kml_export_data,
     newset_export_for)
 from onadata.libs.utils.image_tools import image_url
-from onadata.libs.utils.google import google_export_xls, redirect_uri
+from onadata.libs.utils.google import redirect_uri
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name,\
     disposition_ext_and_date
@@ -298,7 +298,18 @@ def create_export(request, username, id_string, export_type):
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
-
+    
+    token = None
+    if export_type == Export.GSHEETS_EXPORT:
+        redirect_url = reverse(
+            create_export,
+            kwargs={
+                'username': username, 'id_string': id_string,
+                'export_type': export_type})
+        token = _get_google_token(request, redirect_url)
+        if isinstance(token, HttpResponse):
+            return token      
+                
     if export_type == Export.EXTERNAL_EXPORT:
         # check for template before trying to generate a report
         if not MetaData.external_export(xform=xform):
@@ -313,11 +324,10 @@ def create_export(request, username, id_string, export_type):
         return HttpResponseBadRequest(
             _("%s is not a valid delimiter" % group_delimiter))
 
-    # default is True, so when dont_.. is yes
-    # split_select_multiples becomes False
-    split_select_multiples = request.POST.get(
-        "options[dont_split_select_multiples]", "no") == "no"
-
+    split_select_multiples = "options[split_select_multiples]" in request.POST
+    flatten_repeated_fields = "options[flatten_repeated_fields]" in request.POST
+    export_xlsform = "options[export_xlsform]" in request.POST
+    
     binary_select_multiples = getattr(settings, 'BINARY_SELECT_MULTIPLES',
                                       False)
     # external export option
@@ -326,9 +336,13 @@ def create_export(request, username, id_string, export_type):
         'group_delimiter': group_delimiter,
         'split_select_multiples': split_select_multiples,
         'binary_select_multiples': binary_select_multiples,
+        'flatten_repeated_fields': flatten_repeated_fields,
+        'export_xlsform': export_xlsform,
         'meta': meta.replace(",", "") if meta else None
     }
-
+    if token:
+        options['google_token'] = token
+    
     try:
         create_async_export(xform, export_type, query, force_xlsx, options)
     except Export.ExportTypeError:
@@ -374,7 +388,7 @@ def _get_google_token(request, redirect_to_url):
 
 
 def export_list(request, username, id_string, export_type):
-    if export_type == Export.GDOC_EXPORT:
+    if export_type == Export.GSHEETS_EXPORT:
         redirect_url = reverse(
             export_list,
             kwargs={
@@ -455,27 +469,8 @@ def export_progress(request, username, id_string, export_type):
                 'filename': export.filename
             })
             status['filename'] = export.filename
-            if export.export_type == Export.GDOC_EXPORT and \
-                    export.export_url is None:
-                redirect_url = reverse(
-                    export_progress,
-                    kwargs={
-                        'username': username, 'id_string': id_string,
-                        'export_type': export_type})
-                token = _get_google_token(request, redirect_url)
-                if isinstance(token, HttpResponse):
-                    return token
-                status['url'] = None
-                try:
-                    url = google_export_xls(
-                        export.full_filepath, xform.title, token, blob=True)
-                except Exception, e:
-                    status['error'] = True
-                    status['message'] = e.message
-                else:
-                    export.export_url = url
-                    export.save()
-                    status['url'] = url
+            if export.export_type == Export.GSHEETS_EXPORT:
+                status['url'] = export.export_url
             if export.export_type == Export.EXTERNAL_EXPORT \
                     and export.export_url is None:
                 status['url'] = url
@@ -499,7 +494,7 @@ def export_download(request, username, id_string, export_type, filename):
     # find the export entry in the db
     export = get_object_or_404(Export, xform=xform, filename=filename)
 
-    if (export_type == Export.GDOC_EXPORT or export_type == Export.EXTERNAL_EXPORT) \
+    if (export_type == Export.GSHEETS_EXPORT or export_type == Export.EXTERNAL_EXPORT) \
             and export.export_url is not None:
         return HttpResponseRedirect(export.export_url)
 
@@ -643,55 +638,6 @@ def kml_export(request, username, id_string):
         }, audit, request)
 
     return response
-
-
-def google_xls_export(request, username, id_string):
-    token = None
-    if request.user.is_authenticated():
-        try:
-            ts = TokenStorageModel.objects.get(id=request.user)
-        except TokenStorageModel.DoesNotExist:
-            pass
-        else:
-            token = ts.token
-    elif request.session.get('access_token'):
-        token = request.session.get('access_token')
-
-    if token is None:
-        request.session["google_redirect_url"] = reverse(
-            google_xls_export,
-            kwargs={'username': username, 'id_string': id_string})
-        return HttpResponseRedirect(redirect_uri)
-
-    owner = get_object_or_404(User, username__iexact=username)
-    xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
-    if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_(u'Not shared.'))
-
-    valid, dd = dd_for_params(id_string, owner, request)
-    if not valid:
-        return dd
-
-    ddw = XlsWriter()
-    tmp = NamedTemporaryFile(delete=False)
-    ddw.set_file(tmp)
-    ddw.set_data_dictionary(dd)
-    temp_file = ddw.save_workbook_to_file()
-    temp_file.close()
-    url = google_export_xls(tmp.name, xform.title, token, blob=True)
-    os.unlink(tmp.name)
-    audit = {
-        "xform": xform.id_string,
-        "export_type": "google"
-    }
-    audit_log(
-        Actions.EXPORT_CREATED, request.user, owner,
-        _("Created Google Docs export on '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-
-    return HttpResponseRedirect(url)
 
 
 def data_view(request, username, id_string):
