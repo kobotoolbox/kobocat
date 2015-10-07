@@ -122,6 +122,7 @@ def splice_shared_strings(source_file, destination_etree, new_string_indices):
     # Update the "uniqueCount" attribute.
     destination_root.attrib['uniqueCount']= unicode(uniqueCount)
 
+
 def insert_xlsform_worksheets(analyser_shared_strings, analyser_survey_worksheet_file_path, analyser_choices_worksheet_file_path, survey_file_xls):
     # Create an XLSX copy of the survey file.
     survey_file_xlsx= xls_as_xlsx(survey_file_xls)
@@ -142,14 +143,16 @@ def insert_xlsform_worksheets(analyser_shared_strings, analyser_survey_worksheet
                 source_survey_worksheet_tempfile.write(source_survey_worksheet_file.read())
                 source_survey_worksheet_tempfile.seek(0)
                 copy_cells(source_survey_worksheet_tempfile, analyser_survey_worksheet_file_path, new_string_indices)
-        # Copy over the "choices" sheet.
-        choices_sheet_path= 'xl/worksheets/sheet' + worksheet_indices['choices'] + '.xml'
-        with survey_zipfile.open(choices_sheet_path) as source_choices_worksheet_file:
-            # Create a tempfile that supports seeking.
-            with tempfile.TemporaryFile('w+') as source_choices_worksheet_tempfile:
-                source_choices_worksheet_tempfile.write(source_choices_worksheet_file.read())
-                source_choices_worksheet_tempfile.seek(0)
-                copy_cells(source_choices_worksheet_tempfile, analyser_choices_worksheet_file_path, new_string_indices)
+        # Copy over the "choices" sheet if any.
+        if 'choices' in worksheet_indices:
+            choices_sheet_path= 'xl/worksheets/sheet' + worksheet_indices['choices'] + '.xml'
+            with survey_zipfile.open(choices_sheet_path) as source_choices_worksheet_file:
+                # Create a tempfile that supports seeking.
+                with tempfile.TemporaryFile('w+') as source_choices_worksheet_tempfile:
+                    source_choices_worksheet_tempfile.write(source_choices_worksheet_file.read())
+                    source_choices_worksheet_tempfile.seek(0)
+                    copy_cells(source_choices_worksheet_tempfile, analyser_choices_worksheet_file_path, new_string_indices)
+
 
 def insert_data_sheet(analyser_shared_strings, analyser_data_sheet_file_path, data_file_xlsx):
     with ZipFile(data_file_xlsx) as data_zipfile:
@@ -162,6 +165,7 @@ def insert_data_sheet(analyser_shared_strings, analyser_data_sheet_file_path, da
                 data_worksheet_tempfile.write(data_worksheet_file.read())
                 data_worksheet_tempfile.seek(0)
                 copy_cells(data_worksheet_tempfile, analyser_data_sheet_file_path, new_string_indices)
+
 
 def generate_analyser(survey_file_xls, data_file_xlsx, analyser_file_xlsx=None):
     '''
