@@ -2,6 +2,7 @@ import json
 import os
 import pytz
 import re
+import io
 
 from hashlib import md5
 from django.utils import timezone
@@ -12,6 +13,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db.models.signals import post_save, post_delete
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.storage import get_storage_class
 from django.utils.translation import ugettext_lazy, ugettext as _
 from guardian.shortcuts import \
     assign_perm, \
@@ -20,6 +22,7 @@ from taggit.managers import TaggableManager
 
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
+from ....koboform.pyxform_utils import convert_csv_to_xls
 
 
 XFORM_TITLE_LENGTH = 255
@@ -252,6 +255,21 @@ class XForm(BaseModel):
     @classmethod
     def public_forms(cls):
         return cls.objects.filter(shared=True)
+
+    def to_xlsform(self):
+        '''Generate an XLS format XLSForm copy of this form.'''
+        file_path= self.xls.name
+        default_storage= get_storage_class()()
+
+        if file_path != '' and default_storage.exists(file_path):
+            with default_storage.open(file_path) as xlsform_file:
+                if file_path.endswith('.csv'):
+                    xlsform_io = convert_csv_to_xls(xlsform_file.read())
+                else:
+                    xlsform_io= io.BytesIO(xlsform_file.read())
+            return xlsform_io
+        else:
+            return None
 
 
 def update_profile_num_submissions(sender, instance, **kwargs):
