@@ -733,6 +733,7 @@ def generate_export(export_type, extension, username, id_string,
     basename = "%s_%s" % (
         id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     if export_type == Export.ANALYSER_EXPORT:
+        # Analyser exports should be distinguished by more than just their file extension.
         basename= '{}_ANALYSER_{}'.format(id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     filename = basename + "." + extension
 

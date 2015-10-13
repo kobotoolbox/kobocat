@@ -172,6 +172,11 @@ def generate_analyser(survey_file_xls, data_file_xlsx, analyser_file_xlsx=None):
     Generate a KoBo Excel Data Analyser pre-populated with survey contents and
     data.
 
+    NOTE: Due to the Excel formulas used in the analyser template being incompatible with the 
+          `openpyxl` package, this function relies on low-level manipulation of XLSX features such 
+          as `sharedStrings.xml`, and consequently requires both the data to be provided in an XLSX 
+          file.
+
     :param survey_file_xls: An XLS-formatted XLSForm containing the "survey" and
         "choices" (if present) sheet to be inserted into the analyser. Expected
         to be a file-like object that supports the :py:func:`read()` method.

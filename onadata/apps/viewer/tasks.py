@@ -130,11 +130,9 @@ def create_xls_export(username, id_string, export_id, query=None,
 
 
 @task()
-def create_analyser_export(username, id_string, export_id, query=None,
-                           force_xlsx=True, group_delimiter='/',
-                           split_select_multiples=True,
-                           binary_select_multiples=False):
-    # A serving of copy pasta from the above `create_xls_export()`.
+def create_analyser_export(username, id_string, export_id, query=None):
+    # Mostly a serving of copy pasta based on the above `create_xls_export()`. Enjoy.
+
     # we re-query the db instead of passing model objects according to
     # http://docs.celeryproject.org/en/latest/userguide/tasks.html#state
     ext = 'xlsx'
@@ -148,9 +146,9 @@ def create_analyser_export(username, id_string, export_id, query=None,
     # though export is not available when for has 0 submissions, we
     # catch this since it potentially stops celery
     try:
-        # FIXME: Hard code the export options we need.
-        gen_export = generate_export(Export.ANALYSER_EXPORT, ext, username,
-                                     id_string, export_id, query)
+        gen_export = generate_export(Export.ANALYSER_EXPORT, ext, username, id_string, export_id, 
+                                     query, group_delimiter='/', split_select_multiples=True, 
+                                     binary_select_multiples=False)
     except (Exception, NoRecordsFoundError) as e:
         export.internal_status = Export.FAILED
         export.save()
