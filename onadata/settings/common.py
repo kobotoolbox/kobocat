@@ -391,14 +391,6 @@ def configure_logging(logger, **kwargs):
 
 after_setup_logger.connect(configure_logging)
 
-MONGO_DATABASE = {
-    'HOST': 'localhost',
-    'PORT': 27017,
-    'NAME': 'formhub',
-    'USER': '',
-    'PASSWORD': ''
-}
-
 GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
 GOOGLE_CLIENT_ID = '617113120802.onadata.apps.googleusercontent.com'
 GOOGLE_CLIENT_SECRET = '9reM29qpGFPyI8TBuB54Z4fk'
@@ -446,17 +438,6 @@ BINARY_SELECT_MULTIPLES = False
 
 # Use 'n/a' for empty values by default on csv exports
 NA_REP = 'n/a'
-
-# MongoDB
-if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
-    MONGO_CONNECTION_URL = (
-        "mongodb://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s") % MONGO_DATABASE
-else:
-    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s" % MONGO_DATABASE
-
-MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
-MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
 # Set wsgi url scheme to HTTPS
 os.environ['wsgi.url_scheme'] = 'https'
