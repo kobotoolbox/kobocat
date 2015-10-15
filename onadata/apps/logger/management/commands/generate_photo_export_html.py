@@ -15,7 +15,6 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         user = User.objects.get(username=args[0])
         xform = user.xforms.get(id_string=args[1])
-        # xform.instances.count()
         attachments = Attachment.objects.filter(instance__xform=xform)
         out_strs = []
         filename = "%s__%s.html" % (user.username, xform.id_string)
