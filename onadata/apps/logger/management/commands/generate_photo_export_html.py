@@ -1,11 +1,13 @@
+import os
+import json
+import zipfile
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext_lazy
 from django.contrib.auth.models import User
 from onadata.apps.logger.models.attachment import Attachment
-import zipfile
 from tempfile import NamedTemporaryFile
 from django.conf import settings
-import json
+from django.contrib.sites.models import Site
 
 
 class Command(BaseCommand):
@@ -13,17 +15,24 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list
 
     def handle(self, *args, **kwargs):
+        site_domain = 'https://%s' % Site.objects.first().domain
         user = User.objects.get(username=args[0])
         xform = user.xforms.get(id_string=args[1])
         attachments = Attachment.objects.filter(instance__xform=xform)
         out_strs = []
-        filename = "%s__%s.html" % (user.username, xform.id_string)
-        fileurl = 'tmp_html_export/%s.zip' % (filename)
+        export_dir_name = 'tmp_html_export'
+        export_dir_path = os.path.join('onadata', 'static', export_dir_name)
+        if not os.path.exists(export_dir_path):
+            os.mkdir(export_dir_path)
+
+        fileroot = "%s__%s" % (user.username, xform.id_string)
+        fileurl = os.path.join(export_dir_name, '%s.zip' % fileroot)
         out_path = "onadata/static/%s" % (fileurl)
         out_url = ''.join([settings.STATIC_URL, fileurl])
         for attachment in attachments.all():
-            im_html = """<li><a href="%s">%s</a></li>""" % (
-                    attachment.media_file.url,
+            im_html = """<li><a href="%s/attachment/original?media_file=%s">%s</a></li>""" % (
+                    site_domain,
+                    attachment.media_file.name,
                     attachment.filename,
                 )
             out_strs.append(im_html)
@@ -53,4 +62,4 @@ class Command(BaseCommand):
 
         print "wrote html file to '%s' with %d attachment urls." % \
             (out_path, len(out_strs))
-        print "accessible at https://server%s" % out_url
+        print "accessible at %s%s" % (site_domain, out_url)
