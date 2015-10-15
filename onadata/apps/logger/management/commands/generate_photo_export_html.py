@@ -23,7 +23,7 @@ class Command(BaseCommand):
         out_path = "onadata/static/%s" % (fileurl)
         out_url = ''.join([settings.STATIC_URL, fileurl])
         for attachment in attachments.all():
-            im_html = """<li><img src="%s" alt="%s" /></li>""" % (
+            im_html = """<li><a href="%s">%s</a></li>""" % (
                     attachment.media_file.url,
                     attachment.filename,
                 )
