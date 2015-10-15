@@ -92,8 +92,7 @@ SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
 # print "SECRET_KEY=%s" % SECRET_KEY
 # print "CSRF_COOKIE_DOMAIN=%s " % CSRF_COOKIE_DOMAIN
 
-# MongoDB - changing MONGO_DATABASE by itself does nothing unless accompanied
-# by the below code, which has been copied verbatim from common.py
+# MongoDB - moved here from common.py
 if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
     MONGO_CONNECTION_URL = (
         "mongodb://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s") % MONGO_DATABASE
