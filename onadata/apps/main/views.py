@@ -420,13 +420,17 @@ def show(request, username=None, id_string=None, uuid=None):
     return render(request, "show.html", data)
 
 
+@login_required
 @require_GET
 def api_token(request, username=None):
-    user = get_object_or_404(User, username=username)
-    data = {}
-    data['token_key'], created = Token.objects.get_or_create(user=user)
+    if request.user.username == username:
+        user = get_object_or_404(User, username=username)
+        data = {}
+        data['token_key'], created = Token.objects.get_or_create(user=user)
 
-    return render(request, "api_token.html", data)
+        return render(request, "api_token.html", data)
+
+    return HttpResponseForbidden(_(u'Permission denied.'))
 
 
 @require_http_methods(["GET", "OPTIONS"])
