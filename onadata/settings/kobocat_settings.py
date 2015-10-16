@@ -41,6 +41,8 @@ if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
 else:
     TESTING_MODE = False
 
+MEDIA_URL= os.environ.get('KOBOCAT_MEDIA_URL', 'http://localhost:8001/media/')
+
 if TESTING_MODE:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
