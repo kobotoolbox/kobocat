@@ -1,5 +1,5 @@
 import os
-from onadata.settings.common import * 
+from onadata.settings.common import *
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
@@ -104,6 +104,21 @@ else:
 MONGO_CONNECTION = MongoClient(
     MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
+
+AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
+DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
+AWS_DEFAULT_ACL = 'private'
+
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
+    'django.core.mail.backends.filebased.EmailBackend')
+
+if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
+    EMAIL_FILE_PATH = os.environ.get(
+        'EMAIL_FILE_PATH', os.path.join(BASE_DIR, 'emails'))
+    if not os.path.isdir(EMAIL_FILE_PATH):
+        os.mkdir(EMAIL_FILE_PATH)
 
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
