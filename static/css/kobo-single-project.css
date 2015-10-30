@@ -343,8 +343,8 @@ a.dashboard__formbutton-refresh {
 
 .dashboard__download__drop {
   position: absolute;
-  right: 2%;
-  bottom: -115px;
+  right: 22px;
+  bottom: -150px;
   width: 124px;
   border: 1px solid #E7E8E9;
   background: white;
@@ -391,9 +391,8 @@ a.dashboard__formbutton-refresh {
 
 .dashboard__form-drop {
   position: absolute;
-  right: 84px;
+  right: 46px;
   top: 45px;
-  width: 44px;
   border: 1px solid #E7E8E9;
   background: white;
   z-index: 5; 
@@ -416,10 +415,8 @@ a.dashboard__formbutton-refresh {
   background: white;
   color: #3f3f3f;
   display: block;
-  width: 30px;
   text-align: left;
-  padding: 4px;
-  padding-left: 10px;
+  padding: 4px 10px;
   font-weight: 600;
   margin-top: 1px; 
   font-size: 11px;
