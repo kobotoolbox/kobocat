@@ -29,6 +29,8 @@ try:
 except KeyError:
     raise Exception('DJANGO_SECRET_KEY must be set in the environment.')
 
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
+
 TESTING_MODE = False
 # This trick works only when we run tests from the command line.
 if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
