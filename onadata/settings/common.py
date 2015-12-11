@@ -92,21 +92,27 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 STATIC_URL = '/static/'
 
 # Enketo URL.
+# Configurable settings.
+ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
+ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
+ENKETO_VERSION= os.environ.get('ENKETO_VERSION', 'Legacy').lower()
+assert ENKETO_VERSION in ['legacy', 'express']
 # Constants.
 ENKETO_API_ENDPOINT_ONLINE_SURVEYS = '/survey'
 ENKETO_API_ENDPOINT_OFFLINE_SURVEYS = '/survey/offline'
 ENKETO_API_ENDPOINT_INSTANCE= '/instance'
 ENKETO_API_ENDPOINT_INSTANCE_IFRAME= '/instance/iframe'
-# Configurable settings.
-ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
-ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
-ENKETO_API_ROOT= os.environ.get('ENKETO_API_ROOT') or os.environ.get('ENKETO_API_URL_PARTIAL') or '/api_v1' # TODO: Remove backward compatibility with "ENKETO_API_URL_PARTIAL".
-ENKETO_API_ENDPOINT_PREVIEW= os.environ.get('ENKETO_API_ENDPOINT_PREVIEW') or os.environ.get('ENKETO_PREVIEW_URL_PARTIAL') or '/webform/preview' # TODO: Remove backward compatibility with "ENKETO_PREVIEW_URL_PARTIAL".
-ENKETO_OFFLINE_SURVEYS= ('/api/v2' in ENKETO_API_ROOT) and \
-        (os.environ.get('ENKETO_OFFLINE_SURVEYS', '').lower() == 'true') # Offline surveys are only possible in API v2.
-ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
-        else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
-
+# Computed settings.
+if ENKETO_VERSION == 'express':
+    ENKETO_API_ROOT= '/api/v2'
+    ENKETO_OFFLINE_SURVEYS= os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
+    ENKETO_API_ENDPOINT_PREVIEW= '/preview'
+    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
+            else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
+else:
+    ENKETO_API_ROOT= '/api_v1'
+    ENKETO_API_ENDPOINT_PREVIEW= '/webform/preview'
+    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
 ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
 ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
