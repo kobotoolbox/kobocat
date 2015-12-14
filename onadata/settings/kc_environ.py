@@ -107,11 +107,17 @@ MONGO_CONNECTION = MongoClient(
     MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
+# BEGIN external service integration codes
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
-DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
 AWS_DEFAULT_ACL = 'private'
+
+GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
+GOOGLE_ANALYTICS_DOMAIN = "auto"
+# END external service integration codes
+
+DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
 
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
     'django.core.mail.backends.filebased.EmailBackend')
