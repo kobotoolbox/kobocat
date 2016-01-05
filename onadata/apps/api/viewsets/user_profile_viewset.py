@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from rest_framework import serializers
 from rest_framework import status
@@ -130,32 +131,25 @@ curl -X PATCH -d '{"country": "KE"}' https://example.com/api/v1/profiles/demo \
 
     def get_object(self, queryset=None):
         """Lookup user profile by pk or username"""
-        if self.kwargs.get(self.lookup_field, None) is None:
+        lookup = self.kwargs.get(self.lookup_field, None)
+        if lookup is None:
             raise ParseError(
                 'Expected URL keyword argument `%s`.' % self.lookup_field
             )
         if queryset is None:
             queryset = self.filter_queryset(self.get_queryset())
 
-        serializer = self.get_serializer()
-        lookup_field = self.lookup_field
-
-        if self.lookup_field in serializer.get_fields():
-            k = serializer.get_fields()[self.lookup_field]
-            if isinstance(k, serializers.HyperlinkedRelatedField):
-                lookup_field = '%s__%s' % (self.lookup_field, k.lookup_field)
-
-        lookup = self.kwargs[self.lookup_field]
-        filter_kwargs = {lookup_field: lookup}
-
         try:
             pk = int(lookup)
         except (TypeError, ValueError):
-            pass
+            filter_kwargs = {'username': lookup}
         else:
-            filter_kwargs = {'user__pk': pk}
+            filter_kwargs = {'pk': pk}
 
-        obj = get_object_or_404(queryset, **filter_kwargs)
+        # Return a 404 if the user does not exist
+        user = get_object_or_404(User, **filter_kwargs)
+        # Since the user does exist, create a matching profile if necessary
+        obj, created = queryset.get_or_create(user=user)
 
         # May raise a permission denied
         self.check_object_permissions(self.request, obj)
