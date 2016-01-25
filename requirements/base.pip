@@ -28,7 +28,7 @@ openpyxl==2.0.5
 celery==3.1.16
 django-celery==3.1.16
 librabbitmq==1.5.2
--e git+https://github.com/jbalogh/django-nose.git#egg=django-nose
+django-nose==1.4.2
 python-digest==1.7
 django-digest==1.13
 -e git+https://github.com/onaio/python-json2xlsclient.git#egg=j2xclient
