@@ -117,7 +117,10 @@ GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
 # END external service integration codes
 
-DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
+# If not properly overridden, leave uninitialized so Django can set the default.
+# (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
+if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
+    DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
 
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
     'django.core.mail.backends.filebased.EmailBackend')
