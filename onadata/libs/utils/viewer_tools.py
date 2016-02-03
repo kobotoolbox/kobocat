@@ -4,7 +4,6 @@ import requests
 import zipfile
 
 from tempfile import NamedTemporaryFile
-from urlparse import urljoin
 from xml.dom import minidom
 
 from django.conf import settings
@@ -165,14 +164,14 @@ def enketo_url(form_url, id_string, instance_xml=None,
             and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
         return False
 
-    url = urljoin(settings.ENKETO_URL, settings.ENKETO_API_SURVEY_PATH)
+    url = settings.ENKETO_URL + settings.ENKETO_API_SURVEY_PATH
 
     values = {
         'form_id': id_string,
         'server_url': form_url
     }
     if instance_id is not None and instance_xml is not None:
-        url = urljoin(settings.ENKETO_URL, settings.ENKETO_API_INSTANCE_PATH)
+        url = settings.ENKETO_URL + settings.ENKETO_API_INSTANCE_PATH
         values.update({
             'instance': instance_xml,
             'instance_id': instance_id,

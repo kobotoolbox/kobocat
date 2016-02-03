@@ -6,15 +6,17 @@ TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
 TEMPLATE_STRING_IF_INVALID = ''
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+ONADATA_DIR= BASE_DIR
+REAL_PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % BASE_DIR)
+    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % REAL_PROJECT_ROOT)
 }
 
 MONGO_DATABASE = {
-    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'localhost'),
+    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
     'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
     'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
     'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
@@ -22,7 +24,7 @@ MONGO_DATABASE = {
 }
 
 BROKER_URL = os.environ.get(
-    'KOBOCAT_BROKER_URL', 'amqp://guest:guest@localhost:5672/')
+    'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
 
 try:
     SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
@@ -43,7 +45,17 @@ if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
 else:
     TESTING_MODE = False
 
-MEDIA_URL= os.environ.get('KOBOCAT_MEDIA_URL', 'http://localhost:8001/media/')
+MEDIA_URL= '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
+STATIC_URL = '/static/'
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/login_redirect/'
+
+if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
+    KOBOCAT_ROOT_URI_PREFIX= '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
+    MEDIA_URL= KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
+    STATIC_URL= KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
+    LOGIN_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
+    LOGIN_REDIRECT_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
 if TESTING_MODE:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
@@ -71,9 +83,6 @@ TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
 TEMPLATE_DIRS = ( os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
 STATICFILES_DIRS += ( os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 
-KOBOFORM_SERVER=os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT=os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL=os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
 KOBOFORM_LOGIN_AUTOREDIRECT=True
 KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
@@ -92,7 +101,7 @@ if CSRF_COOKIE_DOMAIN:
 SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
 
 # for debugging
-# print "KOBOFORM_SERVER=%s" % KOBOFORM_SERVER
+# print "KOBOFORM_URL=%s" % KOBOFORM_URL
 # print "SECRET_KEY=%s" % SECRET_KEY
 # print "CSRF_COOKIE_DOMAIN=%s " % CSRF_COOKIE_DOMAIN
 
@@ -127,7 +136,7 @@ EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
 
 if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
     EMAIL_FILE_PATH = os.environ.get(
-        'EMAIL_FILE_PATH', os.path.join(BASE_DIR, 'emails'))
+        'EMAIL_FILE_PATH', os.path.join(REAL_PROJECT_ROOT, 'emails'))
     if not os.path.isdir(EMAIL_FILE_PATH):
         os.mkdir(EMAIL_FILE_PATH)
 
