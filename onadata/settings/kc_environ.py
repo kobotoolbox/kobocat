@@ -7,12 +7,12 @@ TEMPLATE_STRING_IF_INVALID = ''
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR= BASE_DIR
-REAL_PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
+PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % REAL_PROJECT_ROOT)
+    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
 }
 
 MONGO_DATABASE = {
@@ -78,10 +78,10 @@ if TESTING_MODE:
 # include the kobocat-template directory
 TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
-    os.path.join(PROJECT_ROOT, '..', 'kobocat-template')
+    os.path.abspath(os.path.join(PROJECT_ROOT, '..', 'kobocat-template'))
 )
-TEMPLATE_DIRS = ( os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
-STATICFILES_DIRS += ( os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
+TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
+STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 
 KOBOFORM_LOGIN_AUTOREDIRECT=True
 KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
@@ -136,7 +136,7 @@ EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
 
 if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
     EMAIL_FILE_PATH = os.environ.get(
-        'EMAIL_FILE_PATH', os.path.join(REAL_PROJECT_ROOT, 'emails'))
+        'EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
     if not os.path.isdir(EMAIL_FILE_PATH):
         os.mkdir(EMAIL_FILE_PATH)
 
