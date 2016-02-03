@@ -10,8 +10,7 @@ COPY docker/*.sh docker/kobocat.ini /srv/src/
 
 COPY . /srv/src/kobocat
 
-RUN /etc/my_init.d/00_regen_ssh_host_keys.sh && \
-    chmod +x /etc/service/wsgi/run && \
+RUN chmod +x /etc/service/wsgi/run && \
     chmod +x /etc/service/celery/run && \
     echo "db:*:*:kobo:kobo" > /root/.pgpass && \
     chmod 600 /root/.pgpass
