@@ -1,6 +1,5 @@
 #!/bin/bash
-
-[ -e /tmp/computed_vars.source.bash ] && source /tmp/computed_vars.source.bash
+set -e
 
 oldpwd=$(pwd)
 cd /srv/src/kobocat
