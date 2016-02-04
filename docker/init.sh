@@ -1,10 +1,12 @@
 #!/bin/bash
+set -e
 
 oldpwd=$(pwd)
 cd /srv/src/kobocat
 
-[ -e /tmp/computed_vars.source.bash ] && source /tmp/computed_vars.source.bash
- 
+# FIXME: Convince South that KPI has already done the overlapping migrations.
+python manage.py migrate --fake oauth2_provider
+
 python manage.py syncdb --noinput
 
 python manage.py migrate --noinput
