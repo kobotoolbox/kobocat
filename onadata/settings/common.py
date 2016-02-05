@@ -214,7 +214,6 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'django.contrib.gis',
     'registration',
-    'south',
     'reversion',
     'django_nose',
     'django_digest',
@@ -479,3 +478,20 @@ if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
         os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
     )
 
+# Transition from South to native migrations
+try:
+    from django.db import migrations
+except ImportError:
+    # Native migrations unavailable; use South instead
+    INSTALLED_APPS += ('south',)
+
+SOUTH_MIGRATION_MODULES = {
+    'taggit': 'taggit.south_migrations',
+    'reversion': 'reversion.south_migrations',
+    'onadata.apps.restservice': 'onadata.apps.restservice.south_migrations',
+    'onadata.apps.api': 'onadata.apps.api.south_migrations',
+    'onadata.apps.main': 'onadata.apps.main.south_migrations',
+    'onadata.apps.stats': 'onadata.apps.stats.south_migrations',
+    'onadata.apps.logger': 'onadata.apps.logger.south_migrations',
+    'onadata.apps.viewer': 'onadata.apps.viewer.south_migrations',
+}
