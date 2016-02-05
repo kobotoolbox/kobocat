@@ -16,6 +16,28 @@ DATABASES = {
     }
 }
 
+### MONGO ###
+
+MONGO_DATABASE = {
+    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'localhost'),
+    'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
+    'NAME': '__formhub_test_WILL_BE_DESTROYED',
+    'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
+    'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
+}
+
+if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
+    MONGO_CONNECTION_URL = (
+        "mongodb://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s") % MONGO_DATABASE
+else:
+    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s" % MONGO_DATABASE
+
+MONGO_CONNECTION = MongoClient(
+    MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
+MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
+
+### END MONGO ###
+
 SECRET_KEY = 'mlfs33^s1l4xf6a36$0#j%dd*sisfoi&)&4s-v=91#^l01v)*j'
 
 PASSWORD_HASHERS = (
@@ -35,7 +57,6 @@ else:
 if TESTING_MODE:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
-    MONGO_DATABASE['NAME'] = "formhub_test"
     # need to have CELERY_ALWAYS_EAGER True and BROKER_BACKEND as memory
     # to run tasks immediately while testing
     CELERY_ALWAYS_EAGER = True
