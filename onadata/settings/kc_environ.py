@@ -119,6 +119,11 @@ GOOGLE_ANALYTICS_DOMAIN = "auto"
 
 DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
 
+# returns an empty tuple if no ADMIN_EMAILS specified
+# otherwise, loads ADMIN_EMAILS environ variable as space-separated emails
+ADMINS = tuple(filter(lambda ss: len(ss) > 0,
+                      os.environ.get('ADMIN_EMAILS', '').split(' ')))
+
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
     'django.core.mail.backends.filebased.EmailBackend')
 
