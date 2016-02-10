@@ -4,6 +4,7 @@ import json
 import os
 import re
 import six
+import tempfile
 from urlparse import urlparse
 from zipfile import ZipFile
 
@@ -34,6 +35,7 @@ from onadata.libs.utils.common_tags import (
     DELETEDAT, USERFORM_ID, INDEX, PARENT_INDEX, PARENT_TABLE_NAME,
     SUBMISSION_TIME, UUID, TAGS, NOTES)
 from onadata.libs.exceptions import J2XException
+from .analyser_export import generate_analyser
 
 
 # this is Mongo Collection where we will store the parsed submissions
@@ -568,6 +570,25 @@ class ExportBuilder(object):
 
         wb.save(filename=path)
 
+    def to_analyser_export(self, path, data, username, xform_id_string, *args):
+        # Get the XLSForm.
+        xform = XForm.objects.get(user__username__iexact=username, id_string__exact=xform_id_string)
+        xlsform_io= xform.to_xlsform()
+
+        with tempfile.NamedTemporaryFile('w+b', prefix='ANALYSER_DATA_TMP_', 
+                                         suffix='.xlsx',) as xls_data:
+            # Generate a new XLS export to work from.
+            self.to_xls_export(xls_data.name, data)
+            xls_data.file.seek(0)
+
+            # Generate the analyser file.
+            analyser_io= generate_analyser(xlsform_io, xls_data)
+
+        # Write the generated analyser file to the specified path
+        #   ...which itself points to a temp file.
+        with open(path, 'wb') as analyser_file:
+            analyser_file.write(analyser_io.read())
+
     def to_flat_csv_export(
             self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
@@ -679,13 +700,13 @@ def generate_export(export_type, extension, username, id_string,
     """
     Create appropriate export object given the export type
     """
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.export import Export
+
     export_type_func_map = {
         Export.XLS_EXPORT: 'to_xls_export',
         Export.CSV_EXPORT: 'to_flat_csv_export',
         Export.CSV_ZIP_EXPORT: 'to_zipped_csv',
         Export.SAV_ZIP_EXPORT: 'to_zipped_sav',
+        Export.ANALYSER_EXPORT: 'to_analyser_export'
     }
 
     xform = XForm.objects.get(
@@ -700,7 +721,7 @@ def generate_export(export_type, extension, username, id_string,
     export_builder.BINARY_SELECT_MULTIPLES = binary_select_multiples
     export_builder.set_survey(xform.data_dictionary().survey)
 
-    temp_file = NamedTemporaryFile(suffix=("." + extension))
+    temp_file = NamedTemporaryFile(prefix=export_type+'_EXPORT_TMP_', suffix=("." + extension))
 
     # get the export function by export type
     func = getattr(export_builder, export_type_func_map[export_type])
@@ -711,6 +732,9 @@ def generate_export(export_type, extension, username, id_string,
     # generate filename
     basename = "%s_%s" % (
         id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
+    if export_type == Export.ANALYSER_EXPORT:
+        # Analyser exports should be distinguished by more than just their file extension.
+        basename= '{}_ANALYSER_{}'.format(id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     filename = basename + "." + extension
 
     # check filename is unique
@@ -762,8 +786,6 @@ def query_mongo(username, id_string, query=None, hide_deleted=True):
 
 
 def should_create_new_export(xform, export_type):
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.export import Export
     if Export.objects.filter(
             xform=xform, export_type=export_type).count() == 0\
             or Export.exports_outdated(xform, export_type=export_type):
@@ -776,8 +798,6 @@ def newset_export_for(xform, export_type):
     Make sure you check that an export exists before calling this,
     it will a DoesNotExist exception otherwise
     """
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.export import Export
     return Export.objects.filter(xform=xform, export_type=export_type)\
         .latest('created_on')
 
@@ -805,8 +825,6 @@ def increment_index_in_filename(filename):
 def generate_attachments_zip_export(
         export_type, extension, username, id_string, export_id=None,
         filter_query=None):
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.export import Export
     xform = XForm.objects.get(user__username=username, id_string=id_string)
     attachments = Attachment.objects.filter(instance__xform=xform)
     basename = "%s_%s" % (id_string,
@@ -852,8 +870,6 @@ def generate_attachments_zip_export(
 def generate_kml_export(
         export_type, extension, username, id_string, export_id=None,
         filter_query=None):
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.export import Export
     user = User.objects.get(username=username)
     xform = XForm.objects.get(user__username=username, id_string=id_string)
     response = render_to_response(

@@ -2,10 +2,8 @@ from datetime import datetime
 import json
 import os
 import tempfile
-import io
 
 import pytz
-
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -19,8 +17,6 @@ from django.http import (HttpResponse,
                          HttpResponseForbidden,
                          HttpResponseRedirect,
                          HttpResponseServerError,
-                         HttpResponseNotFound,
-                         Http404,
                          StreamingHttpResponse,
                          )
 from django.shortcuts import get_object_or_404
@@ -33,6 +29,9 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_digest import HttpDigestAuthenticator
+from pyxform import survey_from
+from pyxform.spss import survey_to_spss_label_zip
+from wsgiref.util import FileWrapper
 
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.apps.logger.import_tools import import_instances_from_zip
@@ -53,17 +52,14 @@ from onadata.libs.utils.logger_tools import (
     publish_form)
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.decorators import is_owner
-from onadata.libs.utils.user_auth import helper_auth_helper, has_permission,\
-    has_edit_permission, HttpResponseNotAuthorized, add_cors_headers
-
+from onadata.libs.utils.user_auth import (helper_auth_helper,
+                                          has_permission,
+                                          has_edit_permission,
+                                          HttpResponseNotAuthorized,
+                                          add_cors_headers,
+                                          )
 from onadata.libs.utils.viewer_tools import _get_form_url
-
-from onadata.koboform.pyxform_utils import convert_csv_to_xls
-from pyxform import survey_from
-from pyxform.spss import survey_to_spss_label_zip
-from wsgiref.util import FileWrapper
-from onadata.apps.viewer.models.export import Export
-from onadata.libs.utils.analyser_export import generate_analyser
+from ...koboform.pyxform_utils import convert_csv_to_xls
 
 IO_ERROR_STRINGS = [
     'request data read error',
@@ -441,8 +437,8 @@ def download_jsonform(request, username, id_string):
         response.content = xform.json
     return response
 
-# FIXME: This overloaded interface (returns `BytesIO`/`HttpResponse`) is ...not great.
-def _get_xlsform(request, username, form_id_string):
+
+def download_spss_labels(request, username, form_id_string):
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
                               id_string__exact=form_id_string)
@@ -450,40 +446,18 @@ def _get_xlsform(request, username, form_id_string):
     helper_auth_helper(request)
 
     if not has_permission(xform, owner, request, xform.shared):
-        # FIXME: Is there not a 403 exception equivalent to `Http404`?
         return HttpResponseForbidden('Not shared.')
 
-    file_path = xform.xls.name
-    default_storage = get_storage_class()()
-
     try:
-        if file_path != '' and default_storage.exists(file_path):
-            with default_storage.open(file_path) as xlsform_file:
-                if file_path.endswith('.csv'):
-                    xlsform_io = convert_csv_to_xls(xlsform_file.read())
-                else:
-                    xlsform_io= io.BytesIO(xlsform_file.read())
-
-            return xlsform_io
-
-        else:
+        xlsform_io= xform.to_xlsform()
+        if not xlsform_io:
             messages.add_message(request, messages.WARNING,
                                  _(u'No XLS file for your form '
                                    u'<strong>%(id)s</strong>')
                                  % {'id': form_id_string})
-
             return HttpResponseRedirect("/%s" % username)
     except:
         return HttpResponseServerError('Error retrieving XLSForm.')
-
-def download_spss_labels(request, username, form_id_string):
-    xform = get_object_or_404(XForm,
-                              user__username__iexact=username,
-                              id_string__exact=form_id_string)
-    xlsform_io= _get_xlsform(request, username, form_id_string)
-    # FIXME: Really don't like this overloading...
-    if isinstance(xlsform_io, HttpResponse):
-        return xlsform_io
 
     survey= survey_from.xls(filelike_obj=xlsform_io)
     zip_filename= '{}_spss_labels.zip'.format(xform.id_string)
@@ -494,48 +468,6 @@ def download_spss_labels(request, username, form_id_string):
     response['Content-Disposition'] = 'attachment; filename={}'.format(zip_filename)
     return response
 
-def download_excel_analyser(request, username, form_id_string):
-    xform = get_object_or_404(XForm,
-                              user__username__iexact=username,
-                              id_string__exact=form_id_string)
-    owner = User.objects.get(username__iexact=username)
-    helper_auth_helper(request)
-
-    if not has_permission(xform, owner, request, xform.shared):
-        return HttpResponseForbidden('Not shared.')
-
-    # Get the XLSForm.
-    xlsform_io= _get_xlsform(request, username, form_id_string)
-    # FIXME: Really don't like this overloading...
-    if isinstance(xlsform_io, HttpResponse):
-        return xlsform_io
-
-    # Get the data.
-    data_export= Export.objects.filter(
-            xform=xform, export_type=Export.XLS_EXPORT).order_by('-created_on').first()
-    if not data_export or not data_export.filename:
-        if not data_export:
-            err_msg = _(u'Please generate an XLS export of your data before generating an Excel Analyser copy.')
-        elif data_export.status == Export.PENDING:
-            err_msg = _(u'Please wait for your XLS export to be generated '
-                        u'before trying to generate an Excel Analyser copy.');
-        elif data_export.status == Export.FAILED:
-            err_msg = _(u'Last attempt for XLS export creation failed. An XLS export of your data must '
-                        u'have been successfully generated before trying to generate an Excel Analyser copy.')
-        else:
-            err_msg = _(u'Unknown XLS export state. '
-                        u'Please generate an XLS export of your data before generating an Excel Analyser copy.')
-        return HttpResponseNotFound(loader.render_to_string('404_xls_analyzer_error.html', {'error_message': err_msg},
-                                                            RequestContext(request)))
-
-    analyser_filename= os.path.splitext(data_export.filename)[0] + '_EXCEL_ANALYSER.xlsx'
-    with get_storage_class()().open(data_export.filepath) as data_file_xlsx:
-        analyser_io= generate_analyser(xlsform_io, data_file_xlsx)
-
-    response = StreamingHttpResponse(FileWrapper(analyser_io),
-            content_type='application/vnd.ms-excel; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename={}'.format(analyser_filename)
-    return response
 
 @is_owner
 @require_POST
