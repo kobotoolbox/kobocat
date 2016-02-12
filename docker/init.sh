@@ -4,6 +4,10 @@ set -e
 oldpwd=$(pwd)
 cd /srv/src/kobocat
 
+echo 'Waiting for Mongo.'
+dockerize -timeout=20s -wait ${MONGO_PORT}
+echo 'Mongo ready.'
+
 echo 'Waiting for Postgres.'
 KOBO_PSQL_DB_NAME=${KOBO_PSQL_DB_NAME:-"kobotoolbox"}
 KOBO_PSQL_DB_USER=${KOBO_PSQL_DB_USER:-"kobo"}
@@ -24,6 +28,7 @@ python manage.py migrate --noinput --fake oauth2_provider
 echo 'Running migrations.'
 python manage.py migrate --noinput
 
-echo '\`kobocat\` initialization completed.'
+
+echo '`kobocat` initialization completed.'
 
 cd $oldpwd
