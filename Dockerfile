@@ -15,8 +15,8 @@ RUN chmod +x /etc/service/wsgi/run && \
     echo "db:*:*:kobo:kobo" > /root/.pgpass && \
     chmod 600 /root/.pgpass
 
-COPY ./docker/init.sh /etc/my_init.d/00_init.bash
-COPY ./docker/sync_static.sh /etc/my_init.d/01_sync_static.bash
+COPY ./docker/init.sh /etc/my_init.d/10_init_kobocat.bash
+COPY ./docker/sync_static.sh /etc/my_init.d/11_sync_static.bash
 RUN mkdir -p /srv/src/kobocat/emails/ && \
     chown -R wsgi /srv/src/kobocat/emails/
 
