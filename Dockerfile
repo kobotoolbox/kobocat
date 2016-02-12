@@ -1,4 +1,4 @@
-FROM kobotoolbox/base-kobocat:latest
+FROM kobotoolbox/base-kobocat:docker_local
 
 MAINTAINER Serban Teodorescu, teodorescu.serban@gmail.com
 
