@@ -15,7 +15,10 @@ RUN chmod +x /etc/service/wsgi/run && \
     echo "db:*:*:kobo:kobo" > /root/.pgpass && \
     chmod 600 /root/.pgpass
 
-COPY ./docker/init.sh /etc/my_init.d/10_init_kobocat.bash
+# Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
+RUN echo 'source /etc/profile' >> /root/.profile
+
+COPY ./docker/init.bash /etc/my_init.d/10_init_kobocat.bash
 COPY ./docker/sync_static.sh /etc/my_init.d/11_sync_static.bash
 RUN mkdir -p /srv/src/kobocat/emails/ && \
     chown -R wsgi /srv/src/kobocat/emails/

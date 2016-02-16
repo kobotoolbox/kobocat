@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source /etc/profile
+
 CELERYD_OPTIONS='--loglevel=DEBUG --time-limit=900 --maxtasksperchild=5'
 
 cd /srv/src/kobocat

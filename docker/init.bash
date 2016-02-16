@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-echo 'Initializing KoBoCAT.'
+source /etc/profile
+
+echo 'KoBoCAT intializing...'
 
 oldpwd=$(pwd)
 cd /srv/src/kobocat
@@ -17,6 +19,6 @@ echo 'Running migrations.'
 python manage.py migrate --noinput
 
 
-echo 'Completed initializing KoBoCAT.'
+echo 'KoBoCAT initialization complete.'
 
 cd $oldpwd
