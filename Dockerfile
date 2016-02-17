@@ -16,7 +16,7 @@ RUN chmod +x /etc/service/wsgi/run && \
     chmod 600 /root/.pgpass
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
-RUN echo 'source /etc/profile' >> /root/.profile
+RUN echo 'source /etc/profile' >> /root/.bashrc
 
 COPY ./docker/init.bash /etc/my_init.d/10_init_kobocat.bash
 COPY ./docker/sync_static.sh /etc/my_init.d/11_sync_static.bash
