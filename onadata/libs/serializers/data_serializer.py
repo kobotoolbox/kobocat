@@ -37,7 +37,7 @@ class DataListSerializer(serializers.Serializer):
     def to_native(self, obj):
         request = self.context.get('request')
 
-        if obj is None:
+        if not hasattr(obj, 'xform'):
             return super(DataListSerializer, self).to_native(obj)
 
         query_params = (request and request.QUERY_PARAMS) or {}
@@ -65,7 +65,7 @@ class DataListSerializer(serializers.Serializer):
 
 class DataInstanceSerializer(serializers.Serializer):
     def to_native(self, obj):
-        if obj is None:
+        if not hasattr(obj, 'xform'):
             return super(DataInstanceSerializer, self).to_native(obj)
 
         request = self.context.get('request')
@@ -88,7 +88,7 @@ class DataInstanceSerializer(serializers.Serializer):
 
 class SubmissionSerializer(serializers.Serializer):
     def to_native(self, obj):
-        if obj is None:
+        if not hasattr(obj, 'xform'):
             return super(SubmissionSerializer, self).to_native(obj)
 
         return {
