@@ -12,10 +12,10 @@ from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework.authentication import (
     BasicAuthentication,
-    TokenAuthentication)
+    TokenAuthentication,
+    SessionAuthentication,)
 from rest_framework.response import Response
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
-
 from onadata.apps.logger.models import Instance
 from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs import filters
@@ -146,6 +146,11 @@ Here is some example JSON, it would replace `[the JSON]` above:
             BasicAuthentication,
             TokenAuthentication
         ]
+        # Do not use `SessionAuthentication`, which implicitly requires CSRF prevention
+        # (which in turn requires that the CSRF token be submitted as a cookie and in the 
+        # body of any "unsafe" requests).
+        if SessionAuthentication in self.authentication_classes:
+            self.authentication_classes.remove(SessionAuthentication)
         # We include BasicAuthentication here to allow submissions using basic
         # authentication over unencrypted HTTP. REST framework stops after the
         # first class that successfully authenticates, so
