@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source /etc/profile
+
 oldpwd=$(pwd)
 cd /srv/src/kobocat
 
