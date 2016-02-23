@@ -4,6 +4,7 @@ from urlparse import urlparse
 
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
@@ -124,7 +125,9 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
                                   UserProfileFormRegister):
 
     class Meta:
-        pass
+        # JNM TEMPORARY
+        model = User
+        fields = ('username', 'email')
 
     _reserved_usernames = [
         'accounts',
@@ -202,7 +205,9 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
         raise forms.ValidationError(_(u'%s already exists') % username)
 
     def save(self, profile_callback=None):
+        site = Site.objects.get(pk=settings.SITE_ID)
         new_user = RegistrationProfile.objects.create_inactive_user(
+            site,
             username=self.cleaned_data['username'],
             password=self.cleaned_data['password1'],
             email=self.cleaned_data['email'])

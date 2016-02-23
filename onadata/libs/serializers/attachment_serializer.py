@@ -36,9 +36,9 @@ class AttachmentSerializer(serializers.ModelSerializer):
         'get_small_download_url')
     medium_download_url = serializers.SerializerMethodField(
         'get_medium_download_url')
-    xform = serializers.Field(source='instance.xform.pk')
-    instance = serializers.Field(source='instance.pk')
-    filename = serializers.Field(source='media_file.name')
+    xform = serializers.ReadOnlyField(source='instance.xform.pk')
+    instance = serializers.ReadOnlyField(source='instance.pk')
+    filename = serializers.ReadOnlyField(source='media_file.name')
 
     class Meta:
         fields = ('url', 'filename', 'mimetype', 'field_xpath', 'id', 'xform',

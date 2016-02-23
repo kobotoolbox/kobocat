@@ -9,10 +9,8 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': '',
         'HOST': '127.0.0.1',
-        'OPTIONS': {
-            # note: this option obsolete starting with django 1.6
-            'autocommit': True,
-        }
+        # Replacement for TransactionMiddleware
+        'ATOMIC_REQUESTS': True,
     }
 }
 
@@ -44,6 +42,12 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.MD5PasswordHasher',
     'django.contrib.auth.hashers.SHA1PasswordHasher',
 )
+
+### JNM TEMPORARY ###
+ALLOWED_HOSTS = ('*',)
+DEBUG=True
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#############
 
 if PRINT_EXCEPTION and DEBUG:
     MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)

@@ -1,3 +1,4 @@
+'''
 from south.signals import post_migrate
 from django.conf import settings
 from django.db.models import get_app, get_models
@@ -15,3 +16,4 @@ def update_permissions_after_migration(app, **kwargs):
 
 
 post_migrate.connect(update_permissions_after_migration)
+'''

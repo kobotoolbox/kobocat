@@ -13,15 +13,14 @@ class ShareProjectSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255)
     role = serializers.CharField(max_length=50)
 
-    def restore_object(self, attrs, instance=None):
-        if instance is not None:
-            instance.project = attrs.get('project', instance.project)
-            instance.username = attrs.get('username', instance.username)
-            instance.role = attrs.get('role', instance.role)
+    def update(self, instance, validated_data):
+        instance.project = validated_data.get('project', instance.project)
+        instance.username = validated_data.get('username', instance.username)
+        instance.role = validated_data.get('role', instance.role)
+        return instance
 
-            return instance
-
-        return ShareProject(**attrs)
+    def create(self, validated_data):
+        return ShareProject(**validated_data)
 
     def validate_username(self, attrs, source):
         """Check that the username exists"""

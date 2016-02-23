@@ -24,9 +24,8 @@ DATABASES = {
         'PASSWORD': os.environ['FORMHUB_PROD_PW'],
         # the server name may be in env
         'HOST': os.environ.get("FORMHUB_DB_SERVER", 'dbserver.yourdomain.org'),
-        'OPTIONS': {
-            # note: this option obsolete starting with django 1.6
-            'autocommit': True,
+        # Replacement for TransactionMiddleware
+        'ATOMIC_REQUESTS': True,
         }
     },
     'gis': {

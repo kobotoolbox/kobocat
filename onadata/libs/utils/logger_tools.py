@@ -201,7 +201,6 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     return instance
 
 
-@transaction.commit_manually
 def create_instance(username, xml_file, media_files,
                     status=u'submitted_via_web', uuid=None,
                     date_created_override=None, request=None):
@@ -214,7 +213,7 @@ def create_instance(username, xml_file, media_files,
         If there is a username and no uuid, submitting an old ODK form.
         If there is a username and a uuid, submitting a new ODK form.
     """
-    try:
+    with transaction.atomic():
         instance = None
         submitted_by = request.user \
             if request and request.user.is_authenticated() else None
@@ -245,23 +244,24 @@ def create_instance(username, xml_file, media_files,
         duplicate_instances = Instance.objects.filter(uuid=new_uuid)
 
         if duplicate_instances:
+            # ensure we have saved the extra attachments
             for f in media_files:
                 Attachment.objects.get_or_create(
                     instance=duplicate_instances[0],
                     media_file=f, mimetype=f.content_type)
-            # ensure we have saved the extra attachments
-            transaction.commit()
-            raise DuplicateInstance()
+        else:
+            instance = save_submission(xform, xml, media_files, new_uuid,
+                                       submitted_by, status,
+                                       date_created_override)
+            return instance
 
-        instance = save_submission(xform, xml, media_files, new_uuid,
-                                   submitted_by, status, date_created_override)
-        # commit all changes
-        transaction.commit()
-
-        return instance
-    except Exception:
-        transaction.rollback()
-        raise
+    if duplicate_instances:
+        # We are now outside the atomic block, so we can raise an exception
+        # without rolling back the extra attachments we created earlier
+        # NB: Since `ATOMIC_REQUESTS` is set at the database level, everything
+        # could still be rolled back if the calling view fails to handle an
+        # exception
+        raise DuplicateInstance()
 
 
 def safe_create_instance(username, xml_file, media_files, uuid, request):
@@ -382,7 +382,6 @@ def publish_form(callback):
             'text': unicode(e)
         }
     except IntegrityError as e:
-        transaction.rollback()
         return {
             'type': 'alert-error',
             'text': _(u'Form with this id or SMS-keyword already exists.'),
@@ -406,6 +405,10 @@ def publish_form(callback):
             'text': _(u'Form validation timeout, please try again.'),
         }
     except Exception as e:
+        # TODO: Something less horrible. This masks storage backend
+        # `ImportError`s and who knows what else
+        raise # JNM TEMPORARY
+
         # error in the XLS file; show an error to the user
         return {
             'type': 'alert-error',

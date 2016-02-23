@@ -1,7 +1,6 @@
 import re
 import sys
 from celery import task
-from django.db import transaction
 from django.conf import settings
 from django.core.mail import mail_admins
 from requests import ConnectionError
@@ -18,7 +17,6 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
     username = xform.user.username
     id_string = xform.id_string
 
-    @transaction.commit_on_success
     def _create_export(xform, export_type):
         return Export.objects.create(xform=xform, export_type=export_type)
 

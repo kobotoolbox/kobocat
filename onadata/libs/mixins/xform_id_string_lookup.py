@@ -5,9 +5,8 @@ from django.shortcuts import get_object_or_404
 class XFormIdStringLookupMixin(object):
     lookup_id_string = 'id_string'
 
-    def get_object(self, queryset=None):
-        if queryset is None:
-            queryset = self.filter_queryset(self.get_queryset())
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
 
         lookup_field = self.lookup_field
         lookup = self.kwargs.get(lookup_field)

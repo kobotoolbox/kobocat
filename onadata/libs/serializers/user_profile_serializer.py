@@ -39,16 +39,16 @@ def _get_first_last_names(name, limit=30):
 
 class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
     is_org = serializers.SerializerMethodField('is_organization')
-    username = serializers.WritableField(source='user.username')
-    email = serializers.WritableField(source='user.email')
-    website = serializers.WritableField(source='home_page', required=False)
-    gravatar = serializers.Field(source='gravatar')
-    password = serializers.WritableField(
-        source='user.password', widget=widgets.PasswordInput(), required=False)
+    username = serializers.CharField(source='user.username')
+    email = serializers.CharField(source='user.email')
+    website = serializers.CharField(source='home_page', required=False)
+    gravatar = serializers.ReadOnlyField(source='gravatar')
+    password = serializers.CharField(
+        source='user.password', style={'input_type': 'password'}, required=False)
     user = serializers.HyperlinkedRelatedField(
         view_name='user-detail', lookup_field='username', read_only=True)
     metadata = JsonField(source='metadata', required=False)
-    id = serializers.Field(source='user.id')
+    id = serializers.ReadOnlyField(source='user.id')
 
     class Meta:
         model = UserProfile
@@ -60,11 +60,11 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
     def is_organization(self, obj):
         return is_organization(obj)
 
-    def to_native(self, obj):
+    def to_representation(self, obj):
         """
         Serialize objects -> primitives.
         """
-        ret = super(UserProfileSerializer, self).to_native(obj)
+        ret = super(UserProfileSerializer, self).to_representation(obj)
         if 'password' in ret:
             del ret['password']
 
@@ -123,6 +123,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
         if form.is_valid():
             site = Site.objects.get(pk=settings.SITE_ID)
             new_user = RegistrationProfile.objects.create_inactive_user(
+                site,
                 username=username,
                 password=password,
                 email=email,
@@ -173,12 +174,12 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserProfileWithTokenSerializer(UserProfileSerializer):
-    username = serializers.WritableField(source='user.username')
-    email = serializers.WritableField(source='user.email')
-    website = serializers.WritableField(source='home_page', required=False)
-    gravatar = serializers.Field(source='gravatar')
-    password = serializers.WritableField(
-        source='user.password', widget=widgets.PasswordInput(), required=False)
+    username = serializers.CharField(source='user.username')
+    email = serializers.CharField(source='user.email')
+    website = serializers.CharField(source='home_page', required=False)
+    gravatar = serializers.ReadOnlyField(source='gravatar')
+    password = serializers.CharField(
+        source='user.password', style={'input_type': 'password'}, required=False)
     user = serializers.HyperlinkedRelatedField(
         view_name='user-detail', lookup_field='username', read_only=True)
     api_token = serializers.SerializerMethodField('get_api_token')

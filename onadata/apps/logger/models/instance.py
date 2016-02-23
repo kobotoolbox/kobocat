@@ -65,7 +65,7 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
         xform.num_of_submissions += 1
         xform.last_submission_time = instance.date_created
         xform.save()
-        profile_qs = User.profile.get_query_set()
+        profile_qs = User.profile.get_queryset()
         try:
             profile = profile_qs.select_for_update()\
                 .get(pk=xform.user.profile.pk)
@@ -86,7 +86,7 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
         if xform.num_of_submissions < 0:
             xform.num_of_submissions = 0
         xform.save()
-        profile_qs = User.profile.get_query_set()
+        profile_qs = User.profile.get_queryset()
         try:
             profile = profile_qs.select_for_update()\
                 .get(pk=xform.user.profile.pk)

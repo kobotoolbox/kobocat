@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -386,7 +386,7 @@ https://example.com/api/v1/projects/28058/labels/hello%20world
                        ProjectOwnerFilter,
                        TagFilter)
 
-    @action(methods=['POST', 'GET'])
+    @detail_route(methods=['POST', 'GET'])
     def forms(self, request, **kwargs):
         """Add a form to a project or list forms for the project.
 
@@ -414,10 +414,10 @@ https://example.com/api/v1/projects/28058/labels/hello%20world
 
         return Response(serializer.data)
 
-    @action(methods=['PUT'])
+    @detail_route(methods=['PUT'])
     def share(self, request, *args, **kwargs):
         self.object = self.get_object()
-        data = dict(request.DATA.items() + [('project', self.object.pk)])
+        data = dict(request.data.items() + [('project', self.object.pk)])
         serializer = ShareProjectSerializer(data=data)
 
         if serializer.is_valid():
@@ -441,7 +441,7 @@ https://example.com/api/v1/projects/28058/labels/hello%20world
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['DELETE', 'GET', 'POST'])
+    @detail_route(methods=['DELETE', 'GET', 'POST'])
     def star(self, request, *args, **kwargs):
         user = request.user
         project = get_object_or_404(Project, pk=kwargs.get('pk'))

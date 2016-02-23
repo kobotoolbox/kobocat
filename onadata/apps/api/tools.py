@@ -259,8 +259,8 @@ def publish_project_xform(request, project):
 
     xform = None
 
-    if 'formid' in request.DATA:
-        xform = get_object_or_404(XForm, pk=request.DATA.get('formid'))
+    if 'formid' in request.data:
+        xform = get_object_or_404(XForm, pk=request.data.get('formid'))
     else:
         xform = publish_form(set_form)
 
@@ -395,7 +395,7 @@ def add_tags_to_instance(request, instance):
     class TagForm(forms.Form):
         tags = TagField()
 
-    form = TagForm(request.DATA)
+    form = TagForm(request.data)
 
     if form.is_valid():
         tags = form.cleaned_data.get('tags', None)

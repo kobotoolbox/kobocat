@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 from rest_framework import serializers
 
 from onadata.apps.main.models.meta_data import MetaData
+from onadata.apps.logger.models import XForm
 
 METADATA_TYPES = (
     ('data_license', _(u"Data License")),
@@ -19,7 +20,7 @@ METADATA_TYPES = (
 
 class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(source='pk', read_only=True)
-    xform = serializers.PrimaryKeyRelatedField()
+    xform = serializers.PrimaryKeyRelatedField(queryset=XForm.objects.all())
     data_value = serializers.CharField(max_length=255,
                                        required=False)
     data_type = serializers.ChoiceField(choices=METADATA_TYPES)

@@ -14,6 +14,8 @@ import dj_database_url
 DATABASES = {
     'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
 }
+# Replacement for TransactionMiddleware
+DATABASES['default']['ATOMIC_REQUESTS'] = True
 
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
@@ -86,7 +88,7 @@ STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 KOBOFORM_SERVER=os.environ.get("KOBOFORM_SERVER", "localhost")
 KOBOFORM_SERVER_PORT=os.environ.get("KOBOFORM_SERVER_PORT", "8000")
 KOBOFORM_SERVER_PROTOCOL=os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
-#KOBOFORM_LOGIN_AUTOREDIRECT=True
+KOBOFORM_LOGIN_AUTOREDIRECT=True
 KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
 TEMPLATE_CONTEXT_PROCESSORS = (

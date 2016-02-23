@@ -180,7 +180,9 @@ MIDDLEWARE_CLASSES = (
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
+    # Django 1.8 removes TransactionMiddleware (was deprecated in 1.6). See:
+    # https://docs.djangoproject.com/en/1.6/topics/db/transactions/#transaction-middleware
+    #'django.middleware.transaction.TransactionMiddleware',
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
 )
@@ -233,6 +235,7 @@ INSTALLED_APPS = (
     'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
+    'django_extensions',
 )
 
 OAUTH2_PROVIDER = {
@@ -262,10 +265,9 @@ REST_FRAMEWORK = {
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.UnicodeJSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework.renderers.JSONPRenderer',
-        'rest_framework.renderers.XMLRenderer',
+        'rest_framework_jsonp.renderers.JSONPRenderer',
+        'rest_framework_xml.renderers.XMLRenderer',
         'rest_framework_csv.renderers.CSVRenderer',
     ),
     'VIEW_NAME_FUNCTION': 'onadata.apps.api.tools.get_view_name',

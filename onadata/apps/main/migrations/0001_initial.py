@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 import jsonfield.fields
 from django.conf import settings
 import onadata.apps.main.models.meta_data
@@ -10,8 +10,8 @@ import onadata.apps.main.models.meta_data
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '__first__'),
-        ('auth', '0001_initial'),
+        ('logger', '0001_initial'),
+        ('auth', '0006_require_contenttypes_0002'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -27,9 +27,6 @@ class Migration(migrations.Migration):
                 ('file_hash', models.CharField(max_length=50, null=True, blank=True)),
                 ('xform', models.ForeignKey(to='logger.XForm')),
             ],
-            options={
-            },
-            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='TokenStorageModel',
@@ -37,9 +34,6 @@ class Migration(migrations.Migration):
                 ('id', models.ForeignKey(related_name='google_id', primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
                 ('token', models.TextField()),
             ],
-            options={
-            },
-            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='UserProfile',
@@ -63,7 +57,6 @@ class Migration(migrations.Migration):
             options={
                 'permissions': (('can_add_xform', 'Can add/upload an xform to user profile'), ('view_profile', 'Can view user profile')),
             },
-            bases=(models.Model,),
         ),
         migrations.AlterUniqueTogether(
             name='metadata',

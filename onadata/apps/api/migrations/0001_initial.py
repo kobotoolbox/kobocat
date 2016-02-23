@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 import jsonfield.fields
 from django.conf import settings
 import taggit.managers
@@ -11,10 +11,10 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('logger', '0001_initial'),
-        ('auth', '0001_initial'),
+        ('taggit', '0002_auto_20150616_2121'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+        ('auth', '0006_require_contenttypes_0002'),
         ('main', '0001_initial'),
-        ('taggit', '0002_auto_20160205_1536'),
     ]
 
     operations = [
@@ -47,7 +47,6 @@ class Migration(migrations.Migration):
             options={
                 'permissions': (('view_project', 'Can view project'), ('add_xform', 'Can add xform to project'), ('transfer_project', 'Can transfer project to different owner')),
             },
-            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='ProjectXForm',
@@ -57,9 +56,6 @@ class Migration(migrations.Migration):
                 ('project', models.ForeignKey(to='api.Project')),
                 ('xform', models.ForeignKey(to='logger.XForm')),
             ],
-            options={
-            },
-            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='Team',
