@@ -12,7 +12,7 @@ PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
+    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % BASE_DIR)
 }
 
 MONGO_DATABASE = {
@@ -33,17 +33,7 @@ except KeyError:
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
 
-TESTING_MODE = False
-# This trick works only when we run tests from the command line.
-if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
-    raise Exception(
-        "Testing destroys data and must NOT be run in a production "
-        "environment. Please use a different settings file if you want to "
-        "run tests."
-    )
-    TESTING_MODE = True
-else:
-    TESTING_MODE = False
+TESTING_MODE = True
 
 MEDIA_URL= '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
 STATIC_URL = '/static/'
@@ -71,10 +61,6 @@ else:
 if PRINT_EXCEPTION and DEBUG:
     MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
 
-# Clear out the test database
-if TESTING_MODE:
-    MONGO_DB.instances.drop()
-
 # include the kobocat-template directory
 TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
@@ -93,7 +79,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'onadata.koboform.context_processors.koboform_integration',
 ) + TEMPLATE_CONTEXT_PROCESSORS
 
-MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
+#MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
 
 CSRF_COOKIE_DOMAIN = os.environ.get('CSRF_COOKIE_DOMAIN', None)
 
@@ -118,6 +104,10 @@ else:
 MONGO_CONNECTION = MongoClient(
     MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
+
+# Clear out the test database
+if TESTING_MODE:
+    MONGO_DB.instances.drop()
 
 # BEGIN external service integration codes
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
