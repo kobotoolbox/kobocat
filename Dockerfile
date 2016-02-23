@@ -4,6 +4,13 @@ MAINTAINER Serban Teodorescu, teodorescu.serban@gmail.com
 
 RUN mkdir -p /etc/service/celery
 
+# Install any live additions in `apt_requirements.txt`.
+# COPY ./apt_requirements.txt /tmp/kobocat_apt_requirements.txt
+# RUN apt-get update && \
+#     apt-get upgrade -y && \
+#     apt-get install -y $(cat /tmp/kobocat_apt_requirements.txt) && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 COPY docker/run_wsgi /etc/service/wsgi/run
 COPY docker/run_celery /etc/service/celery/run
 COPY docker/*.sh docker/kobocat.ini /srv/src/
