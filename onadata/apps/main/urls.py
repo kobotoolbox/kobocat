@@ -185,8 +185,6 @@ urlpatterns = patterns(
         'onadata.apps.viewer.views.export_download'),
     url(r'^(?P<username>\w+)/forms/(?P<form_id_string>[^/]+)/spss_labels\.zip$',
         'onadata.apps.logger.views.download_spss_labels', name='download_spss_labels'),
-    url(r'^(?P<username>\w+)/forms/(?P<form_id_string>[^/]+)/excel_analyser\.xlsx$',
-        'onadata.apps.logger.views.download_excel_analyser', name='download_excel_analyser'),
 
     # odk data urls
     url(r"^submission$",
