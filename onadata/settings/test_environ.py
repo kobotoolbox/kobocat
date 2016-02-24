@@ -12,13 +12,14 @@ PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % BASE_DIR)
+    'default': dj_database_url.config(
+        env='TEST_DATABASE_URL', default="sqlite:///%s/db.sqlite3" % BASE_DIR)
 }
 
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
     'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
-    'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
+    'NAME': os.environ.get('KOBOCAT_TEST_MONGO_NAME', 'formhub_test'),
     'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
     'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
 }

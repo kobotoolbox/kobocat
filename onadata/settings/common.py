@@ -235,7 +235,6 @@ INSTALLED_APPS = (
     'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
-    'django_extensions',
 )
 
 OAUTH2_PROVIDER = {
