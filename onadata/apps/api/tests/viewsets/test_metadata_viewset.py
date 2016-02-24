@@ -23,7 +23,7 @@ class TestMetaDataViewSet(TestAbstractViewSet):
         self._publish_xls_form_to_project()
         self.data_value = "screenshot.png"
         self.fixture_dir = os.path.join(
-            settings.PROJECT_ROOT, "apps", "main", "tests", "fixtures",
+            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation"
         )
         self.path = os.path.join(self.fixture_dir, self.data_value)

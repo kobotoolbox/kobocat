@@ -9,7 +9,7 @@ DEBUG = False
 MEDIA_ROOT = '/var/formhub-media'
 STATIC_ROOT = "/srv/formhub-static"
 STATICFILES_DIRS = (
-    os.path.join(PROJECT_ROOT, "static"),
+    os.path.join(ONADATA_DIR, "static"),
 )
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),

@@ -5,10 +5,6 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
 TEMPLATE_STRING_IF_INVALID = ''
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-ONADATA_DIR= BASE_DIR
-PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
-
 import dj_database_url
 
 DATABASES = {

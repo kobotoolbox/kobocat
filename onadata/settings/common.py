@@ -23,9 +23,10 @@ from pymongo import MongoClient
 
 djcelery.setup_loader()
 
-CURRENT_FILE = os.path.abspath(__file__)
-PROJECT_ROOT = os.path.realpath(
-    os.path.join(os.path.dirname(CURRENT_FILE), '..//'))
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+ONADATA_DIR = BASE_DIR
+PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
+
 PRINT_EXCEPTION = False
 
 TEMPLATED_EMAIL_TEMPLATE_DIR = 'templated_email/'
@@ -85,7 +86,7 @@ MEDIA_URL = 'http://localhost:8000/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+STATIC_ROOT = os.path.join(ONADATA_DIR, 'static')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -187,14 +188,14 @@ MIDDLEWARE_CLASSES = (
     'readonly.middleware.DatabaseReadOnlyMiddleware',
 )
 
-LOCALE_PATHS = (os.path.join(PROJECT_ROOT, 'onadata.apps.main', 'locale'), )
+LOCALE_PATHS = (os.path.join(ONADATA_DIR, 'onadata.apps.main', 'locale'), )
 
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
 
 
 TEMPLATE_DIRS = (
-    os.path.join(PROJECT_ROOT, 'libs/templates'),
+    os.path.join(ONADATA_DIR, 'libs/templates'),
     # Put strings here, like "/home/html/django_templates"
     # or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
@@ -472,11 +473,11 @@ except ImportError:
 if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
     # site templates overrides
     TEMPLATE_DIRS = (
-        os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
+        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
     ) + TEMPLATE_DIRS
     # site static files path
     STATICFILES_DIRS += (
-        os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
+        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
     )
 
 # Transition from South to native migrations

@@ -59,7 +59,7 @@ else:
     TESTING_MODE = False
 
 if TESTING_MODE:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
+    MEDIA_ROOT = os.path.join(ONADATA_DIR, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
     # need to have CELERY_ALWAYS_EAGER True and BROKER_BACKEND as memory
     # to run tasks immediately while testing
@@ -67,7 +67,7 @@ if TESTING_MODE:
     BROKER_BACKEND = 'memory'
     ENKETO_API_TOKEN = 'abc'
 else:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media/')
+    MEDIA_ROOT = os.path.join(ONADATA_DIR, 'media/')
 
 # Clear out the test database
 if TESTING_MODE:

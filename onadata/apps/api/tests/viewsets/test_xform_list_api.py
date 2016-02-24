@@ -216,7 +216,7 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
         data_value = "screenshot.png"
         data_type = 'media'
         fixture_dir = os.path.join(
-            settings.PROJECT_ROOT, "apps", "main", "tests", "fixtures",
+            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation"
         )
         path = os.path.join(fixture_dir, data_value)

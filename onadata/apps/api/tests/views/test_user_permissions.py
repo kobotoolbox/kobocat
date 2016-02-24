@@ -36,7 +36,7 @@ class TestUserPermissions(TestAbstractViewSet):
             'bamboo_dataset': u''
         }
         path = os.path.join(
-            settings.PROJECT_ROOT, "apps", "main", "tests", "fixtures",
+            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.xls")
 
         bob = self.user

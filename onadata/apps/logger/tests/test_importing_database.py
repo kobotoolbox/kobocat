@@ -26,7 +26,7 @@ class TestImportingDatabase(TestBase):
         TestBase.setUp(self)
         self._publish_xls_file(
             os.path.join(
-                settings.PROJECT_ROOT, "apps", "logger", "fixtures",
+                settings.ONADATA_DIR, "apps", "logger", "fixtures",
                 "test_forms", "tutorial.xls"))
 
     def tearDown(self):

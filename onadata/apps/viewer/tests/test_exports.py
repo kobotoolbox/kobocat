@@ -33,7 +33,7 @@ AMBULANCE_KEY_DOTS = 'transport.available_transportation_types_to_referra'\
 
 
 def _main_fixture_path(instance_name):
-    return os.path.join(settings.PROJECT_ROOT, 'apps', 'main', 'tests',
+    return os.path.join(settings.ONADATA_DIR, 'apps', 'main', 'tests',
                         'fixtures', 'transportation', 'instances_w_uuid',
                         instance_name, instance_name + '.xml')
 

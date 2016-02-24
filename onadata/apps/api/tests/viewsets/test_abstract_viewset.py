@@ -205,7 +205,7 @@ class TestAbstractViewSet(TransactionTestCase):
             data = publish_data
 
         path = os.path.join(
-            settings.PROJECT_ROOT, "apps", "main", "tests", "fixtures",
+            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.xls")
         with open(path) as xls_file:
             post_data = {'xls_file': xls_file}
