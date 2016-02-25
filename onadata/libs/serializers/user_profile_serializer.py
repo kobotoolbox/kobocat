@@ -197,8 +197,8 @@ class UserProfileWithTokenSerializer(UserProfileSerializer):
         source='user.password', style={'input_type': 'password'}, required=False)
     user = serializers.HyperlinkedRelatedField(
         view_name='user-detail', lookup_field='username', read_only=True)
-    api_token = serializers.SerializerMethodField('get_api_token')
-    temp_token = serializers.SerializerMethodField('get_temp_token')
+    api_token = serializers.SerializerMethodField('api_token')
+    temp_token = serializers.SerializerMethodField('temp_token')
 
     class Meta:
         model = UserProfile

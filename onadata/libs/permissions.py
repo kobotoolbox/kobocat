@@ -244,7 +244,7 @@ def get_object_users_with_permissions(obj, exclude=None):
             obj, attach_perms=True, with_group_users=False).items()
 
         result = [{
-            'user': user,
+            'user': user.username, # don't pass in the user object has it's not serializable
             'role': get_role(permissions, obj),
             'permissions': permissions} for user, permissions in
             users_with_perms if not is_organization(

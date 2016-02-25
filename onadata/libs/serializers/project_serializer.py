@@ -92,6 +92,9 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             filter(xform_id__in=xform_ids).values_list('date_created',
                                                        flat=True)
 
+        # Force explicit serialization to a list as it used to rely on
+        # an implicit one.
+        last_submission = list(last_submission)
         return last_submission and last_submission[0]
 
     def is_starred_project(self, obj):
