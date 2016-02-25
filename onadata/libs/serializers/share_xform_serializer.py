@@ -13,15 +13,14 @@ class ShareXFormSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255)
     role = serializers.CharField(max_length=50)
 
-    def restore_object(self, attrs, instance=None):
-        if instance is not None:
-            instance.xform = attrs.get('xform', instance.xform)
-            instance.username = attrs.get('username', instance.username)
-            instance.role = attrs.get('role', instance.role)
+    def create(self, validated_data):
+        return ShareXForm(**validated_data)
 
-            return instance
-
-        return ShareXForm(**attrs)
+    def update(self, instance, validated_data):
+        instance.xform = validated_data.get('xform', instance.xform)
+        instance.username = validated_data.get('username', instance.username)
+        instance.role = validated_data.get('role', instance.role)
+        return instance
 
     def validate_username(self, attrs, source):
         """Check that the username exists"""

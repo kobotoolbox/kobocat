@@ -31,25 +31,27 @@ class TeamSerializer(serializers.Serializer):
 
         return users
 
-    def restore_object(self, attrs, instance=None):
-        org = attrs.get('organization', None)
-        projects = attrs.get('projects', [])
-        team_name = attrs.get('team_name', None)
+    def create(self, validated_data):
+        org = validated_data.get('organization', None)
+        team_name = validated_data.get('team_name', None)
         request = self.context.get('request')
         created_by = request.user
 
-        if instance:
-            instance.organization = org if org else instance.organization
-            instance.name = attrs.get('team_name', instance.name)
-            instance.projects.clear()
-
-            for project in projects:
-                instance.projects.add(project)
-
-            return instance
-
         if not team_name:
             self.errors['name'] = u'A team name is required'
-            return attrs
+            return validated_data
 
         return Team(organization=org, name=team_name, created_by=created_by)
+
+    def update(self, attrs, instance=None):
+        org = attrs.get('organization', None)
+        projects = attrs.get('projects', [])
+
+        instance.organization = org if org else instance.organization
+        instance.name = attrs.get('team_name', instance.name)
+        instance.projects.clear()
+
+        for project in projects:
+            instance.projects.add(project)
+
+        return instance

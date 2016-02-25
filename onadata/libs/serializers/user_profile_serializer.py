@@ -42,12 +42,12 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
     username = serializers.CharField(source='user.username')
     email = serializers.CharField(source='user.email')
     website = serializers.CharField(source='home_page', required=False)
-    gravatar = serializers.ReadOnlyField(source='gravatar')
+    gravatar = serializers.ReadOnlyField()
     password = serializers.CharField(
         source='user.password', style={'input_type': 'password'}, required=False)
     user = serializers.HyperlinkedRelatedField(
         view_name='user-detail', lookup_field='username', read_only=True)
-    metadata = JsonField(source='metadata', required=False)
+    metadata = JsonField(required=False)
     id = serializers.ReadOnlyField(source='user.id')
 
     class Meta:
@@ -77,12 +77,11 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
 
         return ret
 
-    def restore_object(self, attrs, instance=None):
-        params = copy.deepcopy(attrs)
-        username = attrs.get('user.username', None)
-        password = attrs.get('user.password', None)
-        name = attrs.get('name', None)
-        email = attrs.get('user.email', None)
+    def create(self, validated_data):
+        params = copy.deepcopy(validated_data)
+        username = validated_data.get('user.username', None)
+        password = validated_data.get('user.password', None)
+        email = validated_data.get('user.email', None)
 
         if username:
             params['username'] = username
@@ -92,29 +91,6 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
 
         if password:
             params.update({'password1': password, 'password2': password})
-
-        if instance:
-            form = UserProfileForm(params, instance=instance)
-
-            # form.is_valid affects instance object for partial updates [PATCH]
-            # so only use it for full updates [PUT], i.e shallow copy effect
-            if not self.partial and form.is_valid():
-                instance = form.save()
-
-            # get user
-            if email:
-                instance.user.email = form.cleaned_data['email']
-
-            if name:
-                first_name, last_name = _get_first_last_names(name)
-                instance.user.first_name = first_name
-                instance.user.last_name = last_name
-
-            if email or name:
-                instance.user.save()
-
-            return super(
-                UserProfileSerializer, self).restore_object(attrs, instance)
 
         form = RegistrationFormUserProfile(params)
         # does not require captcha
@@ -135,20 +111,59 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
             created_by = self.context['request'].user
             created_by = None if created_by.is_anonymous() else created_by
             profile = UserProfile(
-                user=new_user, name=attrs.get('name', u''),
+                user=new_user, name=validated_data.get('name', u''),
                 created_by=created_by,
-                city=attrs.get('city', u''),
-                country=attrs.get('country', u''),
-                organization=attrs.get('organization', u''),
-                home_page=attrs.get('home_page', u''),
-                twitter=attrs.get('twitter', u''))
+                city=validated_data.get('city', u''),
+                country=validated_data.get('country', u''),
+                organization=validated_data.get('organization', u''),
+                home_page=validated_data.get('home_page', u''),
+                twitter=validated_data.get('twitter', u''))
 
             return profile
 
         else:
             self.errors.update(form.errors)
 
-        return attrs
+        return validated_data
+
+    def update(self, instance, validated_data):
+
+        params = copy.deepcopy(validated_data)
+        username = validated_data.get('user.username', None)
+        password = validated_data.get('user.password', None)
+        name = validated_data.get('name', None)
+        email = validated_data.get('user.email', None)
+
+        if username:
+            params['username'] = username
+
+        if email:
+            params['email'] = email
+
+        if password:
+            params.update({'password1': password, 'password2': password})
+
+            form = UserProfileForm(params, instance=instance)
+
+            # form.is_valid affects instance object for partial updates [PATCH]
+            # so only use it for full updates [PUT], i.e shallow copy effect
+            if not self.partial and form.is_valid():
+                instance = form.save()
+
+            # get user
+            if email:
+                instance.user.email = form.cleaned_data['email']
+
+            if name:
+                first_name, last_name = _get_first_last_names(name)
+                instance.user.first_name = first_name
+                instance.user.last_name = last_name
+
+            if email or name:
+                instance.user.save()
+
+        return super(
+            UserProfileSerializer, self).create(instance, validated_data)
 
     def validate_username(self, attrs, source):
         if self.context['request'].method == 'PATCH':
@@ -177,7 +192,7 @@ class UserProfileWithTokenSerializer(UserProfileSerializer):
     username = serializers.CharField(source='user.username')
     email = serializers.CharField(source='user.email')
     website = serializers.CharField(source='home_page', required=False)
-    gravatar = serializers.ReadOnlyField(source='gravatar')
+    gravatar = serializers.ReadOnlyField()
     password = serializers.CharField(
         source='user.password', style={'input_type': 'password'}, required=False)
     user = serializers.HyperlinkedRelatedField(

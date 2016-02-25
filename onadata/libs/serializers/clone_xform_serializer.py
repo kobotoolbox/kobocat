@@ -11,14 +11,13 @@ class CloneXFormSerializer(serializers.Serializer):
     xform = XFormField()
     username = serializers.CharField(max_length=255)
 
-    def restore_object(self, attrs, instance=None):
-        if instance is not None:
-            instance.xform = attrs.get('xform', instance.xform)
-            instance.username = attrs.get('username', instance.username)
+    def create(self, validated_data):
+        return CloneXForm(**validated_data)
 
-            return instance
-
-        return CloneXForm(**attrs)
+    def update(self, instance, validated_data):
+        instance.xform = validated_data.get('xform', instance.xform)
+        instance.username = validated_data.get('username', instance.username)
+        return instance
 
     def validate_username(self, attrs, source):
         """Check that the username exists"""

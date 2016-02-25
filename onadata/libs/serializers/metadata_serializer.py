@@ -45,16 +45,12 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
 
         return attrs
 
-    def restore_object(self, attrs, instance=None):
-        data_type = attrs.get('data_type')
-        data_file = attrs.get('data_file')
-        xform = attrs.get('xform')
-        data_value = data_file.name if data_file else attrs.get('data_value')
+    def create(self, validated_data):
+        data_type = validated_data.get('data_type')
+        data_file = validated_data.get('data_file')
+        xform = validated_data.get('xform')
+        data_value = data_file.name if data_file else validated_data.get('data_value')
         data_file_type = data_file.content_type if data_file else None
-
-        if instance:
-            return super(MetaDataSerializer, self).restore_object(
-                attrs, instance)
 
         return MetaData(
             data_type=data_type,
@@ -63,3 +59,4 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             data_file=data_file,
             data_file_type=data_file_type
         )
+
