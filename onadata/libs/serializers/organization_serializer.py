@@ -19,11 +19,15 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = OrganizationProfile
-        lookup_field = 'user'
         exclude = ('created_by', 'is_organization', 'organization')
+        extra_kwargs = {
+            'url': {'lookup_field': 'user'}
+        }
 
     def create(self, validated_data):
-        org = validated_data.get('user.username', None)
+        # get('user.username') does not work anymore:
+        # username is in a nested dict
+        org = validated_data.get('user', {}).get('username', None)
         org_name = validated_data.get('name', None)
         org_exists = False
         creator = None
@@ -42,7 +46,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
         if org and org_name and creator and not org_exists:
             validated_data['organization'] = org_name
             orgprofile = tools.create_organization_object(org, creator, validated_data)
-
+            orgprofile.save()
             return orgprofile
 
         if not org:
@@ -53,8 +57,8 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
 
         return validated_data
 
-    def validate_org(self, attrs, source):
-        org = attrs[source].lower()
+    def validate_org(self, value):
+        org = value.lower()
         if org in RegistrationFormUserProfile._reserved_usernames:
             raise ValidationError(
                 u"%s is a reserved name, please choose another" % org)
@@ -65,9 +69,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
         try:
             User.objects.get(username=org)
         except User.DoesNotExist:
-            attrs[source] = org
-
-            return attrs
+            return value
         raise ValidationError(u'%s already exists' % org)
 
     def get_org_permissions(self, obj):

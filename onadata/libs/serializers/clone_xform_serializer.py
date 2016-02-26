@@ -12,20 +12,19 @@ class CloneXFormSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255)
 
     def create(self, validated_data):
-        return CloneXForm(**validated_data)
+        return CloneXForm.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         instance.xform = validated_data.get('xform', instance.xform)
         instance.username = validated_data.get('username', instance.username)
         return instance
 
-    def validate_username(self, attrs, source):
+    def validate_username(self, value):
         """Check that the username exists"""
-        value = attrs[source]
         try:
             User.objects.get(username=value)
         except User.DoesNotExist:
             raise ValidationError(_(u"User '%(value)s' does not exist."
                                     % {"value": value}))
 
-        return attrs
+        return value

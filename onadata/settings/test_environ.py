@@ -150,3 +150,10 @@ if 'RAVEN_DSN' in os.environ:
             pass
 
 POSTGIS_VERSION = (2, 1, 2)
+
+# DISABLE Django DB logging
+LOGGING['loggers']['django.db.backends'] = {
+            'level': 'WARNING',
+            'propagate': True
+        }
+

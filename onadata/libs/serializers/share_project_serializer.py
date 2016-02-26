@@ -22,26 +22,24 @@ class ShareProjectSerializer(serializers.Serializer):
     def create(self, validated_data):
         return ShareProject(**validated_data)
 
-    def validate_username(self, attrs, source):
+    def validate_username(self, value):
         """Check that the username exists"""
-        value = attrs[source]
         try:
             User.objects.get(username=value)
         except User.DoesNotExist:
             raise ValidationError(_(u"User '%(value)s' does not exist."
                                     % {"value": value}))
 
-        return attrs
+        return value
 
-    def validate_role(self, attrs, source):
+    def validate_role(self, value):
         """check that the role exists"""
-        value = attrs[source]
 
         if value not in ROLES:
             raise ValidationError(_(u"Unknown role '%(role)s'."
                                     % {"role": value}))
 
-        return attrs
+        return value
 
     def remove_user(self):
         self.object.remove_user()

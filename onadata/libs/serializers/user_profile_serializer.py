@@ -110,7 +110,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
 
             created_by = self.context['request'].user
             created_by = None if created_by.is_anonymous() else created_by
-            profile = UserProfile(
+            profile = UserProfile.objects.create(
                 user=new_user, name=validated_data.get('name', u''),
                 created_by=created_by,
                 city=validated_data.get('city', u''),
@@ -165,12 +165,11 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
         return super(
             UserProfileSerializer, self).create(instance, validated_data)
 
-    def validate_username(self, attrs, source):
+    def validate_username(self, value):
         if self.context['request'].method == 'PATCH':
+            return value
 
-            return attrs
-
-        username = attrs[source].lower()
+        username = value.lower()
         form = RegistrationFormUserProfile
         if username in form._reserved_usernames:
             raise ValidationError(
@@ -182,9 +181,8 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
         try:
             User.objects.get(username=username)
         except User.DoesNotExist:
-            attrs[source] = username
 
-            return attrs
+            return value
         raise ValidationError(u'%s already exists' % username)
 
 

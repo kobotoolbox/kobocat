@@ -13,11 +13,9 @@ class TeamSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100, source='team_name')
     organization = serializers.SlugRelatedField(
         slug_field='username',
-        source='organization',
         queryset=User.objects.filter(
             pk__in=OrganizationProfile.objects.values('user')))
     projects = serializers.HyperlinkedRelatedField(view_name='project-detail',
-                                                   source='projects',
                                                    many=True,
                                                    read_only=True)
     users = serializers.SerializerMethodField('get_team_users')
@@ -41,7 +39,8 @@ class TeamSerializer(serializers.Serializer):
             self.errors['name'] = u'A team name is required'
             return validated_data
 
-        return Team(organization=org, name=team_name, created_by=created_by)
+        return Team.objects.create(organization=org, name=team_name,
+                                   created_by=created_by)
 
     def update(self, attrs, instance=None):
         org = attrs.get('organization', None)

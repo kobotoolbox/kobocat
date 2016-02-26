@@ -30,20 +30,23 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = MetaData
 
-    def validate_data_value(self, attrs, source):
+    # was previously validate_data_value but the signature change in DRF3.
+    def validate(self, attrs):
         """Ensure we have a valid url if we are adding a media uri
         instead of a media file
         """
-        value = attrs.get(source)
+        value = attrs.get("data_value")
         media = attrs.get('data_type')
         data_file = attrs.get('data_file')
 
         if media == 'media' and data_file is None:
-            URLValidator(message=_(u"Invalid url %s." % value))(value)
+            msg = {'data_value': u"Invalid url %s." % value}
+            raise serializers.ValidationError(msg)
         if value is None:
-            raise ValidationError(u"This field is required.")
+            msg = {'data_value': u"This field is required."}
+            raise serializers.ValidationError(msg)
 
-        return attrs
+        return super(MetaDataSerializer, self).validate(attrs)
 
     def create(self, validated_data):
         data_type = validated_data.get('data_type')
@@ -52,7 +55,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_value = data_file.name if data_file else validated_data.get('data_value')
         data_file_type = data_file.content_type if data_file else None
 
-        return MetaData(
+        return MetaData.objects.create(
             data_type=data_type,
             xform=xform,
             data_value=data_value,

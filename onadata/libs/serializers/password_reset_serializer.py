@@ -106,7 +106,7 @@ class PasswordResetSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        return PasswordReset(**validated_data)
+        return PasswordReset.objects.create(**validated_data)
 
 
 class PasswordResetChangeSerializer(serializers.Serializer):
@@ -129,4 +129,4 @@ class PasswordResetChangeSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        return PasswordResetChange(**validated_data)
+        return PasswordResetChange.objects.create(**validated_data)
