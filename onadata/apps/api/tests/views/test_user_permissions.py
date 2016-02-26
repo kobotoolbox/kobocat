@@ -74,8 +74,6 @@ class TestUserPermissions(TestAbstractViewSet):
         xfs = XFormSerializer(instance=self.xform,
                               context={'request': request})
 
-        # JNM TEMPORARY debug here
-        #import ipdb; ipdb.set_trace()
         data = json.loads(JSONRenderer().render(xfs.data))
         data.update({'public': True, 'description': description})
 

@@ -37,7 +37,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
                    'has_start_time', 'shared', 'shared_data')
 
     def get_xform_permissions(self, obj):
-        return get_object_users_with_permissions(obj)
+        return get_object_users_with_permissions(obj, serializable=True)
 
     def get_xform_metadata(self, obj):
         if obj:

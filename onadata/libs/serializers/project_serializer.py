@@ -62,7 +62,7 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         return validated_data
 
     def get_project_permissions(self, obj):
-        return get_object_users_with_permissions(obj)
+        return get_object_users_with_permissions(obj, serializable=True)
 
     @check_obj
     def get_project_forms(self, obj):
