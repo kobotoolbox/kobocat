@@ -4,7 +4,7 @@ import re
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django_digest.test import Client as DigestClient
 from tempfile import NamedTemporaryFile
 from django.contrib.auth.models import User
@@ -25,7 +25,7 @@ from onadata.libs.serializers.project_serializer import ProjectSerializer
 from onadata.apps.logger.views import submission
 
 
-class TestAbstractViewSet(TestCase):
+class TestAbstractViewSet(TransactionTestCase):
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
                'transport_2011-07-25_19-06-01',
@@ -46,7 +46,7 @@ class TestAbstractViewSet(TestCase):
     }
 
     def setUp(self):
-        TestCase.setUp(self)
+        super(TestAbstractViewSet, self).setUp()
         self.factory = APIRequestFactory()
         self._login_user_and_profile()
         self.maxDiff = None
@@ -205,7 +205,7 @@ class TestAbstractViewSet(TestCase):
             data = publish_data
 
         path = os.path.join(
-            settings.PROJECT_ROOT, "apps", "main", "tests", "fixtures",
+            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.xls")
         with open(path) as xls_file:
             post_data = {'xls_file': xls_file}

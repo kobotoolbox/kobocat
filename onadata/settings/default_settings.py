@@ -17,10 +17,8 @@ DATABASES = {
         'USER': 'onadata',
         'PASSWORD': '',
         'HOST': '127.0.0.1',
-        'OPTIONS': {
-            # note: this option obsolete starting with django 1.6
-            'autocommit': True,
-        }
+        # Replacement for TransactionMiddleware
+        'ATOMIC_REQUESTS': True,
     }
 }
 

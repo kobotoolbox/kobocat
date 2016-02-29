@@ -10,7 +10,7 @@ from onadata.libs.permissions import get_role_in_org
 
 
 class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
-    org = serializers.WritableField(source='user.username')
+    org = serializers.CharField(source='user.username')
     user = serializers.HyperlinkedRelatedField(
         view_name='user-detail', lookup_field='username', read_only=True)
     creator = serializers.HyperlinkedRelatedField(
@@ -19,16 +19,16 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = OrganizationProfile
-        lookup_field = 'user'
         exclude = ('created_by', 'is_organization', 'organization')
+        extra_kwargs = {
+            'url': {'lookup_field': 'user'}
+        }
 
-    def restore_object(self, attrs, instance=None):
-        if instance:
-            return super(OrganizationSerializer, self)\
-                .restore_object(attrs, instance)
-
-        org = attrs.get('user.username', None)
-        org_name = attrs.get('name', None)
+    def create(self, validated_data):
+        # get('user.username') does not work anymore:
+        # username is in a nested dict
+        org = validated_data.get('user', {}).get('username', None)
+        org_name = validated_data.get('name', None)
         org_exists = False
         creator = None
 
@@ -44,9 +44,9 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
             creator = self.context['request'].user
 
         if org and org_name and creator and not org_exists:
-            attrs['organization'] = org_name
-            orgprofile = tools.create_organization_object(org, creator, attrs)
-
+            validated_data['organization'] = org_name
+            orgprofile = tools.create_organization_object(org, creator, validated_data)
+            orgprofile.save()
             return orgprofile
 
         if not org:
@@ -55,10 +55,10 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
         if not org_name:
             self.errors['name'] = u'name is required!'
 
-        return attrs
+        return validated_data
 
-    def validate_org(self, attrs, source):
-        org = attrs[source].lower()
+    def validate_org(self, value):
+        org = value.lower()
         if org in RegistrationFormUserProfile._reserved_usernames:
             raise ValidationError(
                 u"%s is a reserved name, please choose another" % org)
@@ -69,9 +69,7 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
         try:
             User.objects.get(username=org)
         except User.DoesNotExist:
-            attrs[source] = org
-
-            return attrs
+            return value
         raise ValidationError(u'%s already exists' % org)
 
     def get_org_permissions(self, obj):

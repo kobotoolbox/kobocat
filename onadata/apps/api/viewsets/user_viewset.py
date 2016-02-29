@@ -55,10 +55,9 @@ This endpoint allows you to list and retrieve user's first and last names.
     lookup_field = 'username'
     permission_classes = [permissions.DjangoObjectPermissionsAllowAnon]
 
-    def get_object(self, queryset=None):
+    def get_object(self):
         """Lookup a  username by pk else use lookup_field"""
-        if queryset is None:
-            queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset())
 
         lookup = self.kwargs.get(self.lookup_field)
         filter_kwargs = {self.lookup_field: lookup}

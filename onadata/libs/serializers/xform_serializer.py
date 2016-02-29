@@ -1,4 +1,5 @@
 from django.forms import widgets
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
@@ -11,19 +12,18 @@ from onadata.libs.utils.decorators import check_obj
 
 
 class XFormSerializer(serializers.HyperlinkedModelSerializer):
-    formid = serializers.Field(source='id')
+    formid = serializers.ReadOnlyField(source='id')
     metadata = serializers.SerializerMethodField('get_xform_metadata')
     owner = serializers.HyperlinkedRelatedField(view_name='user-detail',
                                                 source='user',
-                                                lookup_field='username')
-    public = BooleanField(source='shared', widget=widgets.CheckboxInput())
+                                                lookup_field='username',
+                                                queryset=User.objects.all())
+    public = BooleanField(source='shared')
     public_data = BooleanField(source='shared_data')
-    require_auth = BooleanField(source='require_auth',
-                                widget=widgets.CheckboxInput())
-    submission_count_for_today = serializers.Field(
-        source='submission_count_for_today')
+    require_auth = BooleanField()
+    submission_count_for_today = serializers.ReadOnlyField()
     tags = TagListSerializer(read_only=True)
-    title = serializers.CharField(max_length=255, source='title')
+    title = serializers.CharField(max_length=255)
     url = serializers.HyperlinkedIdentityField(view_name='xform-detail',
                                                lookup_field='pk')
     users = serializers.SerializerMethodField('get_xform_permissions')
@@ -33,11 +33,11 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = (
             'json', 'xml', 'date_created', 'date_modified', 'encrypted',
             'bamboo_dataset', 'last_submission_time')
-        exclude = ('id', 'json', 'xml', 'xls', 'user',
+        exclude = ('json', 'xml', 'xls', 'user',
                    'has_start_time', 'shared', 'shared_data')
 
     def get_xform_permissions(self, obj):
-        return get_object_users_with_permissions(obj)
+        return get_object_users_with_permissions(obj, serializable=True)
 
     def get_xform_metadata(self, obj):
         if obj:
@@ -48,12 +48,12 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class XFormListSerializer(serializers.Serializer):
-    formID = serializers.Field(source='id_string')
-    name = serializers.Field(source='title')
+    formID = serializers.ReadOnlyField(source='id_string')
+    name = serializers.ReadOnlyField(source='title')
     majorMinorVersion = serializers.SerializerMethodField('get_version')
-    version = serializers.SerializerMethodField('get_version')
-    hash = serializers.SerializerMethodField('get_hash')
-    descriptionText = serializers.Field(source='description')
+    version = serializers.SerializerMethodField()
+    hash = serializers.SerializerMethodField()
+    descriptionText = serializers.ReadOnlyField(source='description')
     downloadUrl = serializers.SerializerMethodField('get_url')
     manifestUrl = serializers.SerializerMethodField('get_manifest_url')
 
@@ -80,8 +80,8 @@ class XFormListSerializer(serializers.Serializer):
 
 
 class XFormManifestSerializer(serializers.Serializer):
-    filename = serializers.Field(source='data_value')
-    hash = serializers.SerializerMethodField('get_hash')
+    filename = serializers.ReadOnlyField(source='data_value')
+    hash = serializers.SerializerMethodField()
     downloadUrl = serializers.SerializerMethodField('get_url')
 
     @check_obj

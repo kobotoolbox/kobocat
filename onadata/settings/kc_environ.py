@@ -5,15 +5,13 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
 TEMPLATE_STRING_IF_INVALID = ''
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-ONADATA_DIR= BASE_DIR
-PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
-
 import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
 }
+# Replacement for TransactionMiddleware
+DATABASES['default']['ATOMIC_REQUESTS'] = True
 
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
@@ -83,6 +81,9 @@ TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
 TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
 STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 
+KOBOFORM_SERVER=os.environ.get("KOBOFORM_SERVER", "localhost")
+KOBOFORM_SERVER_PORT=os.environ.get("KOBOFORM_SERVER_PORT", "8000")
+KOBOFORM_SERVER_PROTOCOL=os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
 KOBOFORM_LOGIN_AUTOREDIRECT=True
 KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
@@ -158,3 +159,5 @@ if 'RAVEN_DSN' in os.environ:
             RAVEN_CONFIG['release'] = raven.fetch_git_sha(BASE_DIR)
         except raven.exceptions.InvalidGitRepository:
             pass
+
+POSTGIS_VERSION = (2, 1, 2)

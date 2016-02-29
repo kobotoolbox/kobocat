@@ -42,7 +42,7 @@ class XFormOwnerFilter(filters.BaseFilterBackend):
     owner_prefix = 'user'
 
     def filter_queryset(self, request, queryset, view):
-        owner = request.QUERY_PARAMS.get('owner')
+        owner = request.query_params.get('owner')
 
         if owner:
             kwargs = {
@@ -93,7 +93,7 @@ class AnonUserProjectFilter(filters.DjangoObjectPermissionsFilter):
 class TagFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         # filter by tags if available.
-        tags = request.QUERY_PARAMS.get('tags', None)
+        tags = request.query_params.get('tags', None)
 
         if tags and isinstance(tags, six.string_types):
             tags = tags.split(',')
@@ -105,7 +105,7 @@ class TagFilter(filters.BaseFilterBackend):
 class XFormPermissionFilterMixin(object):
     def _xform_filter_queryset(self, request, queryset, view, keyword):
         """Use XForm permissions"""
-        xform = request.QUERY_PARAMS.get('xform')
+        xform = request.query_params.get('xform')
         if xform:
             try:
                 int(xform)
@@ -134,7 +134,7 @@ class AttachmentFilter(XFormPermissionFilterMixin,
     def filter_queryset(self, request, queryset, view):
         queryset = self._xform_filter_queryset(request, queryset, view,
                                                'instance__xform')
-        instance_id = request.QUERY_PARAMS.get('instance')
+        instance_id = request.query_params.get('instance')
         if instance_id:
             try:
                 int(instance_id)

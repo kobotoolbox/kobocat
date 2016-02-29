@@ -117,6 +117,9 @@ class TestConnectViewSet(TestAbstractViewSet):
         self.assertEqual(response.data['detail'],
                          u"Invalid username/password")
         auth = BasicAuth('bob', 'bobbob')
+
+        # redo the request
+        request = self.factory.get('/')
         request.META.update(auth(request.META))
         request.session = self.client.session
 

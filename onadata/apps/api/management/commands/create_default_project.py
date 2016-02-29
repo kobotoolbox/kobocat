@@ -19,7 +19,8 @@ class Command(BaseCommand):
         for user in queryset_iterator(User.objects.all()):
             # For each user get the forms which are projectless
             for form in queryset_iterator(XForm.objects
-                                          .select_related('projectxform')
+                                          # JNM TEMPORARY
+                                          #.select_related('projectxform')
                                           .filter(projectxform=None,
                                                   user=user)):
 

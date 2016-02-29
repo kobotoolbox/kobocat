@@ -13,11 +13,9 @@ class TeamSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100, source='team_name')
     organization = serializers.SlugRelatedField(
         slug_field='username',
-        source='organization',
         queryset=User.objects.filter(
             pk__in=OrganizationProfile.objects.values('user')))
     projects = serializers.HyperlinkedRelatedField(view_name='project-detail',
-                                                   source='projects',
                                                    many=True,
                                                    read_only=True)
     users = serializers.SerializerMethodField('get_team_users')
@@ -31,25 +29,28 @@ class TeamSerializer(serializers.Serializer):
 
         return users
 
-    def restore_object(self, attrs, instance=None):
-        org = attrs.get('organization', None)
-        projects = attrs.get('projects', [])
-        team_name = attrs.get('team_name', None)
+    def create(self, validated_data):
+        org = validated_data.get('organization', None)
+        team_name = validated_data.get('team_name', None)
         request = self.context.get('request')
         created_by = request.user
 
-        if instance:
-            instance.organization = org if org else instance.organization
-            instance.name = attrs.get('team_name', instance.name)
-            instance.projects.clear()
-
-            for project in projects:
-                instance.projects.add(project)
-
-            return instance
-
         if not team_name:
             self.errors['name'] = u'A team name is required'
-            return attrs
+            return validated_data
 
-        return Team(organization=org, name=team_name, created_by=created_by)
+        return Team.objects.create(organization=org, name=team_name,
+                                   created_by=created_by)
+
+    def update(self, attrs, instance=None):
+        org = attrs.get('organization', None)
+        projects = attrs.get('projects', [])
+
+        instance.organization = org if org else instance.organization
+        instance.name = attrs.get('team_name', instance.name)
+        instance.projects.clear()
+
+        for project in projects:
+            instance.projects.add(project)
+
+        return instance

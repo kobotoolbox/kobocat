@@ -148,8 +148,8 @@ response. If `fields=all` then all the fields of the form will be returned.
         serializer = self.get_serializer(xform)
         dd = xform.data_dictionary()
 
-        field_name = request.QUERY_PARAMS.get('field_name')
-        fields = request.QUERY_PARAMS.get('fields')
+        field_name = request.query_params.get('field_name')
+        fields = request.query_params.get('fields')
         fmt = kwargs.get('format')
 
         if fields:

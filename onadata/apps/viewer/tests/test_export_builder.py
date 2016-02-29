@@ -20,7 +20,7 @@ from onadata.libs.utils.export_tools import (
 
 
 def _logger_fixture_path(*args):
-    return os.path.join(settings.PROJECT_ROOT, 'apps', 'logger',
+    return os.path.join(settings.ONADATA_DIR, 'apps', 'logger',
                         'tests', 'fixtures', *args)
 
 

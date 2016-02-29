@@ -9,7 +9,7 @@ class FormAdmin(admin.ModelAdmin):
     list_display = ('id_string', 'downloadable', 'shared')
 
     # A user should only see forms that belong to him.
-    def queryset(self, request):
+    def get_queryset(self, request):
         qs = super(FormAdmin, self).queryset(request)
         if request.user.is_superuser:
             return qs

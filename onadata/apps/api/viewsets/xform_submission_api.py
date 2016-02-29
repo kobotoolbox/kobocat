@@ -5,6 +5,8 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
+from django.utils.decorators import method_decorator
+from django.db import transaction
 
 from rest_framework import permissions
 from rest_framework import status
@@ -60,7 +62,7 @@ def create_instance_from_xml(username, request):
 def create_instance_from_json(username, request):
     request.accepted_renderer = JSONRenderer()
     request.accepted_media_type = JSONRenderer.media_type
-    dict_form = request.DATA
+    dict_form = request.data
     submission = dict_form.get('submission')
 
     if submission is None:

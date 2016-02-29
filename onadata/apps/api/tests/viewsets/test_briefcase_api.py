@@ -231,10 +231,14 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         self._create_user_profile(alice_data)
         auth = DigestAuth('alice', 'bobbob')
-        request = self.factory.get(
-            self._download_submission_url, data=params)
+        url = self._download_submission_url  # aliasing long name
+        request = self.factory.get(url, data=params)
         response = view(request, username=self.user.username)
         self.assertEqual(response.status_code, 401)
+
+        # Rewind the file to avoid the xml parser to get an empty string
+        # and throw and parsing error
+        request = request = self.factory.get(url, data=params)
         request.META.update(auth(request.META, response))
         response = view(request, username=self.user.username)
         self.assertEqual(response.status_code, 404)
@@ -269,6 +273,12 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             request = self.factory.post(self._form_upload_url, data=params)
             response = view(request, username=self.user.username)
             self.assertEqual(response.status_code, 401)
+
+            # Rewind the file to avoid the xml parser to get an empty string
+            # and throw and parsing error
+            f.seek(0)
+            # Create a new requests to avoid request.FILES to be empty
+            request = self.factory.post(self._form_upload_url, data=params)
             request.META.update(auth(request.META, response))
             response = view(request, username=self.user.username)
             self.assertEqual(XForm.objects.count(), count + 1)
@@ -285,6 +295,12 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             request = self.factory.post(self._form_upload_url, data=params)
             response = view(request, username=self.user.username)
             self.assertEqual(response.status_code, 401)
+
+            # Rewind the file to avoid the xml parser to get an empty string
+            # and throw and parsing error
+            f.seek(0)
+            # Create a new requests to avoid request.FILES to be empty
+            request = self.factory.post(self._form_upload_url, data=params)
             request.META.update(auth(request.META, response))
             response = view(request, username=self.user.username)
             self.assertEqual(XForm.objects.count(), count + 1)
@@ -302,9 +318,16 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             request = self.factory.post(self._form_upload_url, data=params)
             response = view(request, username=self.user.username)
             self.assertEqual(response.status_code, 401)
+
+            # Rewind the file to avoid the xml parser to get an empty string
+            # and throw and parsing error
+            f.seek(0)
+            # Create a new requests to avoid request.FILES to be empty
+            request = self.factory.post(self._form_upload_url, data=params)
             request.META.update(auth(request.META, response))
             response = view(request, username=self.user.username)
             self.assertEqual(response.status_code, 400)
+
             self.assertEqual(
                 response.data,
                 {'message': u'Form with this id or SMS-keyword already exists.'
@@ -343,6 +366,12 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             response = view(request)
             self.assertEqual(response.status_code, 401)
             auth = DigestAuth('bob', 'bobbob')
+
+            # Rewind the file to avoid the xml parser to get an empty string
+            # and throw and parsing error
+            f.seek(0)
+            # Create a new requests to avoid request.FILES to be empty
+            request = self.factory.post(self._submission_list_url, post_data)
             request.META.update(auth(request.META, response))
             response = view(request, username=self.user.username)
             self.assertContains(response, message, status_code=201)

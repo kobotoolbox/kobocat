@@ -1,4 +1,5 @@
 from django.forms import widgets
+from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from onadata.apps.api.models import Project
@@ -11,60 +12,57 @@ from onadata.libs.utils.decorators import check_obj
 
 
 class ProjectSerializer(serializers.HyperlinkedModelSerializer):
-    projectid = serializers.Field(source='id')
+    projectid = serializers.ReadOnlyField(source='id')
     url = serializers.HyperlinkedIdentityField(
         view_name='project-detail', lookup_field='pk')
     owner = serializers.HyperlinkedRelatedField(
         view_name='user-detail',
         source='organization',
-        lookup_field='username')
+        lookup_field='username',
+        queryset=User.objects.all())
     created_by = serializers.HyperlinkedRelatedField(
         view_name='user-detail',
-        source='created_by',
         lookup_field='username',
         read_only=True)
-    metadata = JsonField(source='metadata', required=False)
+    metadata = JsonField(required=False)
     starred = serializers.SerializerMethodField('is_starred_project')
     users = serializers.SerializerMethodField('get_project_permissions')
     forms = serializers.SerializerMethodField('get_project_forms')
-    public = BooleanField(
-        source='shared', widget=widgets.CheckboxInput())
+    public = BooleanField(source='shared')
     tags = TagListSerializer(read_only=True)
-    num_datasets = serializers.SerializerMethodField('get_num_datasets')
-    last_submission_date = serializers.SerializerMethodField(
-        'get_last_submission_date')
+    num_datasets = serializers.SerializerMethodField()
+    last_submission_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
         exclude = ('organization', 'user_stars')
 
-    def restore_object(self, attrs, instance=None):
-        if instance:
-            metadata = JsonField.to_json(attrs.get('metadata'))
+    def update(self, instance, validated_data):
+        metadata = JsonField.to_json(validated_data.get('metadata'))
 
-            if self.partial and metadata:
-                if not isinstance(instance.metadata, dict):
-                    instance.metadata = {}
+        if self.partial and metadata:
+            if not isinstance(instance.metadata, dict):
+                instance.metadata = {}
 
-                instance.metadata.update(metadata)
-                attrs['metadata'] = instance.metadata
+            instance.metadata.update(metadata)
+            validated_data['metadata'] = instance.metadata
 
-            return super(ProjectSerializer, self).restore_object(
-                attrs, instance)
+        return super(ProjectSerializer, self).update(instance, validated_data)
 
+    def create(self, validated_data):
         if 'request' in self.context:
             created_by = self.context['request'].user
 
-            return Project(
-                name=attrs.get('name'),
-                organization=attrs.get('organization'),
+            return Project.objects.create(
+                name=validated_data.get('name'),
+                organization=validated_data.get('organization'),
                 created_by=created_by,
-                metadata=attrs.get('metadata'),)
+                metadata=validated_data.get('metadata'),)
 
-        return attrs
+        return validated_data
 
     def get_project_permissions(self, obj):
-        return get_object_users_with_permissions(obj)
+        return get_object_users_with_permissions(obj, serializable=True)
 
     @check_obj
     def get_project_forms(self, obj):
@@ -94,6 +92,9 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
             filter(xform_id__in=xform_ids).values_list('date_created',
                                                        flat=True)
 
+        # Force explicit serialization to a list as it used to rely on
+        # an implicit one.
+        last_submission = list(last_submission)
         return last_submission and last_submission[0]
 
     def is_starred_project(self, obj):

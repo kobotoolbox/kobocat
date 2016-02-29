@@ -18,7 +18,7 @@ class TestBackupTools(TestBase):
         super(TestBackupTools, self).setUp()
         self._publish_xls_file_and_set_xform(
             os.path.join(
-                settings.PROJECT_ROOT,
+                settings.ONADATA_DIR,
                 "apps", "logger", "fixtures", "test_forms",
                 "tutorial.xls"))
 
@@ -28,7 +28,7 @@ class TestBackupTools(TestBase):
         will set our date as the date_created
         """
         xml_file_path = os.path.join(
-            settings.PROJECT_ROOT, "apps", "logger", "fixtures",
+            settings.ONADATA_DIR, "apps", "logger", "fixtures",
             "tutorial", "instances", "tutorial_2012-06-27_11-27-53.xml")
         xml_file = django_file(
             xml_file_path, field_name="xml_file", content_type="text/xml")

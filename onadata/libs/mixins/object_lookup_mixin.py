@@ -4,7 +4,7 @@ from rest_framework.generics import get_object_or_404
 
 
 class ObjectLookupMixin(object):
-    def get_object(self, queryset=None):
+    def get_object(self):
         """
         Incase the lookup is on an object that has been hyperlinked
         then update the queryset filter appropriately
@@ -13,8 +13,7 @@ class ObjectLookupMixin(object):
             raise ParseError(
                 'Expected URL keyword argument `%s`.' % self.lookup_field
             )
-        if queryset is None:
-            queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset())
 
         filter_kwargs = {}
         serializer = self.get_serializer()

@@ -9,7 +9,7 @@ DEBUG = False
 MEDIA_ROOT = '/var/formhub-media'
 STATIC_ROOT = "/srv/formhub-static"
 STATICFILES_DIRS = (
-    os.path.join(PROJECT_ROOT, "static"),
+    os.path.join(ONADATA_DIR, "static"),
 )
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -24,9 +24,8 @@ DATABASES = {
         'PASSWORD': os.environ['FORMHUB_PROD_PW'],
         # the server name may be in env
         'HOST': os.environ.get("FORMHUB_DB_SERVER", 'dbserver.yourdomain.org'),
-        'OPTIONS': {
-            # note: this option obsolete starting with django 1.6
-            'autocommit': True,
+        # Replacement for TransactionMiddleware
+        'ATOMIC_REQUESTS': True,
         }
     },
     'gis': {
