@@ -13,33 +13,30 @@ class ShareXFormSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255)
     role = serializers.CharField(max_length=50)
 
-    def restore_object(self, attrs, instance=None):
-        if instance is not None:
-            instance.xform = attrs.get('xform', instance.xform)
-            instance.username = attrs.get('username', instance.username)
-            instance.role = attrs.get('role', instance.role)
+    def create(self, validated_data):
+        return ShareXForm.objects.create(**validated_data)
 
-            return instance
+    def update(self, instance, validated_data):
+        instance.xform = validated_data.get('xform', instance.xform)
+        instance.username = validated_data.get('username', instance.username)
+        instance.role = validated_data.get('role', instance.role)
+        return instance
 
-        return ShareXForm(**attrs)
-
-    def validate_username(self, attrs, source):
+    def validate_username(self, value):
         """Check that the username exists"""
-        value = attrs[source]
         try:
             User.objects.get(username=value)
         except User.DoesNotExist:
             raise ValidationError(_(u"User '%(value)s' does not exist."
                                     % {"value": value}))
 
-        return attrs
+        return value
 
-    def validate_role(self, attrs, source):
+    def validate_role(self, value):
         """check that the role exists"""
-        value = attrs[source]
 
         if value not in ROLES:
             raise ValidationError(_(u"Unknown role '%(role)s'."
                                     % {"role": value}))
 
-        return attrs
+        return value

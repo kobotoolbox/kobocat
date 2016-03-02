@@ -8,10 +8,11 @@ from django.contrib.auth.models import User
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _
 from django.utils import six
+from django.shortcuts import get_object_or_404
 
 from rest_framework import exceptions
 from rest_framework import status
-from rest_framework.decorators import action, detail_route
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ModelViewSet
@@ -151,7 +152,7 @@ def _get_user(username):
 
 
 def _get_owner(request):
-    owner = request.DATA.get('owner') or request.user
+    owner = request.data.get('owner') or request.user
 
     if isinstance(owner, six.string_types):
         owner = _get_user(owner)
@@ -323,6 +324,15 @@ https://example.com/api/v1/forms
 >
 >       curl -X GET https://example.com/api/v1/forms?owner=ona
 
+## Get list of forms filtered by id_string
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/forms?<code>id_string</code>=<code>form_id_string</code></pre>
+
+> Request
+>
+>       curl -X GET https://example.com/api/v1/forms?id_string=Birds
+
 ## Get Form Information
 
 <pre class="prettyprint">
@@ -389,6 +399,19 @@ https://example.com/api/v1/forms/28058
 >           "date_created": "2013-07-25T14:14:22.892Z",
 >           "date_modified": "2013-07-25T14:14:22.892Z"
 >       }
+
+## Update Form
+
+You can overwrite the form while maintaining the same `id_string` and other
+elements by sending a `PATCH` with the `xls_file` parameter.
+
+<pre class="prettyprint">
+<b>PATCH</b> /api/v1/forms/<code>{pk}</code></pre>
+
+> Example
+>
+>       curl -X PATCH -F xls_file=@/path/to/form.xls \
+https://example.com/api/v1/forms/28058
 
 ## Delete Form
 
@@ -698,7 +721,8 @@ data (instance/submission per row)
                             'shared', 'shared_data', 'title'))
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.TagFilter,
-                       filters.XFormOwnerFilter)
+                       filters.XFormOwnerFilter,
+                       filters.XFormIdStringFilter)
 
     public_forms_endpoint = 'public'
 
@@ -717,7 +741,24 @@ data (instance/submission per row)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['GET'])
+    def update(self, request, pk, *args, **kwargs):
+        if 'xls_file' in request.FILES:
+            # A new XLSForm has been uploaded and will replace the existing
+            # form
+            owner = _get_owner(request)
+            existing_xform = get_object_or_404(XForm, pk=pk)
+            survey = utils.publish_xlsform(request, owner, existing_xform)
+            if not isinstance(survey, XForm):
+                if isinstance(survey, dict) and 'text' in survey:
+                    # Typical error text; pass it along
+                    raise exceptions.ParseError(detail=survey['text'])
+                else:
+                    # Something odd; hopefully it can be coerced into a string
+                    raise exceptions.ParseError(detail=survey)
+        # Let the superclass handle updates to the other fields
+        return super(XFormViewSet, self).update(request, pk, *args, **kwargs)
+
+    @detail_route(methods=['GET'])
     def form(self, request, format='json', **kwargs):
         form = self.get_object()
         if format not in ['json', 'xml', 'xls']:
@@ -726,7 +767,7 @@ data (instance/submission per row)
                                           status=400)
         return response_for_format(form, format=format)
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def enketo(self, request, **kwargs):
         self.object = self.get_object()
         form_url = _get_form_url(request, self.object.user.username)
@@ -777,12 +818,12 @@ data (instance/submission per row)
                                        token,
                                        meta)
 
-    @action(methods=['POST'])
+    @detail_route(methods=['POST'])
     def share(self, request, *args, **kwargs):
         self.object = self.get_object()
 
         data = {}
-        for key, val in request.DATA.iteritems():
+        for key, val in request.data.iteritems():
             data[key] = val
         data.update({'xform': self.object.pk})
 
@@ -796,10 +837,10 @@ data (instance/submission per row)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def clone(self, request, *args, **kwargs):
         self.object = self.get_object()
-        data = {'xform': self.object.pk, 'username': request.DATA['username']}
+        data = {'xform': self.object.pk, 'username': request.data['username']}
         serializer = CloneXFormSerializer(data=data)
         if serializer.is_valid():
             clone_to_user = User.objects.get(username=data['username'])

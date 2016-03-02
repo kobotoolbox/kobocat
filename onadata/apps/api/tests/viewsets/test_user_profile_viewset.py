@@ -1,5 +1,6 @@
 import json
 
+from onadata.apps.main.urls import router
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
     TestAbstractViewSet
 from onadata.apps.api.viewsets.user_profile_viewset import UserProfileViewSet
@@ -142,11 +143,13 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         del data['name']
         request = self.factory.post(
             '/api/v1/profiles', data=json.dumps(data),
-            content_type="application/json", **self.extra)
+            content_type="application/json",
+            HTTP_ACCEPT='application/javascript',  # get JSONP response
+            **self.extra)
         response = self.view(request)
         response.render()
-        self.assertContains(response, '{"name": ["This field is required."]}',
-                            status_code=400)
+
+        self.assertEqual(response.data, {"name": ["This field is required."]})
 
     def test_split_long_name_to_first_name_and_last_name(self):
         name = "(CPLTGL) Centre Pour la Promotion de la Liberte D'Expression "\
@@ -172,30 +175,36 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
         data = _profile_data()
+
         request = self.factory.post(
             '/api/v1/profiles', data=json.dumps(data),
-            content_type="application/json", **self.extra)
+            content_type="application/json",
+            HTTP_ACCEPT="application/javascript",  # get JSONP response
+            **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 201)
+
         del data['password']
         profile = UserProfile.objects.get(
             user__username=data['username'].lower())
+
         data['id'] = profile.user.pk
         data['gravatar'] = unicode(profile.gravatar)
         data['url'] = 'http://testserver/api/v1/profiles/deno'
         data['user'] = 'http://testserver/api/v1/users/deno'
         data['username'] = u'deno'
         data['metadata'] = {}
-        self.assertEqual(response.data, data)
 
         data['username'] = u'deno'
         request = self.factory.post(
             '/api/v1/profiles', data=json.dumps(data),
-            content_type="application/json", **self.extra)
+            content_type="application/json",
+            HTTP_ACCEPT='application/javascript',
+            **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("%s already exists" %
-                      data['username'], response.data['username'])
+
+        msg = "%s already exists" % data['username']
+        self.assertIn(msg, response.data['username'][0])
 
     def test_change_password(self):
         view = UserProfileViewSet.as_view(

@@ -5,7 +5,7 @@ from django.db.models import Sum
 class StatsManager(models.Manager):
 
     def count(self, key=None):
-        qs = super(StatsManager, self).get_query_set()
+        qs = super(StatsManager, self).get_queryset()
         if key:
             qs = qs.filter(key=key)
         return qs.aggregate(Sum('value'))['value__sum']

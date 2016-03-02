@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from django.core.exceptions import PermissionDenied
 
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ParseError
@@ -374,8 +374,8 @@ Delete a specific submission in a form
 
         return serializer_class
 
-    def get_object(self, queryset=None):
-        obj = super(DataViewSet, self).get_object(queryset)
+    def get_object(self):
+        obj = super(DataViewSet, self).get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
@@ -410,7 +410,7 @@ Delete a specific submission in a form
     def filter_queryset(self, queryset, view=None):
         qs = super(DataViewSet, self).filter_queryset(queryset)
         pk = self.kwargs.get(self.lookup_field)
-        tags = self.request.QUERY_PARAMS.get('tags', None)
+        tags = self.request.query_params.get('tags', None)
 
         if tags and isinstance(tags, six.string_types):
             tags = tags.split(',')
@@ -429,7 +429,7 @@ Delete a specific submission in a form
 
         return qs
 
-    @action(methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
+    @detail_route(methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
     def labels(self, request, *args, **kwargs):
         http_status = status.HTTP_400_BAD_REQUEST
         instance = self.get_object()
@@ -462,7 +462,7 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def enketo(self, request, *args, **kwargs):
         self.object = self.get_object()
         data = {}
@@ -470,7 +470,7 @@ Delete a specific submission in a form
             raise ParseError(_(u"Data id not provided."))
         elif(isinstance(self.object, Instance)):
             if request.user.has_perm("change_xform", self.object.xform):
-                return_url = request.QUERY_PARAMS.get('return_url')
+                return_url = request.query_params.get('return_url')
                 if not return_url:
                     raise ParseError(_(u"return_url not provided."))
 

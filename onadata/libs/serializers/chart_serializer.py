@@ -21,7 +21,7 @@ class FieldsChartSerializer(serializers.ModelSerializer):
     class Meta:
         model = XForm
 
-    def to_native(self, obj):
+    def to_representation(self, obj):
         data = {}
         request = self.context.get('request')
 
@@ -30,7 +30,7 @@ class FieldsChartSerializer(serializers.ModelSerializer):
             fields = dd.survey_elements
 
             if request:
-                selected_fields = request.QUERY_PARAMS.get('fields')
+                selected_fields = request.query_params.get('fields')
 
                 if isinstance(selected_fields, basestring) \
                         and selected_fields != 'all':

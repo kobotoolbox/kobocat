@@ -159,7 +159,7 @@ class AttachmentViewSet(viewsets.ReadOnlyModelViewSet):
 
             return Response(data, content_type=self.object.mimetype)
 
-        filename = request.QUERY_PARAMS.get('filename')
+        filename = request.query_params.get('filename')
         serializer = self.get_serializer(self.object)
 
         if filename:

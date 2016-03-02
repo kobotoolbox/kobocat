@@ -234,7 +234,11 @@ def add_xform_to_project(xform, project, creator):
     return instance
 
 
-def publish_xlsform(request, user):
+def publish_xlsform(request, user, existing_xform=None):
+    '''
+    If `existing_xform` is specified, that form will be overwritten with the
+    new XLSForm
+    '''
     if not request.user.has_perm(
         'can_add_xform',
         UserProfile.objects.get_or_create(user=user)[0]
@@ -243,10 +247,19 @@ def publish_xlsform(request, user):
             detail=_(u"User %(user)s has no permission to add xforms to "
                      "account %(account)s" % {'user': request.user.username,
                                               'account': user.username}))
+    if existing_xform and not request.user.has_perm(
+            'change_xform', existing_xform):
+        raise exceptions.PermissionDenied(
+            detail=_(u"User %(user)s has no permission to change this "
+                     "form." % {'user': request.user.username, })
+        )
 
     def set_form():
         form = QuickConverter(request.POST, request.FILES)
-        return form.publish(user)
+        if existing_xform:
+            return form.publish(user, existing_xform.id_string)
+        else:
+            return form.publish(user)
 
     return publish_form(set_form)
 
@@ -259,8 +272,8 @@ def publish_project_xform(request, project):
 
     xform = None
 
-    if 'formid' in request.DATA:
-        xform = get_object_or_404(XForm, pk=request.DATA.get('formid'))
+    if 'formid' in request.data:
+        xform = get_object_or_404(XForm, pk=request.data.get('formid'))
     else:
         xform = publish_form(set_form)
 
@@ -395,7 +408,7 @@ def add_tags_to_instance(request, instance):
     class TagForm(forms.Form):
         tags = TagField()
 
-    form = TagForm(request.DATA)
+    form = TagForm(request.data)
 
     if form.is_valid():
         tags = form.cleaned_data.get('tags', None)

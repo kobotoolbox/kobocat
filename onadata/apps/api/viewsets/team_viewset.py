@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from rest_framework import filters
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import DjangoObjectPermissions
@@ -109,15 +109,15 @@ A list of usernames is the response for members of the team.
     permission_classes = [DjangoObjectPermissions]
     filter_backends = (filters.DjangoObjectPermissionsFilter,)
 
-    @action(methods=['DELETE', 'GET', 'POST'])
+    @detail_route(methods=['DELETE', 'GET', 'POST'])
     def members(self, request, *args, **kwargs):
         team = self.get_object()
         data = {}
         status_code = status.HTTP_200_OK
 
         if request.method in ['DELETE', 'POST']:
-            username = request.DATA.get('username') or\
-                request.QUERY_PARAMS.get('username')
+            username = request.data.get('username') or\
+                request.query_params.get('username')
 
             if username:
                 try:

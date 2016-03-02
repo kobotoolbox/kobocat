@@ -13,7 +13,7 @@ from rest_framework import permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 
 from onadata.apps.api.tools import get_media_file_response
 from onadata.apps.api.permissions import ViewDjangoObjectPermissions
@@ -99,7 +99,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
                 if not auth_class in authentication_classes
         ]
 
-    def get_object(self, queryset=None):
+    def get_object(self):
         formId = self.request.GET.get('formId', '')
         id_string = _extract_id_string(formId)
         uuid = _extract_uuid(formId)
@@ -233,7 +233,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
                                                           location=False),
                         template_name='downloadSubmission.xml')
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def manifest(self, request, *args, **kwargs):
         self.object = self.get_object()
         object_list = MetaData.objects.filter(data_type='media',
@@ -246,7 +246,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
                         headers=self.get_openrosa_headers(request,
                                                           location=False))
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def media(self, request, *args, **kwargs):
         self.object = self.get_object()
         pk = kwargs.get('metadata')

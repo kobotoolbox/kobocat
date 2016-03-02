@@ -28,19 +28,19 @@ class DataListSerializer(serializers.Serializer):
             if self.many:
                 self._data = []
                 for item in obj:
-                    self._data.extend(self.to_native(item))
+                    self._data.extend(self.to_representation(item))
             else:
-                self._data = self.to_native(obj)
+                self._data = self.to_representation(obj)
 
         return self._data
 
-    def to_native(self, obj):
+    def to_representation(self, obj):
         request = self.context.get('request')
 
         if not hasattr(obj, 'xform'):
-            return super(DataListSerializer, self).to_native(obj)
+            return super(DataListSerializer, self).to_representation(obj)
 
-        query_params = (request and request.QUERY_PARAMS) or {}
+        query_params = (request and request.query_params) or {}
         query = {
             ParsedInstance.USERFORM_ID:
             u'%s_%s' % (obj.user.username, obj.id_string)
@@ -64,12 +64,12 @@ class DataListSerializer(serializers.Serializer):
 
 
 class DataInstanceSerializer(serializers.Serializer):
-    def to_native(self, obj):
+    def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
-            return super(DataInstanceSerializer, self).to_native(obj)
+            return super(DataInstanceSerializer, self).to_representation(obj)
 
         request = self.context.get('request')
-        query_params = (request and request.QUERY_PARAMS) or {}
+        query_params = (request and request.query_params) or {}
         query = {
             ParsedInstance.USERFORM_ID:
             u'%s_%s' % (obj.xform.user.username, obj.xform.id_string),
@@ -87,9 +87,9 @@ class DataInstanceSerializer(serializers.Serializer):
 
 
 class SubmissionSerializer(serializers.Serializer):
-    def to_native(self, obj):
+    def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
-            return super(SubmissionSerializer, self).to_native(obj)
+            return super(SubmissionSerializer, self).to_representation(obj)
 
         return {
             'message': _("Successful submission."),

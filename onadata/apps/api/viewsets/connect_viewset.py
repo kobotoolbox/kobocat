@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
@@ -119,7 +119,7 @@ using the `window.atob();` function.
 
         return Response(serializer.data)
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def starred(self, request, *args, **kwargs):
         """Return projects starred for this user."""
         user_profile = self.get_object()
@@ -134,8 +134,8 @@ using the `window.atob();` function.
     @list_route(methods=['POST'])
     def reset(self, request, *args, **kwargs):
         context = {'request': request}
-        data = request.DATA if request.DATA is not None else {}
-        if 'token' in request.DATA:
+        data = request.data if request.data is not None else {}
+        if 'token' in request.data:
             serializer = PasswordResetChangeSerializer(data=data,
                                                        context=context)
         else:
