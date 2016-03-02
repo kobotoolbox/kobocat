@@ -95,18 +95,17 @@ class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField(label=_("Email"), max_length=254)
     reset_url = serializers.URLField(label=_("Reset URL"), max_length=254)
 
-    def validate_email(self, attrs, source):
-        value = attrs[source]
+    def validate_email(self, value):
         users = User.objects.filter(email__iexact=value)
 
         if users.count() == 0:
             raise ValidationError(_(u"User '%(value)s' does not exist.")
                                   % {"value": value})
 
-        return attrs
+        return value
 
     def create(self, validated_data):
-        return PasswordReset.objects.create(**validated_data)
+        return PasswordReset(**validated_data)
 
 
 class PasswordResetChangeSerializer(serializers.Serializer):

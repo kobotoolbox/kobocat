@@ -125,9 +125,15 @@ curl -X PATCH -d '{"country": "KE"}' https://example.com/api/v1/profiles/demo \
 """
     queryset = UserProfile.objects.exclude(user__pk=settings.ANONYMOUS_USER_ID)
     serializer_class = UserProfileSerializer
-    lookup_field = 'user'
     permission_classes = [UserProfilePermissions]
     ordering = ('user__username', )
+
+    # This is NOT DRF lookup_field. DRF lookup_field is only located on
+    # seralizers and is deprecated and replaced by Meta.extra_kwargs['url']['lookup field']
+    # This field is has been added by the previous dev, and is used to generate
+    # a custom url routing on the fly. Basically it will be added in the
+    # url regex.
+    lookup_field = 'user'
 
     def get_object(self):
         """Lookup user profile by pk or username"""

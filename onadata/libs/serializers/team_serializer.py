@@ -10,7 +10,8 @@ from onadata.apps.api.models import OrganizationProfile, Team
 class TeamSerializer(serializers.Serializer):
     url = HyperlinkedMultiIdentityField(
         view_name='team-detail')
-    name = serializers.CharField(max_length=100, source='team_name')
+    name = serializers.CharField(max_length=100, source='team_name',
+                                 required=True)
     organization = serializers.SlugRelatedField(
         slug_field='username',
         queryset=User.objects.filter(
@@ -22,10 +23,16 @@ class TeamSerializer(serializers.Serializer):
 
     def get_team_users(self, obj):
         users = []
-
         if obj:
             for user in obj.user_set.all():
-                users.append(UserSerializer(instance=user).data)
+                # HACK: removing the URL right now because a test does not
+                # expect it. We should rather unify the entire API in the
+                # future but righ now we need to stick we the tests, which
+                # are the closest thing we got to a specification.
+                user_data = UserSerializer(instance=user,
+                                            context=self.context).data
+                user_data.pop('url', None)
+                users.append(user_data)
 
         return users
 
@@ -34,10 +41,6 @@ class TeamSerializer(serializers.Serializer):
         team_name = validated_data.get('team_name', None)
         request = self.context.get('request')
         created_by = request.user
-
-        if not team_name:
-            self.errors['name'] = u'A team name is required'
-            return validated_data
 
         return Team.objects.create(organization=org, name=team_name,
                                    created_by=created_by)

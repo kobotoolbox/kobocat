@@ -59,7 +59,6 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
                 created_by=created_by,
                 metadata=validated_data.get('metadata'),)
 
-        return validated_data
 
     def get_project_permissions(self, obj):
         return get_object_users_with_permissions(obj, serializable=True)

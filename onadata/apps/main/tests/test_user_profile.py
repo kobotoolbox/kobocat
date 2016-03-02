@@ -1,3 +1,5 @@
+import unittest
+
 from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
@@ -76,6 +78,7 @@ class TestUserProfile(TestCase):
                                            kwargs={'username': 'nonuser'}))
         self.assertEqual(response.status_code, 404)
 
+    @unittest.skip("We don't use twitter in kobocat tests")
     def test_show_single_at_sign_in_twitter_link(self):
         self._login_user_and_profile()
         response = self.client.get(

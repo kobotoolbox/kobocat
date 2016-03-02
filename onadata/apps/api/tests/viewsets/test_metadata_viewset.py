@@ -91,7 +91,7 @@ class TestMetaDataViewSet(TestAbstractViewSet):
         path = os.path.join(self.fixture_dir, data_value)
         with open(path) as f:
             f = InMemoryUploadedFile(
-                f, 'media', data_value, 'application/octet-stream', 2625, None)
+                f, 'media', data_value, 'text/csv', 2625, None)
             data = {
                 'data_value': data_value,
                 'data_file': f,

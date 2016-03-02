@@ -68,6 +68,8 @@ class MultiLookupRouter(routers.DefaultRouter):
         ))
 
     def get_extra_lookup_regexes(self, route):
+
+
         ret = []
         base_regex = '(?P<{lookup_field}>[^/]+)'
         if 'extra_lookup_fields' in route.initkwargs:
@@ -77,6 +79,8 @@ class MultiLookupRouter(routers.DefaultRouter):
 
     def get_lookup_regexes(self, viewset):
         ret = []
+
+
         lookup_fields = getattr(viewset, 'lookup_fields', None)
         if lookup_fields:
             for i in range(1, len(lookup_fields)):

@@ -40,8 +40,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_file = attrs.get('data_file')
 
         if media == 'media' and data_file is None:
-            msg = {'data_value': u"Invalid url %s." % value}
-            raise serializers.ValidationError(msg)
+            URLValidator(message=_(u"Invalid url %s." % value))(value)
         if value is None:
             msg = {'data_value': u"This field is required."}
             raise serializers.ValidationError(msg)

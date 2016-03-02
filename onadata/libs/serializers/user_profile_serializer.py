@@ -2,7 +2,7 @@ import copy
 import six
 
 from django.conf import settings
-from django.forms import widgets
+from django.forms import ValidationError as FormValidationError
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.validators import ValidationError
@@ -40,6 +40,11 @@ def _get_first_last_names(name, limit=30):
 class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
     is_org = serializers.SerializerMethodField('is_organization')
     username = serializers.CharField(source='user.username')
+
+    # Added this field so it's required in the API in a clean way
+    # and triggers validatino
+    name = serializers.CharField(required=True)
+
     email = serializers.CharField(source='user.email')
     website = serializers.CharField(source='home_page', required=False)
     gravatar = serializers.ReadOnlyField()
@@ -52,10 +57,13 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = UserProfile
+
         fields = ('id', 'is_org', 'url', 'username', 'name', 'password',
                   'email', 'city', 'country', 'organization', 'website',
                   'twitter', 'gravatar', 'require_auth', 'user', 'metadata')
-        lookup_field = 'user'
+        extra_kwargs = {
+            'url': {'lookup_field': 'user'}
+        }
 
     def is_organization(self, obj):
         return is_organization(obj)
@@ -77,54 +85,51 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
 
         return ret
 
+    # Those 2 validations methods where embeded in the same code as
+    # the create() method but DRF3 needs it to be separted now.
+    # It uses to fill merge the form.errors and self._errors,
+    # but you can't do it anymore so we validate the username, catch
+    # the validation exception and reraise it in an exception DRF will
+    # understand
+    def validate_name(self, value):
+        try:
+            RegistrationFormUserProfile.validate_username(value)
+        except FormValidationError as e:
+            raise serializers.ValidationError(list(e))
+
+        return value
+
+    def validate_username(self, value):
+        return self.validate_name(value)
+
     def create(self, validated_data):
-        params = copy.deepcopy(validated_data)
-        username = validated_data.get('user.username', None)
-        password = validated_data.get('user.password', None)
-        email = validated_data.get('user.email', None)
+        user = validated_data.get('user', {})
+        username = user.get('username', None)
+        password = user.get('password', None)
+        email = user.get('email', None)
 
-        if username:
-            params['username'] = username
+        site = Site.objects.get(pk=settings.SITE_ID)
+        new_user = RegistrationProfile.objects.create_inactive_user(
+            site,
+            username=username,
+            password=password,
+            email=email,
+            send_email=True)
+        new_user.is_active = True
+        new_user.save()
 
-        if email:
-            params['email'] = email
+        created_by = self.context['request'].user
+        created_by = None if created_by.is_anonymous() else created_by
+        profile = UserProfile.objects.create(
+            user=new_user, name=validated_data.get('name', u''),
+            created_by=created_by,
+            city=validated_data.get('city', u''),
+            country=validated_data.get('country', u''),
+            organization=validated_data.get('organization', u''),
+            home_page=validated_data.get('home_page', u''),
+            twitter=validated_data.get('twitter', u''))
 
-        if password:
-            params.update({'password1': password, 'password2': password})
-
-        form = RegistrationFormUserProfile(params)
-        # does not require captcha
-        form.REGISTRATION_REQUIRE_CAPTCHA = False
-
-        if form.is_valid():
-            site = Site.objects.get(pk=settings.SITE_ID)
-            new_user = RegistrationProfile.objects.create_inactive_user(
-                site,
-                username=username,
-                password=password,
-                email=email,
-                site=site,
-                send_email=True)
-            new_user.is_active = True
-            new_user.save()
-
-            created_by = self.context['request'].user
-            created_by = None if created_by.is_anonymous() else created_by
-            profile = UserProfile.objects.create(
-                user=new_user, name=validated_data.get('name', u''),
-                created_by=created_by,
-                city=validated_data.get('city', u''),
-                country=validated_data.get('country', u''),
-                organization=validated_data.get('organization', u''),
-                home_page=validated_data.get('home_page', u''),
-                twitter=validated_data.get('twitter', u''))
-
-            return profile
-
-        else:
-            self.errors.update(form.errors)
-
-        return validated_data
+        return profile
 
     def update(self, instance, validated_data):
 
@@ -162,28 +167,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
             if email or name:
                 instance.user.save()
 
-        return super(
-            UserProfileSerializer, self).create(instance, validated_data)
-
-    def validate_username(self, value):
-        if self.context['request'].method == 'PATCH':
-            return value
-
-        username = value.lower()
-        form = RegistrationFormUserProfile
-        if username in form._reserved_usernames:
-            raise ValidationError(
-                u"%s is a reserved name, please choose another" % username)
-        elif not form.legal_usernames_re.search(username):
-            raise ValidationError(
-                u'username may only contain alpha-numeric characters and '
-                u'underscores')
-        try:
-            User.objects.get(username=username)
-        except User.DoesNotExist:
-
-            return value
-        raise ValidationError(u'%s already exists' % username)
+        return super(UserProfileSerializer, self).update(instance, validated_data)
 
 
 class UserProfileWithTokenSerializer(UserProfileSerializer):
