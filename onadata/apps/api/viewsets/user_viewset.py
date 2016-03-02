@@ -52,8 +52,14 @@ This endpoint allows you to list and retrieve user's first and last names.
 """
     queryset = User.objects.exclude(pk=settings.ANONYMOUS_USER_ID)
     serializer_class = UserSerializer
-    lookup_field = 'username'
     permission_classes = [permissions.DjangoObjectPermissionsAllowAnon]
+
+    # This is NOT DRF lookup_field. DRF lookup_field is only located on
+    # seralizers and is deprecated and replaced by Meta.extra_kwargs['url']['lookup field']
+    # This field is has been added by the previous dev, and is used to generate
+    # a custom url routing on the fly. Basically it will be added in the
+    # url regex.
+    lookup_field = 'username'
 
     def get_object(self):
         """Lookup a  username by pk else use lookup_field"""

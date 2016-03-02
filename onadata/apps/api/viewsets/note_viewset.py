@@ -1,7 +1,6 @@
 from django.utils.translation import ugettext as _
 from guardian.shortcuts import assign_perm
 
-from rest_framework import exceptions
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -63,19 +62,14 @@ A `GET` request will return the list of notes applied to a data point.
     permission_classes = [permissions.ViewDjangoObjectPermissions,
                           permissions.IsAuthenticated, ]
 
-    def pre_save(self, obj):
-        # throws PermissionDenied if request.user has no permission to xform
-        if not self.request.user.has_perm('change_xform', obj.instance.xform):
-            raise exceptions.PermissionDenied(
-                _(u"You are not authorized to add/change notes on this form."))
-
-    def post_save(self, obj, created=False):
-        if created:
-            assign_perm('add_note', self.request.user, obj)
-            assign_perm('change_note', self.request.user, obj)
-            assign_perm('delete_note', self.request.user, obj)
-            assign_perm('view_note', self.request.user, obj)
-
+    #u This used to be post_save. Part of it is here, permissions validation
+    # has been moved to the note serializer
+    def perform_create(self, serializer):
+        obj = serializer.save(user=self.request.user)
+        assign_perm('add_note', self.request.user, obj)
+        assign_perm('change_note', self.request.user, obj)
+        assign_perm('delete_note', self.request.user, obj)
+        assign_perm('view_note', self.request.user, obj)
         # make sure parsed_instance saves to mongo db
         obj.instance.parsed_instance.save()
 

@@ -119,10 +119,34 @@ class MetaDataObjectPermissions(HasXFormObjectPermissionMixin,
                                 DjangoObjectPermissions):
 
     def has_object_permission(self, request, view, obj):
-        view.model = XForm
 
-        return super(MetaDataObjectPermissions, self).has_object_permission(
-            request, view, obj.xform)
+        # Originally they monkey patched the permissions object this way:
+        # view.model = XForm
+        # It was already a hack for some permission workaround
+        # (https://github.com/kobotoolbox/kobocat/commit/106c0cbef2ecec9448df1baab7333391972730f8)
+        # It doesn't work with DRF 3 because the model class is retrived
+        # using get_queryset. We should replace this hack by something
+        # cleaner, but that would need to rework the entire permissions system
+        # so instead, we are keeping the spirit of the original hack
+        # by temporarly patching get_queryset.
+
+        # save all get_queryset to restore it later
+        old_get_qs = view.get_queryset
+
+        # has_object_permission() will do get_queryset().model to get XForm
+        def get_queryset(*args, **kwargs):
+            return XForm.objects.all()
+
+        # patching the method
+        view.get_queryset = get_queryset
+
+        # now getting the perm works
+        parent = super(MetaDataObjectPermissions, self)
+        has_perm = parent.has_object_permission(request, view, obj.xform)
+
+        # putting the true get_queryset back
+        view.get_queryset = old_get_qs
+        return has_perm
 
 
 class AttachmentObjectPermissions(DjangoObjectPermissions):

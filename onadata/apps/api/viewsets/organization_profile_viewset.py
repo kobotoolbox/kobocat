@@ -186,9 +186,15 @@ https://example.com/api/v1/orgs/modilabs/members -H "Content-Type: application/j
 """
     queryset = OrganizationProfile.objects.all()
     serializer_class = OrganizationSerializer
-    lookup_field = 'user'
     permission_classes = [permissions.DjangoObjectPermissions]
     filter_backends = (OrganizationPermissionFilter,)
+
+    # This is NOT DRF lookup_field. DRF lookup_field is only located on
+    # seralizers and is deprecated and replaced by Meta.extra_kwargs['url']['lookup field']
+    # This field is has been added by the previous dev, and is used to generate
+    # a custom url routing on the fly. Basically it will be added in the
+    # url regex.
+    lookup_field = 'user'
 
     @detail_route(methods=['DELETE', 'GET', 'POST', 'PUT'])
     def members(self, request, *args, **kwargs):

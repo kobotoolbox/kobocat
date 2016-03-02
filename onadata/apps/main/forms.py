@@ -129,6 +129,10 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
         model = User
         fields = ('username', 'email')
 
+    # Those names conflicts with existing url patterns. Indeed, the root
+    #  url pattern stating  states /<username> but you have /admin for
+    # as admin url, /support as support url, etc. So you want to avoid
+    # account created with those names.
     _reserved_usernames = [
         'accounts',
         'about',
@@ -189,12 +193,18 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
                                           u"Please, try again."))
         return cleaned_data
 
-    def clean_username(self):
-        username = self.cleaned_data['username'].lower()
-        if username in self._reserved_usernames:
+    # This code use to be in clean_username. Now clean_username is just
+    # a convenience proxy to this method. This method is here to allow
+    # the UserProfileSerializer to validate the username without reinventing
+    # the wheel while still avoiding the need to instancate the form. A even
+    # cleaner way would be a shared custom validator.
+    @classmethod
+    def validate_username(cls, username):
+        username = username.lower()
+        if username in cls._reserved_usernames:
             raise forms.ValidationError(
                 _(u'%s is a reserved name, please choose another') % username)
-        elif not self.legal_usernames_re.search(username):
+        elif not cls.legal_usernames_re.search(username):
             raise forms.ValidationError(
                 _(u'username may only contain alpha-numeric characters and '
                   u'underscores'))
@@ -204,15 +214,8 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
             return username
         raise forms.ValidationError(_(u'%s already exists') % username)
 
-    def save(self, profile_callback=None):
-        site = Site.objects.get(pk=settings.SITE_ID)
-        new_user = RegistrationProfile.objects.create_inactive_user(
-            site,
-            username=self.cleaned_data['username'],
-            password=self.cleaned_data['password1'],
-            email=self.cleaned_data['email'])
-        UserProfileFormRegister.save(self, new_user)
-        return new_user
+    def clean_username(self):
+        return self.validate_username(self.cleaned_data['username'])
 
 
 class SourceForm(forms.Form):

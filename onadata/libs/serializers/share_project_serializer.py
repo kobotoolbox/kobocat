@@ -20,7 +20,9 @@ class ShareProjectSerializer(serializers.Serializer):
         return instance
 
     def create(self, validated_data):
-        return ShareProject(**validated_data)
+        project = ShareProject(**validated_data)
+        project.save()
+        return project
 
     def validate_username(self, value):
         """Check that the username exists"""
@@ -42,4 +44,5 @@ class ShareProjectSerializer(serializers.Serializer):
         return value
 
     def remove_user(self):
-        self.object.remove_user()
+        obj = ShareProject(**self.validated_data)
+        obj.remove_user()
