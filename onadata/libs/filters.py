@@ -54,6 +54,14 @@ class XFormOwnerFilter(filters.BaseFilterBackend):
         return queryset
 
 
+class XFormIdStringFilter(filters.BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        id_string = request.query_params.get('id_string')
+        if id_string:
+            return queryset.filter(id_string=id_string)
+        return queryset
+
+
 class ProjectOwnerFilter(XFormOwnerFilter):
     owner_prefix = 'organization'
 
