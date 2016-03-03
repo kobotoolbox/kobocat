@@ -8,6 +8,7 @@ search_index
 tmp/*
 xform_manager_dataset.json
 deployments.json
+requirements/uninstall.pip
 
 # folder to hold csv files
 csvs
