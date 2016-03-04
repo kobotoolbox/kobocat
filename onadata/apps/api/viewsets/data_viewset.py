@@ -350,7 +350,6 @@ Delete a specific submission in a form
 
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.XFormOwnerFilter)
-    serializer_class = DataSerializer
     permission_classes = (XFormPermissions,)
     lookup_field = 'pk'
     lookup_fields = ('pk', 'dataid')
@@ -369,8 +368,7 @@ Delete a specific submission in a form
         elif pk is not None and dataid is not None:
             serializer_class = DataInstanceSerializer
         else:
-            serializer_class = \
-                super(DataViewSet, self).get_serializer_class()
+            serializer_class = DataSerializer
 
         return serializer_class
 
@@ -549,6 +547,12 @@ Delete a specific submission in a form
         export_type = kwargs.get('format')
         if export_type is None or export_type in ['json']:
             # perform default viewset retrieve, no data export
-            return super(DataViewSet, self).list(request, *args, **kwargs)
+
+            # With DRF ListSerializer are automatically created and wraps
+            # everything in a list. Since this returns a list
+            # # already, we unwrap it.
+            res = super(DataViewSet, self).list(request, *args, **kwargs)
+            res.data = res.data[0]
+            return res
 
         return custom_response_handler(request, xform, query, export_type)

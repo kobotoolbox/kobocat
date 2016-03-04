@@ -41,6 +41,19 @@ class XFormPermissions(DjangoObjectPermissions):
         is_authenticated = request and request.user.is_authenticated()
 
         if 'pk' in view.kwargs:
+
+            # Always allow listing xform (again, this is to match unit tests)
+            # since we are filtering them down the road.
+            if view.action == 'list':
+                return True
+
+            # Allow getting a shared xform is you are anonymous.
+            pk = view.kwargs.get('pk')
+            if view.action == 'retrieve':
+                xform = XForm.objects.get(pk=pk)
+                if xform.shared_data or xform.shared:
+                    return True
+
             check_inherit_permission_from_project(view.kwargs.get('pk'),
                                                   request.user)
 
@@ -53,6 +66,14 @@ class XFormPermissions(DjangoObjectPermissions):
         return super(XFormPermissions, self).has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
+
+        # Currently the permissions are ambigious on this. They check
+        # permissions, but want to let you list public data. So we always
+        # return True for list, and let the view filter the with shared*=True
+        # down the road
+        if request.method == 'GET' and view.action == 'list':
+            return True
+
         if request.method == 'DELETE' and view.action == 'labels':
             user = request.user
 

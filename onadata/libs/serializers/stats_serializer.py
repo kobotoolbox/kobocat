@@ -32,6 +32,14 @@ class SubmissionStatsSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SubmissionStatsInstanceSerializer(serializers.Serializer):
+
+    # The test is expecting a list, but DRF now wraps that in a dict.
+    # We need to clean the routing and serializer configs but in the meantime,
+    # this will fix it.
+    @property
+    def data(self):
+        return super(serializers.Serializer, self).data
+
     def to_representation(self, obj):
         if obj is None:
             return \
@@ -59,7 +67,6 @@ class SubmissionStatsInstanceSerializer(serializers.Serializer):
                     for record in data:
                         label = dd.get_choice_label(element, record[name])
                         record[name] = label
-
         return data
 
 

@@ -12,7 +12,9 @@ class CloneXFormSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255)
 
     def create(self, validated_data):
-        return CloneXForm.objects.create(**validated_data)
+        obj = CloneXForm(**validated_data)
+        obj.save()
+        return obj
 
     def update(self, instance, validated_data):
         instance.xform = validated_data.get('xform', instance.xform)

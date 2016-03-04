@@ -14,7 +14,9 @@ class ShareXFormSerializer(serializers.Serializer):
     role = serializers.CharField(max_length=50)
 
     def create(self, validated_data):
-        return ShareXForm.objects.create(**validated_data)
+        obj = ShareXForm(**validated_data)
+        obj.save()
+        return obj
 
     def update(self, instance, validated_data):
         instance.xform = validated_data.get('xform', instance.xform)
