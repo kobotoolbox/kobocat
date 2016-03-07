@@ -270,9 +270,9 @@ REST_FRAMEWORK = {
         # http://www.django-rest-framework.org/api-guide/renderers/#ordering-of-renderer-classes
         'rest_framework.renderers.JSONRenderer',
         'rest_framework_jsonp.renderers.JSONPRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
         'rest_framework_xml.renderers.XMLRenderer',
         'rest_framework_csv.renderers.CSVRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'VIEW_NAME_FUNCTION': 'onadata.apps.api.tools.get_view_name',
     'VIEW_DESCRIPTION_FUNCTION': 'onadata.apps.api.tools.get_view_description',
