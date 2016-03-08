@@ -402,8 +402,10 @@ https://example.com/api/v1/forms/28058
 
 ## Update Form
 
-You can overwrite the form while maintaining the same `id_string` and other
-elements by sending a `PATCH` with the `xls_file` parameter.
+You may overwrite the form's contents while preserving its submitted data,
+`id_string` and all other attributes, by sending a `PATCH` that includes
+`xls_file` or `text_xls_form`. Use with caution, as this may compromise the
+methodology of your study!
 
 <pre class="prettyprint">
 <b>PATCH</b> /api/v1/forms/<code>{pk}</code></pre>
@@ -742,7 +744,7 @@ data (instance/submission per row)
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk, *args, **kwargs):
-        if 'xls_file' in request.FILES:
+        if 'xls_file' in request.FILES or 'text_xls_form' in request.data:
             # A new XLSForm has been uploaded and will replace the existing
             # form
             owner = _get_owner(request)
