@@ -32,7 +32,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     # but now it must be implemented manually
     def validate(self, attrs):
         shared = attrs.get('shared')
-        if shared not in ('True', 'False'):
+        if shared is not None and shared not in ('True', 'False'):
             msg = "'%s' value must be either True or False." % shared
             raise serializers.ValidationError({'shared': msg})
         attrs['shared'] = shared == 'True'
