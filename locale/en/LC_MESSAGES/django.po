@@ -1,0 +1,4215 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-03-09 12:23-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: onadata/apps/api/management/commands/create_default_project.py:12
+msgid "Check for forms not in a project and move them to the default project"
+msgstr ""
+
+#: onadata/apps/api/management/commands/set_api_permissions.py:14
+msgid "Set object permissions for all objects."
+msgstr ""
+
+#: onadata/apps/api/templates/api_password_reset_email.html:3
+#, python-format
+msgid ""
+"\n"
+"    Hi %(username)s,\n"
+"\n"
+"    You recently requested a link to reset your %(site_name)s password for "
+"the username %(username)s.\n"
+"    Please set a new password by following the link below:\n"
+msgstr ""
+
+#: onadata/apps/api/templates/api_password_reset_email.html:13
+#: onadata/libs/templates/registration/password_reset_email.html:13
+#, python-format
+msgid ""
+"\n"
+"    Thanks,\n"
+"    - The %(site_name)s Team.\n"
+msgstr ""
+
+#: onadata/apps/api/tools.py:243
+#: onadata/apps/api/viewsets/briefcase_api.py:180
+#: onadata/apps/api/viewsets/xform_viewset.py:811
+#, python-format
+msgid "User %(user)s has no permission to add xforms to account %(account)s"
+msgstr ""
+
+#: onadata/apps/api/tools.py:376
+msgid "You do not have permission to view data from this form."
+msgstr ""
+
+#: onadata/apps/api/viewsets/attachment_viewset.py:169
+#, python-format
+msgid "Filename '%s' not found."
+msgstr ""
+
+#: onadata/apps/api/viewsets/briefcase_api.py:40
+#, python-format
+msgid "Invalid formId %s."
+msgstr ""
+
+#: onadata/apps/api/viewsets/briefcase_api.py:192
+#: onadata/apps/logger/views.py:708
+#, python-format
+msgid "%s successfully published."
+msgstr ""
+
+#: onadata/apps/api/viewsets/briefcase_api.py:197
+msgid "Missing xml file."
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:387
+#, python-format
+msgid "Invalid dataid %(dataid)s"
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:406
+msgid "No data matches with given query."
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:426
+#, python-format
+msgid "Invalid pk %(pk)s"
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:470
+#: onadata/apps/api/viewsets/data_viewset.py:491
+msgid "Data id not provided."
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:475
+msgid "return_url not provided."
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:483
+msgid "You do not have edit permissions."
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:497
+msgid "You do not have delete permissions."
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:507
+msgid "Data ID should be an integer"
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:517
+#, python-format
+msgid "'%(_format)s' format unknown or not implemented!"
+msgstr ""
+
+#: onadata/apps/api/viewsets/data_viewset.py:522
+#, python-format
+msgid "data with id '%(data_id)s' not found!"
+msgstr ""
+
+#: onadata/apps/api/viewsets/organization_profile_viewset.py:29
+#: onadata/apps/api/viewsets/team_viewset.py:128
+#, python-format
+msgid "User `%(username)s` does not exist."
+msgstr ""
+
+#: onadata/apps/api/viewsets/organization_profile_viewset.py:209
+#: onadata/apps/api/viewsets/organization_profile_viewset.py:220
+#: onadata/apps/api/viewsets/team_viewset.py:138
+msgid "This field is required."
+msgstr ""
+
+#: onadata/apps/api/viewsets/organization_profile_viewset.py:219
+#, python-format
+msgid "'%s' is not a valid role."
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_submission_api.py:70
+msgid "No submission key provided."
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_submission_api.py:209
+#: onadata/apps/logger/views.py:301 onadata/apps/sms_support/tools.py:115
+msgid "Unable to create submission."
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_viewset.py:65
+#, python-format
+msgid "'%(export_type)s' format not known or not implemented!"
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_viewset.py:103
+#: onadata/apps/viewer/views.py:60
+msgid "Dates must be in the format YY_MM_DD_hh_mm_ss"
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_viewset.py:133
+#: onadata/apps/viewer/views.py:257 onadata/apps/viewer/views.py:344
+#, python-format
+msgid "Created %(export_type)s export on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_viewset.py:139
+#: onadata/apps/viewer/views.py:263
+msgid "No records found to export"
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_viewset.py:210
+#: onadata/apps/viewer/views.py:270
+#, python-format
+msgid "Downloaded %(export_type)s export on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/api/viewsets/xform_viewset.py:734
+msgid "Enketo not properly configured."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/change_s3_media_permissions.py:11
+msgid "Makes all s3 files private"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/change_s3_media_permissions.py:17
+msgid "Missing permission argument"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/change_s3_media_permissions.py:23
+#, python-format
+msgid "Expected %s as permission"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/change_s3_media_permissions.py:28
+msgid ""
+"Missing necessary libraries. Try running: pip install -r requirements-s3.pip"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_backup.py:14
+msgid "Create a zip backup of a form and all its submissions"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_backup.py:20
+msgid "Provide the path to the zip file to backup to"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_backup.py:28
+#: onadata/apps/logger/management/commands/publish_xls.py:40
+#: onadata/apps/logger/management/commands/restore_backup.py:20
+msgid "You must provide the username to publish the form to."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_backup.py:34
+#: onadata/apps/logger/management/commands/publish_xls.py:45
+#: onadata/apps/logger/management/commands/restore_backup.py:26
+#, python-format
+msgid "The user '%s' does not exist."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_backup.py:45
+#, python-format
+msgid "The id_string '%s' does not exist."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_image_thumbnails.py:18
+msgid "Creates thumbnails for all form images and stores them"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_image_thumbnails.py:22
+#: onadata/apps/viewer/management/commands/remongo.py:19
+msgid "Username of the form user"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_image_thumbnails.py:24
+#: onadata/apps/viewer/management/commands/remongo.py:21
+msgid "id string of the form"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_image_thumbnails.py:26
+msgid "regenerate thumbnails if they exist."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_image_thumbnails.py:73
+#, python-format
+msgid "Thumbnails created for %(file)s"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_image_thumbnails.py:76
+#, python-format
+msgid "Problem with the file %(file)s"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/create_image_thumbnails.py:79
+#, python-format
+msgid "Error on %(filename)s: %(error)s"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/export_xforms_and_instances.py:14
+msgid "Export ODK forms and instances to JSON."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import.py:11
+#: onadata/apps/logger/management/commands/import_tools.py:20
+#: onadata/apps/viewer/management/commands/import.py:11
+msgid "Import ODK forms and instances."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_briefcase.py:12
+#: onadata/apps/logger/management/commands/pull_from_aggregate.py:12
+#: onadata/apps/viewer/management/commands/remongo.py:11
+msgid "Insert all existing parsed instances into MongoDB"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_briefcase.py:15
+#: onadata/apps/logger/management/commands/pull_from_aggregate.py:15
+msgid "server url to pull forms and submissions"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_briefcase.py:17
+#: onadata/apps/logger/management/commands/pull_from_aggregate.py:17
+msgid "Username"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_briefcase.py:19
+#: onadata/apps/logger/management/commands/pull_from_aggregate.py:19
+msgid "Password"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_briefcase.py:21
+#: onadata/apps/logger/management/commands/pull_from_aggregate.py:21
+msgid "username in this server"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_forms.py:12
+#: onadata/apps/logger/management/commands/set_xform_surveys_with_geopoints.py:12
+#: onadata/apps/viewer/management/commands/import_forms.py:12
+msgid "Import a folder of XForms for ODK."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_instances.py:15
+msgid ""
+"Import a zip file, a directory containing zip files or a directory of ODK "
+"instances"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_instances.py:21
+#, python-format
+msgid ""
+"Total: %(total)d, Imported: %(imported)d, Errors: %(errors)s\n"
+"------------------------------\n"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_instances.py:28
+msgid "Usage: <command> username file/path."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_instances.py:35
+#, python-format
+msgid "The specified user '%s' does not exist."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_instances.py:40
+#, python-format
+msgid "The specified path '%s' does not exist."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_instances.py:47
+#, python-format
+msgid "Importing from dir %s..\n"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_instances.py:55
+#, python-format
+msgid "Importing from zip at %s..\n"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_tools.py:24
+msgid "path(xform instances) username"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_tools.py:30
+#, python-format
+msgid "Invalid username %s"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_tools.py:33
+#, python-format
+msgid "[Importing XForm Instances from %(path)s]\n"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_tools.py:36
+msgid "Before Parse:"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_tools.py:37
+#: onadata/apps/logger/management/commands/import_tools.py:44
+#, python-format
+msgid " --> Images:    %(nb)d"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_tools.py:38
+#: onadata/apps/logger/management/commands/import_tools.py:45
+#, python-format
+msgid " --> Instances: %(nb)d"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/import_tools.py:43
+msgid "After Parse:"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/move_media_to_s3.py:16
+msgid ""
+"Moves all attachments and xls files to s3 from the local file system storage."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/move_media_to_s3.py:25
+msgid ""
+"Missing necessary libraries. Try running: pip install -rrequirements/s3.pip"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/move_media_to_s3.py:31
+msgid ""
+"You must first set your default storage to s3 in your local_settings.py file."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/move_media_to_s3.py:41
+#, python-format
+msgid "Moving %(class)ss to s3..."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/move_media_to_s3.py:48
+#, python-format
+msgid ""
+"\t+ '%(fname)s'\n"
+"\t---> '%(url)s'"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:16
+msgid "Publish an XLS file with the option of replacing anexisting one"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:23
+msgid "Replace existing form if any"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:29
+msgid "You must provide the path to the xls file."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:33
+#, python-format
+msgid "The xls file '%s' does not exist."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:59
+msgid "Form already exist, replacing ..\n"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:62
+#, python-format
+msgid ""
+"The form with id_string '%s' already exists, use the -r option to replace it."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:65
+msgid "Form does NOT exist, publishing ..\n"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/publish_xls.py:71
+msgid "Done..\n"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/restore_backup.py:13
+msgid "Restore a zip backup of a form and all its submissions"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/restore_backup.py:31
+msgid "You must provide the path to restore from."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/sync_deleted_instances_fix.py:15
+msgid "Fixes deleted instances by syncing deleted items from mongo."
+msgstr ""
+
+#: onadata/apps/logger/management/commands/update_xform_uuids.py:16
+msgid "Use a csv file with username, id_string and new_uuid to set new uuids"
+msgstr ""
+
+#: onadata/apps/logger/management/commands/update_xform_uuids.py:20
+msgid "Path to csv file"
+msgstr ""
+
+#: onadata/apps/logger/models/instance.py:27
+msgid "Form is inactive"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:63
+msgid "SMS ID"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:69
+msgid "ID"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:94
+#: onadata/apps/main/templates/show.html:68 templates/show.html:440
+msgid "XForm"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:95
+msgid "XForms"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:98
+msgid "Can view associated data"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:99
+msgid "Can make submissions to the form"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:100
+msgid "Can move form between projects"
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:101
+msgid "Can transfer form ownership."
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:128
+msgid "There should be a single id string."
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:137
+msgid "There should be a single title."
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:173
+#, python-format
+msgid ""
+"Your updated form's id_string '%(new_id)s' must match the existing forms' "
+"id_string '%(old_id)s'."
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:179
+msgid ""
+"In strict mode, the XForm ID must be a valid slug and contain no spaces."
+msgstr ""
+
+#: onadata/apps/logger/models/xform.py:203
+msgid "Submission Count"
+msgstr ""
+
+#: onadata/apps/logger/templates/bulk_submission_form.html:15
+#: onadata/apps/logger/templates/form.html:18
+#: onadata/apps/logger/templates/submission_test_form.html:10
+#: onadata/apps/main/templates/show.html:630
+#: onadata/libs/templates/registration/password_reset_confirm.html:12
+#: onadata/libs/templates/registration/password_reset_form.html:22
+msgid "Submit"
+msgstr ""
+
+#: onadata/apps/logger/templates/form.html:4
+msgid "Update XForm"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:6
+msgid "Downloadable by Phone"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:7
+msgid "Form ID"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:8
+msgid "Number of Submissions"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:9
+msgid "Time of Last Submission"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:10
+msgid "CSV"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:19
+msgid "yes"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:21
+msgid "no"
+msgstr ""
+
+#: onadata/apps/logger/templates/list_xforms.html:32
+msgid "Download CSV"
+msgstr ""
+
+#: onadata/apps/logger/templates/submission.html:3
+msgid "Your submission was successful!"
+msgstr ""
+
+#: onadata/apps/logger/templates/submission.html:5
+msgid "Return to the form page"
+msgstr ""
+
+#: onadata/apps/logger/templates/submission.html:6
+msgid "Fill the form out again"
+msgstr ""
+
+#: onadata/apps/logger/templates/submission_test_form.html:4
+msgid "List XForms"
+msgstr ""
+
+#: onadata/apps/logger/views.py:101
+#: onadata/libs/serializers/data_serializer.py:95
+msgid "Successful submission."
+msgstr ""
+
+#: onadata/apps/logger/views.py:127
+msgid ""
+"There was a problem receiving your ODK submission. [Error: IO Error reading "
+"data]"
+msgstr ""
+
+#: onadata/apps/logger/views.py:131
+msgid ""
+"There was a problem receiving your ODK submission. [Error: multiple "
+"submission files (?)]"
+msgstr ""
+
+#: onadata/apps/logger/views.py:153
+#, python-format
+msgid ""
+"Submission complete. Out of %(total)d survey instances, %(success)d were "
+"imported, (%(rejected)d were rejected as duplicates, missing forms, etc.)"
+msgstr ""
+
+#: onadata/apps/logger/views.py:165
+msgid "Made bulk submissions."
+msgstr ""
+
+#: onadata/apps/logger/views.py:211
+msgid "Requested forms list."
+msgstr ""
+
+#: onadata/apps/logger/views.py:286
+msgid "There should be a single XML submission file."
+msgstr ""
+
+#: onadata/apps/logger/views.py:308 onadata/apps/sms_support/tools.py:124
+#, python-format
+msgid "Created submission on form %(id_string)s."
+msgstr ""
+
+#: onadata/apps/logger/views.py:328
+msgid "File transfer interruption."
+msgstr ""
+
+#: onadata/apps/logger/views.py:354
+#, python-format
+msgid "Downloaded XML for form '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/logger/views.py:383
+#, python-format
+msgid "Downloaded XLS file for form '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/logger/views.py:411 onadata/apps/logger/views.py:455
+#, python-format
+msgid "No XLS file for your form <strong>%(id)s</strong>"
+msgstr ""
+
+#: onadata/apps/logger/views.py:427 onadata/apps/logger/views.py:514
+#: onadata/apps/logger/views.py:554 onadata/apps/main/views.py:461
+#: onadata/apps/main/views.py:1008 onadata/apps/main/views.py:1159
+#: onadata/apps/main/views.py:1384 onadata/apps/viewer/views.py:130
+#: onadata/apps/viewer/views.py:227 onadata/apps/viewer/views.py:300
+#: onadata/apps/viewer/views.py:389 onadata/apps/viewer/views.py:436
+#: onadata/apps/viewer/views.py:497 onadata/apps/viewer/views.py:540
+#: onadata/apps/viewer/views.py:575 onadata/apps/viewer/views.py:620
+#: onadata/apps/viewer/views.py:669 onadata/apps/viewer/views.py:701
+#: onadata/apps/viewer/views.py:749 onadata/apps/viewer/views.py:776
+#: onadata/apps/viewer/views.py:810
+msgid "Not shared."
+msgstr ""
+
+#: onadata/apps/logger/views.py:484
+#, python-format
+msgid "Deleted form '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/logger/views.py:500
+#, python-format
+msgid "Made form '%(id_string)s' %(downloadable)s."
+msgstr ""
+
+#: onadata/apps/logger/views.py:504
+msgid "downloadable"
+msgstr ""
+
+#: onadata/apps/logger/views.py:504
+msgid "un-downloadable"
+msgstr ""
+
+#: onadata/apps/logger/views.py:538 onadata/apps/logger/views.py:583
+#, python-format
+msgid "Enketo error: enketo replied %s"
+msgstr ""
+
+#: onadata/apps/logger/views.py:694
+#, python-format
+msgid "Not allowed to upload form[s] to %(user)s account."
+msgstr ""
+
+#: onadata/apps/logger/views.py:727
+msgid "Invalid request!"
+msgstr ""
+
+#: onadata/apps/logger/views.py:740
+#, python-format
+msgid "Successfully processed %(records)s records"
+msgstr ""
+
+#: onadata/apps/logger/xform_instance_parser.py:16
+msgid "Duplicate Instance"
+msgstr ""
+
+#: onadata/apps/logger/xform_instance_parser.py:24
+msgid "Could not determine the user."
+msgstr ""
+
+#: onadata/apps/logger/xform_instance_parser.py:32
+msgid "The instance could not be parsed."
+msgstr ""
+
+#: onadata/apps/logger/xform_instance_parser.py:40
+msgid "Empty instance"
+msgstr ""
+
+#: onadata/apps/logger/xform_instance_parser.py:56
+#: onadata/apps/logger/xform_instance_parser.py:95
+#: onadata/apps/logger/xform_instance_parser.py:110
+#: onadata/libs/utils/logger_tools.py:506
+msgid "XML string must have a survey element."
+msgstr ""
+
+#: onadata/apps/logger/xform_instance_parser.py:169
+#, python-format
+msgid "Multiple nodes with the same name '%s' while not a repeat"
+msgstr ""
+
+#: onadata/apps/main/forms.py:24 onadata/apps/main/forms.py:32
+msgid "No License"
+msgstr ""
+
+#: onadata/apps/main/forms.py:26
+msgid "Attribution CC BY"
+msgstr ""
+
+#: onadata/apps/main/forms.py:28
+msgid "Attribution-ShareAlike CC BY-SA"
+msgstr ""
+
+#: onadata/apps/main/forms.py:34
+msgid "PDDL"
+msgstr ""
+
+#: onadata/apps/main/forms.py:36
+msgid "ODC-BY"
+msgstr ""
+
+#: onadata/apps/main/forms.py:38
+msgid "ODBL"
+msgstr ""
+
+#: onadata/apps/main/forms.py:42
+msgid "Can view"
+msgstr ""
+
+#: onadata/apps/main/forms.py:43
+msgid "Can edit"
+msgstr ""
+
+#: onadata/apps/main/forms.py:44 onadata/apps/main/views.py:377
+msgid "Can submit to"
+msgstr ""
+
+#: onadata/apps/main/forms.py:45
+msgid "Remove permissions"
+msgstr ""
+
+#: onadata/apps/main/forms.py:192
+msgid "The Captcha is invalid. Please, try again."
+msgstr ""
+
+#: onadata/apps/main/forms.py:206
+#, python-format
+msgid "%s is a reserved name, please choose another"
+msgstr ""
+
+#: onadata/apps/main/forms.py:209
+msgid "username may only contain alpha-numeric characters and underscores"
+msgstr ""
+
+#: onadata/apps/main/forms.py:215
+#, python-format
+msgid "%s already exists"
+msgstr ""
+
+#: onadata/apps/main/forms.py:222
+msgid "Source document"
+msgstr ""
+
+#: onadata/apps/main/forms.py:227
+msgid "Supporting document"
+msgstr ""
+
+#: onadata/apps/main/forms.py:232
+msgid "Media upload"
+msgstr ""
+
+#: onadata/apps/main/forms.py:247
+msgid "JSONP url"
+msgstr ""
+
+#: onadata/apps/main/forms.py:253 onadata/libs/utils/quick_converter.py:8
+msgid "XLS File"
+msgstr ""
+
+#: onadata/apps/main/forms.py:257 onadata/apps/main/forms.py:263
+msgid "XLS URL"
+msgstr ""
+
+#: onadata/apps/main/forms.py:268
+msgid "XLSForm Representation"
+msgstr ""
+
+#: onadata/apps/main/forms.py:322
+msgid "Enable SMS Support"
+msgstr ""
+
+#: onadata/apps/main/forms.py:324
+msgid "SMS Keyword"
+msgstr ""
+
+#: onadata/apps/main/management/commands/mailer.py:12
+msgid "Send an email to all formhub users"
+msgstr ""
+
+#: onadata/apps/main/management/commands/mailer.py:22
+msgid "message must be included in kwargs"
+msgstr ""
+
+#: onadata/apps/main/management/commands/mailer.py:30
+#, python-format
+msgid "Emailing name: %(name)s, email: %(email)s"
+msgstr ""
+
+#: onadata/apps/main/management/commands/remove_odk_prefix.py:7
+msgid "Remove from logger and viewer apps"
+msgstr ""
+
+#: onadata/apps/main/management/commands/set_media_file_hash.py:9
+msgid "Set media file_hash for all existing media files"
+msgstr ""
+
+#: onadata/apps/main/models/user_profile.py:28
+msgid "Require authentication to see forms and submit data"
+msgstr ""
+
+#: onadata/apps/main/templates/activity.html:13
+#: onadata/libs/templates/topbar.html:82 templates/topbar.html:110
+msgid "Account Activity"
+msgstr ""
+
+#: onadata/apps/main/templates/api_token.html:7
+msgid "Developer API Token"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:10 templates/dashboard.html:10
+msgid "Publish a Form <small>Upload XLSForm</small>"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:12 templates/dashboard.html:12
+msgid ""
+"For a quick introduction on how to publish a form try do download <a href=\"/"
+"examples/forms/tutorial/form.xls\">tutorial.xls</a> and publish it."
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:16 templates/dashboard.html:16
+#, python-format
+msgid ""
+"Learn about the XLSForm syntax <a href=\"%(syntax_url)s\">here</a> along "
+"with more <a href=\"/examples/\">form examples</a>."
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:23
+#: onadata/apps/main/templates/show.html:319
+#: onadata/apps/main/templates/show.html:341
+#: onadata/apps/main/templates/show.html:382
+#: onadata/apps/main/templates/show.html:417 templates/dashboard.html:23
+#: templates/show.html:57 templates/show.html.py:192 templates/show.html:644
+#: templates/show.html.py:675
+msgid "Upload"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:24 templates/dashboard.html:24
+msgid "URL"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:25 templates/dashboard.html:25
+msgid "Dropbox"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:45 templates/dashboard.html:45
+#: templates/profile.html:51
+msgid "Publish"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:58
+#: onadata/apps/main/templates/profile.html:13 templates/dashboard.html:58
+msgid "Click to change your avatar"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:72 templates/dashboard.html:72
+msgid "View Profile Page"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:88 templates/dashboard.html:88
+msgid "FORMS"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:91 templates/dashboard.html:91
+msgid "SHARED FORMS"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:94 templates/dashboard.html:94
+msgid "SUBMISSIONS"
+msgstr ""
+
+#: onadata/apps/main/templates/dashboard.html:103
+#, python-format
+msgid ""
+"\n"
+"The url \"of\" this web application <strong>%(url)s</strong>\n"
+"must be given to ODK Collect before it will get forms from and\n"
+"submit data to ona. In Collect's Main Menu, press the Menu\n"
+"button. Select Server Preferences, then Server. Enter\n"
+"<strong>%(url)s</strong> as the server. "
+msgstr ""
+
+#: onadata/apps/main/templates/form_gallery.html:9
+msgid "Form Gallery <small>Shared Forms</small>"
+msgstr ""
+
+#: onadata/apps/main/templates/form_gallery.html:16
+#: onadata/apps/main/templates/people.html:14
+#: onadata/apps/stats/templates/submissions.html:13
+msgid "User"
+msgstr ""
+
+#: onadata/apps/main/templates/form_gallery.html:17
+#: onadata/apps/main/templates/people.html:15
+#: onadata/apps/main/templates/profile.html:67
+#: onadata/apps/main/templates/published_surveys.html:27
+msgid "Name"
+msgstr ""
+
+#: onadata/apps/main/templates/form_gallery.html:18
+#: onadata/apps/main/templates/show.html:34 templates/show.html:418
+msgid "Description"
+msgstr ""
+
+#: onadata/apps/main/templates/form_gallery.html:19
+#: onadata/apps/main/templates/profile.html:69
+#: onadata/apps/main/templates/show.html:49
+#: onadata/apps/main/templates/show.html:57 templates/show.html:421
+#: templates/show.html.py:429
+msgid "XLSForm"
+msgstr ""
+
+#: onadata/apps/main/templates/form_gallery.html:33
+msgid "Excel"
+msgstr ""
+
+#: onadata/apps/main/templates/form_gallery.html:37
+#: onadata/apps/main/templates/show.html:110 templates/show.html:482
+msgid "Clone"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:5
+msgid "Getting Started"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:8
+#: onadata/apps/main/templates/tutorial.html:8
+msgid ""
+"ona aims to make collecting survey data with Android smart phones easy and "
+"free."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:11
+#: onadata/apps/main/templates/tutorial.html:11
+msgid "One uses ona as follows:"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:13
+#: onadata/apps/main/templates/tutorial.html:13
+msgid "Translate survey into the xsl2xform syntax."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:14
+#: onadata/apps/main/templates/tutorial.html:14
+msgid "Upload XLSForm file to ona."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:15
+#: onadata/apps/main/templates/getting_started.html:16
+#: onadata/apps/main/templates/tutorial.html:15
+#: onadata/apps/main/templates/tutorial.html:16
+msgid "Use"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:15
+#: onadata/apps/main/templates/tutorial.html:15
+msgid "to download form and submit data."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:16
+#: onadata/apps/main/templates/tutorial.html:16
+msgid "to download and map data submissions."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:18
+#: onadata/apps/main/templates/tutorial.html:18
+msgid "This tutorial will walk you through each stop of the way."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:24
+#: onadata/apps/main/templates/tutorial.html:24
+msgid "Translate survey into the XLSForm syntax"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:30
+#: onadata/apps/main/templates/tutorial.html:30
+msgid ""
+"The first step in collecting survey data is to actually write the survey. "
+"For this tutorial we will be using the following survey:"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:32
+#: onadata/apps/main/templates/tutorial.html:32
+msgid "What is your name?"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:33
+#: onadata/apps/main/templates/tutorial.html:33
+msgid "How old are you?"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:34
+#: onadata/apps/main/templates/tutorial.html:34
+msgid "May I take your picture?"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:35
+#: onadata/apps/main/templates/tutorial.html:35
+msgid "Do you have any children?"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:36
+#: onadata/apps/main/templates/tutorial.html:36
+msgid "Record your GPS coordinates."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:37
+#: onadata/apps/main/templates/tutorial.html:37
+msgid "What web browsers do you use?"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:39
+#: onadata/apps/main/templates/tutorial.html:39
+msgid ""
+"The second step is writing this survey in the xls2xform syntax. The idea "
+"behind this approach is that each question in the survey is a row in the "
+"spreadsheet. By using a spreadsheet we can expose most of the XForm features "
+"supported by ODK Collect. Check out the images to the right that show the "
+"xls2xform syntax for this survey."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:48
+#: onadata/apps/main/templates/tutorial.html:48
+#, python-format
+msgid ""
+"For more in depth information about the XLSForm syntax go <a href="
+"\"%(syntax_url)s\">here</a>."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:53
+#: onadata/apps/main/templates/tutorial.html:53
+msgid "Upload XLSForm file to ona"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:59
+#: onadata/apps/main/templates/tutorial.html:59
+#, python-format
+msgid ""
+"After creating an account and signing into the site you can publish forms "
+"for use with ODK Collect. On the right, we submit <a href="
+"\"%(STATIC_URL)stutorial/tutorial.xls\">tutorial.xls</a>, described above, "
+"for publication."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:69
+#: onadata/apps/main/templates/tutorial.html:69
+msgid ""
+"After publishing our first form, a new table appears showing our new form. "
+"Next we need to use ODK Collect to submit data for this form..."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:80
+#: onadata/apps/main/templates/tutorial.html:80
+msgid "Use ODK Collect to download form and submit data"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:89
+#: onadata/apps/main/templates/tutorial.html:89
+#, python-format
+msgid ""
+"The url \"of\" this web application must be given to ODK Collect before it "
+"will get forms from and submit data to ona. In ODK Collect's Main Menu, "
+"press the Menu button. Select Server Preferences, then Server. Enter <strong>"
+"%(url)s</strong> as the server."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:98
+#: onadata/apps/main/templates/tutorial.html:98
+msgid "Download your published form to your phone."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:107
+#: onadata/apps/main/templates/tutorial.html:107
+msgid "Fill out the form on your phone."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:116
+#: onadata/apps/main/templates/tutorial.html:116
+msgid "After filling out the form on your phone submit the data to the server."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:124
+#: onadata/apps/main/templates/tutorial.html:124
+msgid "Use ona to download and map data submissions"
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:130
+#: onadata/apps/main/templates/tutorial.html:130
+msgid ""
+"After submitting data from ODK Collect to the server you can now download "
+"the data as a nicely formatted csv or xls file."
+msgstr ""
+
+#: onadata/apps/main/templates/getting_started.html:140
+#: onadata/apps/main/templates/tutorial.html:140
+msgid "And look at submissions on a map:"
+msgstr ""
+
+#: onadata/apps/main/templates/home.html:42
+msgid "We're down for maintenance. We will be back shortly."
+msgstr ""
+
+#: onadata/apps/main/templates/home.html:60
+#: onadata/libs/templates/registration/login.html:7
+#: onadata/libs/templates/registration/login.html:18
+#: onadata/libs/templates/topbar.html:90 templates/home.html:62
+#: templates/topbar.html:118
+msgid "Sign in"
+msgstr ""
+
+#: onadata/apps/main/templates/home.html:64 templates/home.html:66
+#, python-format
+msgid ""
+"\n"
+"                        <a class=\"btn btn-info btn-lg btn-block\" href="
+"\"%(registration_url)s\">Sign up</a>\n"
+"                        "
+msgstr ""
+
+#: onadata/apps/main/templates/home.html:71
+#: onadata/libs/templates/registration/login.html:26 templates/home.html:73
+#, python-format
+msgid ""
+"Can't access your account? <a href=\"%(reset_url)s\">Reset your password.</a>"
+msgstr ""
+
+#: onadata/apps/main/templates/people.html:9
+#, python-format
+msgid "Ona users <small>(%(nb_users)s)</small>"
+msgid_plural "Ona Users <small>(%(nb_users)s)</small>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: onadata/apps/main/templates/people.html:16
+msgid "Organization"
+msgstr ""
+
+#: onadata/apps/main/templates/people.html:17
+msgid "Location"
+msgstr ""
+
+#: onadata/apps/main/templates/people.html:18
+msgid "Member Since"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:17
+msgid "change"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:26
+msgid "Edit Your Profile"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:35
+msgid "Organization:"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:38
+msgid "Location:"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:41
+msgid "Website:"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:45
+msgid "Twitter:"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:48
+msgid "Member since:"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:53
+#, python-format
+msgid "%(num_forms)s <small>Shared form</small>"
+msgid_plural "%(num_forms)s <small>Shared forms</small>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: onadata/apps/main/templates/profile.html:62
+#, python-format
+msgid "Shared Forms & Public Data <small>(%(num_forms)s)</small>"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:68
+msgid "Create Date"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:70
+msgid "Public Data"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:71
+#: onadata/apps/main/templates/published_surveys.html:30
+msgid "View"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:86
+msgid "XLS"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:89
+#: onadata/apps/main/templates/profile.html:119
+#: onadata/apps/main/templates/profile.html:130
+#: onadata/apps/main/templates/show.html:51
+#: onadata/apps/main/templates/show.html:120 templates/show.html:423
+#: templates/show.html.py:492
+msgid "PRIVATE"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:100
+#: onadata/apps/main/templates/published_surveys.html:31
+msgid "Download"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:102
+#: onadata/apps/main/templates/published_surveys.html:45
+#: onadata/apps/main/templates/published_surveys.html:90
+#: onadata/apps/main/templates/show.html:50
+#: onadata/apps/main/templates/show.html:119
+#: templates/published_forms__list.html:31 templates/show.html:422
+#: templates/show.html.py:491
+msgid "PUBLIC"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:105
+#: onadata/apps/main/templates/show.html:128
+#: onadata/libs/templates/topbar.html:44 templates/map.html:36
+#: templates/show.html:500
+msgid "csv"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:106
+#: onadata/apps/main/templates/show.html:161
+#: onadata/libs/templates/topbar.html:49 templates/map.html:41
+#: templates/show.html:533
+msgid "xls"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:109
+#: onadata/apps/main/templates/show.html:172
+#: onadata/libs/templates/topbar.html:54 templates/map.html:46
+#: templates/show.html:544
+msgid "kml"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:116
+#: onadata/apps/main/templates/show.html:256 templates/show.html:616
+msgid "NO DATA"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:125
+#: onadata/apps/main/templates/published_surveys.html:58
+#: onadata/apps/main/templates/show.html:235 templates/show.html:338
+#: templates/show.html.py:595
+msgid "View Map"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:138
+msgid "None public"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:173
+#: onadata/apps/stats/templates/submissions.html:50 templates/profile.html:84
+msgid "Search:"
+msgstr ""
+
+#: onadata/apps/main/templates/profile.html:182 templates/profile.html:93
+msgid "Show inactive:"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:9
+#: onadata/apps/main/templates/show.html:284
+#: templates/published_surveys.html:10 templates/show.html:307
+msgid "Preview"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:28
+#: onadata/apps/stats/templates/submissions.html:14
+#: templates/published_forms__list.html:13
+msgid "Submissions"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:29
+msgid "Enter Data"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:32
+msgid "Last Submission"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:33
+#: templates/published_forms__list.html:9
+msgid "Active"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:42
+msgid "Shared by"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:48
+#: onadata/apps/main/templates/published_surveys.html:93
+#: onadata/apps/main/templates/show.html:52
+#: onadata/apps/main/templates/show.html:121
+#: templates/published_forms__list.html:34 templates/show.html:424
+#: templates/show.html.py:493
+msgid "ENCRYPTED"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:54
+msgid "Web"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:65
+msgid "View Photo"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:67
+#: onadata/apps/main/templates/show.html:242 templates/show.html:235
+#: templates/show.html.py:602
+msgid "View Submitted Data"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:70
+msgid "View Table Maker"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:73
+#: onadata/apps/main/templates/show.html:248 templates/show.html:608
+msgid "View Statistics"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:106
+msgid "Options"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:110
+#: onadata/apps/main/templates/show.html:466
+#: onadata/apps/main/templates/show.html:576
+#: onadata/apps/restservice/templates/service.html:4
+#: onadata/apps/viewer/templates/export_list.html:66
+#: onadata/apps/viewer/templates/export_list.html:99
+#: onadata/apps/viewer/templates/instance.html:31
+#: onadata/apps/viewer/templates/map.html:41 templates/export_list.html:82
+#: templates/export_list.html.py:115 templates/instance.html:42
+#: templates/show.html:76
+msgid "Delete"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:111
+msgid "Replace"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:122
+#: onadata/apps/main/templates/show.html:564
+#: onadata/apps/viewer/templates/instance.html:25
+#: onadata/apps/viewer/templates/map.html:35 templates/instance.html:36
+#: templates/show.html:208
+msgid "Delete Confirmation"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:125
+#: onadata/apps/main/templates/show.html:567 templates/show.html:211
+#, python-format
+msgid ""
+"Are you sure you want to delete the form '%(title)s'? This form has <strong>"
+"%(nb_sub)s</strong> submissions associated with it that will also be "
+"deleted. If you are unsure about deleting this form press 'Cancel' and "
+"consider 'Archiving' the form instead."
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:141
+#: templates/show.html:316
+msgid "Update XLS"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:145
+#: onadata/apps/main/templates/settings.html:40 templates/show.html:322
+msgid "Update"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:166
+#: onadata/apps/main/templates/show.html:642
+#: templates/published_surveys.html:35
+msgid "Mobile Form"
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:173
+#: onadata/apps/main/templates/show.html:649
+#: templates/published_surveys.html:42
+msgid "DOWNLOAD "
+msgstr ""
+
+#: onadata/apps/main/templates/published_surveys.html:176
+#: onadata/apps/main/templates/show.html:652
+#: templates/published_surveys.html:45
+msgid " Scan - QR Reader"
+msgstr ""
+
+#: onadata/apps/main/templates/resources.html:7
+#: onadata/libs/templates/topbar.html:67
+msgid "Resources"
+msgstr ""
+
+#: onadata/apps/main/templates/resources.html:8
+msgid "Getting Started "
+msgstr ""
+
+#: onadata/apps/main/templates/resources.html:13
+msgid ""
+"Need more help understanding what this is all about? We’ve created a\n"
+"  comprehensive getting started guide to help you better understand how to "
+"get the most\n"
+"  out of ona."
+msgstr ""
+
+#: onadata/apps/main/templates/resources.html:22
+msgid "Authoring with XLSForms"
+msgstr ""
+
+#: onadata/apps/main/templates/resources.html:25
+msgid ""
+"\n"
+"  Form authoring in ona is based on the XLSForm standard. While there is an "
+"initial\n"
+"  learning curve, we’ve found that XLS provides a great interface for "
+"authoring forms — whether it’s\n"
+"  simple 5 question questionnaire or a complex survey with hundreds of "
+"questions. XLS also makes\n"
+"  sharing and collaborating on forms easy. Whether you need help authoring "
+"your first form or want\n"
+"  to pick up advanced tips, please check out our <a href=\"http://xlsform.org"
+"\">XLForm Syntax page</a> and\n"
+"  our gallery of sample forms on <a href=\"#\">ona University</a>.\n"
+"  "
+msgstr ""
+
+#: onadata/apps/main/templates/settings.html:7
+msgid "Edit User Profile"
+msgstr ""
+
+#: onadata/apps/main/templates/settings.html:11
+msgid "change password"
+msgstr ""
+
+#: onadata/apps/main/templates/settings.html:23
+msgid "Username:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:13 templates/show.html:412
+msgid "Owner"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:22
+#: onadata/apps/main/templates/show.html:41
+#: onadata/apps/main/templates/show.html:98
+#: onadata/apps/main/templates/show.html:226
+#: onadata/apps/main/templates/show.html:309 templates/show.html:470
+#: templates/show.html.py:586 templates/show.html:634
+msgid "edit"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:23
+#: onadata/apps/main/templates/show.html:42
+#: onadata/apps/main/templates/show.html:99
+#: onadata/apps/main/templates/show.html:227
+#: onadata/apps/main/templates/show.html:310 templates/show.html:154
+#: templates/show.html.py:166 templates/show.html:471
+#: templates/show.html.py:587 templates/show.html:635
+msgid "save"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:32
+msgid "Form ID:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:39
+msgid "None"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:79 templates/show.html:451
+msgid "JSONForm"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:93 templates/show.html:465
+msgid "License"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:104
+#: onadata/apps/main/templates/show.html:232 templates/show.html:476
+#: templates/show.html.py:592
+msgid "License information"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:118 templates/show.html:490
+msgid "Form Data"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:128 templates/show.html:500
+msgid "csv exports"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:139 templates/show.html:511
+msgid "csv zip exports"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:139 templates/show.html:511
+msgid "csv zip"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:150 templates/show.html:522
+msgid "SPSS data files zip exports"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:150 templates/show.html:522
+msgid "sav zip"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:161 templates/show.html:533
+msgid "xls exports"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:172 templates/show.html:544
+msgid "Export to kml File (Google Earth)"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:184 templates/show.html:556
+msgid "Export a zip folder of attachments"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:184 templates/show.html:556
+msgid "zip"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:195 templates/show.html:567
+msgid "Export to google docs"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:195 templates/show.html:567
+msgid "gdocs"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:207
+msgid "xls reports"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:218 templates/show.html:578
+msgid "Submissions:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:221 templates/show.html:581
+msgid "License:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:236 templates/show.html:596
+msgid "Map"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:239 templates/show.html:265
+#: templates/show.html.py:599
+msgid "View Photos"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:240 templates/show.html:600
+msgid "Photos"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:243 templates/show.html:603
+msgid "View Data"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:245 templates/show.html:605
+msgid "Browse Data (One by One)"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:246 templates/show.html:606
+msgid "Browse Data"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:249 templates/show.html:609
+msgid "Statistics"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:266
+msgid "Webform"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:268
+msgid "Enter Web Form"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:270
+msgid "Mobile"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:273
+#: onadata/apps/main/templates/show.html:275 templates/show.html:299
+msgid "Preview Form"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:299
+#: onadata/libs/serializers/metadata_serializer.py:15 templates/show.html:624
+msgid "Source"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:326
+msgid "Methodology"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:331
+#: onadata/apps/main/templates/show.html:361
+#: onadata/apps/main/templates/show.html:408 templates/show.html:39
+#: templates/show.html.py:178 templates/show.html:666
+msgid "remove"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:349 templates/show.html:652
+msgid "Rest Services"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:356
+msgid "Media &nbsp;<small>jpeg/png/mp3/wav/3gp/csv/zip allowed</small>"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:393 templates/show.html:62
+msgid "Save Media URL"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:402
+#: onadata/libs/serializers/metadata_serializer.py:12 templates/show.html:660
+msgid "Mapbox Layer"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:406 templates/show.html:664
+msgid "Attribution:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:424
+msgid "XLS Reports (beta)"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:430
+msgid "Add Template"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:431
+msgid "Template Upload"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:432
+msgid "Uploaded Templates"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:439
+msgid "Add Template URL"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:445
+msgid "Template Name:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:449
+msgid "Template Server:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:453
+msgid "Template File:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:458
+msgid "Upload template"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:479 templates/show.html:702
+msgid "SMS Support"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:484 templates/show.html:707
+msgid "This form has enabled SMS submissions."
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:484 templates/show.html:707
+#, python-format
+msgid "Submit to this form using the “<em>%(id_string)s</em>” identifier."
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:492 templates/show.html:715
+msgid "Save Changes"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:498 templates/show.html:721
+msgid "Expected Format:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:505 templates/show.html:728
+msgid "Example"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:510 templates/show.html:733
+msgid "Usage"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:514 templates/show.html:737
+msgid "Select an SMS API"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:514 templates/show.html:737
+msgid "Generic SMS API"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:516 templates/show.html:739
+msgid "Use the Generic SMS API to write your own wrapper around Formhub."
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:518 templates/show.html:741
+msgid "Single SMS Submission"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:520
+#: onadata/apps/main/templates/show.html:524 templates/show.html:743
+#: templates/show.html.py:747
+msgid "Params:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:521
+#: onadata/apps/main/templates/show.html:525 templates/show.html:744
+#: templates/show.html.py:748
+msgid "Returns:"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:522 templates/show.html:745
+msgid "Multiple SMS Submissions at once"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:527 templates/show.html:750
+msgid "One of"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:528 templates/show.html:751
+msgid "Either an error or success message. Suitable for end user."
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:529 templates/show.html:752
+msgid "Only if successful. A unique ID of the submission."
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:539
+#: onadata/libs/templates/topbar.html:81 templates/topbar.html:43
+#: templates/topbar.html.py:109
+msgid "Settings"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:542
+msgid "Form Shared"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:546
+msgid "Data Shared"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:551
+msgid "Form Active"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:556
+msgid "Delete Form"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:571
+#: onadata/apps/viewer/templates/export_list.html:54
+#: onadata/apps/viewer/templates/export_list.html:98
+#: onadata/apps/viewer/templates/instance.html:32
+#: onadata/apps/viewer/templates/map.html:42 templates/export_list.html:70
+#: templates/export_list.html.py:114 templates/instance.html:43
+#: templates/show.html:214
+msgid "Cancel"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:582 templates/show.html:682
+msgid "bamboo"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:584 templates/show.html:684
+#, python-format
+msgid ""
+"bamboo dataset: <strong><a href=\"http://bamboo.io/datasets/%(dataset)s/info"
+"\">%(dataset)s</a></strong>"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:586 templates/show.html:686
+msgid "bamboo link is <strong>not active</strong>"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:589 templates/show.html:689
+msgid "bamboo requires at least one submission."
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:593 templates/show.html:693
+msgid "Regenerate"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:595 templates/show.html:695
+msgid "Activate"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:602
+msgid "Sharing"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:605 templates/show.html:114
+#, python-format
+msgid ""
+"Sharing by link is <strong>on with URL <a href=\"%(form_url)s\">%(base_url)s"
+"%(form_url)s</a></strong>"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:607 templates/show.html:116
+msgid "Sharing by link is <strong>off</strong>"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:616 templates/show.html:123
+msgid "Turn off"
+msgstr ""
+
+#: onadata/apps/main/templates/show.html:616 templates/show.html:123
+msgid "Turn on"
+msgstr ""
+
+#: onadata/apps/main/templates/tutorial.html:5
+msgid "Introduction"
+msgstr ""
+
+#: onadata/apps/main/templates/xls2xform.html:5
+msgid "XLS2XForm Converter"
+msgstr ""
+
+#: onadata/apps/main/templates/xls2xform.html:8
+msgid ""
+"If you're looking for the XLS2XForm converter you're in the right place. "
+"We've incorporated the XLS2XForm converter into ona."
+msgstr ""
+
+#: onadata/apps/main/templates/xls2xform.html:11
+msgid "To use it simply:"
+msgstr ""
+
+#: onadata/apps/main/templates/xls2xform.html:14
+#, python-format
+msgid ""
+"<a href=\"%(registration_register)s\">Signup</a> for a free account with ona"
+msgstr ""
+
+#: onadata/apps/main/templates/xls2xform.html:15
+msgid ""
+"Upload your XLSForm to ona and it'll instantly be converted to an XForm "
+"which will be available on your phone."
+msgstr ""
+
+#: onadata/apps/main/templates/xls2xform.html:16
+msgid ""
+"If you want to download the XForm, click on the form name and click on "
+"<strong>other</strong> to download the converted XForm"
+msgstr ""
+
+#: onadata/apps/main/views.py:112
+#, python-format
+msgid "Cloned form '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:122
+#, python-format
+msgid "Successfully cloned to %(form_url)s into your %(profile_url)s"
+msgstr ""
+
+#: onadata/apps/main/views.py:172
+#, python-format
+msgid "Published form '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:186 onadata/apps/main/views.py:1251
+#, python-format
+msgid ""
+"Successfully published %(form_id)s. <a href=\"%(form_url)s\">Enter Web Form</"
+"a> or <a href=\"#preview-modal\" data-toggle=\"modal\">Preview Web Form</a>"
+msgstr ""
+
+#: onadata/apps/main/views.py:235 onadata/apps/main/views.py:247
+msgid "Published Forms"
+msgstr ""
+
+#: onadata/apps/main/views.py:236 onadata/apps/main/views.py:248
+msgid "Export, map, and view submissions."
+msgstr ""
+
+#: onadata/apps/main/views.py:241
+msgid "Shared Forms"
+msgstr ""
+
+#: onadata/apps/main/views.py:242
+msgid "List of forms shared with you."
+msgstr ""
+
+#: onadata/apps/main/views.py:269
+msgid "Forbidden."
+msgstr ""
+
+#: onadata/apps/main/views.py:292
+msgid "Profile settings updated."
+msgstr ""
+
+#: onadata/apps/main/views.py:315
+msgid "Public profile accessed."
+msgstr ""
+
+#: onadata/apps/main/views.py:373
+msgid "Can Edit"
+msgstr ""
+
+#: onadata/apps/main/views.py:375
+msgid "Can View"
+msgstr ""
+
+#: onadata/apps/main/views.py:433 onadata/apps/main/views.py:889
+#: onadata/apps/main/views.py:938 onadata/apps/main/views.py:1001
+#: onadata/apps/main/views.py:1045
+msgid "Permission denied."
+msgstr ""
+
+#: onadata/apps/main/views.py:536
+#, python-format
+msgid ""
+"Description for '%(id_string)s' updated from '%(old_description)s' to "
+"'%(new_description)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:550
+#, python-format
+msgid ""
+"Title for '%(id_string)s' updated from '%(old_title)s' to '%(new_title)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:565
+#, python-format
+msgid ""
+"Data sharing updated for '%(id_string)s' from '%(old_shared)s' to "
+"'%(new_shared)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:569 onadata/apps/main/views.py:571
+#: onadata/apps/main/views.py:585 onadata/apps/main/views.py:587
+#: onadata/apps/main/views.py:601 onadata/apps/main/views.py:603
+msgid "shared"
+msgstr ""
+
+#: onadata/apps/main/views.py:570 onadata/apps/main/views.py:572
+#: onadata/apps/main/views.py:586 onadata/apps/main/views.py:588
+#: onadata/apps/main/views.py:602 onadata/apps/main/views.py:604
+msgid "not shared"
+msgstr ""
+
+#: onadata/apps/main/views.py:581
+#, python-format
+msgid ""
+"Form sharing for '%(id_string)s' updated from '%(old_shared)s' to "
+"'%(new_shared)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:597
+#, python-format
+msgid ""
+"Active status for '%(id_string)s' updated from '%(old_shared)s' to "
+"'%(new_shared)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:613
+#, python-format
+msgid "Form License for '%(id_string)s' updated to '%(form_license)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:626
+#, python-format
+msgid "Data license for '%(id_string)s' updated to '%(data_license)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:639
+#, python-format
+msgid "Source for '%(id_string)s' updated to '%(source)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:656
+msgid "SMS Support Activated on"
+msgstr ""
+
+#: onadata/apps/main/views.py:659
+msgid "SMS Support Deactivated on"
+msgstr ""
+
+#: onadata/apps/main/views.py:692
+#, python-format
+msgid "Media added to '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:706
+#, python-format
+msgid "Map layer added to '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:717
+#, python-format
+msgid "Supporting document added to '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:731
+#, python-format
+msgid "External export added to '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:755
+msgid "Updated succeeded."
+msgstr ""
+
+#: onadata/apps/main/views.py:762
+msgid "Update failed."
+msgstr ""
+
+#: onadata/apps/main/views.py:876
+#, python-format
+msgid "Document '%(filename)s' for '%(id_string)s' downloaded."
+msgstr ""
+
+#: onadata/apps/main/views.py:910
+#, python-format
+msgid "Document '%(filename)s' deleted from '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:929
+#, python-format
+msgid "Map layer deleted from '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:961
+#, python-format
+msgid "Media download '%(filename)s' deleted from '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:987
+#, python-format
+msgid "Media '%(filename)s' downloaded from '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1059
+#, python-format
+msgid "Wrong username <b>%s</b>."
+msgstr ""
+
+#: onadata/apps/main/views.py:1069
+#, python-format
+msgid "Edit permissions on '%(id_string)s' assigned to '%(for_user)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1083
+#, python-format
+msgid "View permissions on '%(id_string)s' assigned to '%(for_user)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1097
+#, python-format
+msgid "Report permissions on '%(id_string)s' assigned to '%(for_user)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1110
+#, python-format
+msgid "All permissions on '%(id_string)s' removed from '%(for_user)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1132
+#, python-format
+msgid "Public link on '%(id_string)s' %(action)s."
+msgstr ""
+
+#: onadata/apps/main/views.py:1163
+msgid "id must be specified"
+msgstr ""
+
+#: onadata/apps/main/views.py:1171
+#, python-format
+msgid "Deleted submission with id '%(record_id)s' on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1202
+#, python-format
+msgid "Bamboo link deleted on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1215
+#, python-format
+msgid "Bamboo link created on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/main/views.py:1245
+#, python-format
+msgid "XLS for '%(id_string)s' updated."
+msgstr ""
+
+#: onadata/apps/main/views.py:1279
+msgid "Performed On"
+msgstr ""
+
+#: onadata/apps/main/views.py:1285
+msgid "Action"
+msgstr ""
+
+#: onadata/apps/main/views.py:1359
+msgid "Unexpected Error occured: No QRCODE generated"
+msgstr ""
+
+#: onadata/apps/main/views.py:1364
+#, python-format
+msgid "Error Generating QRCODE: %s"
+msgstr ""
+
+#: onadata/apps/restservice/forms.py:9
+msgid "Service Name"
+msgstr ""
+
+#: onadata/apps/restservice/forms.py:11 onadata/apps/restservice/models.py:14
+msgid "Service URL"
+msgstr ""
+
+#: onadata/apps/restservice/templates/add-service.html:15
+msgid "Add service"
+msgstr ""
+
+#: onadata/apps/restservice/views.py:35
+msgid "Service already defined."
+msgstr ""
+
+#: onadata/apps/restservice/views.py:39
+#, python-format
+msgid "Successfully added service %(name)s."
+msgstr ""
+
+#: onadata/apps/restservice/views.py:47
+msgid "Please fill in all required fields"
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:26
+#, python-format
+msgid "%(question)s: %(message)s"
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:70
+msgid "Required field missing"
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:76
+#, python-format
+msgid "%(error)s"
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:90
+#, python-format
+msgid "Media file format incorrect. %(except)s"
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:103
+#, python-format
+msgid "No matching choice for '%(input)s'"
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:116
+msgid "Incorrect geopoint coordinates."
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:151
+#, python-format
+msgid "Unsuported column '%(type)s'"
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:255
+msgid "[SUCCESS] Your submission has been accepted. It's ID is {{ id }}."
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:268
+msgid "Missing 'identity' or 'text' field."
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:274
+msgid "'identity' and 'text' fields can not be empty."
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:290
+#, python-format
+msgid "The form '%(id_string)s' does not accept SMS submissions."
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:310
+msgid "There must be at least one group of questions filled."
+msgstr ""
+
+#: onadata/apps/sms_support/parser.py:326
+#, python-format
+msgid "Required field `%(field)s` is  missing."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:33
+#: onadata/apps/sms_support/providers/telerivet.py:30
+#: onadata/apps/sms_support/providers/textit.py:36
+#: onadata/apps/sms_support/providers/twilio.py:35
+#, python-format
+msgid "%(service)s Instructions:"
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:37
+msgid "Download the SMS Sync App on your phone serving as a gateway."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:39
+msgid "Configure the app to point to one of the following URLs"
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:42
+msgid "Optionnaly set a keyword to prevent non-formhub messages to be sent."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:45
+msgid "In the preferences, tick the box to allow replies from the server."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:48
+msgid ""
+"That's it. Now Send an SMS Formhub submission to the number of that phone. "
+"It will create a submission on Formhub."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:61
+#: onadata/apps/sms_support/providers/telerivet.py:53
+#: onadata/apps/sms_support/providers/textit.py:58
+#: onadata/apps/sms_support/providers/twilio.py:61
+#, python-format
+msgid "[ERROR] %s"
+msgstr ""
+
+#: onadata/apps/sms_support/providers/smssync.py:114
+#: onadata/apps/sms_support/providers/telerivet.py:101
+#: onadata/apps/sms_support/providers/textit.py:125
+#: onadata/apps/sms_support/providers/twilio.py:109
+#: onadata/apps/sms_support/views.py:60
+msgid "`identity` and `message` are both required and must not be empty."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/telerivet.py:34
+msgid "Sign in to Telerivet.com and go to Service Page."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/telerivet.py:36
+msgid "Follow instructions to add an application with either URL:"
+msgstr ""
+
+#: onadata/apps/sms_support/providers/telerivet.py:40
+msgid ""
+"That's it. Now Send an SMS Formhub submission to your Telerivet phone "
+"number. It will create a submission on Formhub."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/textit.py:40
+msgid "Sign in to TextIt.in and go to Account Page."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/textit.py:42
+msgid "Tick “Incoming SMS Messages” and set Webhook URL to either:"
+msgstr ""
+
+#: onadata/apps/sms_support/providers/textit.py:46
+msgid ""
+"That's it. Now Send an SMS Formhub submission to your TextIt phone number. "
+"It will create a submission on Formhub."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/twilio.py:39
+msgid "Sign in to Twilio.com and go your Application."
+msgstr ""
+
+#: onadata/apps/sms_support/providers/twilio.py:41
+msgid ""
+"Follow instructions to add one of the following URLs, selecting the HTTP "
+"POST method:"
+msgstr ""
+
+#: onadata/apps/sms_support/providers/twilio.py:46
+msgid ""
+"That's it. Now Send an SMS Formhub submission to your Twilio phone number. "
+"It will create a submission on Formhub."
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:95 onadata/libs/utils/logger_tools.py:279
+msgid "Username or ID required."
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:98 onadata/libs/utils/logger_tools.py:282
+msgid "Received empty submission. No instance was created"
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:102
+#: onadata/libs/utils/logger_tools.py:285
+msgid "Form is not active"
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:105
+#: onadata/libs/utils/logger_tools.py:288
+msgid "Form does not exist on this account"
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:108
+#: onadata/libs/utils/logger_tools.py:291
+msgid "Improperly formatted XML."
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:111
+#: onadata/libs/utils/logger_tools.py:293
+msgid "Duplicate submission"
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:132
+msgid "[SUCCESS] Your submission has been accepted."
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:229
+msgid "All your questions must be in groups."
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:234
+#, python-format
+msgid ""
+"All your groups must have an 'sms_field' (use 'meta' prefixed ones for non-"
+"fillable groups). %s"
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:255
+#, python-format
+msgid ""
+"Not all options in the choices list for <strong>%s</strong> have an "
+"<em>sms_option</em> value."
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:270
+#, python-format
+msgid ""
+"Questions for which values can contain spaces are only allowed on last "
+"position of group (%s)"
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:280
+#, python-format
+msgid ""
+"When allowing medias ('sms_allow_media'), your separator (%s) must be "
+"outside Base64 alphabet (letters, digits and +/=). You case use '#' instead."
+msgstr ""
+
+#: onadata/apps/sms_support/tools.py:326
+msgid "Note that your form is also SMS comptatible."
+msgstr ""
+
+#: onadata/apps/stats/templates/form-stats.html:7
+msgid "Submission Statistics"
+msgstr ""
+
+#: onadata/apps/stats/templates/form-stats.html:19
+msgid "Date"
+msgstr ""
+
+#: onadata/apps/stats/templates/submissions.html:7
+#, python-format
+msgid "Submissions (%(nb_sub)s)"
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/mark_start_times.py:8
+msgid "This is a one-time command to mark start times of old surveys."
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/mark_start_times.py:17
+#, python-format
+msgid "Could not mark start time for DD: %(data)s"
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/relink.py:7
+msgid "Relink all instances with the current forms."
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/remongo.py:17
+msgid "Number of records to process per query"
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/set_uuid_in_xml.py:9
+msgid "Insert UUID into XML of all existing XForms"
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/set_uuid_in_xml.py:12
+#, python-format
+msgid "%(nb)d XForms to update"
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/set_uuid_in_xml.py:20
+#, python-format
+msgid "Updated %(nb)d XForms..."
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/sync_mongo.py:14
+msgid ""
+"Check the count of submissions in sqlite vs the mongo db per form and "
+"optionally run remongo."
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/sync_mongo.py:21
+msgid "Whether to run remongo on the found set."
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/sync_mongo.py:25
+msgid ""
+"Update all instances for the selected form(s), including existing ones. Will "
+"delete and re-create mongo records. Only makes sense when used with the -r "
+"option"
+msgstr ""
+
+#: onadata/apps/viewer/management/commands/update_delete_from_mongo.py:11
+msgid "Update deleted records from mongo to sql instances"
+msgstr ""
+
+#: onadata/apps/viewer/models/export.py:22
+msgid "Invalid export type specified"
+msgstr ""
+
+#: onadata/apps/viewer/models/parsed_instance.py:154
+#: onadata/apps/viewer/models/parsed_instance.py:227
+msgid "Invalid start/limit params"
+msgstr ""
+
+#: onadata/apps/viewer/models/parsed_instance.py:178
+#, python-format
+msgid "Invalid pipeline! %s"
+msgstr ""
+
+#: onadata/apps/viewer/models/parsed_instance.py:180
+#, python-format
+msgid "Invalid query! %s"
+msgstr ""
+
+#: onadata/apps/viewer/templates/data_view.html:14
+#: onadata/apps/viewer/templates/instance.html:9 templates/data_view.html:19
+#: templates/instance.html:10
+msgid "Data View"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:9
+#: templates/export_list.html:15
+msgid "Exports"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:17
+#: templates/export_list.html:31
+msgid "New Export"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:18
+#: onadata/apps/viewer/templates/export_list.html:29
+#: templates/export_list.html:33 templates/export_list.html.py:45
+msgid "Advanced Export"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:33
+#: templates/export_list.html:49
+msgid "Template to use for the export"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:42
+#: templates/export_list.html:58
+msgid "Delimiter to use to separate group names from field names"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:44
+#: templates/export_list.html:60
+msgid "Dot"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:45
+#: templates/export_list.html:61
+msgid "Slash"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:49
+#: templates/export_list.html:65
+msgid "DONT split select multiple choice answers into separate columns"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:55
+#: templates/export_list.html:71
+msgid "Create Export"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:64
+#: templates/export_list.html:80
+msgid "Filename"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:65
+#: templates/export_list.html:81 templates/published_forms__list.html:11
+msgid "Date Created"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:81
+#: templates/export_list.html:97
+msgid "Pending ..."
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:82
+#: templates/export_list.html:98
+msgid "Click to refresh"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:92
+#: templates/export_list.html:108
+msgid "Delete Export"
+msgstr ""
+
+#: onadata/apps/viewer/templates/export_list.html:95
+#: templates/export_list.html:111
+msgid "Are you sure you want to delete this export?"
+msgstr ""
+
+#: onadata/apps/viewer/templates/instance.html:6 templates/instance.html:16
+msgid "Browse Form Data"
+msgstr ""
+
+#: onadata/apps/viewer/templates/instance.html:28
+#: onadata/apps/viewer/templates/map.html:38 templates/instance.html:39
+msgid ""
+"Are you sure you want to delete this record. If you are unsure about "
+"deleting this record press 'Cancel'."
+msgstr ""
+
+#: onadata/apps/viewer/templates/instance.html:54 templates/instance.html:65
+#, python-brace-format
+msgid "Record {pos} of {total}"
+msgstr ""
+
+#: onadata/apps/viewer/templates/map.html:261 templates/map.html:266
+msgid "BAD REQUEST"
+msgstr ""
+
+#: onadata/apps/viewer/templates/survey.html:20
+msgid "Question"
+msgstr ""
+
+#: onadata/apps/viewer/templates/survey.html:21
+msgid "Response"
+msgstr ""
+
+#: onadata/apps/viewer/views.py:96
+msgid "Start time format must be YY_MM_DD_hh_mm_ss"
+msgstr ""
+
+#: onadata/apps/viewer/views.py:105
+msgid "End time format must be YY_MM_DD_hh_mm_ss"
+msgstr ""
+
+#: onadata/apps/viewer/views.py:162
+#, python-format
+msgid "Requested map on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:305 onadata/apps/viewer/views.py:394
+msgid "No XLS Template set."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:314
+#, python-format
+msgid "%s is not a valid delimiter"
+msgstr ""
+
+#: onadata/apps/viewer/views.py:336 onadata/apps/viewer/views.py:410
+#, python-format
+msgid "%s is not a valid export type"
+msgstr ""
+
+#: onadata/apps/viewer/views.py:514
+#, python-format
+msgid "Downloaded %(export_type)s export '%(filename)s' on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:554
+#, python-format
+msgid "Deleted %(export_type)s export '%(filename)s' on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:590
+#, python-format
+msgid "Created ZIP export on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:597
+#, python-format
+msgid "Downloaded ZIP export on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:633
+#, python-format
+msgid "Created KML export on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:640
+#, python-format
+msgid "Downloaded KML export on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:689
+#, python-format
+msgid "Created Google Docs export on '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:712
+#, python-format
+msgid "Requested data view for '%(id_string)s'."
+msgstr ""
+
+#: onadata/apps/viewer/views.py:726
+msgid "Attachment not found"
+msgstr ""
+
+#: onadata/apps/viewer/views.py:740
+msgid "Error: Attachment not found"
+msgstr ""
+
+#: onadata/apps/viewer/views.py:756
+#, python-format
+msgid "Requested instance view for '%(id_string)s'."
+msgstr ""
+
+#: onadata/libs/authentication.py:23
+msgid "Invalid username/password"
+msgstr ""
+
+#: onadata/libs/authentication.py:41
+msgid ""
+"Using basic authentication without HTTPS transmits credentials in clear "
+"text! You MUST connect via HTTPS to use basic authentication."
+msgstr ""
+
+#: onadata/libs/serializers/clone_xform_serializer.py:27
+#: onadata/libs/serializers/password_reset_serializer.py:102
+#: onadata/libs/serializers/share_project_serializer.py:32
+#: onadata/libs/serializers/share_xform_serializer.py:30
+#, python-format
+msgid "User '%(value)s' does not exist."
+msgstr ""
+
+#: onadata/libs/serializers/data_serializer.py:52
+#, python-format
+msgid "Invalid query: %(query)s"
+msgstr ""
+
+#: onadata/libs/serializers/metadata_serializer.py:10
+msgid "Data License"
+msgstr ""
+
+#: onadata/libs/serializers/metadata_serializer.py:11
+msgid "Form License"
+msgstr ""
+
+#: onadata/libs/serializers/metadata_serializer.py:13
+msgid "Media"
+msgstr ""
+
+#: onadata/libs/serializers/metadata_serializer.py:14
+msgid "Public Link"
+msgstr ""
+
+#: onadata/libs/serializers/metadata_serializer.py:16
+msgid "Supporting Document"
+msgstr ""
+
+#: onadata/libs/serializers/metadata_serializer.py:17
+msgid "External Export"
+msgstr ""
+
+#: onadata/libs/serializers/metadata_serializer.py:43
+#, python-format
+msgid "Invalid url %s."
+msgstr ""
+
+#: onadata/libs/serializers/password_reset_serializer.py:43
+msgid "uid is required!"
+msgstr ""
+
+#: onadata/libs/serializers/password_reset_serializer.py:48
+#, python-format
+msgid "Invalid uid %s"
+msgstr ""
+
+#: onadata/libs/serializers/password_reset_serializer.py:95
+msgid "Email"
+msgstr ""
+
+#: onadata/libs/serializers/password_reset_serializer.py:96
+msgid "Reset URL"
+msgstr ""
+
+#: onadata/libs/serializers/password_reset_serializer.py:126
+#, python-format
+msgid "Invalid token: %s"
+msgstr ""
+
+#: onadata/libs/serializers/share_project_serializer.py:41
+#: onadata/libs/serializers/share_xform_serializer.py:39
+#, python-format
+msgid "Unknown role '%(role)s'."
+msgstr ""
+
+#: onadata/libs/serializers/stats_serializer.py:45
+msgid "Expecting `group` and `name` query parameters."
+msgstr ""
+
+#: onadata/libs/serializers/stats_serializer.py:86
+msgid "Field not in XForm."
+msgstr ""
+
+#: onadata/libs/templates/404.html:5
+msgid "404 Error"
+msgstr ""
+
+#: onadata/libs/templates/405.html:5
+msgid "405 Error: Method Not Allowed!"
+msgstr ""
+
+#: onadata/libs/templates/500.html:5 templates/500.html:5
+msgid "500 Error"
+msgstr ""
+
+#: onadata/libs/templates/browser_message.html:17
+msgid "Browser Error"
+msgstr ""
+
+#: onadata/libs/templates/browser_message.html:19
+msgid "close"
+msgstr ""
+
+#: onadata/libs/templates/browser_message.html:24
+msgid "Recommended Browser Alert"
+msgstr ""
+
+#: onadata/libs/templates/browser_message.html:28
+msgid "Dear Sir or Madam,"
+msgstr ""
+
+#: onadata/libs/templates/browser_message.html:31
+msgid ""
+"Our tests indicate that you are currently using a browser that does not "
+"support complex navigation. We highly recommend that you switch to one of "
+"the browsers below in order to take full advantage of the Nigeria MDGs "
+"Information System."
+msgstr ""
+
+#: onadata/libs/templates/browser_message.html:42
+msgid "Thank You,"
+msgstr ""
+
+#: onadata/libs/templates/browser_message.html:45
+msgid "The NMIS Support Team"
+msgstr ""
+
+#: onadata/libs/templates/footer.html:5
+msgid "About Ona"
+msgstr ""
+
+#: onadata/libs/templates/footer.html:8
+msgid "Copyright &copy; 2014 Ona"
+msgstr ""
+
+#: onadata/libs/templates/home_topbar.html:14
+#: onadata/libs/templates/topbar.html:63 templates/topbar.html:22
+#: templates/topbar.html.py:93
+msgid "Forms"
+msgstr ""
+
+#: onadata/libs/templates/home_topbar.html:16
+#: onadata/libs/templates/topbar.html:65 templates/topbar.html:96
+msgid "People"
+msgstr ""
+
+#: onadata/libs/templates/home_topbar.html:18
+msgid "FAQ"
+msgstr ""
+
+#: onadata/libs/templates/home_topbar.html:19
+#: onadata/libs/templates/topbar.html:69
+msgid "Support"
+msgstr ""
+
+#: onadata/libs/templates/home_topbar.html:23
+#: onadata/libs/templates/registration/password_reset_complete.html:4
+msgid "Log In"
+msgstr ""
+
+#: onadata/libs/templates/main_index.html:9
+msgid "View LGAs"
+msgstr ""
+
+#: onadata/libs/templates/registration/activate.html:7
+#: onadata/libs/templates/registration/activation_complete.html:7
+msgid "Account Activated"
+msgstr ""
+
+#: onadata/libs/templates/registration/activate.html:14
+#: onadata/libs/templates/registration/activation_complete.html:14
+#, python-format
+msgid ""
+"\n"
+"        Your account has been successfully activated. You may log in\n"
+"        <a href=\"%(login_url)s\">here</a>."
+msgstr ""
+
+#: onadata/libs/templates/registration/activation_email.txt:3
+#, python-format
+msgid ""
+"You have registered on %(site_name)s. To activate your account\n"
+"please click on the link below:\n"
+"\n"
+"http://%(site_domain)s%(register_url)s\n"
+"\n"
+"The link above is valid for %(expiration_days)s day%(expiration_days_p)s.\n"
+msgstr ""
+
+#: onadata/libs/templates/registration/activation_email_subject.txt:1
+#, python-format
+msgid "Account activation on %(site_name)s"
+msgstr ""
+
+#: onadata/libs/templates/registration/login.html:28
+#, python-format
+msgid "New to ona.io? <a href=\"%(registration_url)s\">Create an account.</a>"
+msgstr ""
+
+#: onadata/libs/templates/registration/logout.html:7
+msgid "Successful Logout"
+msgstr ""
+
+#: onadata/libs/templates/registration/logout.html:10
+msgid "Thank you for using Ona, please come again!"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_change_done.html:6
+msgid "Password changed"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_change_form.html:7
+#: onadata/libs/templates/registration/password_change_form.html:17
+msgid "Change Password"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_complete.html:8
+msgid "Password reset successfully"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_complete.html:10
+#: templates/registration/login.html:16
+msgid "Log in"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_confirm.html:17
+msgid "Password reset failed"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_done.html:7
+msgid "Email Sent"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_done.html:10
+msgid "An email with password reset instructions has been sent."
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_email.html:3
+#, python-format
+msgid ""
+"\n"
+"    Hi %(user)s,\n"
+"\n"
+"    You recently requested a link to reset your %(site_name)s password for "
+"the username %(user)s.\n"
+"    Please set a new password by following the link below:\n"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_form.html:7
+msgid "Password Reset"
+msgstr ""
+
+#: onadata/libs/templates/registration/password_reset_form.html:11
+msgid ""
+"To reset your password please enter your email address below. A\n"
+"    message will be sent to your email address with a link for you to\n"
+"    reset your password."
+msgstr ""
+
+#: onadata/libs/templates/registration/registration_complete.html:7
+msgid "Registration Email Sent"
+msgstr ""
+
+#: onadata/libs/templates/registration/registration_complete.html:10
+msgid ""
+"A user account has been created for you and an email message has\n"
+"    been sent to the email address you provided."
+msgstr ""
+
+#: onadata/libs/templates/registration/registration_complete.html:14
+msgid ""
+"To activate your account and complete the registration process,\n"
+"    you must click the activation link provided in the email."
+msgstr ""
+
+#: onadata/libs/templates/registration/registration_form.html:7
+#: onadata/libs/templates/registration/registration_form.html:38
+#: templates/registration/login.html:21
+msgid "Register"
+msgstr ""
+
+#: onadata/libs/templates/registration/registration_form.html:14
+msgid "Fields marked wth an asterisk (*) are required."
+msgstr ""
+
+#: onadata/libs/templates/registration/registration_form.html:37
+msgid ""
+"By clicking the button, you agree to our <a href=\"/privacy\">privacy "
+"policy</a> and <a href=\"/tos\">terms of service</a>."
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:32 templates/topbar.html:87
+#, python-format
+msgid ""
+" <%%= geocoded_submission_count %%> submissions with geo data out of "
+"%(nb_sub)s total."
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:32 templates/topbar.html:87
+#, python-format
+msgid "%(nb_sub)s submissions"
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:36 templates/map.html:28
+msgid "Data"
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:68
+msgid "Syntax"
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:73 templates/topbar.html:101
+msgid "New Form"
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:80 templates/topbar.html:108
+msgid "Public profile"
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:83 templates/topbar.html:111
+msgid "API Token"
+msgstr ""
+
+#: onadata/libs/templates/topbar.html:86 templates/topbar.html:50
+#: templates/topbar.html.py:114
+msgid "Sign out"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:7
+msgid "Afghanistan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:8
+msgid "Albania"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:9
+msgid "Algeria"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:10
+msgid "American Samoa"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:11
+msgid "Andorra"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:12
+msgid "Angola"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:13
+msgid "Anguilla"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:14
+msgid "Antarctica"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:15
+msgid "Antigua and Barbuda"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:16
+msgid "Argentina"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:17
+msgid "Armenia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:18
+msgid "Aruba"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:19
+msgid "Australia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:20
+msgid "Austria"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:21
+msgid "Azerbaijan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:22
+msgid "Bahamas"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:23
+msgid "Bahrain"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:24
+msgid "Bangladesh"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:25
+msgid "Barbados"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:26
+msgid "Belarus"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:27
+msgid "Belgium"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:28
+msgid "Belize"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:29
+msgid "Benin"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:30
+msgid "Bermuda"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:31
+msgid "Bhutan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:32
+msgid "Bolivia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:33
+msgid "Bonaire, Sint Eustatius and Saba"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:34
+msgid "Bosnia and Herzegovina"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:35
+msgid "Botswana"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:36
+msgid "Brazil"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:37
+msgid "British Indian Ocean Territory"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:38
+msgid "Brunei Darussalam"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:39
+msgid "Bulgaria"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:40
+msgid "Burkina Faso"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:41
+msgid "Burundi"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:42
+msgid "Cambodia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:43
+msgid "Cameroon"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:44
+msgid "Canada"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:45
+msgid "Cape Verde"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:46
+msgid "Cayman Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:47
+msgid "Central African Republic"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:48
+msgid "Chad"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:49
+msgid "Chile"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:50
+msgid "China"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:51
+msgid "Christmas Island"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:52
+msgid "Cocos (Keeling) Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:53
+msgid "Colombia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:54
+msgid "Comoros"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:55
+msgid "Congo"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:56
+msgid "Congo, The Democratic Republic of the"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:57
+msgid "Cook Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:58
+msgid "Costa Rica"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:59
+msgid "Ivory Coast"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:60
+msgid "Croatia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:61
+msgid "Cuba"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:62
+msgid "Curacao"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:63
+msgid "Cyprus"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:64
+msgid "Czech Republic"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:65
+msgid "Denmark"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:66
+msgid "Djibouti"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:67
+msgid "Dominica"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:68
+msgid "Dominican Republic"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:69
+msgid "Ecuador"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:70
+msgid "Egypt"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:71
+msgid "El Salvador"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:72
+msgid "Equatorial Guinea"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:73
+msgid "Eritrea"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:74
+msgid "Estonia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:75
+msgid "Ethiopia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:76
+msgid "Falkland Islands (Malvinas)"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:77
+msgid "Faroe Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:78
+msgid "Fiji"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:79
+msgid "Finland"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:80
+msgid "France"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:81
+msgid "French Guiana"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:82
+msgid "French Polynesia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:83
+msgid "French Southern Territories"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:84
+msgid "Gabon"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:85
+msgid "Gambia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:86
+msgid "Georgia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:87
+msgid "Germany"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:88
+msgid "Ghana"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:89
+msgid "Gibraltar"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:90
+msgid "Greece"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:91
+msgid "Greenland"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:92
+msgid "Grenada"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:93
+msgid "Guadeloupe"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:94
+msgid "Guam"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:95
+msgid "Guatemala"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:96
+msgid "Guernsey"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:97
+msgid "Guinea"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:98
+msgid "Guinea-Bissau"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:99
+msgid "Guyana"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:100
+msgid "Haiti"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:101
+msgid "Heard Island and McDonald Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:102
+msgid "Holy See (Vatican City State)"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:103
+msgid "Honduras"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:104
+msgid "Hong Kong"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:105
+msgid "Hungary"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:106
+msgid "Iceland"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:107
+msgid "India"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:108
+msgid "Indonesia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:109
+msgid "Installations in International Waters"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:110
+msgid "Iran, Islamic Republic of"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:111
+msgid "Iraq"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:112
+msgid "Ireland"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:113
+msgid "Isle of Man"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:114
+msgid "Israel"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:115
+msgid "Italy"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:116
+msgid "Jamaica"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:117
+msgid "Japan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:118
+msgid "Jersey"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:119
+msgid "Jordan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:120
+msgid "Kazakhstan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:121
+msgid "Kenya"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:122
+msgid "Kiribati"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:123
+msgid "Korea, Democratic People's Republic of"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:124
+msgid "Korea, Republic of"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:126
+msgid "Kosovo"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:127
+msgid "Kuwait"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:128
+msgid "Kyrgyzstan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:129
+msgid "Lao People's Democratic Republic"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:130
+msgid "Latvia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:131
+msgid "Lebanon"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:132
+msgid "Lesotho"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:133
+msgid "Liberia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:134
+msgid "Libyan Arab Jamahiriya"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:135
+msgid "Liechtenstein"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:136
+msgid "Lithuania"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:137
+msgid "Luxembourg"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:138
+msgid "Macao"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:139
+msgid "Macedonia, The former Yugoslav Republic of"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:140
+msgid "Madagascar"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:141
+msgid "Malawi"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:142
+msgid "Malaysia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:143
+msgid "Maldives"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:144
+msgid "Mali"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:145
+msgid "Malta"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:146
+msgid "Marshall Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:147
+msgid "Martinique"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:148
+msgid "Mauritania"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:149
+msgid "Mauritius"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:150
+msgid "Mayotte"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:151
+msgid "Mexico"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:152
+msgid "Micronesia, Federated States of"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:153
+msgid "Moldova, Republic of"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:154
+msgid "Monaco"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:155
+msgid "Mongolia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:156
+msgid "Montenegro"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:157
+msgid "Montserrat"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:158
+msgid "Morocco"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:159
+msgid "Mozambique"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:160
+msgid "Myanmar"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:161
+msgid "Namibia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:162
+msgid "Nauru"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:163
+msgid "Nepal"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:164
+msgid "Netherlands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:165
+msgid "New Caledonia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:166
+msgid "New Zealand"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:167
+msgid "Nicaragua"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:168
+msgid "Niger"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:169
+msgid "Nigeria"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:170
+msgid "Niue"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:171
+msgid "Norfolk Island"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:172
+msgid "Northern Mariana Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:173
+msgid "Norway"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:174
+msgid "Oman"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:175
+msgid "Pakistan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:176
+msgid "Palau"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:177
+msgid "Palestinian Territory, Occupied"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:178
+msgid "Panama"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:179
+msgid "Papua New Guinea"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:180
+msgid "Paraguay"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:181
+msgid "Peru"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:182
+msgid "Philippines"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:183
+msgid "Pitcairn"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:184
+msgid "Poland"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:185
+msgid "Portugal"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:186
+msgid "Puerto Rico"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:187
+msgid "Qatar"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:188
+msgid "Reunion"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:189
+msgid "Romania"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:190
+msgid "Russian Federation"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:191
+msgid "Rwanda"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:192
+msgid "Saint Helena"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:193
+msgid "Saint Kitts and Nevis"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:194
+msgid "Saint Lucia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:195
+msgid "Saint Pierre and Miquelon"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:196
+msgid "Saint Vincent and the Grenadines"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:197
+msgid "Samoa"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:198
+msgid "San Marino"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:199
+msgid "Sao Tome and Principe"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:200
+msgid "Saudi Arabia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:201
+msgid "Senegal"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:202
+msgid "Serbia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:203
+msgid "Seychelles"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:204
+msgid "Sierra Leone"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:205
+msgid "Singapore"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:206
+msgid "Sint Maarten (Dutch Part)"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:207
+msgid "Slovakia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:208
+msgid "Slovenia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:209
+msgid "Solomon Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:210
+msgid "Somalia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:211
+msgid "South Africa"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:212
+msgid "South Georgia and the South Sandwich Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:213
+msgid "South Sudan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:214
+msgid "Spain"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:215
+msgid "Sri Lanka"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:216
+msgid "Sudan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:217
+msgid "Suriname"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:218
+msgid "Svalbard and Jan Mayen"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:219
+msgid "Swaziland"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:220
+msgid "Sweden"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:221
+msgid "Switzerland"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:222
+msgid "Syrian Arab Republic"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:223
+msgid "Taiwan, Province of China"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:224
+msgid "Tajikistan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:225
+msgid "Tanzania, United Republic of"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:226
+msgid "Thailand"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:227
+msgid "Timor-Leste"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:228
+msgid "Togo"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:229
+msgid "Tokelau"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:230
+msgid "Tonga"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:231
+msgid "Trinidad and Tobago"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:232
+msgid "Tunisia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:233
+msgid "Turkey"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:234
+msgid "Turkmenistan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:235
+msgid "Turks and Caicos Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:236
+msgid "Tuvalu"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:237
+msgid "Uganda"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:238
+msgid "Ukraine"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:239
+msgid "United Arab Emirates"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:240
+msgid "United Kingdom"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:241
+msgid "United States"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:242
+msgid "United States Minor Outlying Islands"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:243
+msgid "Uruguay"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:244
+msgid "Uzbekistan"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:245
+msgid "Vanuatu"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:246
+msgid "Venezuela"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:247
+msgid "Viet Nam"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:248
+msgid "Virgin Islands, British"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:249
+msgid "Virgin Islands, U.S."
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:250
+msgid "Wallis and Futuna"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:251
+msgid "Western Sahara"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:252
+msgid "Yemen"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:253
+msgid "Zambia"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:254
+msgid "Zimbabwe"
+msgstr ""
+
+#: onadata/libs/utils/country_field.py:255
+msgid "Unknown or unspecified country"
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:140
+#, python-format
+msgid ""
+"%(request_user)s is not allowed to make edit submissions to %(form_user)s's "
+"%(form_title)s form."
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:167
+#, python-format
+msgid ""
+"%(request_user)s is not allowed to make submissions to %(form_user)s's "
+"%(form_title)s form."
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:302
+msgid "File likely corrupted during transmission, please try later."
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:312
+#: onadata/libs/utils/viewer_tools.py:117
+#, python-format
+msgid "Exception in request: %(class)s: %(error)s"
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:348
+msgid "The requested file could not be found."
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:387
+msgid "Form with this id or SMS-keyword already exists."
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:393
+msgid "Invalid URL format."
+msgstr ""
+
+#: onadata/libs/utils/logger_tools.py:405
+msgid "Form validation timeout, please try again."
+msgstr ""
+
+#: onadata/libs/utils/viewer_tools.py:66
+msgid "There should be exactly one attribute in this document."
+msgstr ""
+
+#: templates/404_xls_analyzer_error.html:5
+msgid "Error"
+msgstr ""
+
+#: templates/500.html:8
+msgid ""
+"If this is a significant error that needs to be fixed, please send a support "
+"request to support@kobotoolbox.org with information about what triggered "
+"this error."
+msgstr ""
+
+#: templates/dashboard.html:103
+#, python-format
+msgid ""
+"\n"
+"The url \"of\" this web application <strong>%(url)s</strong>\n"
+"must be given to ODK Collect before it will get forms from and\n"
+"submit data to formhub. In Collect's Main Menu, press the Menu\n"
+"button. Select Server Preferences, then Server. Enter\n"
+"<strong>%(url)s</strong> as the server. "
+msgstr ""
+
+#: templates/data_view.html:13 templates/export_list.html:9
+#: templates/stats_tables.html:11
+msgid "Return to"
+msgstr ""
+
+#: templates/instance.html:25
+msgid "Loading..."
+msgstr ""
+
+#: templates/map.html:247
+msgid ""
+"Are you sure you want to delete this record? If you are unsure about "
+"deleting this record press <strong>Cancel</strong>."
+msgstr ""
+
+#: templates/profile.html:9 templates/published_forms__list.html:8
+#: templates/topbar.html:12 templates/topbar.html.py:36
+msgid "Projects"
+msgstr ""
+
+#: templates/profile.html:35
+msgid "You currently have no projects yet."
+msgstr ""
+
+#: templates/profile.html:36
+msgid "You can create a project by deploying one of your forms."
+msgstr ""
+
+#: templates/profile.html:38
+msgid "Click here to go to your forms list."
+msgstr ""
+
+#: templates/published_forms__list.html:10
+msgid "Shared By"
+msgstr ""
+
+#: templates/published_forms__list.html:12
+msgid "Last Modified"
+msgstr ""
+
+#: templates/registration/login.html:20
+msgid "Forgot password"
+msgstr ""
+
+#: templates/registration/login.html:20
+msgid "Reset it"
+msgstr ""
+
+#: templates/registration/login.html:21
+msgid "Not member"
+msgstr ""
+
+#: templates/show.html:21
+msgid "Form Settings"
+msgstr ""
+
+#: templates/show.html:26
+msgid "Accept Submissions"
+msgstr ""
+
+#: templates/show.html:37
+msgid "download"
+msgstr ""
+
+#: templates/show.html:94
+msgid "Allow anyone from the web to view this page."
+msgstr ""
+
+#: templates/show.html:104
+msgid "Allow anyone from the web to inspect this project&rsquo;s data."
+msgstr ""
+
+#: templates/show.html:137
+msgid "Save Permissions"
+msgstr ""
+
+#: templates/show.html:173
+msgid "Background Documents"
+msgstr ""
+
+#: templates/show.html:284
+msgid ""
+"Replace the form with a new XLSForm file. This can only be done if no data "
+"has yet been collected."
+msgstr ""
+
+#: templates/show.html:366
+msgid "How to Collect Data on a Mobile Device"
+msgstr ""
+
+#: templates/show.html:372
+msgid "Collect data on your Android device with KoBoCollect"
+msgstr ""
+
+#: templates/show.html:373
+msgid "To start collecting data with our "
+msgstr ""
+
+#: templates/show.html:375
+msgid "KoBoCollect Android app"
+msgstr ""
+
+#: templates/show.html:376
+msgid ""
+"you need to enter the following URL into the URL field in the KoBoCollect "
+"settings: "
+msgstr ""
+
+#: templates/show.html:384
+msgid "Collect Data on Any Device in Your Browser"
+msgstr ""
+
+#: templates/stats_tables.html:17
+msgid "Create Tables"
+msgstr ""
+
+#: templates/stats_tables.html:29
+msgid "Select a question"
+msgstr ""
+
+#: templates/stats_tables.html:35
+msgid "Select summary method"
+msgstr ""
+
+#: templates/stats_tables.html:39
+msgid "Frequencies"
+msgstr ""
+
+#: templates/stats_tables.html:43
+msgid "Percentage of total respondents"
+msgstr ""
+
+#: templates/stats_tables.html:47
+msgid "Mean (Average)"
+msgstr ""
+
+#: templates/stats_tables.html:51
+msgid "Median"
+msgstr ""
+
+#: templates/stats_tables.html:55
+msgid "Mode"
+msgstr ""
+
+#: templates/stats_tables.html:60
+msgid "Which labels should be displayed?"
+msgstr ""
+
+#: templates/stats_tables.html:67
+msgid "Create"
+msgstr ""
+
+#: templates/topbar.html:28
+msgid "Question Library"
+msgstr ""
