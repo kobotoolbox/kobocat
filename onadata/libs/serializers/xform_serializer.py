@@ -1,4 +1,3 @@
-from django.forms import widgets
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -28,6 +27,17 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
                                                lookup_field='pk')
     users = serializers.SerializerMethodField('get_xform_permissions')
 
+    # Tests are expecting this "public" to be passed only "True" or "False"
+    # and as a string. I don't know how it worked pre-migrations to django 1.8
+    # but now it must be implemented manually
+    def validate(self, attrs):
+        shared = attrs.get('shared')
+        if shared not in ('True', 'False'):
+            msg = "'%s' value must be either True or False." % shared
+            raise serializers.ValidationError({'shared': msg})
+        attrs['shared'] = shared == 'True'
+        return attrs
+
     class Meta:
         model = XForm
         read_only_fields = (
@@ -35,6 +45,14 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             'bamboo_dataset', 'last_submission_time')
         exclude = ('json', 'xml', 'xls', 'user',
                    'has_start_time', 'shared', 'shared_data')
+
+    # Again, this is to match unit tests
+    @property
+    def data(self):
+        data = super(XFormSerializer, self).data
+        if 'num_of_submissions' in data and data['num_of_submissions'] is None:
+            data['num_of_submissions'] = 0
+        return data
 
     def get_xform_permissions(self, obj):
         return get_object_users_with_permissions(obj, serializable=True)

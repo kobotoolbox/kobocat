@@ -149,7 +149,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
             TokenAuthentication
         ]
         # Do not use `SessionAuthentication`, which implicitly requires CSRF prevention
-        # (which in turn requires that the CSRF token be submitted as a cookie and in the 
+        # (which in turn requires that the CSRF token be submitted as a cookie and in the
         # body of any "unsafe" requests).
         if SessionAuthentication in self.authentication_classes:
             self.authentication_classes.remove(SessionAuthentication)

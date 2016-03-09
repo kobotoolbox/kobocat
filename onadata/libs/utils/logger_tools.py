@@ -287,7 +287,7 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
         error = OpenRosaResponseNotFound(
             _(u"Form does not exist on this account")
         )
-    except ExpatError:
+    except ExpatError as e:
         error = OpenRosaResponseBadRequest(_(u"Improperly formatted XML."))
     except DuplicateInstance:
         response = OpenRosaResponse(_(u"Duplicate submission"))
@@ -407,7 +407,12 @@ def publish_form(callback):
     except Exception as e:
         # TODO: Something less horrible. This masks storage backend
         # `ImportError`s and who knows what else
-        raise # JNM TEMPORARY
+
+        # ODK validation errors are vanilla errors and it masks a lot of regular
+        # errors if we try to catch it so let's catch it, BUT reraise it
+        # if we don't see typical ODK validation error messages in it.
+        if u"ODK Validate Errors" not in e.message:
+            raise
 
         # error in the XLS file; show an error to the user
         return {

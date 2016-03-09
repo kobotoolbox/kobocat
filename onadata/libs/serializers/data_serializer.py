@@ -37,7 +37,7 @@ class DataListSerializer(serializers.Serializer):
     def to_representation(self, obj):
         request = self.context.get('request')
 
-        if not hasattr(obj, 'xform'):
+        if not hasattr(obj, 'xform') and not isinstance(obj, XForm):
             return super(DataListSerializer, self).to_representation(obj)
 
         query_params = (request and request.query_params) or {}
@@ -58,9 +58,7 @@ class DataListSerializer(serializers.Serializer):
             'sort': query_params.get('sort')
         }
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
-        records = list(record for record in cursor)
-
-        return records
+        return list(cursor)
 
 
 class DataInstanceSerializer(serializers.Serializer):

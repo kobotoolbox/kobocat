@@ -115,7 +115,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = view(request)
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data['detail'],
-                         u"Invalid username/password")
+                         u"Invalid username/password.")
         auth = BasicAuth('bob', 'bobbob')
 
         # redo the request
@@ -129,10 +129,13 @@ class TestConnectViewSet(TestAbstractViewSet):
 
     @patch('onadata.libs.serializers.password_reset_serializer.send_mail')
     def test_request_reset_password(self, mock_send_mail):
+
+
         data = {'email': self.user.email,
                 'reset_url': u'http://testdomain.com/reset_form'}
         request = self.factory.post('/', data=data)
         response = self.view(request)
+
         self.assertTrue(mock_send_mail.called)
         self.assertEqual(response.status_code, 204)
 

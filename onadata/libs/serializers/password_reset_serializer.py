@@ -105,7 +105,9 @@ class PasswordResetSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
-        return PasswordReset(**validated_data)
+        obj = PasswordReset(**validated_data)
+        obj.save()
+        return obj
 
 
 class PasswordResetChangeSerializer(serializers.Serializer):
@@ -113,14 +115,13 @@ class PasswordResetChangeSerializer(serializers.Serializer):
     new_password = serializers.CharField(min_length=4, max_length=128)
     token = serializers.CharField(max_length=128)
 
-    def validate_uid(self, attrs, source):
-        get_user_from_uid(attrs['uid'])
+    def validate_uid(self, value):
+        get_user_from_uid(value)
+        return value
 
-        return attrs
-
-    def validate_token(self, attrs, source, *args, **kwargs):
+    def validate(self, attrs):
         user = get_user_from_uid(attrs.get('uid'))
-        value = attrs[source]
+        value = attrs['token']
 
         if not default_token_generator.check_token(user, value):
             raise ValidationError(_("Invalid token: %s") % value)
@@ -128,4 +129,6 @@ class PasswordResetChangeSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        return PasswordResetChange.objects.create(**validated_data)
+        obj = PasswordResetChange(**validated_data)
+        obj.save()
+        return obj

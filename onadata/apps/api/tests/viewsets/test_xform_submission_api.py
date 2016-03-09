@@ -36,8 +36,9 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
             with open(submission_path) as sf:
                 data = {'xml_submission_file': sf, 'media_file': f}
                 request = self.factory.post(
-                    '%s/submission' % self.user.username, data)
+                    '/%s/submission' % self.user.username, data)
                 request.user = AnonymousUser()
+
                 response = self.view(request, username=self.user.username)
                 self.assertContains(response, 'Successful submission',
                                     status_code=201)
@@ -59,14 +60,21 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
         with open(path) as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
+
             submission_path = os.path.join(
                 self.main_directory, 'fixtures',
                 'transportation', 'instances', s, s + '.xml')
+
             with open(submission_path) as sf:
                 data = {'xml_submission_file': sf, 'media_file': f}
                 request = self.factory.post('/submission', data)
                 response = self.view(request)
                 self.assertEqual(response.status_code, 401)
+
+                # rewind the file and redo the request since they were
+                # consummed
+                sf.seek(0)
+                request = self.factory.post('/submission', data)
                 auth = DigestAuth('bob', 'bobbob')
                 request.META.update(auth(request.META, response))
                 response = self.view(request, username=self.user.username)
@@ -101,6 +109,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
                 request = self.factory.post('/submission', data)
                 response = self.view(request)
                 self.assertEqual(response.status_code, 401)
+
+                # rewind the file and redo the request since they were
+                # consummed
+                sf.seek(0)
+                request = self.factory.post('/submission', data)
                 auth = DigestAuth('alice', 'bobbob')
                 request.META.update(auth(request.META, response))
                 response = self.view(request)
@@ -118,8 +131,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
             response = self.view(request)
             self.assertEqual(response.status_code, 401)
 
+            # redo the request since it were consummed
+            request = self.factory.post('/submission', data, format='json')
             auth = DigestAuth('bob', 'bobbob')
             request.META.update(auth(request.META, response))
+
             response = self.view(request)
             self.assertContains(response, 'Successful submission',
                                 status_code=201)
@@ -144,10 +160,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
             response = self.view(request)
             self.assertEqual(response.status_code, 401)
 
+            request = self.factory.post('/submission', data, format='json')
             auth = DigestAuth('bob', 'bobbob')
             request.META.update(auth(request.META, response))
             response = self.view(request)
-            self.assertContains(response, 'error": "Improperly',
+            self.assertContains(response, 'error":"Improperly',
                                 status_code=400)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
@@ -174,7 +191,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
             auth = DigestAuth('bob', 'bobbob')
             request.META.update(auth(request.META, response))
             response = self.view(request)
-            self.assertContains(response, 'error": "Received empty submission',
+            self.assertContains(response, 'error":"Received empty submission',
                                 status_code=400)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
@@ -199,6 +216,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
             submission_path = os.path.join(
                 self.main_directory, 'fixtures',
                 'transportation', 'instances', s, s + '.xml')
+
             with open(submission_path) as sf:
                 data = {'xml_submission_file': sf, 'media_file': f}
                 request = self.factory.post('/submission', data)
@@ -206,6 +224,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
                 self.assertEqual(response.status_code, 401)
                 response = self.view(request, username=self.user.username)
                 self.assertEqual(response.status_code, 401)
+
+                # rewind the file and redo the request since they were
+                # consummed
+                sf.seek(0)
+                request = self.factory.post('/submission', data)
                 auth = DigestAuth('bob', 'bobbob')
                 request.META.update(auth(request.META, response))
                 response = self.view(request, username=self.user.username)
@@ -270,6 +293,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
                 response = self.view(request, username=self.user.username)
                 self.assertEqual(response.status_code, 401)
                 self.assertEqual(count, Attachment.objects.count())
+
+                # rewind the file and redo the request since they were
+                # consummed
+                sf.seek(0)
+                request = self.factory.post('/submission', data)
                 auth = DigestAuth('alice', 'bobbob')
                 request.META.update(auth(request.META, response))
                 response = self.view(request, username=self.user.username)
@@ -305,6 +333,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
                 response = self.view(request, username=self.user.username)
                 self.assertEqual(response.status_code, 401)
                 self.assertEqual(count, Attachment.objects.count())
+
+                # rewind the file and redo the request since they were
+                # consummed
+                sf.seek(0)
+                request = self.factory.post('/submission', data)
                 auth = DigestAuth('alice', 'bobbob')
                 request.META.update(auth(request.META, response))
                 response = self.view(request, username=self.user.username)
@@ -317,6 +350,8 @@ class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, 401)
 
+        # redo the request since it's been consummed
+        request = self.factory.post('/submission', data, format='json')
         auth = DigestAuth('bob', 'bobbob')
         request.META.update(auth(request.META, response))
         response = self.view(request)
