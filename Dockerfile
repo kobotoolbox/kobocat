@@ -27,12 +27,13 @@ RUN diff -q /tmp/kobocat_base_requirements.pip /srv/src/kobocat/requirements/bas
     pip install --upgrade -r /tmp/kobocat_base_requirements.pip \
     || true # Prevent non-zero exit code.
 
-# Wipe out the base image's `kobocat` dir (**including migrations**) and copy over this directory in it's live state.
+# `pip` packages installed in the base image that should be removed can be listed in `requirements/uninstall.pip`.
+COPY ./requirements/ /srv/src/kobocat/requirements/
+RUN bash -c '[[ -e /srv/src/kobocat/requirements/uninstall.pip ]] && pip uninstall --yes -r /srv/src/kobocat/requirements/uninstall.pip'
+
+# Wipe out the base image's `kobocat` dir (**including migration files**) and copy over this directory in its live state.
 RUN rm -rf /srv/src/kobocat
 COPY . /srv/src/kobocat
-
-# `pip` packages installed in the base image that should be removed can be listed in `requirements/uninstall.pip`.
-RUN bash -c '[[ -e /srv/src/kobocat/requirements/uninstall.pip ]] && pip uninstall --yes -r /srv/src/kobocat/requirements/uninstall.pip'
 
 RUN chmod +x /etc/service/wsgi/run && \
     chmod +x /etc/service/celery/run && \
