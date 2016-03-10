@@ -29,7 +29,8 @@ RUN diff -q /tmp/kobocat_base_requirements.pip /srv/src/kobocat/requirements/bas
 
 # `pip` packages installed in the base image that should be removed can be listed in `requirements/uninstall.pip`.
 COPY ./requirements/ /srv/src/kobocat/requirements/
-RUN bash -c '[[ -e /srv/src/kobocat/requirements/uninstall.pip ]] && pip uninstall --yes -r /srv/src/kobocat/requirements/uninstall.pip'
+RUN bash -c '[[ -e /srv/src/kobocat/requirements/uninstall.pip ]] && pip uninstall --yes -r /srv/src/kobocat/requirements/uninstall.pip' \
+    || true  # Prevent non-zero status code when there's nothing to uninstall.
 
 # Wipe out the base image's `kobocat` dir (**including migration files**) and copy over this directory in its live state.
 RUN rm -rf /srv/src/kobocat
