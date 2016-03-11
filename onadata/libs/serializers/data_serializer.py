@@ -37,7 +37,7 @@ class DataListSerializer(serializers.Serializer):
     def to_native(self, obj):
         request = self.context.get('request')
 
-        if not hasattr(obj, 'xform'):
+        if not isinstance(obj, XForm):
             return super(DataListSerializer, self).to_native(obj)
 
         query_params = (request and request.QUERY_PARAMS) or {}
