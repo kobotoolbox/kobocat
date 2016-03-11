@@ -19,21 +19,6 @@ class DataSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DataListSerializer(serializers.Serializer):
-
-    @property
-    def data(self):
-        if self._data is None:
-            obj = self.object
-
-            if self.many:
-                self._data = []
-                for item in obj:
-                    self._data.extend(self.to_representation(item))
-            else:
-                self._data = self.to_representation(obj)
-
-        return self._data
-
     def to_representation(self, obj):
         request = self.context.get('request')
 
