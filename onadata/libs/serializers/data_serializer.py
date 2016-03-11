@@ -22,7 +22,7 @@ class DataListSerializer(serializers.Serializer):
     def to_representation(self, obj):
         request = self.context.get('request')
 
-        if not hasattr(obj, 'xform') and not isinstance(obj, XForm):
+        if not isinstance(obj, XForm):
             return super(DataListSerializer, self).to_representation(obj)
 
         query_params = (request and request.query_params) or {}
