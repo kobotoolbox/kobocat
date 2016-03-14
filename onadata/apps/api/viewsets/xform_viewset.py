@@ -11,7 +11,7 @@ from django.utils import six
 
 from rest_framework import exceptions
 from rest_framework import status
-from rest_framework.decorators import action, detail_route
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ModelViewSet
@@ -151,7 +151,7 @@ def _get_user(username):
 
 
 def _get_owner(request):
-    owner = request.DATA.get('owner') or request.user
+    owner = request.data.get('owner') or request.user
 
     if isinstance(owner, six.string_types):
         owner = _get_user(owner)
@@ -717,7 +717,7 @@ data (instance/submission per row)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def form(self, request, format='json', **kwargs):
         form = self.get_object()
         if format not in ['json', 'xml', 'xls']:
@@ -726,7 +726,7 @@ data (instance/submission per row)
                                           status=400)
         return response_for_format(form, format=format)
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def enketo(self, request, **kwargs):
         self.object = self.get_object()
         form_url = _get_form_url(request, self.object.user.username)
@@ -777,12 +777,12 @@ data (instance/submission per row)
                                        token,
                                        meta)
 
-    @action(methods=['POST'])
+    @detail_route(methods=['POST'])
     def share(self, request, *args, **kwargs):
         self.object = self.get_object()
 
         data = {}
-        for key, val in request.DATA.iteritems():
+        for key, val in request.data.iteritems():
             data[key] = val
         data.update({'xform': self.object.pk})
 
@@ -796,10 +796,10 @@ data (instance/submission per row)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['GET'])
+    @detail_route(methods=['GET'])
     def clone(self, request, *args, **kwargs):
         self.object = self.get_object()
-        data = {'xform': self.object.pk, 'username': request.DATA['username']}
+        data = {'xform': self.object.pk, 'username': request.data['username']}
         serializer = CloneXFormSerializer(data=data)
         if serializer.is_valid():
             clone_to_user = User.objects.get(username=data['username'])
@@ -837,3 +837,4 @@ data (instance/submission per row)
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
             status.HTTP_400_BAD_REQUEST)
+

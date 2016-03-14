@@ -4,9 +4,8 @@ from rest_framework.exceptions import ParseError
 
 
 class MultiLookupMixin(object):
-    def get_object(self, queryset=None):
-        if queryset is None:
-            queryset = self.filter_queryset(self.get_queryset())
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
         filter_kwargs = {}
         serializer = self.get_serializer()
         lookup_fields = getattr(self, 'lookup_fields', [])

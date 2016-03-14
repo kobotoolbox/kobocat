@@ -36,7 +36,7 @@ class TestUserPermissions(TestAbstractViewSet):
             'bamboo_dataset': u''
         }
         path = os.path.join(
-            settings.PROJECT_ROOT, "apps", "main", "tests", "fixtures",
+            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.xls")
 
         bob = self.user
@@ -50,6 +50,8 @@ class TestUserPermissions(TestAbstractViewSet):
             self.assertEqual(response.status_code, 403)
 
             role.ManagerRole.add(self.user, bob.profile)
+            xls_file.seek(0)
+            request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
             self.assertEqual(response.status_code, 201)
 
@@ -71,6 +73,7 @@ class TestUserPermissions(TestAbstractViewSet):
         request = self.factory.get('/', **self.extra)
         xfs = XFormSerializer(instance=self.xform,
                               context={'request': request})
+
         data = json.loads(JSONRenderer().render(xfs.data))
         data.update({'public': True, 'description': description})
 
@@ -78,7 +81,10 @@ class TestUserPermissions(TestAbstractViewSet):
 
         request = self.factory.put('/', data=data, **self.extra)
         response = view(request, pk=self.xform.id)
-        self.assertEqual(response.status_code, 400)
+
+        # used to be a 400, but django guardian now filters those and yet
+        # still return something. So the expexted behavior is a 404
+        self.assertEqual(response.status_code, 404)
         self.assertFalse(self.xform.shared)
 
         role.ManagerRole.add(self.user, self.xform)

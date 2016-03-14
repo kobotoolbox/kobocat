@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
 from onadata.apps.api.models.organization_profile import OrganizationProfile
@@ -186,16 +186,22 @@ https://example.com/api/v1/orgs/modilabs/members -H "Content-Type: application/j
 """
     queryset = OrganizationProfile.objects.all()
     serializer_class = OrganizationSerializer
-    lookup_field = 'user'
     permission_classes = [permissions.DjangoObjectPermissions]
     filter_backends = (OrganizationPermissionFilter,)
 
-    @action(methods=['DELETE', 'GET', 'POST', 'PUT'])
+    # This is NOT DRF lookup_field. DRF lookup_field is only located on
+    # seralizers and is deprecated and replaced by Meta.extra_kwargs['url']['lookup field']
+    # This field is has been added by the previous dev, and is used to generate
+    # a custom url routing on the fly. Basically it will be added in the
+    # url regex.
+    lookup_field = 'user'
+
+    @detail_route(methods=['DELETE', 'GET', 'POST', 'PUT'])
     def members(self, request, *args, **kwargs):
         organization = self.get_object()
         status_code = status.HTTP_200_OK
         data = []
-        username = request.DATA.get('username') or request.QUERY_PARAMS.get(
+        username = request.data.get('username') or request.query_params.get(
             'username')
 
         if request.method in ['DELETE', 'POST', 'PUT'] and not username:
@@ -205,7 +211,7 @@ https://example.com/api/v1/orgs/modilabs/members -H "Content-Type: application/j
             data, status_code = _add_username_to_organization(
                 organization, username)
         elif request.method == 'PUT':
-            role = request.DATA.get('role')
+            role = request.data.get('role')
             role_cls = ROLES.get(role)
 
             if not role or not role_cls:

@@ -11,11 +11,11 @@ class DigestAuthentication(BaseAuthentication):
         self.authenticator = HttpDigestAuthenticator()
 
     def authenticate(self, request):
+
         auth = get_authorization_header(request).split()
 
         if not auth or auth[0].lower() != b'digest':
             return None
-
         if self.authenticator.authenticate(request):
             return request.user, None
         else:

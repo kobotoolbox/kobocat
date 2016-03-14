@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 from rest_framework import serializers
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import detail_route
 from rest_framework.exceptions import ParseError
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ModelViewSet
@@ -125,19 +125,24 @@ curl -X PATCH -d '{"country": "KE"}' https://example.com/api/v1/profiles/demo \
 """
     queryset = UserProfile.objects.exclude(user__pk=settings.ANONYMOUS_USER_ID)
     serializer_class = UserProfileSerializer
-    lookup_field = 'user'
     permission_classes = [UserProfilePermissions]
     ordering = ('user__username', )
 
-    def get_object(self, queryset=None):
+    # This is NOT DRF lookup_field. DRF lookup_field is only located on
+    # seralizers and is deprecated and replaced by Meta.extra_kwargs['url']['lookup field']
+    # This field is has been added by the previous dev, and is used to generate
+    # a custom url routing on the fly. Basically it will be added in the
+    # url regex.
+    lookup_field = 'user'
+
+    def get_object(self):
         """Lookup user profile by pk or username"""
         lookup = self.kwargs.get(self.lookup_field, None)
         if lookup is None:
             raise ParseError(
                 'Expected URL keyword argument `%s`.' % self.lookup_field
             )
-        if queryset is None:
-            queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset())
 
         try:
             pk = int(lookup)
@@ -156,11 +161,11 @@ curl -X PATCH -d '{"country": "KE"}' https://example.com/api/v1/profiles/demo \
 
         return obj
 
-    @action(methods=['POST'])
+    @detail_route(methods=['POST'])
     def change_password(self, request, *args, **kwargs):
         user_profile = self.get_object()
-        current_password = request.DATA.get('current_password', None)
-        new_password = request.DATA.get('new_password', None)
+        current_password = request.data.get('current_password', None)
+        new_password = request.data.get('new_password', None)
 
         if new_password:
             if user_profile.user.check_password(current_password):

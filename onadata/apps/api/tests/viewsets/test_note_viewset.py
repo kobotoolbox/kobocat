@@ -27,6 +27,7 @@ class TestNoteViewSet(TestBase):
         note['instance'] = dataid
         request = self.factory.post('/', data=note, **self.extra)
         self.assertTrue(self.xform.instances.count())
+
         response = self.view(request)
         self.assertEqual(response.status_code, 201)
         self.pk = response.data['id']

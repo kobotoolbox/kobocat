@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.core.serializers import serialize
 from django.utils.translation import ugettext_lazy
 
-from settings import PROJECT_ROOT
+from settings import ONADATA_DIR
 from onadata.apps.logger.models import XForm, Instance
 
 
@@ -14,7 +14,7 @@ class Command(BaseCommand):
     help = ugettext_lazy("Export ODK forms and instances to JSON.")
 
     def handle(self, *args, **kwargs):
-        fixtures_dir = os.path.join(PROJECT_ROOT, "json_xform_fixtures")
+        fixtures_dir = os.path.join(ONADATA_DIR, "json_xform_fixtures")
         if not os.path.exists(fixtures_dir):
             os.mkdir(fixtures_dir)
 

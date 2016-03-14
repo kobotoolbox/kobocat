@@ -95,18 +95,19 @@ class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField(label=_("Email"), max_length=254)
     reset_url = serializers.URLField(label=_("Reset URL"), max_length=254)
 
-    def validate_email(self, attrs, source):
-        value = attrs[source]
+    def validate_email(self, value):
         users = User.objects.filter(email__iexact=value)
 
         if users.count() == 0:
             raise ValidationError(_(u"User '%(value)s' does not exist.")
                                   % {"value": value})
 
-        return attrs
+        return value
 
-    def restore_object(self, attrs, instance=None):
-        return PasswordReset(**attrs)
+    def create(self, validated_data):
+        obj = PasswordReset(**validated_data)
+        obj.save()
+        return obj
 
 
 class PasswordResetChangeSerializer(serializers.Serializer):
@@ -114,19 +115,20 @@ class PasswordResetChangeSerializer(serializers.Serializer):
     new_password = serializers.CharField(min_length=4, max_length=128)
     token = serializers.CharField(max_length=128)
 
-    def validate_uid(self, attrs, source):
-        get_user_from_uid(attrs['uid'])
+    def validate_uid(self, value):
+        get_user_from_uid(value)
+        return value
 
-        return attrs
-
-    def validate_token(self, attrs, source, *args, **kwargs):
+    def validate(self, attrs):
         user = get_user_from_uid(attrs.get('uid'))
-        value = attrs[source]
+        value = attrs['token']
 
         if not default_token_generator.check_token(user, value):
             raise ValidationError(_("Invalid token: %s") % value)
 
         return attrs
 
-    def restore_object(self, attrs, instance=None):
-        return PasswordResetChange(**attrs)
+    def create(self, validated_data):
+        obj = PasswordResetChange(**validated_data)
+        obj.save()
+        return obj

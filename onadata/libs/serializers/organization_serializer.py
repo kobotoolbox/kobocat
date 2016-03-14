@@ -10,55 +10,51 @@ from onadata.libs.permissions import get_role_in_org
 
 
 class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
-    org = serializers.WritableField(source='user.username')
+    org = serializers.CharField(source='user.username', required=True)
+    name = serializers.CharField(source='organization', required=True)
     user = serializers.HyperlinkedRelatedField(
         view_name='user-detail', lookup_field='username', read_only=True)
     creator = serializers.HyperlinkedRelatedField(
         view_name='user-detail', lookup_field='username', read_only=True)
     users = serializers.SerializerMethodField('get_org_permissions')
 
+
+    # There is a bit of a mixup here, variables are called org, names
+    # organization, org_name, username, etc.
+    # Basically an organization is pair of User with a "username" and a
+    # Organization with "name" that is the same as the user.username.
+    # Organization si a subclass of UserProfile, and hence is attached to
+    # the user.
+    # An organization also has some kind of verbose name, which is
+    # misleadingly stored in the atribute Organization.organization.
+
+    # Curently the tests create an organization by sending :
+    #        'org': u'someusername',
+    #        'name': u'A verbose name',
+    # with "org" being the username, and 'name' being the verbose name.
+
     class Meta:
         model = OrganizationProfile
-        lookup_field = 'user'
         exclude = ('created_by', 'is_organization', 'organization')
+        extra_kwargs = {
+            'url': {'lookup_field': 'user'}
+        }
 
-    def restore_object(self, attrs, instance=None):
-        if instance:
-            return super(OrganizationSerializer, self)\
-                .restore_object(attrs, instance)
-
-        org = attrs.get('user.username', None)
-        org_name = attrs.get('name', None)
-        org_exists = False
+    def create(self, validated_data):
+        # get('user.username') does not work anymore:
+        # username is in a nested dict
+        org = validated_data.get('user', {}).get('username', None)
         creator = None
-
-        try:
-            User.objects.get(username=org)
-        except User.DoesNotExist:
-            pass
-        else:
-            self.errors['org'] = u'Organization %s already exists.' % org
-            org_exists = True
 
         if 'request' in self.context:
             creator = self.context['request'].user
 
-        if org and org_name and creator and not org_exists:
-            attrs['organization'] = org_name
-            orgprofile = tools.create_organization_object(org, creator, attrs)
+        orgprofile = tools.create_organization_object(org, creator, validated_data)
+        orgprofile.save()
+        return orgprofile
 
-            return orgprofile
-
-        if not org:
-            self.errors['org'] = u'org is required!'
-
-        if not org_name:
-            self.errors['name'] = u'name is required!'
-
-        return attrs
-
-    def validate_org(self, attrs, source):
-        org = attrs[source].lower()
+    def validate_org(self, value):
+        org = value.lower()
         if org in RegistrationFormUserProfile._reserved_usernames:
             raise ValidationError(
                 u"%s is a reserved name, please choose another" % org)
@@ -66,13 +62,11 @@ class OrganizationSerializer(serializers.HyperlinkedModelSerializer):
             raise ValidationError(
                 u'organization may only contain alpha-numeric characters and '
                 u'underscores')
-        try:
-            User.objects.get(username=org)
-        except User.DoesNotExist:
-            attrs[source] = org
 
-            return attrs
-        raise ValidationError(u'%s already exists' % org)
+        if User.objects.filter(username=org).exists():
+            raise ValidationError(u'%s already exists' % org)
+
+        return value
 
     def get_org_permissions(self, obj):
         members = get_organization_members(obj) if obj else []

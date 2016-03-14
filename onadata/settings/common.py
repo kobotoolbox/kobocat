@@ -23,9 +23,10 @@ from pymongo import MongoClient
 
 djcelery.setup_loader()
 
-CURRENT_FILE = os.path.abspath(__file__)
-PROJECT_ROOT = os.path.realpath(
-    os.path.join(os.path.dirname(CURRENT_FILE), '..//'))
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+ONADATA_DIR = BASE_DIR
+PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
+
 PRINT_EXCEPTION = False
 
 TEMPLATED_EMAIL_TEMPLATE_DIR = 'templated_email/'
@@ -85,7 +86,7 @@ MEDIA_URL = 'http://localhost:8000/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+STATIC_ROOT = os.path.join(ONADATA_DIR, 'static')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -180,19 +181,21 @@ MIDDLEWARE_CLASSES = (
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
+    # Django 1.8 removes TransactionMiddleware (was deprecated in 1.6). See:
+    # https://docs.djangoproject.com/en/1.6/topics/db/transactions/#transaction-middleware
+    #'django.middleware.transaction.TransactionMiddleware',
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
 )
 
-LOCALE_PATHS = (os.path.join(PROJECT_ROOT, 'onadata.apps.main', 'locale'), )
+LOCALE_PATHS = (os.path.join(ONADATA_DIR, 'onadata.apps.main', 'locale'), )
 
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
 
 
 TEMPLATE_DIRS = (
-    os.path.join(PROJECT_ROOT, 'libs/templates'),
+    os.path.join(ONADATA_DIR, 'libs/templates'),
     # Put strings here, like "/home/html/django_templates"
     # or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
@@ -214,7 +217,6 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'django.contrib.gis',
     'registration',
-    'south',
     'reversion',
     'django_nose',
     'django_digest',
@@ -263,10 +265,13 @@ REST_FRAMEWORK = {
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.UnicodeJSONRenderer',
+        # Keep JSONRenderer at the top "in order to send JSON responses to
+        # clients that do not specify an Accept header." See
+        # http://www.django-rest-framework.org/api-guide/renderers/#ordering-of-renderer-classes
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework_jsonp.renderers.JSONPRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework.renderers.JSONPRenderer',
-        'rest_framework.renderers.XMLRenderer',
+        'rest_framework_xml.renderers.XMLRenderer',
         'rest_framework_csv.renderers.CSVRenderer',
     ),
     'VIEW_NAME_FUNCTION': 'onadata.apps.api.tools.get_view_name',
@@ -472,10 +477,27 @@ except ImportError:
 if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
     # site templates overrides
     TEMPLATE_DIRS = (
-        os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
+        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
     ) + TEMPLATE_DIRS
     # site static files path
     STATICFILES_DIRS += (
-        os.path.join(PROJECT_ROOT, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
+        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
     )
 
+# Transition from South to native migrations
+try:
+    from django.db import migrations
+except ImportError:
+    # Native migrations unavailable; use South instead
+    INSTALLED_APPS += ('south',)
+
+SOUTH_MIGRATION_MODULES = {
+    'taggit': 'taggit.south_migrations',
+    'reversion': 'reversion.south_migrations',
+    'onadata.apps.restservice': 'onadata.apps.restservice.south_migrations',
+    'onadata.apps.api': 'onadata.apps.api.south_migrations',
+    'onadata.apps.main': 'onadata.apps.main.south_migrations',
+    'onadata.apps.stats': 'onadata.apps.stats.south_migrations',
+    'onadata.apps.logger': 'onadata.apps.logger.south_migrations',
+    'onadata.apps.viewer': 'onadata.apps.viewer.south_migrations',
+}

@@ -69,7 +69,7 @@ class Export(models.Model):
     MAX_EXPORTS = 10
 
     xform = models.ForeignKey(XForm)
-    created_on = models.DateTimeField(auto_now=True, auto_now_add=True)
+    created_on = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=255, null=True, blank=True)
     # need to save an the filedir since when an xform is deleted, it cascades
     # its exports which then try to delete their files and try to access the
@@ -82,7 +82,7 @@ class Export(models.Model):
     # time of last submission when this export was created
     time_of_last_submission = models.DateTimeField(null=True, default=None)
     # status
-    internal_status = models.SmallIntegerField(max_length=1, default=PENDING)
+    internal_status = models.SmallIntegerField(default=PENDING)
     export_url = models.URLField(null=True, default=None)
 
     class Meta:

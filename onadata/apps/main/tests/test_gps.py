@@ -1,6 +1,8 @@
 import os
 
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
+import unittest
+
 from test_base import TestBase
 
 
@@ -35,6 +37,7 @@ class TestGPS(TestBase):
         # submission
         self.assertTrue(dd.has_instances_with_geopoints())
 
+    @unittest.skip('Based on the old template')
     def _check_link_to_map_view(self):
         response = self.client.get("/%s/" % self.user.username)
         map_url = 'href="/%s/forms/gps/map"' % self.user.username

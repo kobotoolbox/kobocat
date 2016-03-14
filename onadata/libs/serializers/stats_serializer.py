@@ -32,14 +32,22 @@ class SubmissionStatsSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SubmissionStatsInstanceSerializer(serializers.Serializer):
-    def to_native(self, obj):
+
+    # The test is expecting a list, but DRF now wraps that in a dict.
+    # We need to clean the routing and serializer configs but in the meantime,
+    # this will fix it.
+    @property
+    def data(self):
+        return super(serializers.Serializer, self).data
+
+    def to_representation(self, obj):
         if obj is None:
             return \
-                super(SubmissionStatsInstanceSerializer, self).to_native(obj)
+                super(SubmissionStatsInstanceSerializer, self).to_representation(obj)
 
         request = self.context.get('request')
-        field = request.QUERY_PARAMS.get('group')
-        name = request.QUERY_PARAMS.get('name', field)
+        field = request.query_params.get('group')
+        name = request.query_params.get('name', field)
 
         if field is None:
             raise exceptions.ParseError(_(u"Expecting `group` and `name`"
@@ -59,7 +67,6 @@ class SubmissionStatsInstanceSerializer(serializers.Serializer):
                     for record in data:
                         label = dd.get_choice_label(element, record[name])
                         record[name] = label
-
         return data
 
 
@@ -74,13 +81,13 @@ class StatsSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class StatsInstanceSerializer(serializers.Serializer):
-    def to_native(self, obj):
+    def to_representation(self, obj):
         if obj is None:
-            return super(StatsInstanceSerializer, self).to_native(obj)
+            return super(StatsInstanceSerializer, self).to_representation(obj)
 
         request = self.context.get('request')
-        method = request.QUERY_PARAMS.get('method', None)
-        field = request.QUERY_PARAMS.get('field', None)
+        method = request.query_params.get('method', None)
+        field = request.query_params.get('field', None)
 
         if field and field not in obj.data_dictionary().get_keys():
             raise exceptions.ParseError(detail=_("Field not in XForm."))

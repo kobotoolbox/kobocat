@@ -248,7 +248,7 @@ class TestFormShow(TestBase):
 
     def test_show_add_supporting_media_if_owner(self):
         response = self.client.get(self.url)
-        self.assertContains(response, 'Media upload:')
+        self.assertContains(response, 'Media Upload')
 
     def test_show_add_mapbox_layer_if_owner(self):
         response = self.client.get(self.url)
@@ -274,6 +274,7 @@ class TestFormShow(TestBase):
         self.assertEqual(response['Location'],
                          '%s%s' % (self.base_url, self.url))
 
+    @skip('Based on the old template')
     def test_xls_replace_markup(self):
         """
         Check that update form is only shown when there are no submissions

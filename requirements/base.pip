@@ -3,9 +3,9 @@
 pybamboo==0.5.8.1
 pytz==2014.7
 
-Django>=1.6,<1.7
-django-guardian==1.2.4
-django-registration-redux==1.1
+Django>=1.8,<1.9
+django-guardian==1.4.1
+django-registration-redux==1.3
 django-templated-email==0.4.9
 gdata==2.0.18
 httplib2==0.9
@@ -20,7 +20,6 @@ lxml==3.4.0
 #-e git+https://github.com/onaio/pyxform.git@onaio#egg=pyxform
 # kobo fork supports csvs with utf, character escaping, etc.
 -e git+https://github.com/kobotoolbox/pyxform.git#egg=pyxform-dev
-South==1.0
 django-reversion==1.8.4
 xlrd==0.9.3
 xlwt==0.7.5
@@ -30,7 +29,8 @@ django-celery==3.1.16
 librabbitmq==1.5.2
 django-nose==1.4.2
 python-digest==1.7
-django-digest==1.13
+#django-digest==1.13 # django-digest has no commits since 2011
+-e git+https://github.com/jnm/django-digest#egg=django-digest
 -e git+https://github.com/onaio/python-json2xlsclient.git#egg=j2xclient
 
 # new export code relies on
@@ -42,8 +42,10 @@ elaphe==0.5.6
 dict2xml==1.3
 
 # api support
-djangorestframework==2.4.3
-djangorestframework-csv==1.3.3
+djangorestframework==3.3.2
+djangorestframework-csv==1.4.1
+djangorestframework-jsonp==1.0.2
+djangorestframework-xml==1.3.0
 
 # cors
 django-cors-headers==0.13
@@ -56,7 +58,7 @@ unicodecsv==0.9.4
 dpath==1.2-70
 
 # tagging
-django-taggit==0.12.1
+django-taggit==0.18.0
 
 # oath2 support
 django-oauth-toolkit==0.9.0
