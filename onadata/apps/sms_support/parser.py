@@ -87,9 +87,8 @@ def parse_sms_text(xform, identity, text):
                                base64.b64decode(b64content)))
                 return filename
             except Exception as e:
-                raise SMSCastingError(_(u"Media file format "
-                                      u"incorrect. %(except)r")
-                                      % {'except': e}, xlsf_name)
+                raise SMSCastingError(_(u"Media file format incorrect. %(except)s")
+                                      % {'except': repr(e)}, xlsf_name)
 
         if xlsf_type == 'text':
             return safe_wrap(lambda: unicode(value))

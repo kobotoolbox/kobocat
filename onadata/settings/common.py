@@ -56,17 +56,6 @@ LANGUAGE_CODE = 'en-us'
 
 ugettext = lambda s: s
 
-LANGUAGES = (
-    ('fr', u'Français'),
-    ('en', u'English'),
-    ('es', u'Español'),
-    ('it', u'Italiano'),
-    ('km', u'ភាសាខ្មែរ'),
-    ('ne', u'नेपाली'),
-    ('nl', u'Nederlands'),
-    ('zh', u'中文'),
-)
-
 SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
@@ -171,9 +160,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 MIDDLEWARE_CLASSES = (
     'reversion.middleware.RevisionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'onadata.libs.utils.middleware.LocaleMiddlewareWithTweaks',
     # BrokenClientMiddleware must come before AuthenticationMiddleware
     'onadata.libs.utils.middleware.BrokenClientMiddleware',
@@ -188,7 +177,6 @@ MIDDLEWARE_CLASSES = (
     'readonly.middleware.DatabaseReadOnlyMiddleware',
 )
 
-LOCALE_PATHS = (os.path.join(ONADATA_DIR, 'onadata.apps.main', 'locale'), )
 
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True

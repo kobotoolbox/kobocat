@@ -4,17 +4,36 @@ MAINTAINER Serban Teodorescu, teodorescu.serban@gmail.com
 
 RUN mkdir -p /etc/service/celery
 
-# Install any live additions in `apt_requirements.txt`.
-# COPY ./apt_requirements.txt /tmp/kobocat_apt_requirements.txt
-# RUN apt-get update && \
-#     apt-get upgrade -y && \
-#     apt-get install -y $(cat /tmp/kobocat_apt_requirements.txt) && \
-#     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 COPY docker/run_wsgi /etc/service/wsgi/run
 COPY docker/run_celery /etc/service/celery/run
 COPY docker/*.sh docker/kobocat.ini /srv/src/
 
+# Upgrade `apt` packages.
+# RUN apt-get update && \
+#    apt-get upgrade -y && \
+#    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install post-base-image `apt` additions from `apt_requirements.txt`, if modified.
+COPY ./apt_requirements.txt /tmp/kobocat_apt_requirements.txt
+RUN diff -q /tmp/kobocat_apt_requirements.txt /srv/src/kobocat/apt_requirements.txt || \
+    apt-get update && \
+    apt-get install -y $(cat /tmp/kobocat_apt_requirements.txt) && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    || true # Prevent non-zero exit code.  
+
+# Install post-base-image `pip` additions/upgrades from `requirements/base.pip`, if modified.
+COPY ./requirements/base.pip /tmp/kobocat_base_requirements.pip
+RUN diff -q /tmp/kobocat_base_requirements.pip /srv/src/kobocat/requirements/base.pip || \
+    pip install --upgrade -r /tmp/kobocat_base_requirements.pip \
+    || true # Prevent non-zero exit code.
+
+# `pip` packages installed in the base image that should be removed can be listed in `requirements/uninstall.pip`.
+COPY ./requirements/ /srv/src/kobocat/requirements/
+RUN bash -c '[[ -e /srv/src/kobocat/requirements/uninstall.pip ]] && pip uninstall --yes -r /srv/src/kobocat/requirements/uninstall.pip' \
+    || true  # Prevent non-zero status code when there's nothing to uninstall.
+
+# Wipe out the base image's `kobocat` dir (**including migration files**) and copy over this directory in its live state.
+RUN rm -rf /srv/src/kobocat
 COPY . /srv/src/kobocat
 
 RUN chmod +x /etc/service/wsgi/run && \
@@ -31,6 +50,8 @@ RUN mkdir -p /srv/src/kobocat/emails/ && \
     chown -R wsgi /srv/src/kobocat/emails/
 
 VOLUME ["/srv/src/kobocat", "/srv/src/kobocat/onadata/media", "/srv/src/kobocat-template", "/tmp"]
+
+WORKDIR /srv/src/kobocat
 
 EXPOSE 8000
 

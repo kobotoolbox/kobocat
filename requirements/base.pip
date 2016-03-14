@@ -72,3 +72,5 @@ django-db-readonly==0.3.2
 
 # memcached support
 pylibmc==1.3.0
+
+transifex-client
