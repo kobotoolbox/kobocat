@@ -142,7 +142,12 @@ Here is some example JSON, it would replace `[the JSON]` above:
     def __init__(self, *args, **kwargs):
         super(XFormSubmissionApi, self).__init__(*args, **kwargs)
         # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
-        # previously hard-coded authentication classes are included first
+        # previously hard-coded authentication classes are included first.
+        # We include BasicAuthentication here to allow submissions using basic
+        # authentication over unencrypted HTTP. REST framework stops after the
+        # first class that successfully authenticates, so
+        # HttpsOnlyBasicAuthentication will be ignored even if included by
+        # DEFAULT_AUTHENTICATION_CLASSES.
         authentication_classes = [
             DigestAuthentication,
             BasicAuthentication,
@@ -151,16 +156,10 @@ Here is some example JSON, it would replace `[the JSON]` above:
         # Do not use `SessionAuthentication`, which implicitly requires CSRF prevention
         # (which in turn requires that the CSRF token be submitted as a cookie and in the
         # body of any "unsafe" requests).
-        if SessionAuthentication in self.authentication_classes:
-            self.authentication_classes.remove(SessionAuthentication)
-        # We include BasicAuthentication here to allow submissions using basic
-        # authentication over unencrypted HTTP. REST framework stops after the
-        # first class that successfully authenticates, so
-        # HttpsOnlyBasicAuthentication will be ignored even if included by
-        # DEFAULT_AUTHENTICATION_CLASSES.
         self.authentication_classes = authentication_classes + [
             auth_class for auth_class in self.authentication_classes
-                if not auth_class in authentication_classes
+                if not auth_class in authentication_classes and \
+                    not issubclass(auth_class, SessionAuthentication)
         ]
 
     def create(self, request, *args, **kwargs):
