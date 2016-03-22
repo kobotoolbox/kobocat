@@ -4,18 +4,18 @@ set -e
 source /etc/profile
 
 oldpwd=$(pwd)
-cd /srv/src/kobocat
+cd "${KOBOCAT_SRC_DIR}"
 
-mkdir -p /srv/src/kobocat/onadata/static
+mkdir -p "${KOBOCAT_SRC_DIR}/onadata/static"
 
 echo "Collecting static files..."
 python manage.py collectstatic -v 0 --noinput
 echo "Done"
 echo "Fixing permissions..."
-chown -R wsgi /srv/src/kobocat
+chown -R wsgi "${KOBOCAT_SRC_DIR}"
 echo "Done."
 echo "Syncing to nginx folder..."
-rsync -aq /srv/src/kobocat/onadata/static/* /srv/static/
+rsync -aq ${KOBOCAT_SRC_DIR}/onadata/static/* /srv/static/
 echo "Done"
 
 cd $oldpwd
