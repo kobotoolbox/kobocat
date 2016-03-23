@@ -6,7 +6,7 @@ source /etc/profile
 echo 'KoBoCAT intializing...'
 
 oldpwd=$(pwd)
-cd /srv/src/kobocat
+cd "${KOBOCAT_SRC_DIR}"
 
 echo 'Synchronizing database.'
 python manage.py syncdb --noinput
