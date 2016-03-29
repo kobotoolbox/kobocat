@@ -719,6 +719,7 @@ data (instance/submission per row)
     lookup_field = 'pk'
     extra_lookup_fields = None
     permission_classes = [XFormPermissions, ]
+    # TODO: Figure out what `updatable_fields` does; if nothing, remove it
     updatable_fields = set(('description', 'downloadable', 'require_auth',
                             'shared', 'shared_data', 'title'))
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
@@ -734,8 +735,20 @@ data (instance/submission per row)
 
         if isinstance(survey, XForm):
             xform = XForm.objects.get(pk=survey.pk)
+            # The XForm has been created, but `publish_xlsform` relies on
+            # `onadata.apps.main.forms.QuickConverter`, which uses standard
+            # Django forms and only recognizes the `xls_file`, `xls_url`,
+            # `dropbox_xls_url`, and `text_xls_form` fields.
+            # Use the DRF serializer to update the XForm with values for other
+            # fields.
             serializer = XFormSerializer(
-                xform, context={'request': request})
+                xform,
+                data=request.data,
+                context={'request': request},
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             headers = self.get_success_headers(serializer.data)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED,
