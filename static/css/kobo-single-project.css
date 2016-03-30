@@ -97,6 +97,11 @@ a.settings__files-delete {
   padding:20px;
 }
 
+.settings__rest-services {
+  border-top: 1px solid #D9DDE1;
+  padding:20px;
+}
+
 /* Documents area of single project */
 .single-project__toggle-description {
   display: inline;
