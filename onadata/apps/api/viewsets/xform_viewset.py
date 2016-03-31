@@ -760,8 +760,13 @@ data (instance/submission per row)
         if 'xls_file' in request.FILES or 'text_xls_form' in request.data:
             # A new XLSForm has been uploaded and will replace the existing
             # form
-            owner = _get_owner(request)
             existing_xform = get_object_or_404(XForm, pk=pk)
+            # Behave like `onadata.apps.main.views.update_xform`: only allow
+            # the update to proceed if the user is the owner
+            owner = existing_xform.user
+            if request.user.pk != owner.pk:
+                raise exceptions.PermissionDenied(
+                    detail=_("Only a form's owner can overwrite its contents"))
             survey = utils.publish_xlsform(request, owner, existing_xform)
             if not isinstance(survey, XForm):
                 if isinstance(survey, dict) and 'text' in survey:
