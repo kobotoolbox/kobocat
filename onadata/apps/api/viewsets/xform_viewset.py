@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _
 from django.utils import six
+from django.shortcuts import get_object_or_404
 
 from rest_framework import exceptions
 from rest_framework import status
@@ -323,6 +324,15 @@ https://example.com/api/v1/forms
 >
 >       curl -X GET https://example.com/api/v1/forms?owner=ona
 
+## Get list of forms filtered by id_string
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/forms?<code>id_string</code>=<code>form_id_string</code></pre>
+
+> Request
+>
+>       curl -X GET https://example.com/api/v1/forms?id_string=Birds
+
 ## Get Form Information
 
 <pre class="prettyprint">
@@ -389,6 +399,21 @@ https://example.com/api/v1/forms/28058
 >           "date_created": "2013-07-25T14:14:22.892Z",
 >           "date_modified": "2013-07-25T14:14:22.892Z"
 >       }
+
+## Update Form
+
+You may overwrite the form's contents while preserving its submitted data,
+`id_string` and all other attributes, by sending a `PATCH` that includes
+`xls_file` or `text_xls_form`. Use with caution, as this may compromise the
+methodology of your study!
+
+<pre class="prettyprint">
+<b>PATCH</b> /api/v1/forms/<code>{pk}</code></pre>
+
+> Example
+>
+>       curl -X PATCH -F xls_file=@/path/to/form.xls \
+https://example.com/api/v1/forms/28058
 
 ## Delete Form
 
@@ -694,11 +719,13 @@ data (instance/submission per row)
     lookup_field = 'pk'
     extra_lookup_fields = None
     permission_classes = [XFormPermissions, ]
+    # TODO: Figure out what `updatable_fields` does; if nothing, remove it
     updatable_fields = set(('description', 'downloadable', 'require_auth',
                             'shared', 'shared_data', 'title'))
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.TagFilter,
-                       filters.XFormOwnerFilter)
+                       filters.XFormOwnerFilter,
+                       filters.XFormIdStringFilter)
 
     public_forms_endpoint = 'public'
 
@@ -708,14 +735,48 @@ data (instance/submission per row)
 
         if isinstance(survey, XForm):
             xform = XForm.objects.get(pk=survey.pk)
+            # The XForm has been created, but `publish_xlsform` relies on
+            # `onadata.apps.main.forms.QuickConverter`, which uses standard
+            # Django forms and only recognizes the `xls_file`, `xls_url`,
+            # `dropbox_xls_url`, and `text_xls_form` fields.
+            # Use the DRF serializer to update the XForm with values for other
+            # fields.
             serializer = XFormSerializer(
-                xform, context={'request': request})
+                xform,
+                data=request.data,
+                context={'request': request},
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             headers = self.get_success_headers(serializer.data)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED,
                             headers=headers)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk, *args, **kwargs):
+        if 'xls_file' in request.FILES or 'text_xls_form' in request.data:
+            # A new XLSForm has been uploaded and will replace the existing
+            # form
+            existing_xform = get_object_or_404(XForm, pk=pk)
+            # Behave like `onadata.apps.main.views.update_xform`: only allow
+            # the update to proceed if the user is the owner
+            owner = existing_xform.user
+            if request.user.pk != owner.pk:
+                raise exceptions.PermissionDenied(
+                    detail=_("Only a form's owner can overwrite its contents"))
+            survey = utils.publish_xlsform(request, owner, existing_xform)
+            if not isinstance(survey, XForm):
+                if isinstance(survey, dict) and 'text' in survey:
+                    # Typical error text; pass it along
+                    raise exceptions.ParseError(detail=survey['text'])
+                else:
+                    # Something odd; hopefully it can be coerced into a string
+                    raise exceptions.ParseError(detail=survey)
+        # Let the superclass handle updates to the other fields
+        return super(XFormViewSet, self).update(request, pk, *args, **kwargs)
 
     @detail_route(methods=['GET'])
     def form(self, request, format='json', **kwargs):
