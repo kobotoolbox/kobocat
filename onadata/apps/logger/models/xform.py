@@ -285,7 +285,7 @@ class XForm(BaseModel):
         of spreadsheet structure.
         '''
         if not xls_to_dicts:
-            raise ImportError('f8dff module needed')
+            raise ImportError('formpack module needed')
         content = xls_to_dicts(self._xls_file_io())
         # a temporary fix to the problem of list_name alias
         return json.loads(re.sub('list name', 'list_name',
