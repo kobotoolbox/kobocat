@@ -6,6 +6,8 @@ from __future__ import (unicode_literals, print_function, absolute_import,
 import json
 import uuid
 
+from datetime import datetime
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import render
@@ -74,7 +76,24 @@ def xlsx_export(request, username, id_string):
         export.to_xlsx(tempfile, data)
         xlsx = tempfile.bytes()
 
-    return HttpResponse(xlsx, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    form_type = 'labels'
+    if not lang:
+        form_type = "values"
+    elif lang != "_default":
+        form_type = lang
+    name = "{title} - {form_type} - {date:%Y-%m-%d - %H-%M-%S}.xlsx".format(
+        form_type=form_type,
+        date=datetime.utcnow(),
+        title=xform.title,
+    )
+
+    # ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    # response = HttpResponse(xlsx, content_type=ct)
+
+    ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response = HttpResponse(xlsx, content_type=ct)
+    response['Content-Disposition'] = 'attachment; filename="%s' % name
+    return response
 
 
 def csv_export(request, username, id_string):
@@ -92,16 +111,28 @@ def csv_export(request, username, id_string):
 
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
     options = {'versions': 'v1', 'header_lang': lang,
-                   'translation': lang, 'hierarchy_in_labels': hierarchy_in_labels,
+                   'translation': lang,
+                   'hierarchy_in_labels': hierarchy_in_labels,
                    'copy_fields': ('_uuid', '_submission_time'),
                    'force_index': True}
     export = FormPack([schema], id_string).export(**options)
 
+    form_type = 'labels'
+    if not lang:
+        form_type = "values"
+    elif lang != "_default":
+        form_type = lang
+    name = "{title} - {form_type} - {date:%Y-%m-%d - %H-%M-%S}.csv".format(
+        form_type=form_type,
+        date=datetime.utcnow(),
+        title=xform.title,
+    )
+
     response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="%s' % name
 
     for line in export.to_csv(data):
         response.write(line + "\n")
-
     return response
 
 
@@ -135,7 +166,6 @@ def html_export(request, username, id_string):
             "version": 'v1',
             "content": xform.to_kpi_content_schema(),
         }
-
         data = [("v1", page.object_list)]
         options = {'versions': 'v1', 'header_lang': lang,
                    'translation': lang,
