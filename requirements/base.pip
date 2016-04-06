@@ -40,6 +40,8 @@ elaphe==0.5.6
 
 # formpack exports
 -e git+https://github.com/kobotoolbox/formpack.git#egg=formpack
+django-pure-pagination==0.3.0
+path.py==8.1.2
 
 # sms support
 dict2xml==1.3
