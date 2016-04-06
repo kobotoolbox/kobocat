@@ -26,7 +26,7 @@ from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
 
 try:
-    from f8dff.utils.xls_to_ss_structure import xls_to_dicts
+    from formpack.utils.xls_to_ss_structure import xls_to_dicts
 except ImportError:
     xls_to_dicts = False
 
