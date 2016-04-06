@@ -233,6 +233,8 @@ INSTALLED_APPS = (
     'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
+    'onadata.apps.export',
+    'pure_pagination',
 )
 
 OAUTH2_PROVIDER = {
