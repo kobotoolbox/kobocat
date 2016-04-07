@@ -31,7 +31,7 @@ def get_instances_for_user_and_form(user, form_id):
 
 def export_menu(request, username, id_string):
 
-    user = User.objects.get(username=username)
+    user = User.objects.get(username=username) 
     xform = user.xforms.get(id_string=id_string)
     schema = {
         "id_string": id_string,
@@ -53,9 +53,10 @@ def export_menu(request, username, id_string):
 def xlsx_export(request, username, id_string):
 
     hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
+    group_sep = request.REQUEST.get('groupsep', '/')
     lang = request.REQUEST.get('lang', None)
 
-    user = User.objects.get(username=username)
+    user = User.objects.get(username=username) 
     xform = user.xforms.get(id_string=id_string)
     schema = {
         "id_string": id_string,
@@ -64,44 +65,48 @@ def xlsx_export(request, username, id_string):
     }
 
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
-    options = {'versions': 'v1', 'header_lang': lang,
-                   'translation': lang,
-                   'hierarchy_in_labels': hierarchy_in_labels,
-                   'copy_fields': ('_uuid', '_submission_time'),
-                   'force_index': True}
+    options = {'versions': 'v1', 
+               'header_lang': lang,
+               'group_sep': group_sep,
+               'translation': lang, 
+               'hierarchy_in_labels': hierarchy_in_labels,
+               'copy_fields': ('_id', '_uuid', '_submission_time'),
+               'force_index': True}
     export = FormPack([schema], id_string).export(**options)
 
     with tempdir() as d:
         tempfile = d / str(uuid.uuid4())
         export.to_xlsx(tempfile, data)
         xlsx = tempfile.bytes()
-
+  
     form_type = 'labels'
     if not lang:
         form_type = "values"
     elif lang != "_default":
         form_type = lang
-    name = "{title} - {form_type} - {date:%Y-%m-%d - %H-%M-%S}.xlsx".format(
+    name = "{title} - {form_type} - {date:%Y-%m-%d-%H-%M}.xlsx".format(
         form_type=form_type,
         date=datetime.utcnow(),
         title=xform.title,
     )
-
-    # ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    # response = HttpResponse(xlsx, content_type=ct)
-
+    
     ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     response = HttpResponse(xlsx, content_type=ct)
-    response['Content-Disposition'] = 'attachment; filename="%s"' % name
+
+    ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    
+    response = HttpResponse(xlsx, content_type=ct)
+    response['Content-Disposition'] = 'attachment; filename="%s' % name
     return response
 
 
 def csv_export(request, username, id_string):
 
     hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
+    group_sep = request.REQUEST.get('groupsep', '/')
     lang = request.REQUEST.get('lang', None)
 
-    user = User.objects.get(username=username)
+    user = User.objects.get(username=username) 
     xform = user.xforms.get(id_string=id_string)
     schema = {
         "id_string": id_string,
@@ -110,11 +115,13 @@ def csv_export(request, username, id_string):
     }
 
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
-    options = {'versions': 'v1', 'header_lang': lang,
-                   'translation': lang,
-                   'hierarchy_in_labels': hierarchy_in_labels,
-                   'copy_fields': ('_uuid', '_submission_time'),
-                   'force_index': True}
+    options = {'versions': 'v1', 
+               'header_lang': lang,
+               'group_sep': group_sep,
+               'translation': lang, 
+               'hierarchy_in_labels': hierarchy_in_labels,
+               'copy_fields': ('_id', '_uuid', '_submission_time'),
+               'force_index': True}
     export = FormPack([schema], id_string).export(**options)
 
     form_type = 'labels'
@@ -122,23 +129,26 @@ def csv_export(request, username, id_string):
         form_type = "values"
     elif lang != "_default":
         form_type = lang
-    name = "{title} - {form_type} - {date:%Y-%m-%d - %H-%M-%S}.csv".format(
+    name = "{title} - {form_type} - {date:%Y-%m-%d-%H-%M}.csv".format(
         form_type=form_type,
         date=datetime.utcnow(),
         title=xform.title,
     )
-
+    
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="%s"' % name
+    response['Content-Disposition'] = 'attachment; filename="%s' % name
 
     for line in export.to_csv(data):
         response.write(line + "\n")
+
     return response
 
 
 
 def html_export(request, username, id_string):
+
     hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
+    group_sep = request.REQUEST.get('groupsep', '/')
     lang = request.REQUEST.get('lang', None)
     limit = request.REQUEST.get('limit', 100)
 
@@ -159,21 +169,26 @@ def html_export(request, username, id_string):
     }
 
     if page:
-        user = User.objects.get(username=username)
+     
+        user = User.objects.get(username=username) 
         xform = user.xforms.get(id_string=id_string)
         schema = {
             "id_string": id_string,
             "version": 'v1',
             "content": xform.to_kpi_content_schema(),
         }
+
         data = [("v1", page.object_list)]
-        options = {'versions': 'v1', 'header_lang': lang,
-                   'translation': lang,
+        options = {'versions': 'v1', 
+                   'header_lang': lang,
+                   'group_sep': group_sep,
+                   'translation': lang, 
                    'hierarchy_in_labels': hierarchy_in_labels,
-                   'copy_fields': ('_uuid', '_submission_time'),
+                   'copy_fields': ('_id', '_uuid', '_submission_time'),
                    'force_index': True}
         export = FormPack([schema], id_string).export(**options)
         context['table'] = mark_safe("\n".join(export.to_html(data)))
         context['title'] = id_string
 
     return render(request, 'export/export_html.html', context)
+
