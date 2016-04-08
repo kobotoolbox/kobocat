@@ -89,14 +89,11 @@ def xlsx_export(request, username, id_string):
         date=datetime.utcnow(),
         title=xform.title,
     )
-    
-    ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response = HttpResponse(xlsx, content_type=ct)
 
     ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     
     response = HttpResponse(xlsx, content_type=ct)
-    response['Content-Disposition'] = 'attachment; filename="%s' % name
+    response['Content-Disposition'] = 'attachment; filename="%s"' % name
     return response
 
 
@@ -136,7 +133,7 @@ def csv_export(request, username, id_string):
     )
     
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="%s' % name
+    response['Content-Disposition'] = 'attachment; filename="%s"' % name
 
     for line in export.to_csv(data):
         response.write(line + "\n")
