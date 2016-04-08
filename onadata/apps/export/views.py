@@ -10,17 +10,30 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.safestring import mark_safe
+from django.core.exceptions import PermissionDenied
+from django.utils.translation import ugettext as _
 
 from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
 
 from path import tempdir
 
 from onadata.apps.logger.models import XForm
+from onadata.libs.utils.user_auth import has_permission
 
 from formpack import FormPack
+
+
+def readable_xform_required(func):
+    def _wrapper(request, username, id_string):        
+        owner = get_object_or_404(User, username=username)
+        xform = get_object_or_404(owner.xforms, id_string=id_string)
+        if not has_permission(xform, owner, request):
+            return HttpResponseForbidden(_(u'Not shared.'))
+        return func(request, username, id_string)
+    return _wrapper
 
 
 def get_instances_for_user_and_form(user, form_id):
@@ -29,6 +42,7 @@ def get_instances_for_user_and_form(user, form_id):
     return settings.MONGO_DB.instances.find(query)
 
 
+@readable_xform_required
 def export_menu(request, username, id_string):
 
     user = User.objects.get(username=username) 
@@ -50,6 +64,7 @@ def export_menu(request, username, id_string):
     return render(request, 'export/export_menu.html', context)
 
 
+@readable_xform_required
 def xlsx_export(request, username, id_string):
 
     hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
@@ -97,6 +112,7 @@ def xlsx_export(request, username, id_string):
     return response
 
 
+@readable_xform_required
 def csv_export(request, username, id_string):
 
     hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
@@ -141,7 +157,7 @@ def csv_export(request, username, id_string):
     return response
 
 
-
+@readable_xform_required
 def html_export(request, username, id_string):
 
     hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
