@@ -3,7 +3,6 @@
 from __future__ import (unicode_literals, print_function, absolute_import,
                         division)
 
-import json
 import uuid
 
 from datetime import datetime
@@ -13,21 +12,19 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.safestring import mark_safe
-from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 
 from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
 
 from path import tempdir
 
-from onadata.apps.logger.models import XForm
 from onadata.libs.utils.user_auth import has_permission
 
 from formpack import FormPack
 
 
 def readable_xform_required(func):
-    def _wrapper(request, username, id_string):        
+    def _wrapper(request, username, id_string):
         owner = get_object_or_404(User, username=username)
         xform = get_object_or_404(owner.xforms, id_string=id_string)
         if not has_permission(xform, owner, request):
@@ -42,18 +39,54 @@ def get_instances_for_user_and_form(user, form_id):
     return settings.MONGO_DB.instances.find(query)
 
 
-@readable_xform_required
-def export_menu(request, username, id_string):
-
-    user = User.objects.get(username=username) 
+def build_formpack(username, id_string):
+    user = User.objects.get(username=username)
     xform = user.xforms.get(id_string=id_string)
     schema = {
         "id_string": id_string,
         "version": 'v1',
         "content": xform.to_kpi_content_schema(),
     }
+    return FormPack([schema], id_string)
 
-    form_pack = FormPack([schema], id_string)
+
+def build_export(request, username, id_string):
+
+    hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
+    group_sep = request.REQUEST.get('groupsep', '/')
+    lang = request.REQUEST.get('lang', None)
+
+    options = {'versions': 'v1',
+               'header_lang': lang,
+               'group_sep': group_sep,
+               'translation': lang,
+               'hierarchy_in_labels': hierarchy_in_labels,
+               'copy_fields': ('_id', '_uuid', '_submission_time'),
+               'force_index': True}
+
+    formpack = build_formpack(username, id_string)
+    return formpack.export(**options)
+
+
+def build_export_filename(export, extension):
+    form_type = 'labels'
+    if not export.translation:
+        form_type = "values"
+    elif export.translation != "_default":
+        form_type = export.translation
+
+    return "{title} - {form_type} - {date:%Y-%m-%d-%H-%M}.{ext}".format(
+        form_type=form_type,
+        date=datetime.utcnow(),
+        title=export.title,
+        ext=extension
+    )
+
+
+@readable_xform_required
+def export_menu(request, username, id_string):
+
+    form_pack = build_formpack(username, id_string)
 
     context = {
         'languages': form_pack.available_translations,
@@ -67,46 +100,16 @@ def export_menu(request, username, id_string):
 @readable_xform_required
 def xlsx_export(request, username, id_string):
 
-    hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
-    group_sep = request.REQUEST.get('groupsep', '/')
-    lang = request.REQUEST.get('lang', None)
-
-    user = User.objects.get(username=username) 
-    xform = user.xforms.get(id_string=id_string)
-    schema = {
-        "id_string": id_string,
-        "version": 'v1',
-        "content": xform.to_kpi_content_schema(),
-    }
-
+    export = build_export(request, username, id_string)
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
-    options = {'versions': 'v1', 
-               'header_lang': lang,
-               'group_sep': group_sep,
-               'translation': lang, 
-               'hierarchy_in_labels': hierarchy_in_labels,
-               'copy_fields': ('_id', '_uuid', '_submission_time'),
-               'force_index': True}
-    export = FormPack([schema], id_string).export(**options)
 
     with tempdir() as d:
         tempfile = d / str(uuid.uuid4())
         export.to_xlsx(tempfile, data)
         xlsx = tempfile.bytes()
-  
-    form_type = 'labels'
-    if not lang:
-        form_type = "values"
-    elif lang != "_default":
-        form_type = lang
-    name = "{title} - {form_type} - {date:%Y-%m-%d-%H-%M}.xlsx".format(
-        form_type=form_type,
-        date=datetime.utcnow(),
-        title=xform.title,
-    )
 
+    name = build_export_filename(export, 'xlsx')
     ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    
     response = HttpResponse(xlsx, content_type=ct)
     response['Content-Disposition'] = 'attachment; filename="%s"' % name
     return response
@@ -115,39 +118,10 @@ def xlsx_export(request, username, id_string):
 @readable_xform_required
 def csv_export(request, username, id_string):
 
-    hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
-    group_sep = request.REQUEST.get('groupsep', '/')
-    lang = request.REQUEST.get('lang', None)
-
-    user = User.objects.get(username=username) 
-    xform = user.xforms.get(id_string=id_string)
-    schema = {
-        "id_string": id_string,
-        "version": 'v1',
-        "content": xform.to_kpi_content_schema(),
-    }
-
+    export = build_export(request, username, id_string)
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
-    options = {'versions': 'v1', 
-               'header_lang': lang,
-               'group_sep': group_sep,
-               'translation': lang, 
-               'hierarchy_in_labels': hierarchy_in_labels,
-               'copy_fields': ('_id', '_uuid', '_submission_time'),
-               'force_index': True}
-    export = FormPack([schema], id_string).export(**options)
 
-    form_type = 'labels'
-    if not lang:
-        form_type = "values"
-    elif lang != "_default":
-        form_type = lang
-    name = "{title} - {form_type} - {date:%Y-%m-%d-%H-%M}.csv".format(
-        form_type=form_type,
-        date=datetime.utcnow(),
-        title=xform.title,
-    )
-    
+    name = build_export_filename(export, 'csv')
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="%s"' % name
 
@@ -160,9 +134,6 @@ def csv_export(request, username, id_string):
 @readable_xform_required
 def html_export(request, username, id_string):
 
-    hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
-    group_sep = request.REQUEST.get('groupsep', '/')
-    lang = request.REQUEST.get('lang', None)
     limit = request.REQUEST.get('limit', 100)
 
     cursor = get_instances_for_user_and_form(username, id_string)
@@ -182,24 +153,8 @@ def html_export(request, username, id_string):
     }
 
     if page:
-     
-        user = User.objects.get(username=username) 
-        xform = user.xforms.get(id_string=id_string)
-        schema = {
-            "id_string": id_string,
-            "version": 'v1',
-            "content": xform.to_kpi_content_schema(),
-        }
-
         data = [("v1", page.object_list)]
-        options = {'versions': 'v1', 
-                   'header_lang': lang,
-                   'group_sep': group_sep,
-                   'translation': lang, 
-                   'hierarchy_in_labels': hierarchy_in_labels,
-                   'copy_fields': ('_id', '_uuid', '_submission_time'),
-                   'force_index': True}
-        export = FormPack([schema], id_string).export(**options)
+        export = build_export(request, username, id_string)
         context['table'] = mark_safe("\n".join(export.to_html(data)))
         context['title'] = id_string
 

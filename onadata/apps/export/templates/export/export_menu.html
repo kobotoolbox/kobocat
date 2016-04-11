@@ -79,78 +79,80 @@ thead td {
 
 </tr>
 
-
-
-<tr>
-  <td>
-    <a href="{% url 'formpack_html_export' username id_string %}?lang=_default&amp;hierarchy_in_labels=true">
-      {% trans "Default labels" %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_csv_export' username id_string %}?lang=_default&amp;hierarchy_in_labels=true">
-      {% trans "Default labels" %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_xlsx_export' username id_string %}?lang=_default&amp;hierarchy_in_labels=true">
-      {% trans "Default labels" %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_html_export' username id_string %}?lang=_default">
-      {% trans "Default labels" %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_csv_export' username id_string %}?lang=_default">
-      {% trans "Default labels" %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_xlsx_export' username id_string %}?lang=_default">
-      {% trans "Default labels" %}
-    </a>
-  </td>
-
-</tr>
-
-
-
-
 {% for lang in languages %}
-<tr>
-  <td>
-    <a href="{% url 'formpack_html_export' username id_string %}?lang={{ lang }}&amp;hierarchy_in_labels=true">
-      {% trans lang %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_csv_export' username id_string %}?lang={{ lang }}&amp;hierarchy_in_labels=true">
-      {% trans lang %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_xlsx_export' username id_string %}?lang={{ lang }}&amp;hierarchy_in_labels=true">
-      {% trans lang %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_html_export' username id_string %}?lang={{ lang }}">
-      {% trans lang %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_csv_export' username id_string %}?lang={{ lang }}">
-      {% trans lang %}
-    </a>
-  </td>
-  <td>
-    <a href="{% url 'formpack_xlsx_export' username id_string %}?lang={{ lang }}">
-      {% trans lang %}
-    </a>
-  </td>
-</tr>
+
+    {% if lang == "_default" %}
+
+        <tr>
+          <td>
+            <a href="{% url 'formpack_html_export' username id_string %}?lang=_default&amp;hierarchy_in_labels=true">
+              {% trans "Default labels" %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_csv_export' username id_string %}?lang=_default&amp;hierarchy_in_labels=true">
+              {% trans "Default labels" %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_xlsx_export' username id_string %}?lang=_default&amp;hierarchy_in_labels=true">
+              {% trans "Default labels" %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_html_export' username id_string %}?lang=_default">
+              {% trans "Default labels" %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_csv_export' username id_string %}?lang=_default">
+              {% trans "Default labels" %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_xlsx_export' username id_string %}?lang=_default">
+              {% trans "Default labels" %}
+            </a>
+          </td>
+
+        </tr>
+
+    {% else %}
+
+        <tr>
+          <td>
+            <a href="{% url 'formpack_html_export' username id_string %}?lang={{ lang }}&amp;hierarchy_in_labels=true">
+              {% trans lang %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_csv_export' username id_string %}?lang={{ lang }}&amp;hierarchy_in_labels=true">
+              {% trans lang %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_xlsx_export' username id_string %}?lang={{ lang }}&amp;hierarchy_in_labels=true">
+              {% trans lang %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_html_export' username id_string %}?lang={{ lang }}">
+              {% trans lang %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_csv_export' username id_string %}?lang={{ lang }}">
+              {% trans lang %}
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'formpack_xlsx_export' username id_string %}?lang={{ lang }}">
+              {% trans lang %}
+            </a>
+          </td>
+        </tr>
+
+    {% endif %}
 
 {% endfor %}
 
