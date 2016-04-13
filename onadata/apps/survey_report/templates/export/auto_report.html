@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+<div>
+{% block content %}
+
+<style type="text/css" media="screen">
+table {
+  border-collapse: collapse;
+  overflow-x: scroll;
+  width: 80%px;
+  display:block;
+  font-size:10px;
+}
+
+td, th {
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+  min-width: 200px;
+}
+
+th td {
+  font-weight: bold;
+  text-align: center;
+}
+
+ th {
+    padding: 5px;
+    min-width: 0px;
+    max-width: 85px;
+    word-wrap: break-word;
+}
+
+ td {
+    padding: 0px 5px;
+    min-width: 0px;
+    max-width: 150px;
+}
+
+</style>
+
+<h1>{{ title }}</h1>
+
+{% for name, stat in stats  %}
+
+  {% if stat.total_count %}
+
+    {% with stat.total_count|length as field_count %}
+
+      {% if stat.show_graph %}
+        <p>Graph will come here later on</p>
+      {% endif %}
+
+      <table>
+        <caption>{{ name }}</caption>
+        <thead>
+          <tr>
+            {% for name, value in stat.total_count %}
+              <th>{{name}}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+
+          {% if stat.frequency %}
+            <tr>
+              <td>{% trans "Frequency" %}</td>
+              {% for name, value in stat.frequency %}
+                <td>{{value}}</td>
+              {% endfor %}
+            </tr>
+          {% endif %}
+
+          {% if stat.pourcentage %}
+            <tr>
+              <td>{% trans "Pourcentage" %}</td>
+              {% for name, value in stat.pourcentage %}
+                <td>{{value}} %</td>
+              {% endfor %}
+            </tr>
+          {% endif %}
+
+          {% if stat.median %}
+
+            <tr>
+              <td>{% trans "Median" %}</td>
+              {% if stat.median == "<N/A>" %}
+                <td colspan="{{ field_count }}">{{stat.median}}</td>
+              {% else %}
+                {% for name, value in stat.median %}
+                  <td>{{value}}</td>
+                {% endfor %}
+
+              {% endif %}
+            </tr>
+
+          {% endif %}
+
+          {% if stat.mean %}
+
+            <tr>
+              <td>{% trans "Mean" %}</td>
+              {% if stat.mean == "<N/A>" %}
+                <td colspan="{{ field_count }}">{{stat.mean}}</td>
+              {% else %}
+                {% for name, value in stat.mean %}
+                  <td>{{value}}</td>
+                {% endfor %}
+
+              {% endif %}
+            </tr>
+
+          {% endif %}
+
+          {% if stat.mode %}
+
+            <tr>
+              <td>{% trans "Mode" %}</td>
+              {% if stat.mode == "<N/A>" %}
+                <td colspan="{{ field_count }}">{{stat.mode}}</td>
+              {% else %}
+                {% for name, value in stat.mode %}
+                  <td>{{value}}</td>
+                {% endfor %}
+              {% endif %}
+            </tr>
+
+          {% endif %}
+
+
+          {% if stat.stdev %}
+
+            <tr>
+              <td>{% trans "Standard deviation" %}</td>
+              {% if stat.stdev == "<N/A>" %}
+                <td colspan="{{ field_count }}">{{stat.stdev}}</td>
+              {% else %}
+                {% for name, value in stat.stdev %}
+                  <td>{{value}}</td>
+                {% endfor %}
+              {% endif %}
+            </tr>
+
+
+          {% endif %}
+
+        </tbody>
+      </table>
+      <p>
+        Total submissions: {{ stat.total_count }} /
+        With data: {{ stat.provided }} /
+        Without data: {{ stat.not_provided }}
+      </p>
+    {% endwith %}
+
+  {% endif %}
+
+{% endfor %}
+
+<div id="pagination">
+    {{ page.render }}
+</div>
+
+{% endblock %}
+</div>

@@ -160,3 +160,33 @@ def html_export(request, username, id_string):
 
     return render(request, 'export/export_html.html', context)
 
+
+@readable_xform_required
+def auto_report(request, username, id_string):
+
+    formpack = build_formpack(username, id_string)
+    report = formpack.autoreport()
+
+    limit = request.REQUEST.get('limit', 20)
+    fields = [field.name for field in formpack.get_fields_for_versions()]
+    paginator = Paginator(fields, limit, request=request)
+
+    try:
+        page = paginator.page(request.REQUEST.get('page', 1))
+    except (EmptyPage, PageNotAnInteger):
+        try:
+            page = paginator.page(1)
+        except (EmptyPage, PageNotAnInteger):
+            page = None
+
+    context = {
+        'page': page,
+        'stats': []
+    }
+
+    if page:
+        cursor = get_instances_for_user_and_form(username, id_string)
+        context['stats'] = report.get_stats(cursor, page.object_list)
+        context['title'] = id_string
+
+    return render(request, 'export/auto_report.html', context)
