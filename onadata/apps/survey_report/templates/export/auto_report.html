@@ -6,39 +6,86 @@
 {% block content %}
 
 <style type="text/css" media="screen">
-table {
-  border-collapse: collapse;
-  overflow-x: scroll;
-  width: 80%px;
-  display:block;
-  font-size:10px;
+.stats h2 {
+    font-size: 17px;
+    color: #2196F3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    margin: 1em 0 0.3em;
 }
 
-td, th {
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left;
-  min-width: 200px;
+.stats p {
+    margin: 0;
 }
 
-th td {
-  font-weight: bold;
-  text-align: center;
+.stats span.label {
+    padding: 0;
+    background: none;
+    color: black;
 }
 
- th {
+.datatable {
+    display: table;
+    width: 100%;
+    font-size: 12px;
+}
+
+.datatable td, .datatable th {
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #A5B3BC;
+    text-align: left;
+}
+
+.datatable td {
     padding: 5px;
-    min-width: 0px;
-    max-width: 85px;
-    word-wrap: break-word;
-}
-
- td {
-    padding: 0px 5px;
     min-width: 0px;
     max-width: 150px;
 }
 
+.datatable th {
+    padding: 8px 5px;
+}
+
+.datatable td:nth-child(2), .datatable td:nth-child(3) {
+    width: 25%;
+}
+
+.stats {
+    margin: 0 10% 39px;
+}
+
+.datatable thead {
+    background-color: #2196F3;
+    color: white;
+    font-weight: bold;
+}
+
+.datagraph {
+    font-size: 10px;
+    text-align: center;
+    background-color: #eee;
+    width: 80%;
+    margin: 20px 10% 20px;
+    height: 150px;
+    padding-top: 100px;
+}
+
+.summarystats {
+    color: #7D8A93;
+    font-size: 11px;
+}
+
+.summarystats__provided {
+    font-weight: bold;
+}
+
+.datatable--advancedstats {
+    width: 80%;
+    margin-left: 10%;
+}
 </style>
 
 <h1>{{ title }}</h1>
@@ -49,8 +96,12 @@ th td {
 
     <h2>{{ name }}</h2>
 
+      <div class="summarystats">
+        <p><span class="summarystats__provided">{{ stat.provided }}</span> out of {{ stat.total_count }} respondents answered this question ({{ stat.not_provided }} were without data)</p>
+      </div>
+
       {% if stat.show_graph %}
-        <p>Graph will come here later on</p>
+        <div class="datagraph"><span>Graph will come here later on</span></div>
       {% endif %}
 
       {# if you got frequency, you have a table with metrics #}
@@ -88,8 +139,8 @@ th td {
 
       {% if stat.mean %}
 
-      <div class="datatable datatable--advancedstats">
-        <table>
+
+        <table class="datatable datatable--advancedstats">
             <thead>
               <tr>
                 <th>{% trans "Mean" %}</th>
@@ -107,22 +158,10 @@ th td {
               </tr>
             </tbody>
           </table>
-      </div>
+
 
       {% endif %}
 
-      <div class="datatable datatable--summarystats">
-        <p>
-          <span class="label">Total submissions</span>:
-          <span class="value">{{ stat.total_count }}</span>
-        </p>
-        <p><span class="label">With data</span>:
-          <span class="value">{{ stat.provided }}</span>
-        </p>
-        <p><span class="label">Without data</span>:
-          <span class="value">{{ stat.not_provided }}</span>
-        </p>
-      </div>
 
     </div>
 
