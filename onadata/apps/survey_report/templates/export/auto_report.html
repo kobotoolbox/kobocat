@@ -45,73 +45,88 @@ th td {
 
 {% for name, stat in stats  %}
 
-  <h2>{{ name }}</h2>
+  <div class="stats">
 
-  {% if stat.show_graph %}
-    <p>Graph will come here later on</p>
-  {% endif %}
+    <h2>{{ name }}</h2>
 
-  {# if you got frequency, you have a table with metrics #}
-  {% if stat.frequency %}
+      {% if stat.show_graph %}
+        <p>Graph will come here later on</p>
+      {% endif %}
 
-    <table>
-      <thead>
-        <tr>
-          <th>{% trans "Value" %}</th>
-          <th>{% trans "Frequency" %}</th>
-          <th>{% trans "Pourcentage" %}</th>
-        </tr>
-      </thead>
-      <tbody>
+      {# if you got frequency, you have a table with metrics #}
+      {% if stat.frequency %}
 
-        {% for answer, _ in stat.frequency %}
-        <tr>
-            <td>
-            {{ answer }}
-            </td>
+        <table class="datatable datatable--basicstats">
+          <thead>
+            <tr>
+              <th>{% trans "Value" %}</th>
+              <th>{% trans "Frequency" %}</th>
+              <th>{% trans "Percentage" %}</th>
+            </tr>
+          </thead>
+          <tbody>
 
-            <td>
-            {{ stat.frequency|index:forloop.counter0|index:1 }}
-            </td>
+            {% for answer, _ in stat.frequency %}
+            <tr>
+                <td>
+                {{ answer }}
+                </td>
 
-            <td> {{ stat.pourcentage|index:forloop.counter0|index:1 }}%</td>
+                <td>
+                {{ stat.frequency|index:forloop.counter0|index:1 }}
+                </td>
 
-        </tr>
-        {% endfor %}
+                <td> {{ stat.percentage|index:forloop.counter0|index:1 }}%</td>
 
-      </tbody>
-    </table>
+            </tr>
+            {% endfor %}
 
-  {% endif %}
+          </tbody>
+        </table>
 
-  {% if stat.mean %}
+      {% endif %}
 
-    <table>
-      <thead>
-        <tr>
-          <th>{% trans "Mean" %}</th>
-          <th>{% trans "Median" %}</th>
-          <th>{% trans "Mode" %}</th>
-          <th>{% trans "Standard deviation" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-            <td> {{ stat.median  }}</td>
-            <td> {{ stat.mean  }}</td>
-            <td> {{ stat.mode  }}</td>
-            <td> {{ stat.stdev  }}</td>
-        </tr>
-      </tbody>
-    </table>
+      {% if stat.mean %}
 
-  {% endif %}
+      <div class="datatable datatable--advancedstats">
+        <table>
+            <thead>
+              <tr>
+                <th>{% trans "Mean" %}</th>
+                <th>{% trans "Median" %}</th>
+                <th>{% trans "Mode" %}</th>
+                <th>{% trans "Standard deviation" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                  <td> {{ stat.mean  }}</td>
+                  <td> {{ stat.median  }}</td>
+                  <td> {{ stat.mode  }}</td>
+                  <td> {{ stat.stdev  }}</td>
+              </tr>
+            </tbody>
+          </table>
+      </div>
 
-  <p><strong>Total submissions</strong>: {{ stat.total_count }}</p>
-  <p><strong>With data</strong>: {{ stat.provided }}</p>
-  <p><strong>Without data</strong>: {{ stat.not_provided }}</p>
+      {% endif %}
 
-{% endfor %}
+      <div class="datatable datatable--summarystats">
+        <p>
+          <span class="label">Total submissions</span>:
+          <span class="value">{{ stat.total_count }}</span>
+        </p>
+        <p><span class="label">With data</span>:
+          <span class="value">{{ stat.provided }}</span>
+        </p>
+        <p><span class="label">Without data</span>:
+          <span class="value">{{ stat.not_provided }}</span>
+        </p>
+      </div>
+
+    {% endfor %}
+
+  </div>
 
 <div id="pagination">
     {{ page.render }}
