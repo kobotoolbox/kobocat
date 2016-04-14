@@ -185,8 +185,8 @@ def auto_report(request, username, id_string):
     }
 
     if page:
-        cursor = get_instances_for_user_and_form(username, id_string)
-        context['stats'] = report.get_stats(cursor, page.object_list)
+        data = [("v1", get_instances_for_user_and_form(username, id_string))]
+        context['stats'] = report.get_stats(data, page.object_list)
         context['title'] = id_string
 
     return render(request, 'export/auto_report.html', context)

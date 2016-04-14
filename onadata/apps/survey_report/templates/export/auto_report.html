@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load data_manipulation %}
 
 <div>
 {% block content %}
@@ -44,117 +45,89 @@ th td {
 
 {% for name, stat in stats  %}
 
-  {% if stat.total_count %}
+  <h2>{{ name }}</h2>
 
-    {% with stat.total_count|length as field_count %}
+  {% if stat.show_graph %}
+    <p>Graph will come here later on</p>
+  {% endif %}
 
-      {% if stat.show_graph %}
-        <p>Graph will come here later on</p>
-      {% endif %}
+  {# if you got frequency, you have a table with metrics #}
+  {% if stat.frequency %}
 
-      <table>
-        <caption>{{ name }}</caption>
-        <thead>
-          <tr>
-            {% for name, value in stat.total_count %}
-              <th>{{name}}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-
-          {% if stat.frequency %}
-            <tr>
-              <td>{% trans "Frequency" %}</td>
-              {% for name, value in stat.frequency %}
-                <td>{{value}}</td>
-              {% endfor %}
-            </tr>
-          {% endif %}
+    <table>
+      <caption>{{ name }}</caption>
+      <thead>
+        <tr>
+          <th>{% trans "Value" %}</th>
+          <th>{% trans "Frequency" %}</th>
 
           {% if stat.pourcentage %}
-            <tr>
-              <td>{% trans "Pourcentage" %}</td>
-              {% for name, value in stat.pourcentage %}
-                <td>{{value}} %</td>
-              {% endfor %}
-            </tr>
+            <th>{% trans "Pourcentage" %}</th>
           {% endif %}
 
           {% if stat.median %}
-
-            <tr>
-              <td>{% trans "Median" %}</td>
-              {% if stat.median == "<N/A>" %}
-                <td colspan="{{ field_count }}">{{stat.median}}</td>
-              {% else %}
-                {% for name, value in stat.median %}
-                  <td>{{value}}</td>
-                {% endfor %}
-
-              {% endif %}
-            </tr>
-
+            <th>{% trans "Median" %}</th>
           {% endif %}
 
           {% if stat.mean %}
-
-            <tr>
-              <td>{% trans "Mean" %}</td>
-              {% if stat.mean == "<N/A>" %}
-                <td colspan="{{ field_count }}">{{stat.mean}}</td>
-              {% else %}
-                {% for name, value in stat.mean %}
-                  <td>{{value}}</td>
-                {% endfor %}
-
-              {% endif %}
-            </tr>
-
+            <th>{% trans "Mean" %}</th>
           {% endif %}
 
           {% if stat.mode %}
-
-            <tr>
-              <td>{% trans "Mode" %}</td>
-              {% if stat.mode == "<N/A>" %}
-                <td colspan="{{ field_count }}">{{stat.mode}}</td>
-              {% else %}
-                {% for name, value in stat.mode %}
-                  <td>{{value}}</td>
-                {% endfor %}
-              {% endif %}
-            </tr>
-
+            <th>{% trans "Mode" %}</th>
           {% endif %}
-
 
           {% if stat.stdev %}
-
-            <tr>
-              <td>{% trans "Standard deviation" %}</td>
-              {% if stat.stdev == "<N/A>" %}
-                <td colspan="{{ field_count }}">{{stat.stdev}}</td>
-              {% else %}
-                {% for name, value in stat.stdev %}
-                  <td>{{value}}</td>
-                {% endfor %}
-              {% endif %}
-            </tr>
-
-
+            <th>{% trans "Standard deviation" %}</th>
           {% endif %}
 
-        </tbody>
-      </table>
-      <p>
-        Total submissions: {{ stat.total_count }} /
-        With data: {{ stat.provided }} /
-        Without data: {{ stat.not_provided }}
-      </p>
-    {% endwith %}
+        </tr>
+      </thead>
+      <tbody>
+
+
+        {% for answer, _ in stat.frequency %}
+        <tr>
+            <td>
+            {{ answer }}
+            </td>
+            <td>
+            {{ stat.frequency|index:forloop.counter0 }}
+            </td>
+
+            {% if stat.pourcentage %}
+              <td> {{ stat.pourcentage|index:forloop.counter0 }}</td>
+            {% endif %}
+
+            {% if stat.median %}
+              <td> {{ stat.median|index:forloop.counter0 }}</td>
+            {% endif %}
+
+            {% if stat.mean %}
+              <td> {{ stat.mean|index:forloop.counter0 }}</td>
+            {% endif %}
+
+            {% if stat.mode %}
+              <td> {{ stat.mode|index:forloop.counter0 }}</td>
+            {% endif %}
+
+            {% if stat.stdev %}
+              <td> {{ stat.stdev|index:forloop.counter0 }}</td>
+            {% endif %}
+
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
 
   {% endif %}
+
+  <p>
+    Total submissions: {{ stat.total_count }} /
+    With data: {{ stat.provided }} /
+    Without data: {{ stat.not_provided }}
+  </p>
 
 {% endfor %}
 
