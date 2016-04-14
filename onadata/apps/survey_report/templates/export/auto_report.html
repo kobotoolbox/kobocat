@@ -97,16 +97,13 @@ th td {
         </tr>
       </thead>
       <tbody>
-        {% for answer, _ in stat.frequency %}
         <tr>
             <td> {{ answer }} </td>
-            <td> {{ stat.median|index:forloop.counter0|index:1 }}</td>
-            <td> {{ stat.mean|index:forloop.counter0|index:1 }}</td>
-            <td> {{ stat.mode|index:forloop.counter0|index:1 }}</td>
-            <td> {{ stat.stdev|index:forloop.counter0|index:1 }}</td>
+            <td> {{ stat.median  }}</td>
+            <td> {{ stat.mean  }}</td>
+            <td> {{ stat.mode  }}</td>
+            <td> {{ stat.stdev  }}</td>
         </tr>
-        {% endfor %}
-
       </tbody>
     </table>
 
