@@ -59,61 +59,51 @@ th td {
         <tr>
           <th>{% trans "Value" %}</th>
           <th>{% trans "Frequency" %}</th>
-
-          {% if stat.pourcentage %}
-            <th>{% trans "Pourcentage" %}</th>
-          {% endif %}
-
-          {% if stat.median %}
-            <th>{% trans "Median" %}</th>
-          {% endif %}
-
-          {% if stat.mean %}
-            <th>{% trans "Mean" %}</th>
-          {% endif %}
-
-          {% if stat.mode %}
-            <th>{% trans "Mode" %}</th>
-          {% endif %}
-
-          {% if stat.stdev %}
-            <th>{% trans "Standard deviation" %}</th>
-          {% endif %}
-
+          <th>{% trans "Pourcentage" %}</th>
         </tr>
       </thead>
       <tbody>
-
 
         {% for answer, _ in stat.frequency %}
         <tr>
             <td>
             {{ answer }}
             </td>
+
             <td>
             {{ stat.frequency|index:forloop.counter0|index:1 }}
             </td>
 
-            {% if stat.pourcentage %}
-              <td> {{ stat.pourcentage|index:forloop.counter0|index:1 }}%</td>
-            {% endif %}
+            <td> {{ stat.pourcentage|index:forloop.counter0|index:1 }}%</td>
 
-            {% if stat.median %}
-              <td> {{ stat.median|index:forloop.counter0|index:1 }}</td>
-            {% endif %}
+        </tr>
+        {% endfor %}
 
-            {% if stat.mean %}
-              <td> {{ stat.mean|index:forloop.counter0|index:1 }}</td>
-            {% endif %}
+      </tbody>
+    </table>
 
-            {% if stat.mode %}
-              <td> {{ stat.mode|index:forloop.counter0|index:1 }}</td>
-            {% endif %}
+  {% endif %}
 
-            {% if stat.stdev %}
-              <td> {{ stat.stdev|index:forloop.counter0|index:1 }}</td>
-            {% endif %}
+  {% if stat.mean %}
 
+    <table>
+      <thead>
+        <tr>
+          <th>{% trans "Value" %}</th>
+          <th>{% trans "Mean" %}</th>
+          <th>{% trans "Median" %}</th>
+          <th>{% trans "Mode" %}</th>
+          <th>{% trans "Standard deviation" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for answer, _ in stat.frequency %}
+        <tr>
+            <td> {{ answer }} </td>
+            <td> {{ stat.median|index:forloop.counter0|index:1 }}</td>
+            <td> {{ stat.mean|index:forloop.counter0|index:1 }}</td>
+            <td> {{ stat.mode|index:forloop.counter0|index:1 }}</td>
+            <td> {{ stat.stdev|index:forloop.counter0|index:1 }}</td>
         </tr>
         {% endfor %}
 
