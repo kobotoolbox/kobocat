@@ -122,11 +122,9 @@ th td {
 
   {% endif %}
 
-  <p>
-    Total submissions: {{ stat.total_count }} /
-    With data: {{ stat.provided }} /
-    Without data: {{ stat.not_provided }}
-  </p>
+  <p><strong>Total submissions</strong>: {{ stat.total_count }}</p>
+  <p><strong>With data</strong>: {{ stat.provided }}</p>
+  <p><strong>Without data</strong>: {{ stat.not_provided }}</p>
 
 {% endfor %}
 

@@ -47,7 +47,7 @@ def build_formpack(username, id_string):
         "version": 'v1',
         "content": xform.to_kpi_content_schema(),
     }
-    return FormPack([schema], id_string)
+    return user, xform, FormPack([schema], id_string)
 
 
 def build_export(request, username, id_string):
@@ -64,7 +64,7 @@ def build_export(request, username, id_string):
                'copy_fields': ('_id', '_uuid', '_submission_time'),
                'force_index': True}
 
-    formpack = build_formpack(username, id_string)
+    user, xform, formpack = build_formpack(username, id_string)
     return formpack.export(**options)
 
 
@@ -164,7 +164,7 @@ def html_export(request, username, id_string):
 @readable_xform_required
 def auto_report(request, username, id_string):
 
-    formpack = build_formpack(username, id_string)
+    user, xform, formpack = build_formpack(username, id_string)
     report = formpack.autoreport()
 
     lang = request.REQUEST.get('lang', None)
@@ -188,6 +188,6 @@ def auto_report(request, username, id_string):
     if page:
         data = [("v1", get_instances_for_user_and_form(username, id_string))]
         context['stats'] = report.get_stats(data, page.object_list, lang)
-        context['title'] = id_string
+        context['title'] = xform.title
 
     return render(request, 'export/auto_report.html', context)
