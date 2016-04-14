@@ -86,7 +86,7 @@ def build_export_filename(export, extension):
 @readable_xform_required
 def export_menu(request, username, id_string):
 
-    form_pack = build_formpack(username, id_string)
+    user, xform, form_pack = build_formpack(username, id_string)
 
     context = {
         'languages': form_pack.available_translations,
