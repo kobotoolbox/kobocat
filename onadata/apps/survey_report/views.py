@@ -167,6 +167,7 @@ def auto_report(request, username, id_string):
     formpack = build_formpack(username, id_string)
     report = formpack.autoreport()
 
+    lang = request.REQUEST.get('lang', None)
     limit = request.REQUEST.get('limit', 20)
     fields = [field.name for field in formpack.get_fields_for_versions()]
     paginator = Paginator(fields, limit, request=request)
@@ -186,7 +187,7 @@ def auto_report(request, username, id_string):
 
     if page:
         data = [("v1", get_instances_for_user_and_form(username, id_string))]
-        context['stats'] = report.get_stats(data, page.object_list)
+        context['stats'] = report.get_stats(data, page.object_list, lang)
         context['title'] = id_string
 
     return render(request, 'export/auto_report.html', context)

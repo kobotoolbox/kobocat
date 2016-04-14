@@ -159,11 +159,31 @@ thead td {
 </tbody>
 </table>
 
-<p>
-  <a href="{% url 'formpack_auto_report' username id_string %}">
-    {% trans 'Automatic report' %}
-  </a>
-</p>
+<h1>{%  trans "Automatic report" %}:</h1>
 
-{% endblock %}
+<ul>
+  <li>
+    <a href="{% url 'formpack_auto_report' username id_string %}">
+      {% trans "XML headers" %}
+    </a>
+  </li>
+
+  {% for lang in languages %}
+      {% if lang == "_default" %}
+        <li>
+          <a href="{% url 'formpack_auto_report' username id_string %}?lang=_default">
+            {% trans "Default labels" %}
+          </a>
+        </li>
+      {% else %}
+        <li>
+          <a href="{% url 'formpack_auto_report' username id_string %}?lang={{ lang }}">
+            {% trans lang %}
+          </a>
+        </li>
+      {% endif %}
+
+  {% endblock %}
+</ul>
+
 </div>

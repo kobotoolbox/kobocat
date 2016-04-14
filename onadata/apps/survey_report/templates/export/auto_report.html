@@ -55,7 +55,6 @@ th td {
   {% if stat.frequency %}
 
     <table>
-      <caption>{{ name }}</caption>
       <thead>
         <tr>
           <th>{% trans "Value" %}</th>
@@ -92,27 +91,27 @@ th td {
             {{ answer }}
             </td>
             <td>
-            {{ stat.frequency|index:forloop.counter0 }}
+            {{ stat.frequency|index:forloop.counter0|index:1 }}
             </td>
 
             {% if stat.pourcentage %}
-              <td> {{ stat.pourcentage|index:forloop.counter0 }}</td>
+              <td> {{ stat.pourcentage|index:forloop.counter0|index:1 }}%</td>
             {% endif %}
 
             {% if stat.median %}
-              <td> {{ stat.median|index:forloop.counter0 }}</td>
+              <td> {{ stat.median|index:forloop.counter0|index:1 }}</td>
             {% endif %}
 
             {% if stat.mean %}
-              <td> {{ stat.mean|index:forloop.counter0 }}</td>
+              <td> {{ stat.mean|index:forloop.counter0|index:1 }}</td>
             {% endif %}
 
             {% if stat.mode %}
-              <td> {{ stat.mode|index:forloop.counter0 }}</td>
+              <td> {{ stat.mode|index:forloop.counter0|index:1 }}</td>
             {% endif %}
 
             {% if stat.stdev %}
-              <td> {{ stat.stdev|index:forloop.counter0 }}</td>
+              <td> {{ stat.stdev|index:forloop.counter0|index:1 }}</td>
             {% endif %}
 
         </tr>
