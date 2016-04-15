@@ -5,42 +5,15 @@
 {% block content %}
 
 <style type="text/css" media="screen">
-table {
-  border-collapse: collapse;
-  overflow-x: scroll;
-  width: 80%px;
-  display:block;
-  font-size:10px;
-}
-
-td, th {
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left;
-  min-width: 200px;
-}
-
-th td {
-  font-weight: bold;
-  text-align: center;
-}
-
- th {
-    padding: 5px;
-    min-width: 0px;
-    max-width: 85px;
-    word-wrap: break-word;
-}
-
- td {
-    padding: 0px 5px;
-    min-width: 0px;
-    max-width: 150px;
-}
 
 .stats h2 {
     font-size: 17px;
     color: #2196F3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    margin: 1em 0 0.3em;
 }
 
 .stats p {
@@ -53,21 +26,27 @@ th td {
     color: black;
 }
 
-table.datatable {
+.datatable {
     display: table;
     width: 100%;
     font-size: 12px;
 }
 
 .datatable td, .datatable th {
-  border-left: none;
-  border-right: none;
-  border-color: #A5B3BC;
-
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #A5B3BC;
+    text-align: left;
 }
 
 .datatable td {
-    padding: 3px 3px;
+    padding: 5px;
+    min-width: 0px;
+    max-width: 150px;
+}
+
+.datatable th {
+    padding: 8px 5px;
 }
 
 .datatable td:nth-child(2), .datatable td:nth-child(3) {
@@ -84,6 +63,29 @@ table.datatable {
     font-weight: bold;
 }
 
+.datagraph {
+    font-size: 10px;
+    text-align: center;
+    background-color: #eee;
+    width: 80%;
+    margin: 20px 10% 20px;
+    height: 150px;
+    padding-top: 100px;
+}
+
+.summarystats {
+    color: #7D8A93;
+    font-size: 11px;
+}
+
+.summarystats__provided {
+    font-weight: bold;
+}
+
+.datatable--advancedstats {
+    width: 80%;
+    margin-left: 10%;
+}
 </style>
 
 <h1>{{ title }}</h1>
@@ -94,17 +96,19 @@ table.datatable {
 
     <h2>{{ name }}</h2>
 
-    <p class="stats-summary">
+    <div class="summarystats">
+	<p>
       {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided %}
 
-        {{ provided }} out of {{ total }} respondents answered
+        <span class="summarystats__provided">{{ provided }}</span>  out of {{ total }} respondents answered
         this question ({{ not_provided}} were without data)
 
       {% endblocktrans %}
     </p>
+    </div>
 
-      {% if stat.show_graph %}
-        <p>Graph will come here later on</p>
+     {% if stat.show_graph %}
+        <div class="datagraph"><span>Graph will come here later on</span></div>
       {% endif %}
 
       {# if you got frequency, you have a table with metrics #}
@@ -187,7 +191,7 @@ $('.datatable--basicstats').each(function(){
    })
 
    var $canvas = $('<canvas width="500" height="700"></canvas>')
-   $(this).siblings('.graph').html('').append($canvas)
+   $(this).siblings('.datagraph').html('').append($canvas)
 
     // Get the context of the canvas element we want to select
     var ctx = $canvas[0].getContext("2d");
