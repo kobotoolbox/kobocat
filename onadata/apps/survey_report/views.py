@@ -98,6 +98,20 @@ def export_menu(request, username, id_string):
 
 
 @readable_xform_required
+def autoreport_menu(request, username, id_string):
+
+    user, xform, form_pack = build_formpack(username, id_string)
+
+    context = {
+        'languages': form_pack.available_translations,
+        'username': username,
+        'id_string': id_string
+    }
+
+    return render(request, 'survey_report/autoreport_menu.html', context)
+
+
+@readable_xform_required
 def xlsx_export(request, username, id_string):
 
     export = build_export(request, username, id_string)

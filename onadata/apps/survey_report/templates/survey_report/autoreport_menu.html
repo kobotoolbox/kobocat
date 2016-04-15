@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+<div>
+{% block content %}
+
+<style type="text/css" media="screen">
+table {
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+
+thead td {
+  font-weight: bold;
+  text-align: center;
+}
+</style>
+
+<h1>{%  trans "Automatic report" %}:</h1>
+
+<ul>
+  <li>
+    <a href="{% url 'formpack_auto_report' username id_string %}">
+      {% trans "XML headers" %}
+    </a>
+  </li>
+
+  {% for lang in languages %}
+      {% if lang == "_default" %}
+        <li>
+          <a href="{% url 'formpack_auto_report' username id_string %}?lang=_default">
+            {% trans "Default labels" %}
+          </a>
+        </li>
+      {% else %}
+        <li>
+          <a href="{% url 'formpack_auto_report' username id_string %}?lang={{ lang }}">
+            {% trans lang %}
+          </a>
+        </li>
+      {% endif %}
+
+   {% endfor %}
+</ul>
+
+
+ {% endblock %}
+</div>
