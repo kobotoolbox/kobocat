@@ -142,10 +142,10 @@
             </tr>
             {% endfor %}
 
-            <p class="more-results"><a href="#">Show more results</a></p>
-
           </tbody>
         </table>
+
+        <p class="more-results"><a href="#">Show more results</a></p>
 
       {% endif %}
 
@@ -203,7 +203,7 @@ $('.datatable--basicstats').each(function(){
 
    if (dataset.length >= 10) {
     var hiddenRows = $this.find('.hiddenrows');
-    var $link = $this.find('.more-results');
+    var $link = $this.siblings('.more-results');
     $link.show().click(function(e){
       hiddenRows.show();
       $link.hide();
