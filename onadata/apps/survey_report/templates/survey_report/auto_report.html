@@ -86,7 +86,7 @@
     margin-left: 10%;
 }
 
-.more-results {
+.more-results, .hiddenrows {
   display:none;
 }
 </style>
@@ -202,11 +202,13 @@ $('.datatable--basicstats').each(function(){
    })
 
    if (dataset.length >= 10) {
-    var hiddenRows = $this.find('.hiddenrows').hide();
-    var $link = $this.find('.more-results a');
-    $link.show().click(function(){
+    var hiddenRows = $this.find('.hiddenrows');
+    var $link = $this.find('.more-results');
+    $link.show().click(function(e){
       hiddenRows.show();
       $link.hide();
+      e.preventDefault();
+      e.stopPropagation();
     })
    }
 
