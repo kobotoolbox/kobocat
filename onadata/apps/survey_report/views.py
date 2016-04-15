@@ -57,9 +57,9 @@ def build_export(request, username, id_string):
     lang = request.REQUEST.get('lang', None)
 
     options = {'versions': 'v1',
-               'header_lang': lang,
+               'lang': lang,
                'group_sep': group_sep,
-               'translation': lang,
+               'lang': lang,
                'hierarchy_in_labels': hierarchy_in_labels,
                'copy_fields': ('_id', '_uuid', '_submission_time'),
                'force_index': True}
@@ -70,10 +70,10 @@ def build_export(request, username, id_string):
 
 def build_export_filename(export, extension):
     form_type = 'labels'
-    if not export.translation:
+    if not export.lang:
         form_type = "values"
-    elif export.translation != "_default":
-        form_type = export.translation
+    elif export.lang != "_default":
+        form_type = export.lang
 
     return "{title} - {form_type} - {date:%Y-%m-%d-%H-%M}.{ext}".format(
         form_type=form_type,
@@ -94,7 +94,7 @@ def export_menu(request, username, id_string):
         'id_string': id_string
     }
 
-    return render(request, 'export/export_menu.html', context)
+    return render(request, 'survey_report/export_menu.html', context)
 
 
 @readable_xform_required
@@ -158,7 +158,7 @@ def html_export(request, username, id_string):
         context['table'] = mark_safe("\n".join(export.to_html(data)))
         context['title'] = id_string
 
-    return render(request, 'export/export_html.html', context)
+    return render(request, 'survey_report/export_html.html', context)
 
 
 @readable_xform_required
@@ -190,4 +190,4 @@ def auto_report(request, username, id_string):
         context['stats'] = report.get_stats(data, page.object_list, lang)
         context['title'] = xform.title
 
-    return render(request, 'export/auto_report.html', context)
+    return render(request, 'survey_report/auto_report.html', context)

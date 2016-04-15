@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load data_manipulation %}
+
+{% block content %}
+
+<style type="text/css" media="screen">
+table {
+  border-collapse: collapse;
+  overflow-x: scroll;
+  width: 80%px;
+  display:block;
+  font-size:10px;
+}
+
+td, th {
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+  min-width: 200px;
+}
+
+th td {
+  font-weight: bold;
+  text-align: center;
+}
+
+ th {
+    padding: 5px;
+    min-width: 0px;
+    max-width: 85px;
+    word-wrap: break-word;
+}
+
+ td {
+    padding: 0px 5px;
+    min-width: 0px;
+    max-width: 150px;
+}
+
+.stats h2 {
+    font-size: 17px;
+    color: #2196F3;
+}
+
+.stats p {
+    margin: 0;
+}
+
+.stats span.label {
+    padding: 0;
+    background: none;
+    color: black;
+}
+
+table.datatable {
+    display: table;
+    width: 100%;
+    font-size: 12px;
+}
+
+.datatable td, .datatable th {
+  border-left: none;
+  border-right: none;
+  border-color: #A5B3BC;
+
+}
+
+.datatable td {
+    padding: 3px 3px;
+}
+
+.datatable td:nth-child(2), .datatable td:nth-child(3) {
+    width: 25%;
+}
+
+.stats {
+    margin: 0 10% 39px;
+}
+
+.datatable thead {
+    background-color: #2196F3;
+    color: white;
+    font-weight: bold;
+}
+
+</style>
+
+<h1>{{ title }}</h1>
+
+{% for name, stat in stats  %}
+
+  <div class="stats">
+
+    <h2>{{ name }}</h2>
+
+    <p class="stats-summary">
+      {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided %}
+
+        {{ provided }} out of {{ total }} respondents answered
+        this question ({{ not_provided}} were without data)
+
+      {% endblocktrans %}
+    </p>
+
+      {% if stat.show_graph %}
+        <p>Graph will come here later on</p>
+      {% endif %}
+
+      {# if you got frequency, you have a table with metrics #}
+      {% if stat.frequency %}
+
+        <table class="datatable datatable--basicstats">
+          <thead>
+            <tr>
+              <th>{% trans "Value" %}</th>
+              <th>{% trans "Frequency" %}</th>
+              <th>{% trans "Percentage" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            {% for answer, _ in stat.frequency %}
+            <tr>
+                <td>
+                {{ answer }}
+                </td>
+
+                <td>
+                {{ stat.frequency|index:forloop.counter0|index:1 }}
+                </td>
+
+                <td> {{ stat.percentage|index:forloop.counter0|index:1 }}%</td>
+
+            </tr>
+            {% endfor %}
+
+          </tbody>
+        </table>
+
+      {% endif %}
+
+      {% if stat.mean %}
+
+      <table class="datatable datatable--advancedstats">
+          <thead>
+            <tr>
+              <th>{% trans "Mean" %}</th>
+              <th>{% trans "Median" %}</th>
+              <th>{% trans "Mode" %}</th>
+              <th>{% trans "Standard deviation" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+                <td> {{ stat.mean  }}</td>
+                <td> {{ stat.median  }}</td>
+                <td> {{ stat.mode  }}</td>
+                <td> {{ stat.stdev  }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+      {% endif %}
+
+    </div>
+
+{% endfor %}
+
+<div id="pagination">
+    {{ page.render }}
+</div>
+
+<script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
+
+<script>
+
+$('.datatable--basicstats').each(function(){
+
+   var dataset = [];
+   var labels = [];
+
+   $(this).find('tbody tr').each(function(){
+     var percent = $(this).children().last().text();
+     dataset.push(parseFloat(percent));
+     labels.push($(this).children().first().text());
+   })
+
+   var $canvas = $('<canvas width="500" height="700"></canvas>')
+   $(this).siblings('.graph').html('').append($canvas)
+
+    // Get the context of the canvas element we want to select
+    var ctx = $canvas[0].getContext("2d");
+
+    var data = {
+        labels: labels,
+        datasets: [
+            {
+                fillColor: "rgba(151,187,205,0.2)",
+                strokeColor: "rgba(151,187,205,1)",
+                pointColor: "rgba(151,187,205,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(151,187,205,1)",
+                data: dataset
+            }
+        ]
+    };
+
+    var myNewChart = new Chart(ctx).Bar(data);
+
+})
+
+
+
+{% endblock %}
