@@ -175,10 +175,14 @@
     {{ page.render }}
 </div>
 
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+
 <script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
 
 <script>
-
 $('.datatable--basicstats').each(function(){
 
    var dataset = [];
