@@ -10,7 +10,7 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, Http404
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
@@ -88,10 +88,13 @@ def export_menu(request, username, id_string):
 
     user, xform, form_pack = build_formpack(username, id_string)
 
+    group_by_fields = form_pack.get_fields_for_versions(data_type="select_one")
+
     context = {
         'languages': form_pack.available_translations,
         'username': username,
-        'id_string': id_string
+        'id_string': id_string,
+        'group_by_fields': group_by_fields
     }
 
     return render(request, 'survey_report/export_menu.html', context)
@@ -159,18 +162,17 @@ def html_export(request, username, id_string):
         try:
             page = paginator.page(1)
         except (EmptyPage, PageNotAnInteger):
-            page = None
+            raise Http404('This report has no submissions')
 
     context = {
         'page': page,
-        'table': []
+        'table': [],
+        'title': id_string
     }
 
-    if page:
-        data = [("v1", page.object_list)]
-        export = build_export(request, username, id_string)
-        context['table'] = mark_safe("\n".join(export.to_html(data)))
-        context['title'] = id_string
+    data = [("v1", page.object_list)]
+    export = build_export(request, username, id_string)
+    context['table'] = mark_safe("\n".join(export.to_html(data)))
 
     return render(request, 'survey_report/export_html.html', context)
 
@@ -183,6 +185,8 @@ def auto_report(request, username, id_string):
 
     lang = request.REQUEST.get('lang', None)
     limit = int(request.REQUEST.get('limit', 20))
+    group_by = request.REQUEST.get('groupby', None)
+
     fields = [field.name for field in formpack.get_fields_for_versions()]
     paginator = Paginator(fields, limit, request=request)
 
@@ -192,16 +196,19 @@ def auto_report(request, username, id_string):
         try:
             page = paginator.page(1)
         except (EmptyPage, PageNotAnInteger):
-            page = None
+            raise Http404('This report has no submissions')
 
-    context = {
+    ctx = {
         'page': page,
-        'stats': []
+        'stats': [],
+        'title': xform.title,
+        'group_by': group_by
     }
 
-    if page:
-        data = [("v1", get_instances_for_user_and_form(username, id_string))]
-        context['stats'] = report.get_stats(data, page.object_list, lang)
-        context['title'] = xform.title
+    data = [("v1", get_instances_for_user_and_form(username, id_string))]
+    ctx['stats'] = report.get_stats(data, page.object_list, lang, group_by)
 
-    return render(request, 'survey_report/auto_report.html', context)
+    if group_by:
+        return render(request, 'survey_report/auto_report_group_by.html', ctx)
+
+    return render(request, 'survey_report/auto_report.html', ctx)
