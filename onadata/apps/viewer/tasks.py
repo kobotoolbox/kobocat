@@ -58,9 +58,8 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
             raise Export.ExportTypeError
     elif export_type == Export.ZIP_EXPORT:
         # start async export
-        expires= os.environ.get('MEDIA_ZIP_EXPORT_TIMEOUT_SECONDS', 30*60)
         result = create_zip_export.apply_async(
-            (), arguments, countdown=10, expires=expires)
+            (), arguments, countdown=10)
     elif export_type == Export.KML_EXPORT:
         # start async export
         result = create_kml_export.apply_async(
@@ -231,7 +230,7 @@ def create_kml_export(username, id_string, export_id, query=None):
         return gen_export.id
 
 
-@task()
+@task(soft_time_limit=30*60, time_limit=31*60)
 def create_zip_export(username, id_string, export_id, query=None):
     export = Export.objects.get(id=export_id)
     try:
