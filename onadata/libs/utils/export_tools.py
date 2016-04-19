@@ -836,21 +836,17 @@ def generate_attachments_zip_export(
         id_string,
         export_type,
         filename)
-    storage = get_storage_class()()
-    zip_file = None
 
+    temporary_file = NamedTemporaryFile('wb+', prefix='media_zip_export', suffix='.zip', delete=False)
     try:
-        zip_file = create_attachments_zipfile(attachments)
-
-        try:
-            temp_file = open(zip_file.name)
-            export_filename = storage.save(
-                file_path,
-                File(temp_file, file_path))
-        finally:
-            temp_file.close()
+        create_attachments_zipfile(attachments, temporary_file=temporary_file)
+        export_filename = get_storage_class()().save(
+            file_path,
+            File(temporary_file, file_path))
     finally:
-        zip_file and zip_file.close()
+        # Delete the temporary file.
+        temporary_file.close()                    
+        temporary_file.unlink(temporary_file.name)
 
     dir_name, basename = os.path.split(export_filename)
 
