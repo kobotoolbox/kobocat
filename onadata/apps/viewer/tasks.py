@@ -1,4 +1,5 @@
 import re
+import os
 import sys
 from celery import task
 from django.conf import settings
@@ -57,8 +58,9 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
             raise Export.ExportTypeError
     elif export_type == Export.ZIP_EXPORT:
         # start async export
+        expires= os.environ.get('MEDIA_ZIP_EXPORT_TIMEOUT', 30)
         result = create_zip_export.apply_async(
-            (), arguments, countdown=10)
+            (), arguments, countdown=10, expires=expires)
     elif export_type == Export.KML_EXPORT:
         # start async export
         result = create_kml_export.apply_async(
