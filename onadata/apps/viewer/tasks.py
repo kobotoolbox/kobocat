@@ -1,5 +1,4 @@
 import re
-import os
 import sys
 from celery import task
 from django.conf import settings
