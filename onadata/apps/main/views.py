@@ -1366,7 +1366,7 @@ def qrcode(request, username, id_string):
         status = 400
     else:
         if url:
-            image = generate_qrcode(''.join((url, '#qr')))
+            image = generate_qrcode(url)
             results = """<img class="qrcode" src="%s" alt="%s" />
                     </br><a href="%s" target="_blank">%s</a>""" \
                 % (image, url, url, url)
