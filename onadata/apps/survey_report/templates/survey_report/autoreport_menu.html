@@ -61,8 +61,8 @@ thead td {
         </option>
 
         {% for field in group_by_fields %}
-              <option value="field.name">
-                  {% blocktrans name=field.name %}
+              <option value="{{ field.name }}">
+                  {% blocktrans with name=field.name %}
                       Group by "{{ name }}"
                   {% endblocktrans %}
               </option>

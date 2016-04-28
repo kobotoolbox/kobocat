@@ -126,12 +126,12 @@
       </tbody>
     </table>
 
-     {% if group.1.0.show_graph %}
+      {% if group.1.0.show_graph %}
         <div class="datagraph"><span>Graph will come here later on</span></div>
       {% endif %}
 
-      {# if you got frequency, you have a table with metrics #}
-      {% if group.1.0.frequency %}
+      {# when you got frequency, you have a table with metrics #}
+      {% if group.0.1.frequency %}
 
         <table class="datatable datatable--basicstats">
           <thead>
@@ -151,8 +151,10 @@
                 rows as there are values inside that group
               {% endcomment %}
               <tr {% if forloop.counter > 10 %}class="hiddenrows"{% endif %}
-                  rowspan="{% stat.frequency|length %}"
+                  rowspan="{{ stat.frequency|length }}"
               >
+              
+              <td rowspan="{{ stat.frequency|length }}" >{{ group_name }}</td>
 
                 {% for answer, _ in stat.frequency %}
 
@@ -193,7 +195,7 @@
 
       {% endif %}
 
-      {% if group.1.0.mean %}
+      {% if group.1.mean %}
 
       <table class="datatable datatable--advancedstats">
           <thead>

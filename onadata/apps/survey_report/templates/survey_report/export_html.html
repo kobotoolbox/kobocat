@@ -38,11 +38,88 @@ th td {
     max-width: 150px;
 }
 
+
+label, button {
+    display:inline;
+    margin:10px;
+}
+
 </style>
 
 <h1>{{ title }}</h1>
 
-{{ table }}
+<form action="{% url 'formpack_html_export' username id_string %}?page={{page}}"
+      method="get" accept-charset="utf-8">
+
+  <p>
+
+    <span id="select select--lang">
+      <label for="lang">{% trans "Value and header format" %}</label>
+      <select name="lang" autocomplete="off">
+        <option value="xml">
+            {% trans "XML values and headers" %}
+        </option>
+
+        {% for lang in languages %}
+
+            {% if lang == "_default" %}
+              <option value="_default" 
+                      {% if headers_lang == lang %}selected{% endif %}
+              >
+                  {% trans "Default labels" %}
+              </option>
+            {% else %}
+              <option value="{{ lang }}"
+                      {% if headers_lang == lang %}selected{% endif %}
+              >
+                  {% trans lang %}
+              </option>
+            {% endif %}
+
+         {% endfor %}
+      </select>
+    </span>
+
+    <span id="select select--group">
+      <label for="showgroup">{% trans "Show groups" %}</label>
+      <input type="checkbox" name="hierarchy_in_labels" {% if hierarchy_in_labels %}checked{% endif %} />
+      <label for="groupsep">{% trans "Separator" %}</label>
+      <input type="input" name="group_sep" value="{{ group_sep }}" width="3em" />
+    </span>
+
+    <button>{% trans "Ok" %}</button>
+  </p>
+
+</form>
+
+<table>
+
+    <thead>
+        <tr>
+            <th>{% trans "Link" %}</th>
+            {% for label in labels %}
+                <th>{{ label }}</th>
+            {% endfor %}   
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for submission_id, row in data  %}
+        <tr>
+            {% url 'onadata.apps.viewer.views.instance' username id_string as submission_url %}
+            
+            <th><a href="{{ submission_url }}#/{{ submission_id|stringformat:'d' }}">{% trans "View" %}</a></th>
+            {% for value in row %}
+                <th>{{ value }}</th>
+            {% endfor %}   
+        </tr>
+    {% endfor %}
+
+    </tbody>
+
+</table>
 
 <div id="pagination">
     {{ page.render }}

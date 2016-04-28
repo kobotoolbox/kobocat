@@ -17,6 +17,10 @@ urlpatterns = patterns(
         'onadata.apps.survey_report.views.html_export',
         name='formpack_html_export'),
 
+    url(r"(?P<id_string>[^/]+)/submission/(?P<submission>\d+).html$",
+        'onadata.apps.survey_report.views.view_one_submission',
+        name='formpack_one_submission'),
+
     url(r"(?P<id_string>[^/]+)/digest/$",
         'onadata.apps.survey_report.views.autoreport_menu',
         name='formpack_autoreport_menu'),
