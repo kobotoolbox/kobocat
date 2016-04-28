@@ -268,7 +268,12 @@ urlpatterns = patterns(
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': settings.MEDIA_ROOT}),
     url(r'^favicon\.ico',
-        RedirectView.as_view(url='/static/images/favicon.ico')))
+        RedirectView.as_view(url='/static/images/favicon.ico')),
+
+    # Statistics for superusers. The username is irrelevant, but leave it as
+    # the first part of the path to avoid collisions
+    url(r"^(?P<username>[^/]+)/superuser_stats/$",
+        'onadata.apps.logger.views.superuser_stats'))
 
 urlpatterns += patterns('django.contrib.staticfiles.views',
                         url(r'^static/(?P<path>.*)$', 'serve'))
