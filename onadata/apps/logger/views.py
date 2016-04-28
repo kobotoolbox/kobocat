@@ -795,7 +795,7 @@ def superuser_stats(request, username):
         for record in data:
             for k in record.keys():
                 if hasattr(record[k], 'strftime'):
-                    record[k] = record[k].strftime('%D-%T')
+                    record[k] = record[k].strftime('%D')
             writer.writerow(record)
         zip_file.writestr(filename, csv_io.getvalue())
         csv_io.close()
