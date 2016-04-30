@@ -187,6 +187,8 @@ urlpatterns = patterns(
         'onadata.apps.logger.views.download_spss_labels', name='download_spss_labels'),
     url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
 
+    url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),
+
     # odk data urls
     url(r"^submission$",
         XFormSubmissionApi.as_view({'post': 'create', 'head': 'create'}),

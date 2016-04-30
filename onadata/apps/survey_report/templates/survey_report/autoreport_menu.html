@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+<div>
+{% block content %}
+
+<style type="text/css" media="screen">
+table {
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+
+thead td {
+  font-weight: bold;
+  text-align: center;
+}
+</style>
+
+<h1>{%  trans "Automatic report" %}:</h1>
+
+<form action="{% url 'formpack_auto_report' username id_string %}"
+      method="get" accept-charset="utf-8">
+
+  <p>
+
+    <span id="select select--lang">
+      <label for="lang">{% trans "Value and header format" %}</label>
+      <select name="lang">
+        <option value="">
+            {% trans "XML values and headers" %}
+        </option>
+
+        {% for lang in languages %}
+
+            {% if lang == "_default" %}
+              <option value="_default">
+                  {% trans "Default labels" %}
+              </option>
+            {% else %}
+              <option value="{{ lang }}">
+                  {% trans lang %}
+              </option>
+            {% endif %}
+
+         {% endfor %}
+      </select>
+    </span>
+
+    <span id="select select--groupby">
+      <label for="groupby">{% trans "Group by" %}</label>
+      <select name="groupby">
+
+        <option value="">
+            {% trans "Do not group by" %}
+        </option>
+
+        {% for field in group_by_fields %}
+              <option value="{{ field.name }}">
+                  {% blocktrans with name=field.name %}
+                      Group by "{{ name }}"
+                  {% endblocktrans %}
+              </option>
+         {% endfor %}
+
+      </select>
+    </span>
+
+    <button>Generate digest</button>
+  </p>
+
+</form>
+
+ {% endblock %}
+</div>
