@@ -202,21 +202,24 @@ def enketo_url(form_url, id_string, instance_xml=None,
     return False
 
 
-def create_attachments_zipfile(attachments):
-    # create zip_file
-    tmp = NamedTemporaryFile()
-    with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as z:
+def create_attachments_zipfile(attachments, temporary_file=None):
+    if not temporary_file:
+        temporary_file = NamedTemporaryFile()
+
+    storage = get_storage_class()()
+    with zipfile.ZipFile(temporary_file, 'w', zipfile.ZIP_STORED, allowZip64=True) as zip_file:
         for attachment in attachments:
-            default_storage = get_storage_class()()
-
-            if default_storage.exists(attachment.media_file.name):
+            if storage.exists(attachment.media_file.name):
                 try:
-                    with default_storage.open(attachment.media_file.name) as f:
-                        z.writestr(attachment.media_file.name, f.read())
+                    with storage.open(attachment.media_file.name, 'rb') as source_file:
+                        zip_file.writestr(attachment.media_file.name, source_file.read())
                 except Exception, e:
-                    report_exception("Create attachment zip exception", e)
+                    report_exception("Error adding file \"{}\" to archive.".format(attachment.media_file.name), e)
 
-    return tmp
+    # Be kind; rewind.
+    temporary_file.seek(0)
+
+    return temporary_file
 
 
 def _get_form_url(request, username, protocol='https'):
