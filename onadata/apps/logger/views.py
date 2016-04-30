@@ -1,10 +1,15 @@
 from datetime import datetime
+import datetime as datetime_module
 import json
 import os
 import tempfile
+import csv
+import re
+import zipfile
+from io import BytesIO
 
 import pytz
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -755,3 +760,45 @@ def ziggy_submissions(request, username):
                 status = 200
                 data = [record for record in cursor]
     return HttpResponse(json.dumps(data), status=status)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def superuser_stats(request, username):
+    REPORTS = {
+        'instances.csv': {
+            'model': Instance,
+            'fields': ('status', 'date_created', 'pk', 'user_id', 'xform_id')
+        },
+        'xforms.csv': {
+            'model': XForm,
+            'fields': ('date_created', 'num_of_submissions', 'pk', 'user_id')
+        },
+        'users.csv': {
+            'model': User,
+            'fields': ('username', 'email', 'date_joined', 'last_login', 'pk')
+        }
+    }
+
+    response = HttpResponse(content_type='application/zip')
+    response['Content-Disposition'] = 'attachment;filename="{}_{}.zip"'.format(
+        re.sub('[^a-zA-Z0-9]', '-', request.META['HTTP_HOST']),
+        datetime_module.date.today()
+    )
+    zip_file = zipfile.ZipFile(response, 'w', zipfile.ZIP_DEFLATED)
+
+    for filename, report_settings in REPORTS.iteritems():
+        data = report_settings['model'].objects.all().values(
+            *report_settings['fields'])
+        csv_io = BytesIO()
+        writer = csv.DictWriter(csv_io, fieldnames=report_settings['fields'])
+        writer.writeheader()
+        for record in data:
+            for k in record.keys():
+                if hasattr(record[k], 'strftime'):
+                    record[k] = record[k].strftime('%D')
+            writer.writerow(record)
+        zip_file.writestr(filename, csv_io.getvalue())
+        csv_io.close()
+
+    zip_file.close()
+    return response

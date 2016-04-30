@@ -225,6 +225,7 @@ INSTALLED_APPS = (
     'onadata.apps.sms_support',
     'onadata.libs',
     'onadata.apps.survey_report',
+    'onadata.apps.export',
     'pure_pagination',
 )
 

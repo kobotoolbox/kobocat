@@ -185,6 +185,7 @@ urlpatterns = patterns(
         'onadata.apps.viewer.views.export_download'),
     url(r'^(?P<username>\w+)/forms/(?P<form_id_string>[^/]+)/spss_labels\.zip$',
         'onadata.apps.logger.views.download_spss_labels', name='download_spss_labels'),
+    url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
 
     url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),
 
@@ -270,7 +271,12 @@ urlpatterns = patterns(
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': settings.MEDIA_ROOT}),
     url(r'^favicon\.ico',
-        RedirectView.as_view(url='/static/images/favicon.ico')))
+        RedirectView.as_view(url='/static/images/favicon.ico')),
+
+    # Statistics for superusers. The username is irrelevant, but leave it as
+    # the first part of the path to avoid collisions
+    url(r"^(?P<username>[^/]+)/superuser_stats/$",
+        'onadata.apps.logger.views.superuser_stats'))
 
 urlpatterns += patterns('django.contrib.staticfiles.views',
                         url(r'^static/(?P<path>.*)$', 'serve'))
