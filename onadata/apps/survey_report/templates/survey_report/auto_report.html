@@ -172,14 +172,14 @@ label, button {
 
   <div class="stats">
 
-    <h2>{{ name }} ({% trans field.data_type %]) </h2>
+    <h2 title="{{ name }}" >{{ name }}</h2>
 
     <div class="summarystats">
 	<p>
-      {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided %}
+      {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided question_type=field.data_type %}
 
         <span class="summarystats__provided">{{ provided }}</span>  out of {{ total }} respondents answered
-        this question ({{ not_provided}} were without data)
+        this question ({{ not_provided}} were without data). - Question type: '{{question_type}}'
 
       {% endblocktrans %}
     </p>
