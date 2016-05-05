@@ -4,7 +4,6 @@
 
 {% block content %}
 
-{% include "topbar.html"%}
 
 <style type="text/css" media="screen">
 table {
@@ -24,10 +23,6 @@ thead td {
 }
 
 
-.main {
-    margin-top:3em;
-}
-
 .formpack_html_export__options input[type=checkbox] {
     float:left;
     margin-right:1em;
@@ -41,7 +36,11 @@ thead td {
   </div>
 </div>
 
-<h1>{% trans "Advanced export" %}</h1>
+<header class="data-page__header">
+    <hgroup class="container">
+      <h1>{% trans "Advanced Exports" %}</h1>
+    </hgroup>
+</header>
 
 <form action="."
       method="get" accept-charset="utf-8">

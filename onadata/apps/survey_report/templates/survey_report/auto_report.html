@@ -102,7 +102,7 @@ label, button {
 </style>
 
 <div class="sub-header-bar">
-  <div>
+  <div class="container__wide">
     <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
   </div>
 </div>
@@ -168,11 +168,11 @@ label, button {
 
 </form>
 
-{% for name, stat in stats  %}
+{% for field, name, stat in stats  %}
 
   <div class="stats">
 
-    <h2>{{ name }}</h2>
+    <h2>{{ name }} ({% trans field.data_type %]) </h2>
 
     <div class="summarystats">
 	<p>
@@ -263,10 +263,14 @@ label, button {
 <script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
 
 <script>
+
+Chart.defaults.global.responsive = true;
+
 $('.datatable--basicstats').each(function(){
 
    var dataset = [];
    var labels = [];
+   var tooltipLabels = [];
 
    $this = $(this);
 
@@ -275,10 +279,12 @@ $('.datatable--basicstats').each(function(){
      dataset.push(parseFloat(percent));
      
      var label = $(this).children().first().text().trim();
+     tooltipLabels.push(label);
      if (label.length > 20) {
         label = label.substr(0, 17) + '...';
      }
      labels.push(label);
+     
    })
 
    if (dataset.length >= 10) {
@@ -292,17 +298,20 @@ $('.datatable--basicstats').each(function(){
     })
    }
 
-   var $canvas = $('<canvas width="500" height="400"></canvas>')
-   $(this).siblings('.datagraph').html('').append($canvas)
-
-    // Get the context of the canvas element we want to select
-    var ctx = $canvas[0].getContext("2d");
-
-    var data = {
+   var $canvas = $('<canvas width="500" height="400"></canvas>');
+   var $graph = $(this).siblings('.datagraph');
+   
+   
+   if ($(this).siblings('.datagraph').length == 0){
+       return
+   }
+   
+   $graph.html('').append($canvas);
+    
+   var data = {
         labels: labels.slice(0, 10),
         datasets: [
             {
-                label: "",
                 backgroundColor: "rgba(151,187,205,0.2)",
                 borderColor: "rgba(151,187,205,1)",
                 borderWidth: 1,
@@ -316,10 +325,24 @@ $('.datatable--basicstats').each(function(){
             }
         ],
     };
-    
-    console.log(data)
 
-    var myNewChart = new Chart($canvas, {type:"bar", data: data});
+    var myNewChart = new Chart($canvas, {
+        type:"bar", 
+        data: data,
+        options: {
+            legend: {
+                display: false,
+            },
+            tooltips: {
+                callbacks: {
+                    title: function(tooltipItem, data){
+                        return tooltipLabels[tooltipItem[0].index];
+                    }
+                    
+                }
+            }
+        }
+   });
 
 })
 
