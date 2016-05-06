@@ -9,8 +9,8 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseForbidden, Http404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse, HttpResponseForbidden, Http404, QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
@@ -103,14 +103,26 @@ def build_export_filename(export, extension):
 @readable_xform_required
 def export_menu(request, username, id_string):
 
-    user, xform, form_pack = build_formpack(username, id_string)
+    req = request.REQUEST
+    export_type = req.get('type', None)
+    if export_type:
+        lang = req.get('lang', None)
+        hierarchy_in_labels = req.get('hierarchy_in_labels')
+        group_sep = req.get('group_sep', '/')
+        
+        q = QueryDict('', mutable=True)
+        q['lang'] = req.get('lang')
+        q['hierarchy_in_labels'] = req.get('hierarchy_in_labels')
+        q['group_sep'] = req.get('group_sep', '/')
+        
+        if export_type == "xlsx":
+            url = reverse('formpack_xlsx_export', args=(username, id_string))
+            return redirect(url + '?' + q.urlencode())
+        if export_type == "csv":
+            url = reverse('formpack_csv_export', args=(username, id_string))
+            return redirect(url + '?' + q.urlencode())
 
-    context = {
-        'languages': form_pack.available_translations,
-        'username': username,
-        'id_string': id_string,   
-    }
-
+    context = build_export_context(request, username, id_string)
     return render(request, 'survey_report/export_menu.html', context)
 
 
@@ -243,7 +255,8 @@ def auto_report(request, username, id_string):
         'username': username,
         'id_string': id_string,
         'languages': translations,
-        'headers_lang': lang
+        'headers_lang': lang,
+        'xform': xform
     }
 
     data = [("v1", get_instances_for_user_and_form(username, id_string))]

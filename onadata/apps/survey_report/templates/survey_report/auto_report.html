@@ -95,9 +95,19 @@ label, button {
     margin:10px;
 }
 
+.formpack_auto_report {
+    margin-top:3em;
+}
+
 </style>
 
-<h1>{{ title }}</h1>
+<div class="sub-header-bar">
+  <div class="container__wide">
+    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+  </div>
+</div>
+
+<h1>{% trans "Automatic report" %}</h1>
 
 <form action="{% url 'formpack_auto_report' username id_string %}"
       method="get" accept-charset="utf-8">
@@ -158,18 +168,18 @@ label, button {
 
 </form>
 
-{% for name, stat in stats  %}
+{% for field, name, stat in stats  %}
 
   <div class="stats">
 
-    <h2>{{ name }}</h2>
+    <h2 title="{{ name }}" >{{ name }}</h2>
 
     <div class="summarystats">
 	<p>
-      {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided %}
+      {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided question_type=field.data_type %}
 
         <span class="summarystats__provided">{{ provided }}</span>  out of {{ total }} respondents answered
-        this question ({{ not_provided}} were without data)
+        this question ({{ not_provided}} were without data). - Question type: '{{question_type}}'
 
       {% endblocktrans %}
     </p>
@@ -253,17 +263,28 @@ label, button {
 <script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
 
 <script>
+
+Chart.defaults.global.responsive = true;
+
 $('.datatable--basicstats').each(function(){
 
    var dataset = [];
    var labels = [];
+   var tooltipLabels = [];
 
    $this = $(this);
 
    $this.find('tbody tr').each(function(){
      var percent = $(this).children().last().text();
      dataset.push(parseFloat(percent));
-     labels.push($(this).children().first().text());
+     
+     var label = $(this).children().first().text().trim();
+     tooltipLabels.push(label);
+     if (label.length > 20) {
+        label = label.substr(0, 17) + '...';
+     }
+     labels.push(label);
+     
    })
 
    if (dataset.length >= 10) {
@@ -277,28 +298,51 @@ $('.datatable--basicstats').each(function(){
     })
    }
 
-   var $canvas = $('<canvas width="500" height="400"></canvas>')
-   $(this).siblings('.datagraph').html('').append($canvas)
-
-    // Get the context of the canvas element we want to select
-    var ctx = $canvas[0].getContext("2d");
-
-    var data = {
+   var $canvas = $('<canvas width="500" height="400"></canvas>');
+   var $graph = $(this).siblings('.datagraph');
+   
+   
+   if ($(this).siblings('.datagraph').length == 0){
+       return
+   }
+   
+   $graph.html('').append($canvas);
+    
+   var data = {
         labels: labels.slice(0, 10),
         datasets: [
             {
-                fillColor: "rgba(151,187,205,0.2)",
-                strokeColor: "rgba(151,187,205,1)",
-                pointColor: "rgba(151,187,205,1)",
-                pointStrokeColor: "#fff",
-                pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(151,187,205,1)",
+                backgroundColor: "rgba(151,187,205,0.2)",
+                borderColor: "rgba(151,187,205,1)",
+                borderWidth: 1,
+                hoverBackgroundColor: "rgba(255,99,132,0.4)",
+                hoverBorderColor: "rgba(151,187,205,1",
                 data: dataset.slice(0, 10)
+                
+                
+
+                
             }
-        ]
+        ],
     };
 
-    var myNewChart = new Chart(ctx).Bar(data);
+    var myNewChart = new Chart($canvas, {
+        type:"bar", 
+        data: data,
+        options: {
+            legend: {
+                display: false,
+            },
+            tooltips: {
+                callbacks: {
+                    title: function(tooltipItem, data){
+                        return tooltipLabels[tooltipItem[0].index];
+                    }
+                    
+                }
+            }
+        }
+   });
 
 })
 
