@@ -230,7 +230,7 @@ def auto_report(request, username, id_string):
     report = formpack.autoreport()
     
     limit = int(request.REQUEST.get('limit', 20))
-    split_by = request.REQUEST.get('split_by') or None
+    split_by = request.REQUEST.get('split_by') or None    
 
     fields = [field.name for field in formpack.get_fields_for_versions()]
     paginator = Paginator(fields, limit, request=request)

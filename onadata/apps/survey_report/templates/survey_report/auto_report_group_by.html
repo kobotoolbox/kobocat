@@ -99,6 +99,25 @@ label, button {
     margin-top:3em;
 }
 
+#pagination {
+  bottom: 0px;
+  margin: 0px;
+  padding: 2px 0 0;
+  border-top: 1px solid #ddd;
+  position:fixed;
+  width: 984px;
+  background-color: white;
+}
+.pagination {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+.pagination .disabled {
+  color:#ccc;
+}
+
 </style>
 
 <div class="sub-header-bar">
@@ -107,7 +126,11 @@ label, button {
   </div>
 </div>
 
-<h1>{% trans "Automatic report" %}</h1>
+<header class="data-page__header">
+    <hgroup class="container">
+      <h1>{% trans "Automatic report" %}</h1>
+    </hgroup>
+</header>
 
 <form action="{% url 'formpack_auto_report' username id_string %}"
       method="get" accept-charset="utf-8">
