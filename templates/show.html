@@ -240,7 +240,7 @@
         <h2 class="dashboard__group-label">
           Submissions ({{ xform.submission_count|intcomma }})
         </h2>
-        <a title="{% trans "View Submitted Data" %}" href="{% url "onadata.apps.viewer.views.data_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view">
+        <a title="{% trans "View Submitted Data" %}" href="{% url "formpack_html_export" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view">
           <i class="fa fa-table"></i>
           <span>View data in table</span>
         </a>
