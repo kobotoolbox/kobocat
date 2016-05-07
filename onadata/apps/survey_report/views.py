@@ -50,7 +50,7 @@ def build_formpack(username, id_string):
         "version": 'v1',
         "content": xform.to_kpi_content_schema(),
     }
-    return user, xform, FormPack([schema], id_string)
+    return user, xform, FormPack([schema], xform.title)
 
 
 def build_export_context(request, username, id_string):
@@ -131,13 +131,14 @@ def autoreport_menu(request, username, id_string):
 
     user, xform, form_pack = build_formpack(username, id_string)
     
-    group_by_fields = form_pack.get_fields_for_versions(data_types="select_one")
+    # exclude fields in repeat group
+    split_by_fields = form_pack.get_fields_for_versions(data_types="select_one")
 
     context = {
         'languages': form_pack.available_translations,
         'username': username,
         'id_string': id_string,
-        'group_by_fields': group_by_fields
+        'split_by_fields': split_by_fields
     }
 
     return render(request, 'survey_report/autoreport_menu.html', context)
@@ -229,7 +230,7 @@ def auto_report(request, username, id_string):
     report = formpack.autoreport()
     
     limit = int(request.REQUEST.get('limit', 20))
-    group_by = request.REQUEST.get('groupby', None)
+    split_by = request.REQUEST.get('split_by') or None    
 
     fields = [field.name for field in formpack.get_fields_for_versions()]
     paginator = Paginator(fields, limit, request=request)
@@ -242,7 +243,8 @@ def auto_report(request, username, id_string):
         except (EmptyPage, PageNotAnInteger):
             raise Http404('This report has no submissions')
 
-    group_by_fields = formpack.get_fields_for_versions(data_types="select_one")
+    # remove fields in a group
+    split_by_fields = formpack.get_fields_for_versions(data_types="select_one")
     translations = formpack.available_translations
     lang = request.REQUEST.get('lang', None) or next(iter(translations), None)
 
@@ -250,8 +252,8 @@ def auto_report(request, username, id_string):
         'page': page,
         'stats': [],
         'title': xform.title,
-        'group_by': group_by,
-        'group_by_fields': group_by_fields,
+        'split_by': split_by,
+        'split_by_fields': split_by_fields,
         'username': username,
         'id_string': id_string,
         'languages': translations,
@@ -260,9 +262,10 @@ def auto_report(request, username, id_string):
     }
 
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
-    ctx['stats'] = report.get_stats(data, page.object_list, lang, group_by)
+    ctx['stats'] = report.get_stats(data, page.object_list, lang, split_by)
 
-    if group_by:
+    if split_by:
+        
         return render(request, 'survey_report/auto_report_group_by.html', ctx)
 
     return render(request, 'survey_report/auto_report.html', ctx)

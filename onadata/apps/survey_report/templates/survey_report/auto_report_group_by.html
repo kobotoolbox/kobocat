@@ -89,118 +89,176 @@
 .more-results, .hiddenrows {
   display:none;
 }
+
+label, button {
+    display:inline;
+    margin:10px;
+}
+
+.formpack_auto_report {
+    margin-top:3em;
+}
+
+#pagination {
+  bottom: 0px;
+  margin: 0px;
+  padding: 2px 0 0;
+  border-top: 1px solid #ddd;
+  position:fixed;
+  width: 984px;
+  background-color: white;
+}
+.pagination {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+.pagination .disabled {
+  color:#ccc;
+}
+
 </style>
 
-<h1>{{ title }}</h1>
+<div class="sub-header-bar">
+  <div class="container__wide">
+    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+  </div>
+</div>
 
-{% for name, group in stats  %}
+<header class="data-page__header">
+    <hgroup class="container">
+      <h1>{% trans "Automatic report" %}</h1>
+    </hgroup>
+</header>
+
+<form action="{% url 'formpack_auto_report' username id_string %}"
+      method="get" accept-charset="utf-8">
+
+  <p>
+
+    <span id="select select--lang">
+      <label for="lang">{% trans "Value and header format" %}</label>
+      <select name="lang" autocomplete="off">
+        <option value="xml">
+            {% trans "XML values and headers" %}
+        </option>
+
+        {% for lang in languages %}
+
+            {% if lang == "_default" %}
+              <option value="_default" 
+                      {% if headers_lang == lang %}selected{% endif %}
+              >
+                  {% trans "Default labels" %}
+              </option>
+            {% else %}
+              <option value="{{ lang }}"
+                      {% if headers_lang == lang %}selected{% endif %}
+              >
+                  {% trans lang %}
+              </option>
+            {% endif %}
+
+         {% endfor %}
+      </select>
+    </span>
+
+  
+    <span id="select select--splitby">
+      <label for="splitby">{% trans "Split by" %}</label>
+      <select name="split_by">
+
+        <option value="">
+            {% trans "Do not split by" %}
+        </option>
+
+        {% for field in split_by_fields %}
+              <option value="{{ field.name }}" 
+                      {% if field.name == split_by %}selected{% endif %}
+              >
+                  {% blocktrans with name=field.name %}
+                      Split by "{{ name }}"
+                  {% endblocktrans %}
+              </option>
+         {% endfor %}
+
+      </select>
+    </span>
+    
+    <button>{% trans "Ok" %}</button>
+  </p>
+
+</form>
+
+{% for field, name, stat in stats  %}
+
+    <p>{{ stat }}</p>
 
   <div class="stats">
 
-    <h2>{{ name }}</h2>
+    <h2 title="{{ name }}" >{{ name }}</h2>
 
-    <table class="datatable datatable--summarystats">
-      <thead>
-        <tr>
-          <th>{{ group_by }}</th>
-          <th>{% trans "Submissions with data" %}</th>
-          <th>{% trans "Submissions without data" %}</th>
-          <th>{% trans "Total submissions" %}</th>
-        </tr>
-      </thead>
-      <tbody>
+    <div class="summarystats">
+	<p>
+      {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided question_type=field.data_type %}
 
-        {% for group_name, stat in group %}
+        <span class="summarystats__provided">{{ provided }}</span>  out of {{ total }} respondents answered
+        this question ({{ not_provided}} were without data). - Question type: '{{question_type}}'
 
-          <tr>
+      {% endblocktrans %}
+    </p>
+    </div>
 
-            <td>{{ group_name }}</td>
-            <td>{{ stat.provided }}</td>
-            <td>{{ stat.not_provided }}</td>
-            <td>{{ stat.total_count }}</td>
-
-          </tr>
-
-        {% endfor %}
-
-      </tbody>
-    </table>
-
-      {% if group.1.0.show_graph %}
+     {% if stat.show_graph %}
         <div class="datagraph"><span>Graph will come here later on</span></div>
       {% endif %}
 
-      {# when you got frequency, you have a table with metrics #}
-      {% if group.0.1.frequency %}
+      {# if you got frequency, you have a table with metrics #}
+      {% if stat.values.0.1.frequency %}
 
         <table class="datatable datatable--basicstats">
           <thead>
             <tr>
-              <th>{{ group_by }}</th>
               <th>{% trans "Value" %}</th>
+              <th>{% trans "Split by" %}</th>
               <th>{% trans "Frequency" %}</th>
               <th>{% trans "Percentage" %}</th>
             </tr>
           </thead>
           <tbody>
 
-            {% for group_name, stat in group  %}
+            {% for value, split_by, statistics in stat.values %}
+            <tr {% if forloop.counter > 5 %}class="hiddenrows"{% endif %}>
+                <td>
+                {{ value }}
+                </td>
 
-              {% comment %}
-                These stats are grouped, and the group name span on as many
-                rows as there are values inside that group
-              {% endcomment %}
-              <tr {% if forloop.counter > 10 %}class="hiddenrows"{% endif %}
-                  rowspan="{{ stat.frequency|length }}"
-              >
-              
-              <td rowspan="{{ stat.frequency|length }}" >{{ group_name }}</td>
+                <td>
+                {{ split_by }}
+                </td>
+                
+                <td>
+                {{ statistics.frequency }}
+                </td>
 
-                {% for answer, _ in stat.frequency %}
+                <td> {{ statistics.percentage }}%</td>
 
-                    {% comment %}
-                      After the first row, the cell containing the group
-                      name is not repeated (since it uses rowspan) so
-                      we need to start the row here.
-                    {% endcomment %}
-                    {% if forloop.counter > 1 %}
-                      <tr>
-                    {% endif %}
-
-                      <td>
-                      {{ answer }}
-                      </td>
-
-                      <td>
-                      {{ stat.frequency|index:forloop.counter0|index:1 }}
-                      </td>
-
-                      <td> {{ stat.percentage|index:forloop.counter0|index:1 }}%</td>
-
-                    {% if forloop.counter > 1 %}
-                      </tr>
-                    {% endif %}
-
-
-                {% endfor %}
-
-              </tr>
-
+            </tr>
             {% endfor %}
 
           </tbody>
         </table>
 
-        <p class="more-results"><a href="#">Show more results</a></p>
 
       {% endif %}
 
-      {% if group.1.mean %}
+      {% if stat.values.0.1.mean %}
 
       <table class="datatable datatable--advancedstats">
           <thead>
             <tr>
-              <th>{{ group_by }}</th>
+              <th>{% trans "Split by" %}</th>
               <th>{% trans "Mean" %}</th>
               <th>{% trans "Median" %}</th>
               <th>{% trans "Mode" %}</th>
@@ -208,18 +266,16 @@
             </tr>
           </thead>
           <tbody>
-
-            {% for group_name, stat in group  %}
-              <tr>
-                  <td> {{ group_name  }}</td>
-                  <td> {{ stat.mean  }}</td>
-                  <td> {{ stat.median  }}</td>
-                  <td> {{ stat.mode  }}</td>
-                  <td> {{ stat.stdev  }}</td>
-              </tr>
+          
+            {% for split_by, statistics in stat.values %}
+            <tr>
+                <td> {{ plit_by.mean  }}</td>
+                <td> {{ statistics.mean  }}</td>
+                <td> {{ statistics.median  }}</td>
+                <td> {{ statistics.mode  }}</td>
+                <td> {{ statistics.stdev  }}</td>
+            </tr>
             {% endfor %}
-
-
           </tbody>
         </table>
 
@@ -241,64 +297,12 @@
 <script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
 
 <script>
+
+Chart.defaults.global.responsive = true;
+
 $('.datatable--basicstats').each(function(){
 
-   var dataset = [];
-   var labels = [];
-   var group = "";
-   var label = "";
-
-   $this = $(this);
-
-   $this.find('tbody tr').each(function(){
-     var $td = $(this).children();
-     if ($td.length == 4){
-        var $group = $td.first();
-        group = $group.text()
-        label = group + "/" + $group.next().text();
-     } else {
-        label = group + "/" + $td.text();
-     }
-
-     var percent = $(this).children().last().text();
-     dataset.push(parseFloat(percent));
-     labels.push(label);
-   })
-
-   if (dataset.length >= 10) {
-    var hiddenRows = $this.find('.hiddenrows');
-    var $link = $this.siblings('.more-results');
-    $link.show().click(function(e){
-      hiddenRows.show();
-      $link.hide();
-      e.preventDefault();
-      e.stopPropagation();
-    })
-   }
-
-   var $canvas = $('<canvas width="500" height="400"></canvas>')
-   $(this).siblings('.datagraph').html('').append($canvas)
-
-    // Get the context of the canvas element we want to select
-    var ctx = $canvas[0].getContext("2d");
-
-    var data = {
-        labels: labels.slice(0, 10),
-        datasets: [
-            {
-                fillColor: "rgba(151,187,205,0.2)",
-                strokeColor: "rgba(151,187,205,1)",
-                pointColor: "rgba(151,187,205,1)",
-                pointStrokeColor: "#fff",
-                pointHighlightFill: "#fff",
-                pointHighlightStroke: "rgba(151,187,205,1)",
-                data: dataset.slice(0, 10)
-            }
-        ]
-    };
-
-    var myNewChart = new Chart(ctx).Bar(data);
-
+ // to fill after tino's feedback
 })
 
 </script>
