@@ -192,8 +192,7 @@ label, button {
 </form>
 
 {% for field, name, stat in stats  %}
-
-    <p>{{ stat }}</p>
+{% if name != split_by %}
 
   <div class="stats">
 
@@ -215,7 +214,7 @@ label, button {
       {% endif %}
 
       {# if you got frequency, you have a table with metrics #}
-      {% if stat.values.0.1.frequency %}
+      {% if 'frequency' in stat.values.0.1 %}
 
         <table class="datatable datatable--basicstats">
           <thead>
@@ -228,23 +227,34 @@ label, button {
           </thead>
           <tbody>
 
-            {% for value, split_by, statistics in stat.values %}
-            <tr {% if forloop.counter > 5 %}class="hiddenrows"{% endif %}>
-                <td>
-                {{ value }}
-                </td>
+            {% for value, statistics in stat.values %}
+            
+                 {% for splitter, _ in statistics.frequency %}
+            
+                    <tr>
+                    
+                        {% if forloop.counter == 1 %}
+                            <td rowspan="{{ statistics.frequency|length }}">
+                            {{ value }}
+                            </td>
+                        {% endif %}
 
-                <td>
-                {{ split_by }}
-                </td>
-                
-                <td>
-                {{ statistics.frequency }}
-                </td>
+                        <td>
+                        {{ splitter }}
+                        </td>
+                        
+                        <td>
+                        {{ statistics.frequency|index:forloop.counter0|index:1 }}
+                        </td>
 
-                <td> {{ statistics.percentage }}%</td>
+                        <td> 
+                        {{ statistics.percentage|index:forloop.counter0|index:1 }}%
+                        </td>
 
-            </tr>
+                    </tr>
+                    
+                {% endfor %}
+            
             {% endfor %}
 
           </tbody>
@@ -253,7 +263,7 @@ label, button {
 
       {% endif %}
 
-      {% if stat.values.0.1.mean %}
+      {% if 'mean' in stat.values.0.1 %}
 
       <table class="datatable datatable--advancedstats">
           <thead>
@@ -269,7 +279,7 @@ label, button {
           
             {% for split_by, statistics in stat.values %}
             <tr>
-                <td> {{ plit_by.mean  }}</td>
+                <td> {{ split_by  }}</td>
                 <td> {{ statistics.mean  }}</td>
                 <td> {{ statistics.median  }}</td>
                 <td> {{ statistics.mode  }}</td>
@@ -283,6 +293,8 @@ label, button {
 
     </div>
 
+
+{% endif %}
 {% endfor %}
 
 <div id="pagination">

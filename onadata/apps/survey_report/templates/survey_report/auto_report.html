@@ -164,7 +164,6 @@ label, button {
       </select>
     </span>
 
-    <!--
     <span id="select select--splitby">
       <label for="splitby">{% trans "Group by" %}</label>
       <select name="split_by">
@@ -185,8 +184,6 @@ label, button {
 
       </select>
     </span>
-    
-    -->
     
     <button>{% trans "Ok" %}</button>
   </p>
@@ -217,7 +214,7 @@ label, button {
       {% endif %}
 
       {# if you got frequency, you have a table with metrics #}
-      {% if stat.frequency %}
+      {% if 'frequency' in stat %}
 
         <table class="datatable datatable--basicstats">
           <thead>
@@ -251,7 +248,7 @@ label, button {
 
       {% endif %}
 
-      {% if stat.mean %}
+      {% if 'mean' in stat %}
 
       <table class="datatable datatable--advancedstats">
           <thead>
