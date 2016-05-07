@@ -141,19 +141,21 @@ label, button {
       </select>
     </span>
 
-    <!--
-    <span id="select select--groupby">
-      <label for="groupby">{% trans "Group by" %}</label>
-      <select name="groupby">
+  
+    <span id="select select--splitby">
+      <label for="splitby">{% trans "Group by" %}</label>
+      <select name="split_by">
 
         <option value="">
-            {% trans "Do not group by" %}
+            {% trans "Do not split by" %}
         </option>
 
-        {% for field in group_by_fields %}
-              <option value="{{ field.name }}">
+        {% for field in split_by_fields %}
+              <option value="{{ field.name }}" 
+                      {% if field.name == split_by %}selected{% endif %}
+              >
                   {% blocktrans with name=field.name %}
-                      Group by "{{ name }}"
+                      Split by "{{ name }}"
                   {% endblocktrans %}
               </option>
          {% endfor %}
@@ -161,19 +163,19 @@ label, button {
       </select>
     </span>
     
-    -->
-
     <button>{% trans "Ok" %}</button>
   </p>
 
 </form>
+
+
 
 {% for field, name, stat in stats  %}
 
   <div class="stats">
 
     <h2 title="{{ name }}" >{{ name }}</h2>
-
+   
     <div class="summarystats">
 	<p>
       {% blocktrans with total=stat.total_count provided=stat.provided not_provided=stat.not_provided question_type=field.data_type %}
