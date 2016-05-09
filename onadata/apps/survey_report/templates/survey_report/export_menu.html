@@ -1,17 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-<div class="sub-header-bar">
-  <div class="container__wide">
-    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
-  </div>
-</div>
-
-<header class="data-page__header">
-    <hgroup class="container">
-      <h1>{% trans "Advanced Exports" %}</h1>
-    </hgroup>
-</header>
 
 {% block content %}
 
@@ -41,6 +30,17 @@ thead td {
 
 </style>
 
+<div class="sub-header-bar">
+  <div class="container__wide">
+    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+  </div>
+</div>
+
+<header class="data-page__header">
+    <hgroup class="container">
+      <h1>{% trans "Advanced Exports" %}</h1>
+    </hgroup>
+</header>
 
 <form action="."
       method="get" accept-charset="utf-8">
