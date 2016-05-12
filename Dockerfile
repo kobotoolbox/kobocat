@@ -1,29 +1,29 @@
 FROM kobotoolbox/kobocat_base:latest
 
 # Install post-base-image `apt` additions from `apt_requirements.txt`, if modified.
-COPY ./apt_requirements.txt ${KOBOCAT_TMP_DIR}/current_apt_requirements.txt
-RUN diff -q ${KOBOCAT_TMP_DIR}/current_apt_requirements.txt ${KOBOCAT_TMP_DIR}/base_apt_requirements.txt || \
-        ( apt-get update && \
-        apt-get install -y $(cat ${KOBOCAT_TMP_DIR}/current_apt_requirements.txt) && \
-        apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* ) \
-    || true # Prevent non-zero exit code.  
+COPY ./apt_requirements.txt "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt"
+RUN if ! diff "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt" "${KOBOCAT_TMP_DIR}/base_apt_requirements.txt"; then \
+        apt-get update && \
+        apt-get install -y $(cat "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt") && \
+        apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    ; fi
 
 # Install post-base-image `pip` additions/upgrades from `requirements/base.pip`, if modified.
-COPY ./requirements/ ${KOBOCAT_TMP_DIR}/current_requirements/
+COPY ./requirements/ "${KOBOCAT_TMP_DIR}/current_requirements/"
 # FIXME: Replace this with the much simpler command `pip-sync ${KOBOCAT_TMP_DIR}/current_requirements/base.pip`.
-RUN diff -q ${KOBOCAT_TMP_DIR}/current_requirements/base.pip ${KOBOCAT_TMP_DIR}/base_requirements/base.pip || \
-    pip install --src ${PIP_EDITABLE_PACKAGES_DIR}/ -r ${KOBOCAT_TMP_DIR}/current_requirements/base.pip \
-    || true # Prevent non-zero exit code.
+RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" "${KOBOCAT_TMP_DIR}/base_requirements/base.pip"; then \
+        pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" \
+    ; fi
 
 # Uninstall `pip` packages installed in the base image from `requirements/uninstall.pip`, if present.
-# FIXME: Replace this with the much simpler `pip-sync` command.
-RUN bash -c '[[ -e ${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip ]] && \
-    pip uninstall --yes -r ${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip' \
-    || true  # Prevent non-zero status code when there's nothing to uninstall.
+# FIXME: Replace this with the much simpler `pip-sync` command equivalent.
+RUN if [ -e "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" ]; then \
+        pip uninstall --yes -r "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" \
+    ; fi
 
 # Wipe out the base image's `kobocat` dir (**including migration files**) and copy over this directory in its current state.
-RUN rm -rf ${KOBOCAT_SRC_DIR}
-COPY . ${KOBOCAT_SRC_DIR}
+RUN rm -rf "${KOBOCAT_SRC_DIR}"
+COPY . "${KOBOCAT_SRC_DIR}"
 
 # Prepare for execution.
 RUN rm -rf /etc/service/wsgi && \
@@ -44,6 +44,6 @@ RUN echo 'source /etc/profile' >> /root/.bashrc
 
 VOLUME ["${KOBOCAT_SRC_DIR}", "${KOBOCAT_SRC_DIR}/onadata/media", "/srv/src/kobocat-template"]
 
-WORKDIR ${KOBOCAT_SRC_DIR}
+WORKDIR "${KOBOCAT_SRC_DIR}"
 
 EXPOSE 8000
