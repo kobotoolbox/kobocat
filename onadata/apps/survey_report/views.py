@@ -36,7 +36,7 @@ def readable_xform_required(func):
 
 def get_instances_for_user_and_form(user, form_id, submission=None):
     userform_id = '{}_{}'.format(user, form_id)
-    query = {'_userform_id': userform_id}
+    query = {'_userform_id': userform_id, '_deleted_at': {'$exists': False}}
     if submission:
         query['_id'] = submission
     return settings.MONGO_DB.instances.find(query)
@@ -266,7 +266,7 @@ def auto_report(request, username, id_string):
 
     if split_by:
         
-        return render(request, 'survey_report/auto_report_group_by.html', ctx)
+        return render(request, 'survey_report/auto_report_split_by.html', ctx)
 
     return render(request, 'survey_report/auto_report.html', ctx)
     
