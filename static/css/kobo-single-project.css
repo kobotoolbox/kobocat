@@ -7,6 +7,8 @@
   border:2px solid #E9EDF0;
   border-top-color: white;
   top:48px;
+  overflow-y: auto;
+  max-height: 640px;
 }
 
 @media (max-width: 979px) {
