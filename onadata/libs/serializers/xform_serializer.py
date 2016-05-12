@@ -26,6 +26,11 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='xform-detail',
                                                lookup_field='pk')
     users = serializers.SerializerMethodField('get_xform_permissions')
+    hash = serializers.SerializerMethodField()
+
+    @check_obj
+    def get_hash(self, obj):
+        return u"md5:%s" % obj.hash
 
     # Tests are expecting this "public" to be passed only "True" or "False"
     # and as a string. I don't know how it worked pre-migrations to django 1.8
