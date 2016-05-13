@@ -200,9 +200,9 @@ label, button {
    
     <div class="summarystats">
 	<p>
-      {% blocktrans with total=stats.submissions_count provided=stat.provided not_provided=stat.not_provided question_type=field.data_type %}
+      {% blocktrans with total=stat.total_count provided=stats.submissions_count|subtract:stat.not_provided not_provided=stat.not_provided question_type=field.data_type %}
 
-        <span class="summarystats__provided">{{ provided }}</span> out of {{ total }} respondents answered
+        <span class="summarystats__provided">{{ provided }}</span>  out of {{ total }} respondents answered
         this question ({{ not_provided}} were without data). - Question type: '{{question_type}}'
 
       {% endblocktrans %}
@@ -261,25 +261,10 @@ label, button {
           </thead>
           <tbody>
             <tr>
-                {% if stat.mean != '*' %}
-                    <td>{{ stat.mean|floatformat:2 }}</td>
-                {% else %}
-                    <td>*</td>
-                {% endif %}
-
-                {% if stat.median != '*' %}
-                    <td>{{ stat.median|floatformat:2  }}</td>
-                {% else %}
-                    <td>*</td>
-                {% endif %}
-
-                <td>{{ stat.mode }}</td>
-
-                {% if stat.stdev != '*' %}
-                    <td>{{ stat.stdev|floatformat:2 }}</td>
-                {% else %}
-                    <td>*</td>
-                {% endif %}
+                <td> {{ stat.mean  }}</td>
+                <td> {{ stat.median  }}</td>
+                <td> {{ stat.mode  }}</td>
+                <td> {{ stat.stdev  }}</td>
             </tr>
           </tbody>
         </table>
@@ -315,7 +300,7 @@ $('.datatable--basicstats').each(function(){
 
    $this.find('tbody tr').each(function(){
      var percent = $(this).children().last().text();
-     dataset.push(parseFloat(percent.replace(/,/g, '.')));
+     dataset.push(parseFloat(percent));
      
      var label = $(this).children().first().text().trim();
      tooltipLabels.push(label);
@@ -340,11 +325,13 @@ $('.datatable--basicstats').each(function(){
    var $canvas = $('<canvas width="500" height="400"></canvas>');
    var $graph = $(this).siblings('.datagraph');
    
+   
    if ($(this).siblings('.datagraph').length == 0){
        return
    }
    
    $graph.html('').append($canvas);
+    
     
    var data = {
         labels: labels.slice(0, 10),
@@ -356,6 +343,10 @@ $('.datatable--basicstats').each(function(){
                 hoverBackgroundColor: "rgba(255,99,132,0.4)",
                 hoverBorderColor: "rgba(151,187,205,1",
                 data: dataset.slice(0, 10)
+                
+                
+
+                
             }
         ],
     };

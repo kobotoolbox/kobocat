@@ -227,7 +227,7 @@ label, button {
 
     <div class="summarystats">
 	<p>
-      {% blocktrans with total=stats.submissions_count provided=stat.provided not_provided=stat.not_provided question_type=field.data_type %}
+      {% blocktrans with total=stats.submissions_count provided=stats.submissions_count|subtract:stat.not_provided not_provided=stat.not_provided question_type=field.data_type %}
 
         <span class="summarystats__provided">{{ provided }}</span>  out of {{ total }} respondents answered
         this question ({{ not_provided}} were without data). - Question type: '{{question_type}}'
@@ -236,12 +236,11 @@ label, button {
     </p>
     </div>
 
-    <!--
+ 
      {% if stat.show_graph %}
         <div class="datagraph"><span>Graph will come here later on</span></div>
       {% endif %}
       
-      -->
 
       {# if you got percentage, you have a table with metrics #}
       {% if stat.values.0.1.percentage %}
@@ -276,6 +275,8 @@ label, button {
 
           </tbody>
         </table>
+        
+        <p class="more-results"><a href="#">Show more results</a></p>
 
 
       {% endif %}
@@ -295,7 +296,7 @@ label, button {
           <tbody>
           
             {% for split_by, statistics in stat.values %}
-            <tr>
+            <tr {% if forloop.counter > 10 %}class="hiddenrows"{% endif %}>
                 <td> {{ split_by }}</td>
 
                 {% if statistics.mean != '*' %}
@@ -321,6 +322,8 @@ label, button {
             {% endfor %}
           </tbody>
         </table>
+        
+        <p class="more-results"><a href="#">Show more results</a></p>
 
       {% endif %}
 
@@ -343,9 +346,111 @@ label, button {
 
 Chart.defaults.global.responsive = true;
 
+
+$('table').each(function(){
+
+    var $this = $(this);
+
+   if ($(this).find('tbody tr').length >= 10) {
+    var hiddenRows = $this.find('.hiddenrows');
+    var $link = $this.siblings('.more-results');
+    $link.show().click(function(e){
+      hiddenRows.show();
+      $link.hide();
+      e.preventDefault();
+      e.stopPropagation();
+    })
+   }
+
+});
+
 $('.datatable--basicstats').each(function(){
 
- // to fill after tino's feedback
+   var $this = $(this);
+
+   var datasets = [];
+   var splitters = [];
+   var labels = [];
+   var tooltipLabels = [];
+
+   $this.find('thead th').slice(1, 6).each(function(){
+        var value = $(this).text();
+        if (value) {
+            datasets.push([]);
+            splitters.push(value.trim());
+        }
+    });
+
+    $this.find('tbody tr').each(function(){
+
+        var $first = $(this).children().first();
+
+        var label = $first.text().trim();
+        tooltipLabels.push(label);
+        if (label.length > 20) {
+            label = label.substr(0, 17) + '...';
+        }
+        labels.push(label);
+
+        $first.siblings().slice(0, 5).each(function(i, e){
+            datasets[i].push($(e).text())
+        });
+
+    })
+
+
+   var $canvas = $('<canvas width="500" height="400"></canvas>');
+   var $graph = $(this).siblings('.datagraph');
+   
+   
+   if ($this.siblings('.datagraph').length == 0){
+       return
+   }
+   
+   $graph.html('').append($canvas);
+    
+   var dataset_colors = [
+    //'#727272',
+    '#f1595f',
+    '#79c36a',
+    '#599ad3',
+    '#f9a65a',
+    '#9e66ab',
+    // '#cd7058',
+    // '#d77fb3',
+   ];
+   
+   var dataset_settings = $.map(datasets, function(e, i){
+
+    return {
+        label: splitters[i],
+        backgroundColor: dataset_colors[i],
+        borderWidth: 1,
+        hoverBorderColor: "rgba(151,187,205,1)",
+        data: e      
+      }
+   });
+
+    console.log(dataset_settings);
+
+    var myNewChart = new Chart($canvas, {
+        type:"bar", 
+        data: {
+            labels: labels.slice(0, 10),
+            datasets: dataset_settings,
+        },
+        options: {
+            tooltips: {
+                callbacks: {
+                    title: function(tooltipItem, data){
+                        return tooltipLabels[tooltipItem[0].index];
+                    }
+                    
+                }
+            }
+        }
+   });
+
 })
 
 </script>
