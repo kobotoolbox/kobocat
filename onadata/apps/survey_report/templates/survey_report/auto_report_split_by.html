@@ -6,7 +6,11 @@
 
 <div class="sub-header-bar">
   <div class="container__wide">
-    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+    <a class="sub-header__back" 
+       href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}">
+        <i class="fa fa-chevron-left"></i> 
+        {% trans "Return to" %} {{ xform.title }}
+    </a>
   </div>
 </div>
 
@@ -111,6 +115,10 @@ label, button {
     margin:10px;
 }
 
+.formpack_auto_report {
+    margin-top:3em;
+}
+
 #pagination {
   bottom: 0px;
   margin: 0px;
@@ -130,7 +138,26 @@ label, button {
   color:#ccc;
 }
 
+.warning {
+    font-style:italic;
+    text-align:center;
+    font-size:0.8em;
+    padding: 2em;
+    margin:2em;
+    color: #2196F3;
+    border: 2px solid;
+}
+
 </style>
+
+<p class="warning">
+  {% blocktrans %}
+     This is an automated report based on raw data submitted to this project. 
+     Please conduct proper data cleaning prior to using the 
+     graphs and figures used on this page.
+  {% endblocktrans %}
+{% trans "" %}
+</p>
 
 <form action="{% url 'formpack_auto_report' username id_string %}"
       method="get" accept-charset="utf-8">
@@ -138,7 +165,7 @@ label, button {
   <p>
 
     <span id="select select--lang">
-      <label for="lang">{% trans "Value and header format" %}</label>
+      <label for="lang">{% trans "Report language" %}</label>
       <select name="lang" autocomplete="off">
         <option value="xml">
             {% trans "XML values and headers" %}
@@ -150,7 +177,7 @@ label, button {
               <option value="_default" 
                       {% if headers_lang == lang %}selected{% endif %}
               >
-                  {% trans "Labels" %}
+                  {% trans "Default labels" %}
               </option>
             {% else %}
               <option value="{{ lang }}"
@@ -164,12 +191,13 @@ label, button {
       </select>
     </span>
 
+  
     <span id="select select--splitby">
-      <label for="splitby">{% trans "Group by" %}</label>
+      <label for="splitby">{% trans "Disaggregator" %}</label>
       <select name="split_by">
 
         <option value="">
-            {% trans "Do not split by" %}
+            {% trans "Do not disaggregate" %}
         </option>
 
         {% for field in split_by_fields %}
@@ -191,52 +219,57 @@ label, button {
 </form>
 
 
-
 {% for field, name, stat in stats  %}
 
   <div class="stats">
 
     <h2 title="{{ name }}" >{{ name }}</h2>
-   
+
     <div class="summarystats">
 	<p>
       {% blocktrans with total=stats.submissions_count provided=stat.provided not_provided=stat.not_provided question_type=field.data_type %}
 
-        <span class="summarystats__provided">{{ provided }}</span> out of {{ total }} respondents answered
+        <span class="summarystats__provided">{{ provided }}</span>  out of {{ total }} respondents answered
         this question ({{ not_provided}} were without data). - Question type: '{{question_type}}'
 
       {% endblocktrans %}
     </p>
     </div>
 
+    <!--
      {% if stat.show_graph %}
         <div class="datagraph"><span>Graph will come here later on</span></div>
       {% endif %}
+      
+      -->
 
-      {# if you got frequency, you have a table with metrics #}
-      {% if 'frequency' in stat %}
+      {# if you got percentage, you have a table with metrics #}
+      {% if stat.values.0.1.percentage %}
 
         <table class="datatable datatable--basicstats">
           <thead>
             <tr>
-              <th>{% trans "Value" %}</th>
-              <th>{% trans "Frequency" %}</th>
-              <th>{% trans "Percentage" %}</th>
+              <th></th>
+              {% for splitter, value in stat.values.0.1.frequency %}
+                    {% if splitter != "..." %}
+                        <th>{{ splitter }}</th>
+                    {% else %}
+                        <th>{% trans "[other responses]" %}</th>
+                    {% endif %}
+              {% endfor %}
             </tr>
           </thead>
           <tbody>
 
-            {% for answer, _ in stat.frequency %}
+            {% for value, split_by in stat.values %}
             <tr {% if forloop.counter > 10 %}class="hiddenrows"{% endif %}>
                 <td>
-                {{ answer }}
+                {{ value }}
                 </td>
 
-                <td>
-                {{ stat.frequency|index:forloop.counter0|index:1 }}
-                </td>
-
-                <td> {{ stat.percentage|index:forloop.counter0|index:1 }}%</td>
+              {% for splitter, value in split_by.frequency %}
+                  <th>{{ value }}{% if value != "*"%}{% endif %}</th>
+              {% endfor %}
 
             </tr>
             {% endfor %}
@@ -244,15 +277,15 @@ label, button {
           </tbody>
         </table>
 
-        <p class="more-results"><a href="#">Show more results</a></p>
 
       {% endif %}
 
-      {% if 'mean' in stat %}
+      {% if stat.values.0.1.mean %}
 
       <table class="datatable datatable--advancedstats">
           <thead>
             <tr>
+              <th>{% trans "Split by" %}</th>
               <th>{% trans "Mean" %}</th>
               <th>{% trans "Median" %}</th>
               <th>{% trans "Mode" %}</th>
@@ -260,27 +293,32 @@ label, button {
             </tr>
           </thead>
           <tbody>
+          
+            {% for split_by, statistics in stat.values %}
             <tr>
-                {% if stat.mean != '*' %}
-                    <td>{{ stat.mean|floatformat:2 }}</td>
+                <td> {{ split_by }}</td>
+
+                {% if statistics.mean != '*' %}
+                    <td>{{ statistics.mean|floatformat:2 }}</td>
                 {% else %}
                     <td>*</td>
                 {% endif %}
 
-                {% if stat.median != '*' %}
-                    <td>{{ stat.median|floatformat:2  }}</td>
+                {% if statistics.median != '*' %}
+                    <td>{{ statistics.median|floatformat:2  }}</td>
                 {% else %}
                     <td>*</td>
                 {% endif %}
 
-                <td>{{ stat.mode }}</td>
+                <td>{{ statistics.mode }}</td>
 
-                {% if stat.stdev != '*' %}
-                    <td>{{ stat.stdev|floatformat:2 }}</td>
+                {% if statistics.stdev != '*' %}
+                    <td>{{ statistics.stdev|floatformat:2 }}</td>
                 {% else %}
                     <td>*</td>
                 {% endif %}
             </tr>
+            {% endfor %}
           </tbody>
         </table>
 
@@ -307,77 +345,7 @@ Chart.defaults.global.responsive = true;
 
 $('.datatable--basicstats').each(function(){
 
-   var dataset = [];
-   var labels = [];
-   var tooltipLabels = [];
-
-   var $this = $(this);
-
-   $this.find('tbody tr').each(function(){
-     var percent = $(this).children().last().text();
-     dataset.push(parseFloat(percent.replace(/,/g, '.')));
-     
-     var label = $(this).children().first().text().trim();
-     tooltipLabels.push(label);
-     if (label.length > 20) {
-        label = label.substr(0, 17) + '...';
-     }
-     labels.push(label);
-     
-   })
-
-   if (dataset.length >= 10) {
-    var hiddenRows = $this.find('.hiddenrows');
-    var $link = $this.siblings('.more-results');
-    $link.show().click(function(e){
-      hiddenRows.show();
-      $link.hide();
-      e.preventDefault();
-      e.stopPropagation();
-    })
-   }
-
-   var $canvas = $('<canvas width="500" height="400"></canvas>');
-   var $graph = $(this).siblings('.datagraph');
-   
-   if ($(this).siblings('.datagraph').length == 0){
-       return
-   }
-   
-   $graph.html('').append($canvas);
-    
-   var data = {
-        labels: labels.slice(0, 10),
-        datasets: [
-            {
-                backgroundColor: "rgba(151,187,205,0.2)",
-                borderColor: "rgba(151,187,205,1)",
-                borderWidth: 1,
-                hoverBackgroundColor: "rgba(255,99,132,0.4)",
-                hoverBorderColor: "rgba(151,187,205,1",
-                data: dataset.slice(0, 10)
-            }
-        ],
-    };
-
-    var myNewChart = new Chart($canvas, {
-        type:"bar", 
-        data: data,
-        options: {
-            legend: {
-                display: false,
-            },
-            tooltips: {
-                callbacks: {
-                    title: function(tooltipItem, data){
-                        return tooltipLabels[tooltipItem[0].index];
-                    }
-                    
-                }
-            }
-        }
-   });
-
+ // to fill after tino's feedback
 })
 
 </script>
