@@ -108,6 +108,18 @@ def deploy_ref(deployment_name, ref):
         run("pip install numpy")
         run("pip install -r %s" % env.pip_requirements_file)
 
+    formpack_path = os.path.join(env.home, 'formpack')
+    formpack_branch = env.get('formpack_branch', False)
+    run("[ -d {fp} ] || git clone https://github.com/kobotoolbox/formpack.git "
+        "{fp}".format(fp=formpack_path))
+
+    with cd(formpack_path):
+        with kobo_workon(env.kc_virtualenv_name):
+            if formpack_branch:
+                run("git checkout {b} && git pull origin {b}"
+                    .format(b=formpack_branch))
+            run("python setup.py develop")
+
     with cd(env.kc_path):
         with kobo_workon(env.kc_virtualenv_name):
             run("python manage.py syncdb")
