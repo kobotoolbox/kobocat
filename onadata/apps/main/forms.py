@@ -15,6 +15,8 @@ from recaptcha.client import captcha
 from registration.forms import RegistrationFormUniqueEmail
 from registration.models import RegistrationProfile
 
+from pyxform.xls2json_backends import csv_to_dict
+
 from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import upload_to
 from onadata.libs.utils.country_field import COUNTRIES
@@ -280,15 +282,14 @@ class QuickConverter(QuickConverterFile, QuickConverterURL,
             if 'text_xls_form' in self.cleaned_data\
                and self.cleaned_data['text_xls_form'].strip():
                 csv_data = self.cleaned_data['text_xls_form']
+                _settings = csv_to_dict(csv_data).get('settings')
+                _settings = _settings[0]
 
-                # assigning the filename to a random string (quick fix)
-                import random
-                rand_name = "uploaded_form_%s.csv" % ''.join(
-                    random.sample("abcdefghijklmnopqrstuvwxyz0123456789", 6))
+                _name = '%s.csv' % _settings['id_string']
 
                 cleaned_xls_file = \
                     default_storage.save(
-                        upload_to(None, rand_name, user.username),
+                        upload_to(None, _name, user.username),
                         ContentFile(csv_data))
             else:
                 cleaned_xls_file = self.cleaned_data['xls_file']
