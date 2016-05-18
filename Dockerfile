@@ -12,10 +12,11 @@ RUN if ! diff "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt" "${KOBOCAT_TMP_D
 COPY ./requirements/ "${KOBOCAT_TMP_DIR}/current_requirements/"
 # FIXME: Replace this with the much simpler command `pip-sync ${KOBOCAT_TMP_DIR}/current_requirements/base.pip`.
 RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" "${KOBOCAT_TMP_DIR}/base_requirements/base.pip"; then \
-        # FIXME: Move `formpack` dependency to `pip` requirements once it's stable.
-        pip install -e "git+https://github.com/kobotoolbox/formpack.git#egg=formpack" && \
         pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" \
     ; fi
+
+# FIXME: Move `formpack` dependency to `pip` requirements once it's stable.
+RUN pip install -e "git+https://github.com/kobotoolbox/formpack.git#egg=formpack"
 
 # Uninstall `pip` packages installed in the base image from `requirements/uninstall.pip`, if present.
 # FIXME: Replace this with the much simpler `pip-sync` command equivalent.
