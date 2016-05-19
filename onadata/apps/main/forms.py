@@ -1,6 +1,7 @@
 import re
 import urllib2
 from urlparse import urlparse
+from cStringIO import StringIO
 
 from django import forms
 from django.contrib.auth.models import User
@@ -282,10 +283,13 @@ class QuickConverter(QuickConverterFile, QuickConverterURL,
             if 'text_xls_form' in self.cleaned_data\
                and self.cleaned_data['text_xls_form'].strip():
                 csv_data = self.cleaned_data['text_xls_form']
-                _settings = csv_to_dict(csv_data).get('settings')
-                _settings = _settings[0]
-
-                _name = '%s.csv' % _settings['id_string']
+                # requires that csv forms have a settings with an id_string
+                try:
+                    _settings = csv_to_dict(StringIO(csv_data))['settings'][0]
+                    _name = '%s.csv' % _settings['id_string']
+                except (KeyError, IndexError) as e:
+                    raise ValueError('CSV XLSForms must have a settings sheet'
+                                     ' and id_string')
 
                 cleaned_xls_file = \
                     default_storage.save(
