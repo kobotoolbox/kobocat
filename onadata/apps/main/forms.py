@@ -1,7 +1,7 @@
 import re
 import urllib2
 from urlparse import urlparse
-from cStringIO import StringIO
+from StringIO import StringIO
 
 from django import forms
 from django.contrib.auth.models import User
