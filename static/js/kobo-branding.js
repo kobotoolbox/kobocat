@@ -4,4 +4,18 @@ $(document).ready(function() {
   });
 
   $('table.published_forms__table').footable();
+
+  if (inIframe()) {
+  	$('body').addClass('in-iframe');
+  } else {
+  	$('body').addClass('not-in-iframe');
+  }
 }); 
+
+function inIframe () {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+}
