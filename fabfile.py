@@ -120,6 +120,9 @@ def deploy_ref(deployment_name, ref):
                     .format(b=formpack_branch))
             run("python setup.py develop")
 
+    with cd(os.path.join(env.kc_path, "onadata", "static")):
+        run("date > LAST_UPDATE.txt")
+
     with cd(env.kc_path):
         with kobo_workon(env.kc_virtualenv_name):
             run("python manage.py syncdb")
