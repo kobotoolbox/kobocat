@@ -13,11 +13,17 @@ autoredirect = active
 if active and hasattr(settings, 'KOBOFORM_LOGIN_AUTOREDIRECT'):
     autoredirect = settings.KOBOFORM_LOGIN_AUTOREDIRECT
 
+
 def redirect_url(url_param):
     if url:
         return url + url_param
 
+
 def login_url(next_kobocat_url=False, next_url=False):
+    # use kpi login if configuration exists
+    if settings.KPI_URL:
+        url = settings.KPI_URL
+
     if url:
         url_param = url + '/accounts/login/'
         if next_kobocat_url:
