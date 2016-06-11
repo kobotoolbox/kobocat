@@ -24,10 +24,10 @@ def login_url(next_kobocat_url=False, next_url=False):
     if settings.KPI_URL:
         url = settings.KPI_URL
 
-    if url:
-        url_param = url + '/accounts/login/'
-        if next_kobocat_url:
-            next_url = '/kobocat%s' % next_kobocat_url
-        if next_url:
-            url_param += "?next=%s" % next_url
-        return url_param
+        if url:
+            url_param = url + '/accounts/login/'
+            if next_kobocat_url:
+                next_url = '/kobocat%s' % next_kobocat_url
+            if next_url:
+                url_param += "?next=%s" % next_url
+            return url_param
