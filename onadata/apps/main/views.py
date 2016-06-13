@@ -329,7 +329,6 @@ def dashboard(request):
 
     return render(request, "dashboard.html", data)
 
-
 def redirect_to_public_link(request, uuid):
     xform = get_object_or_404(XForm, uuid=uuid)
     request.session['public_link'] = \
@@ -418,6 +417,47 @@ def show(request, username=None, id_string=None, uuid=None):
         data['sms_support_doc'] = get_autodoc_for(xform)
 
     return render(request, "show.html", data)
+
+# SETTINGS SCREEN FOR KPI, LOADED IN IFRAME 
+@require_GET
+def show_form_settings(request, username=None, id_string=None, uuid=None):
+    if uuid:
+        return redirect_to_public_link(request, uuid)
+
+    xform, is_owner, can_edit, can_view = get_xform_and_perms(
+        username, id_string, request)
+    # no access
+    if not (xform.shared or can_view or request.session.get('public_link')):
+        return HttpResponseRedirect(reverse(home))
+
+    data = {}
+    data['cloned'] = len(
+        XForm.objects.filter(user__username__iexact=request.user.username,
+                             id_string__exact=id_string + XForm.CLONED_SUFFIX)
+    ) > 0
+    data['public_link'] = MetaData.public_link(xform)
+    data['is_owner'] = is_owner
+    data['can_edit'] = can_edit
+    data['can_view'] = can_view or request.session.get('public_link')
+    data['xform'] = xform
+    data['content_user'] = xform.user
+    data['base_url'] = "https://%s" % request.get_host()
+    data['source'] = MetaData.source(xform)
+    data['form_license'] = MetaData.form_license(xform).data_value
+    data['data_license'] = MetaData.data_license(xform).data_value
+    data['supporting_docs'] = MetaData.supporting_docs(xform)
+    data['media_upload'] = MetaData.media_upload(xform)
+    data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
+    data['external_export'] = MetaData.external_export(xform)
+
+    if is_owner:
+        set_xform_owner_data(data, xform, request, username, id_string)
+
+    if xform.allows_sms:
+        data['sms_support_doc'] = get_autodoc_for(xform)
+
+    return render(request, "show_form_settings.html", data)
+
 
 
 @login_required
