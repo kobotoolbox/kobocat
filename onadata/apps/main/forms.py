@@ -287,13 +287,18 @@ class QuickConverter(QuickConverterFile, QuickConverterURL,
                 # EmailField - always cleans the input into a Unicode string"
                 # (https://docs.djangoproject.com/en/1.8/ref/forms/api/#django.forms.Form.cleaned_data).
                 csv_data = csv_data.encode('utf-8')
-                # requires that csv forms have a settings with an id_string
+                # requires that csv forms have a settings with an id_string or
+                # form_id
+                _sheets = csv_to_dict(StringIO(csv_data))
                 try:
-                    _settings = csv_to_dict(StringIO(csv_data))['settings'][0]
-                    _name = '%s.csv' % _settings['id_string']
+                    _settings = _sheets['settings'][0]
+                    if 'id_string' in _settings:
+                        _name = '%s.csv' % _settings['id_string']
+                    else:
+                        _name = '%s.csv' % _settings['form_id']
                 except (KeyError, IndexError) as e:
                     raise ValueError('CSV XLSForms must have a settings sheet'
-                                     ' and id_string')
+                                     ' and id_string or form_id')
 
                 cleaned_xls_file = \
                     default_storage.save(
