@@ -1,6 +1,7 @@
 import re
 import urllib2
 from urlparse import urlparse
+from StringIO import StringIO
 
 from django import forms
 from django.contrib.auth.models import User
@@ -14,6 +15,8 @@ from django.conf import settings
 from recaptcha.client import captcha
 from registration.forms import RegistrationFormUniqueEmail
 from registration.models import RegistrationProfile
+
+from pyxform.xls2json_backends import csv_to_dict
 
 from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import upload_to
@@ -280,15 +283,26 @@ class QuickConverter(QuickConverterFile, QuickConverterURL,
             if 'text_xls_form' in self.cleaned_data\
                and self.cleaned_data['text_xls_form'].strip():
                 csv_data = self.cleaned_data['text_xls_form']
-
-                # assigning the filename to a random string (quick fix)
-                import random
-                rand_name = "uploaded_form_%s.csv" % ''.join(
-                    random.sample("abcdefghijklmnopqrstuvwxyz0123456789", 6))
+                # "Note that any text-based field - such as CharField or
+                # EmailField - always cleans the input into a Unicode string"
+                # (https://docs.djangoproject.com/en/1.8/ref/forms/api/#django.forms.Form.cleaned_data).
+                csv_data = csv_data.encode('utf-8')
+                # requires that csv forms have a settings with an id_string or
+                # form_id
+                _sheets = csv_to_dict(StringIO(csv_data))
+                try:
+                    _settings = _sheets['settings'][0]
+                    if 'id_string' in _settings:
+                        _name = '%s.csv' % _settings['id_string']
+                    else:
+                        _name = '%s.csv' % _settings['form_id']
+                except (KeyError, IndexError) as e:
+                    raise ValueError('CSV XLSForms must have a settings sheet'
+                                     ' and id_string or form_id')
 
                 cleaned_xls_file = \
                     default_storage.save(
-                        upload_to(None, rand_name, user.username),
+                        upload_to(None, _name, user.username),
                         ContentFile(csv_data))
             else:
                 cleaned_xls_file = self.cleaned_data['xls_file']
