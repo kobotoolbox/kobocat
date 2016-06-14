@@ -283,6 +283,10 @@ class QuickConverter(QuickConverterFile, QuickConverterURL,
             if 'text_xls_form' in self.cleaned_data\
                and self.cleaned_data['text_xls_form'].strip():
                 csv_data = self.cleaned_data['text_xls_form']
+                # "Note that any text-based field - such as CharField or
+                # EmailField - always cleans the input into a Unicode string"
+                # (https://docs.djangoproject.com/en/1.8/ref/forms/api/#django.forms.Form.cleaned_data).
+                csv_data = csv_data.encode('utf-8')
                 # requires that csv forms have a settings with an id_string
                 try:
                     _settings = csv_to_dict(StringIO(csv_data))['settings'][0]
