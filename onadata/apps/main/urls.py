@@ -117,6 +117,8 @@ urlpatterns = patterns(
         'onadata.apps.main.views.update_xform'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/preview$',
         'onadata.apps.main.views.enketo_preview'),
+    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/form_settings$',
+        'onadata.apps.main.views.show_form_settings', name='show_form_settings'),
 
     # briefcase api urls
     url(r"^(?P<username>\w+)/view/submissionList$",
