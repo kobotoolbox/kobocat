@@ -164,3 +164,18 @@ if 'RAVEN_DSN' in os.environ:
             pass
 
 POSTGIS_VERSION = (2, 1, 2)
+
+### ISSUE 242 TEMPORARY FIX ###
+# See https://github.com/kobotoolbox/kobocat/issues/242
+ISSUE_242_MINIMUM_INSTANCE_ID = os.environ.get(
+    'ISSUE_242_MINIMUM_INSTANCE_ID', None)
+if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
+    from datetime import timedelta
+    CELERYBEAT_SCHEDULE = {
+        'fix-root-node-names': {
+            'task': 'onadata.apps.logger.tasks.fix_root_node_names',
+            'schedule': timedelta(hours=1),
+            'args': (int(ISSUE_242_MINIMUM_INSTANCE_ID),)
+        },
+    }
+###### END ISSUE 242 FIX ######
