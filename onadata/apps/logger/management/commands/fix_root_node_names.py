@@ -60,6 +60,7 @@ class Command(BaseCommand):
             criteria['id__gte'] = options['minimum_instance_id']
         if options['username']:
             criteria['xform__user__username'] = options['username']
+        last_instance = Instance.objects.last()
         kpi_auto_named_instances = Instance.objects.filter(**criteria)
         affected_xforms = XForm.objects.filter(
             id__in=kpi_auto_named_instances.values_list(
@@ -113,3 +114,7 @@ class Command(BaseCommand):
                     int((t1 - t0) / 60),
                     (t1 - t0) % 60
             ))
+            self.stdout.write(
+                'At the start of processing, the last instance ID ' \
+                'was {}.'.format(last_instance.pk)
+            )
