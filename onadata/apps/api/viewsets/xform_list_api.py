@@ -67,24 +67,34 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
-        if username is None and self.request.user.is_anonymous():
-            # raises a permission denied exception, forces authentication
-            self.permission_denied(self.request)
-
-        if username is not None:
-            profile = get_object_or_404(
-                UserProfile, user__username=username.lower())
-
-            if profile.require_auth and self.request.user.is_anonymous():
+        if username is None:
+            # If no username is specified, the request must be authenticated
+            if self.request.user.is_anonymous():
                 # raises a permission denied exception, forces authentication
                 self.permission_denied(self.request)
             else:
-                queryset = queryset.filter(user=profile.user)
+                # Return all the forms the currently-logged-in user can access,
+                # including those shared by other users
+                return super(XFormListApi, self).filter_queryset(queryset)
 
-        if not self.request.user.is_anonymous():
-            queryset = super(XFormListApi, self).filter_queryset(queryset)
-
-        return queryset
+        profile = get_object_or_404(
+            UserProfile, user__username=username.lower())
+        # Include only the forms belonging to the specified user
+        queryset = queryset.filter(user=profile.user)
+        if profile.require_auth:
+            # The specified has user ticked "Require authentication to see
+            # forms and submit data"; reject anonymous requests
+            if self.request.user.is_anonymous():
+                # raises a permission denied exception, forces authentication
+                self.permission_denied(self.request)
+            else:
+                # Someone has logged in, but they are not necessarily allowed
+                # to access the forms belonging to the specified user. Filter
+                # again to consider object-level permissions
+                return super(XFormListApi, self).filter_queryset(queryset)
+        else:
+            # The specified user's forms are wide open. Return them all
+            return queryset
 
     def list(self, request, *args, **kwargs):
         self.object_list = self.filter_queryset(self.get_queryset())
