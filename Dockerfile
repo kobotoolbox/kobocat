@@ -29,8 +29,7 @@ RUN rm -rf "${KOBOCAT_SRC_DIR}"
 COPY . "${KOBOCAT_SRC_DIR}"
 
 # Prepare for execution.
-RUN rm -rf /etc/service/wsgi && \
-    mkdir -p /etc/service/uwsgi && \
+RUN mkdir -p /etc/service/uwsgi && \
     cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
     mkdir -p /etc/service/celery && \
     cp "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" /etc/service/celery/run && \
