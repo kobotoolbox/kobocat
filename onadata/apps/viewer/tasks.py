@@ -229,7 +229,7 @@ def create_kml_export(username, id_string, export_id, query=None):
         return gen_export.id
 
 
-@task(soft_time_limit=30*60, time_limit=31*60)
+@task()
 def create_zip_export(username, id_string, export_id, query=None):
     export = Export.objects.get(id=export_id)
     try:
