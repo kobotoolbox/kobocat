@@ -10,6 +10,7 @@
 # The local files should be used as the value for your DJANGO_SETTINGS_FILE
 # environment variable as needed.
 import logging
+import multiprocessing
 import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
@@ -415,6 +416,23 @@ BROKER_BACKEND = "librabbitmq"
 BROKER_URL = 'amqp://guest:guest@localhost:5672/'
 CELERY_RESULT_BACKEND = "amqp"  # telling Celery to report results to RabbitMQ
 CELERY_ALWAYS_EAGER = False
+
+# Celery defaults to having as many workers as there are cores. To avoid
+# excessive resource consumption, don't spawn more than 6 workers by default
+# even if there more than 6 cores.
+CELERYD_MAX_CONCURRENCY = int(os.environ.get('CELERYD_MAX_CONCURRENCY', 6))
+if multiprocessing.cpu_count() > CELERYD_MAX_CONCURRENCY:
+    CELERYD_CONCURRENCY = CELERYD_MAX_CONCURRENCY
+
+# Replace a worker after it completes 7 tasks by default. This allows the OS to
+# reclaim memory allocated during large tasks
+CELERYD_MAX_TASKS_PER_CHILD = int(os.environ.get(
+    'CELERYD_MAX_TASKS_PER_CHILD', 7))
+
+# Default to a 30-minute soft time limit and a 35-minute hard time limit
+CELERYD_TASK_TIME_LIMIT = int(os.environ.get('CELERYD_TASK_TIME_LIMIT', 2100))
+CELERYD_TASK_SOFT_TIME_LIMIT = int(os.environ.get(
+    'CELERYD_TASK_SOFT_TIME_LIMIT', 1800))
 
 # duration to keep zip exports before deletion (in seconds)
 ZIP_EXPORT_COUNTDOWN = 3600  # 1 hour
