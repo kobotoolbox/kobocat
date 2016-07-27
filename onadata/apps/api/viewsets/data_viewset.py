@@ -506,15 +506,8 @@ Delete a specific submission in a form
 
         try:
             instance = Instance.objects.get(pk=data_id)
-            if _format == 'json' or _format is None:
-                return Response(instance.json)
-            elif _format == 'xml':
-                return Response(instance.xml)
-            else:
-                raise ParseError(
-                    _(u"'%(_format)s' format unknown or not implemented!" %
-                      {'_format': _format})
-                )
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
         except Instance.DoesNotExist:
             raise ParseError(
                 _(u"data with id '%(data_id)s' not found!" %
