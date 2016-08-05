@@ -85,10 +85,11 @@ class Command(BaseCommand):
             try:
                 xform_root_node_name = get_xform_root_node_name(xform)
             except Exception as e:
-                self.stderr.write(
-                    '!!! Failed to get root node name for form {}: {}'.format(
-                        xform.id, e.message)
-                )
+                if options['verbosity']:
+                    self.stderr.write(
+                        '!!! Failed to get root node name for form {}: ' \
+                        '{}'.format(xform.id, e.message)
+                    )
                 failed_forms += 1
                 continue
             affected_instances = xform.instances.exclude(
@@ -98,10 +99,11 @@ class Command(BaseCommand):
                 try:
                     root_node_name = instance.get_root_node_name()
                 except Exception as e:
-                    self.stderr.write(
-                        '!!! Failed to get root node name for instance {}: ' \
-                        '{}'.format(instance.id, e.message)
-                    )
+                    if options['verbosity']:
+                        self.stderr.write(
+                            '!!! Failed to get root node name for instance ' \
+                            '{}: {}'.format(instance.id, e.message)
+                        )
                     failed_instances += 1
                     continue
                 # Our crude `affected_instances` filter saves us a lot of work,
@@ -112,7 +114,7 @@ class Command(BaseCommand):
                         instance.xml, root_node_name, xform_root_node_name)
                     instance.save(force=True)
                     mismatch_count += 1
-                if options['verbosity']:
+                if options['verbosity'] > 1:
                     write_same_line(
                         self.stdout,
                         u'Form {} ({}): corrected instance {}. ' \
@@ -124,7 +126,7 @@ class Command(BaseCommand):
                             total_forms
                     ))
             forms_complete += 1
-            if options['verbosity']:
+            if options['verbosity'] > 1:
                 write_same_line(
                     self.stdout,
                     u'Form {} ({}). Completed {} of {} forms.'.format(
