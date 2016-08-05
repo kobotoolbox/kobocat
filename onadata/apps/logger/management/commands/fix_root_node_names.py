@@ -47,6 +47,12 @@ class Command(BaseCommand):
                  'to this number'
         )
         parser.add_argument(
+            '--minimum-form-id',
+            type=int,
+            help='consider only forms whose ID is greater than or equal '\
+                 'to this number'
+        )
+        parser.add_argument(
             '--username',
             help='consider only forms belonging to a particular user'
         )
@@ -55,6 +61,8 @@ class Command(BaseCommand):
         t0 = time.time()
         forms_complete = 0
         mismatch_count = 0
+        failed_forms = 0
+        failed_instances = 0
         criteria = {'xml__contains': AUTO_NAME_INSTANCE_XML_SEARCH_STRING}
         if options['minimum_instance_id']:
             criteria['id__gte'] = options['minimum_instance_id']
@@ -65,17 +73,37 @@ class Command(BaseCommand):
         affected_xforms = XForm.objects.filter(
             id__in=kpi_auto_named_instances.values_list(
                 'xform_id', flat=True).distinct()
-        )
+        ).order_by('id')
+        if options['minimum_form_id']:
+            affected_xforms = affected_xforms.filter(
+                id__gte=options['minimum_form_id'])
         if options['verbosity']:
             self.stdout.write('Running slow query... ', ending='')
             self.stdout.flush()
         total_forms = affected_xforms.count()
         for xform in affected_xforms.iterator():
-            xform_root_node_name = get_xform_root_node_name(xform)
+            try:
+                xform_root_node_name = get_xform_root_node_name(xform)
+            except Exception as e:
+                self.stderr.write(
+                    '!!! Failed to get root node name for form {}: {}'.format(
+                        xform.id, e.message)
+                )
+                failed_forms += 1
+                continue
             affected_instances = xform.instances.exclude(
-                xml__endswith='</{}>'.format(xform_root_node_name))
+                xml__endswith='</{}>'.format(xform_root_node_name)
+            ).order_by('id')
             for instance in affected_instances:
-                root_node_name = instance.get_root_node_name()
+                try:
+                    root_node_name = instance.get_root_node_name()
+                except Exception as e:
+                    self.stderr.write(
+                        '!!! Failed to get root node name for instance {}: ' \
+                        '{}'.format(instance.id, e.message)
+                    )
+                    failed_instances += 1
+                    continue
                 # Our crude `affected_instances` filter saves us a lot of work,
                 # but it doesn't account for things like trailing
                 # whitespace--so there might not really be a discrepancy
@@ -114,7 +142,13 @@ class Command(BaseCommand):
                     int((t1 - t0) / 60),
                     (t1 - t0) % 60
             ))
+            if failed_forms or failed_instances:
+                self.stderr.write(
+                    'Failed to process {} forms and {} instances'.format(
+                        failed_forms, failed_instances
+                    )
+                )
             self.stdout.write(
                 'At the start of processing, the last instance ID ' \
-                'was {}.'.format(last_instance.pk)
+                'was {}.'.format(last_instance.id)
             )
