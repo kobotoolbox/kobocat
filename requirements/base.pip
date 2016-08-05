@@ -42,7 +42,7 @@ requests==2.4.1
 elaphe==0.5.6
 
 # formpack exports
-# -e git+https://github.com/kobotoolbox/formpack.git#egg=formpack
+git+https://github.com/kobotoolbox/formpack@kobocat-requirement
 django-pure-pagination==0.3.0
 path.py==8.1.2
 
