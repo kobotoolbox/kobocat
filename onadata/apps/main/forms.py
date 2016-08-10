@@ -80,11 +80,10 @@ class PermissionForm(forms.Form):
 
 
 class UserProfileForm(ModelForm):
-
     class Meta:
         model = UserProfile
-        exclude = ('user', 'created_by', 'num_of_submissions')
-    email = forms.EmailField(widget=forms.TextInput())
+        # Include only `require_auth` since others are now stored in KPI
+        fields = ('require_auth',)
 
 
 class UserProfileFormRegister(forms.Form):
