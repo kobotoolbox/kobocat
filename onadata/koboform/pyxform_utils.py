@@ -8,6 +8,13 @@ def convert_csv_to_xls(csv_repr):
     """
     This method should be moved into pyxform
     """
+    # There should not be any blank lines in the "sheeted" CSV representation,
+    # but often times there are. Strip them out before any further processing;
+    # otherwise, `convert_csv_to_xls()` will raise an
+    # `invalid worksheet name u''` exception
+    csv_repr = ''.join([
+        line for line in csv_repr.splitlines(True) if line.strip().strip('"')
+    ])
     def _add_contents_to_sheet(sheet, contents):
         cols = []
         for row in contents:
@@ -25,9 +32,6 @@ def convert_csv_to_xls(csv_repr):
     dict_repr = xls2json_backends.csv_to_dict(StringIO.StringIO(encoded_csv))
     workbook = xlwt.Workbook()
     for sheet_name in dict_repr.keys():
-        if not len(sheet_name) and not dict_repr[sheet_name]:
-            # Discard an empty sheet with no name
-            continue
         # pyxform.xls2json_backends adds "_header" items for each sheet.....
         if not re.match(r".*_header$", sheet_name):
             cur_sheet = workbook.add_sheet(sheet_name)
