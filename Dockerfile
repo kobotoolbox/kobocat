@@ -15,9 +15,6 @@ RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" "${KOBOCAT_TMP_
         pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" \
     ; fi
 
-# FIXME: Move `formpack` dependency to `pip` requirements once it's stable.
-RUN pip install -e "git+https://github.com/kobotoolbox/formpack.git#egg=formpack"
-
 # Uninstall `pip` packages installed in the base image from `requirements/uninstall.pip`, if present.
 # FIXME: Replace this with the much simpler `pip-sync` command equivalent.
 RUN if [ -e "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" ]; then \
