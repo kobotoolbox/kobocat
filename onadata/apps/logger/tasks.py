@@ -6,9 +6,9 @@ from django.core.management import call_command
 
 @shared_task(soft_time_limit=600, time_limit=900)
 def fix_root_node_names(minimum_instance_id):
-    call_command('fix_root_node_names',
+    call_command(
+        'fix_root_node_names',
         minimum_instance_id=minimum_instance_id,
-        verbosity=0
     )
 
 ###### END ISSUE 242 FIX ######
