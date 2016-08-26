@@ -15,6 +15,7 @@ from django.core.files.temp import NamedTemporaryFile
 from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
 from django.shortcuts import render_to_response
+from django.utils.text import slugify
 from openpyxl.date_time import SharedDate
 from openpyxl.workbook import Workbook
 from pyxform.question import Question
@@ -28,8 +29,7 @@ from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.models.parsed_instance import\
     _is_invalid_for_mongo, _encode_for_mongo, dict_for_mongo,\
     _decode_from_mongo
-from onadata.libs.utils.viewer_tools import create_attachments_zipfile,\
-    image_urls
+from onadata.libs.utils.viewer_tools import create_attachments_zipfile
 from onadata.libs.utils.common_tags import (
     ID, XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION, BAMBOO_DATASET_ID,
     DELETEDAT, USERFORM_ID, INDEX, PARENT_INDEX, PARENT_TABLE_NAME,
@@ -575,8 +575,12 @@ class ExportBuilder(object):
         xform = XForm.objects.get(user__username__iexact=username, id_string__exact=xform_id_string)
         xlsform_io= xform.to_xlsform()
 
-        with tempfile.NamedTemporaryFile('w+b', prefix='ANALYSER_DATA_TMP_', 
-                                         suffix='.xlsx',) as xls_data:
+        if xlsform_io is None:
+            raise RuntimeError('XLSForm `{}` for user `{}` could not be retrieved from storage.'.
+                               format(xform_id_string, username))
+
+        prefix = slugify('analyser_data__{}__{}'.format(username, xform_id_string))
+        with tempfile.NamedTemporaryFile('w+b', prefix=prefix, suffix='.xlsx',) as xls_data:
             # Generate a new XLS export to work from.
             self.to_xls_export(xls_data.name, data)
             xls_data.file.seek(0)
@@ -721,7 +725,8 @@ def generate_export(export_type, extension, username, id_string,
     export_builder.BINARY_SELECT_MULTIPLES = binary_select_multiples
     export_builder.set_survey(xform.data_dictionary().survey)
 
-    temp_file = NamedTemporaryFile(prefix=export_type+'_EXPORT_TMP_', suffix=("." + extension))
+    prefix = slugify('{}_export__{}__{}'.format(export_type, username, id_string))
+    temp_file = NamedTemporaryFile(prefix=prefix, suffix=("." + extension))
 
     # get the export function by export type
     func = getattr(export_builder, export_type_func_map[export_type])
