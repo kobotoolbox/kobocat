@@ -6,7 +6,7 @@ import json
 import re
 import requests
 
-from fabric.api import cd, env, prefix, run, sudo
+from fabric.api import cd, env, prefix, run as run_
 from fabric.contrib import files
 from fabric.operations import put
 
@@ -17,6 +17,16 @@ if os.path.exists(deployments_file):
     with open(deployments_file, 'r') as f:
         imported_deployments = json.load(f)
         DEPLOYMENTS.update(imported_deployments)
+
+
+def run(*args, **kwargs):
+    '''
+    Workaround for mangled output that's returned after sourcing
+    $NVM_DIR/nvm.sh
+    '''
+    kwargs['pty'] = False
+    return run_(*args, **kwargs)
+
 
 def kobo_workon(_virtualenv_name):
     return prefix('kobo_workon %s' % _virtualenv_name)
