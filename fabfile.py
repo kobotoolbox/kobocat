@@ -116,7 +116,7 @@ def deploy_ref(deployment_name, ref):
     # numpy pip install from requirements file fails
     with kobo_workon(env.kc_virtualenv_name):
         run("pip install numpy")
-        run("pip install -r %s" % env.pip_requirements_file)
+        run("pip install --upgrade -r %s" % env.pip_requirements_file)
 
     formpack_path = os.path.join(env.home, 'formpack')
     formpack_branch = env.get('formpack_branch', False)
