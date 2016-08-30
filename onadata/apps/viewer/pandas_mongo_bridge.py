@@ -541,7 +541,9 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             # anything that's not a list will be in the top level dict so its
             # safe to simply assign
             if key == NOTES:
-                d[key] = u"\r\n".join(value)
+                # Match behavior of
+                # onadata.libs.utils.export_tools.dict_to_joined_export()
+                d[key] = "\r\n".join([v['note'] for v in value])
             elif key == ATTACHMENTS:
                 d[key] = []
             else:
