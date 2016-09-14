@@ -45,15 +45,17 @@ class TeamSerializer(serializers.Serializer):
         return Team.objects.create(organization=org, name=team_name,
                                    created_by=created_by)
 
-    def update(self, attrs, instance=None):
+    def update(self, instance, attrs):
         org = attrs.get('organization', None)
         projects = attrs.get('projects', [])
-
+        name = attrs.get('team_name', None)
         instance.organization = org if org else instance.organization
-        instance.name = attrs.get('team_name', instance.name)
-        instance.projects.clear()
+        instance.name = name if name else instance.name
 
-        for project in projects:
-            instance.projects.add(project)
+        if projects:
+            instance.projects.clear()
+            for project in projects:
+                instance.projects.add(project)
 
+        instance.save()
         return instance
