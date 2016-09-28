@@ -75,12 +75,6 @@ class TestDataViewSet(TestBase):
         data = _data_instance(dataid)
         self.assertDictContainsSubset(data, sorted(response.data)[0])
 
-        data = {
-            u'_xform_id_string': u'transportation_2011_07_25',
-            u'transport/available_transportation_types_to_referral_facility':
-            u'none',
-            u'_submitted_by': u'bob',
-        }
         view = DataViewSet.as_view({'get': 'retrieve'})
         response = view(request, pk=formid, dataid=dataid)
         self.assertEqual(response.status_code, 200)
