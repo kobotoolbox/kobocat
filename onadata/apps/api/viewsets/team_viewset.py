@@ -141,3 +141,52 @@ A list of usernames is the response for members of the team.
             data = [u.username for u in team.user_set.all()]
 
         return Response(data, status=status_code)
+    
+    @detail_route(methods=['DELETE', 'POST', 'GET'])
+    def projects(self, request, *args, **kwargs):  # get, assign and dissociate projects from a team
+        """
+        # Get associated projects of a team
+        <pre>GET https://www.example.com/api/v1/teams/1/projects</pre>
+        Returns JSON Array of Assigned projects IDs
+        # Associate a project to team
+        <pre>POST https://www.example.com/api/v1/teams/1/projects</pre>
+        <pre>POST Body
+        {"project": 1}
+        </pre>
+        Response: Returns JSON Array of Assigned projects IDs
+        # Dissociate a project from team
+        <pre>DELETE https://www.example.com/api/v1/teams/1/projects</pre>
+        <pre>DELETE Body
+        [1,2,3,4]
+        </pre>
+        Response: Returns JSON Array of Assigned projects IDs
+        """
+        team = self.get_object()
+        status_code = status.HTTP_200_OK
+        request_data = request.data
+        response_data = {}
+        organization_projects = Project.objects.filter(organization=team.organization)
+        if request_data and type(request_data) is dict:
+            project_id = request_data.get('project')
+            try:
+                project = Project.objects.get(id=project_id)
+                if project in organization_projects:
+                    if request.method == 'POST':
+                        # assign project to team
+                        team.projects.add(project)
+                        status_code = status.HTTP_201_CREATED
+                    elif request.method == 'DELETE':
+                        # dissociate project from team
+                        if project in team.projects.all():
+                            team.projects.remove(project)
+                            status_code = status.HTTP_201_CREATED
+
+            except Project.DoesNotExist:
+                status_code = status.HTTP_400_BAD_REQUEST
+                return  Response({ 'project': [_(u"Project `%d` does not exist." % project_id)] }, status_code = status_code)
+
+        # construct an array of team's projects IDs
+        response_data = [p.id for p in team.projects.all()] if team.projects else []
+
+        return Response(response_data, status=status_code)
+
