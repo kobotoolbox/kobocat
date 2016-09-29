@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 
 from django.core.exceptions import ValidationError
+from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _
@@ -165,13 +166,18 @@ def _get_owner(request):
     return owner
 
 
-def response_for_format(data, format=None):
-    if format == 'xml':
-        formatted_data = data.xml
-    elif format == 'xls':
-        formatted_data = data.xls
+def response_for_format(form, fmt=None):
+    if fmt == 'xml':
+        formatted_data = form.xml
+    elif fmt == 'xls':
+        file_path = form.xls.name
+        default_storage = get_storage_class()()
+        if file_path != '' and default_storage.exists(file_path):
+            formatted_data = form.xls
+        else:
+            raise Http404(_("No XLSForm found."))
     else:
-        formatted_data = json.loads(data.json)
+        formatted_data = json.loads(form.json)
     return Response(formatted_data)
 
 
@@ -785,7 +791,7 @@ data (instance/submission per row)
             return HttpResponseBadRequest('400 BAD REQUEST',
                                           content_type='application/json',
                                           status=400)
-        return response_for_format(form, format=format)
+        return response_for_format(form, format)
 
     @detail_route(methods=['GET'])
     def enketo(self, request, **kwargs):
