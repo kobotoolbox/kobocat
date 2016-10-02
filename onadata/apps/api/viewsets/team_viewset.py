@@ -184,7 +184,7 @@ A list of usernames is the response for members of the team.
 
             except Project.DoesNotExist:
                 status_code = status.HTTP_400_BAD_REQUEST
-                return  Response({ 'project': [_(u"Project `%d` does not exist." % project_id)] }, status_code = status_code)
+                return  Response({'project': [_(u"Project `%d` does not exist." % project_id)]}, status=status_code)
 
         # construct an array of team's projects IDs
         response_data = [p.id for p in team.projects.all()] if team.projects else []
