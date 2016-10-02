@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
+from django.http.request import QueryDict
 
 from rest_framework import filters
 from rest_framework import status
@@ -166,7 +167,7 @@ A list of usernames is the response for members of the team.
         request_data = request.data
         response_data = {}
         organization_projects = Project.objects.filter(organization=team.organization)
-        if request_data and type(request_data) is dict:
+        if request_data and type(request_data) is QueryDict:
             project_id = request_data.get('project')
             try:
                 project = Project.objects.get(id=project_id)
