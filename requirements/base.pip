@@ -32,8 +32,7 @@ librabbitmq==1.5.2
 amqp>1.4,<2.0
 django-nose==1.4.2
 python-digest==1.7
-#django-digest==1.13 # django-digest has no commits since 2011
--e git+https://github.com/jnm/django-digest#egg=django-digest
+-e git+https://github.com/dimagi/django-digest#egg=django-digest
 -e git+https://github.com/onaio/python-json2xlsclient.git#egg=j2xclient
 
 # new export code relies on
