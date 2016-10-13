@@ -41,7 +41,7 @@ RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo 'source /etc/profile' >> /root/.bashrc
 
-VOLUME ["${KOBOCAT_SRC_DIR}", "${KOBOCAT_SRC_DIR}/onadata/media", "/srv/src/kobocat-template"]
+VOLUME ["${KOBOCAT_SRC_DIR}", "${KOBOCAT_SRC_DIR}/media", "/srv/src/kobocat-template"]
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
