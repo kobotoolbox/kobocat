@@ -794,14 +794,17 @@ def superuser_stats(request, username):
     )
 
     def list_created_by_month(model, date_field):
-        sorted_objects = model.objects.order_by(date_field)
-        first_object = sorted_objects.first()
-        last_object = sorted_objects.last()
+        today = datetime_module.date.today()
+        # Just start at January 1 of the previous year. Going back to the
+        # oldest object would be great, but it's too slow right now. Django
+        # 1.10 will provide a more efficient way:
+        # https://docs.djangoproject.com/en/1.10/ref/models/database-functions/#trunc
         first_date = datetime_module.date(
-            year=getattr(first_object, date_field).year,
-            month=getattr(first_object, date_field).month,
+            year=today.year - 1,
+            month=1,
             day=1
         )
+        last_object = model.objects.last()
         last_date = first_day_of_next_month(getattr(last_object, date_field))
         year_month_count = []
         while last_date > first_date:
@@ -832,7 +835,9 @@ def superuser_stats(request, username):
         fieldnames = [
             'Year',
             'Month',
-            'New {}'.format(model_name_plural.capitalize())
+            'New {}'.format(model_name_plural.capitalize()),
+            'NOTE: Records created prior to January 1 of last '
+            'year are NOT included in this report!'
         ]
         data = list_created_by_month(
             report_settings['model'], report_settings['date_field'])
