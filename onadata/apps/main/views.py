@@ -282,8 +282,11 @@ def profile_settings(request, username):
         if form.is_valid():
             # get user
             # user.email = cleaned_email
+            '''
+            The email field has been removed from the profile form.
             form.instance.user.email = form.cleaned_data['email']
             form.instance.user.save()
+            '''
             form.save()
             # todo: add string rep. of settings to see what changed
             audit = {}
