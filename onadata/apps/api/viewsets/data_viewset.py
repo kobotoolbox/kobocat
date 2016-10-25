@@ -380,6 +380,10 @@ Delete a specific submission in a form
 
         if pk is not None and dataid is not None:
             try:
+                int(pk)
+            except ValueError:
+                raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+            try:
                 int(dataid)
             except ValueError:
                 raise ParseError(_(u"Invalid dataid %(dataid)s"
@@ -496,23 +500,6 @@ Delete a specific submission in a form
                                          u"permissions."))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def retrieve(self, request, *args, **kwargs):
-        data_id = str(kwargs.get('dataid'))
-        _format = kwargs.get('format')
-
-        if not data_id.isdigit():
-            raise ParseError(_(u"Data ID should be an integer"))
-
-        try:
-            instance = Instance.objects.get(pk=data_id)
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except Instance.DoesNotExist:
-            raise ParseError(
-                _(u"data with id '%(data_id)s' not found!" %
-                  {'data_id': data_id})
-            )
 
     def list(self, request, *args, **kwargs):
         lookup_field = self.lookup_field
