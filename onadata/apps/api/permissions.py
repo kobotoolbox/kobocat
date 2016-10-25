@@ -1,3 +1,4 @@
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.permissions import IsAuthenticated
 
@@ -42,16 +43,11 @@ class XFormPermissions(DjangoObjectPermissions):
 
         if 'pk' in view.kwargs:
 
-            # Always allow listing xform (again, this is to match unit tests)
-            # since we are filtering them down the road.
-            if view.action == 'list':
-                return True
-
-            # Allow getting a shared xform is you are anonymous.
-            pk = view.kwargs.get('pk')
-            if view.action == 'retrieve':
-                xform = XForm.objects.get(pk=pk)
-                if xform.shared_data or xform.shared:
+            # Allow anonymous users to access shared data
+            if request.method == 'GET' and view.action in ('list', 'retrieve'):
+                pk = view.kwargs.get('pk')
+                xform = get_object_or_404(XForm, pk=pk)
+                if xform.shared_data:
                     return True
 
             check_inherit_permission_from_project(view.kwargs.get('pk'),
@@ -66,13 +62,12 @@ class XFormPermissions(DjangoObjectPermissions):
         return super(XFormPermissions, self).has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
-
-        # Currently the permissions are ambigious on this. They check
-        # permissions, but want to let you list public data. So we always
-        # return True for list, and let the view filter the with shared*=True
-        # down the road
-        if request.method == 'GET' and view.action == 'list':
-            return True
+        # Allow anonymous users to access shared data
+        if request.method == 'GET' and view.action in ('list', 'retrieve'):
+            pk = view.kwargs.get('pk')
+            xform = get_object_or_404(XForm, pk=pk)
+            if xform.shared_data:
+                return True
 
         if request.method == 'DELETE' and view.action == 'labels':
             user = request.user
