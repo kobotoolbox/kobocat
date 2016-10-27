@@ -7,9 +7,13 @@ from django.db import models
 from instance import Instance
 
 
-def upload_to(instance, filename):
+def upload_to(attachment, filename):
+    instance = attachment.instance
+    xform = instance.xform
     return os.path.join(
-        instance.instance.xform.user.username,
+        xform.user.username,
+        xform.uuid,
+        instance.uuid,
         'attachments',
         os.path.split(filename)[1])
 
