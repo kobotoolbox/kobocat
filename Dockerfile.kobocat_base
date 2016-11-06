@@ -3,8 +3,7 @@
 FROM kobotoolbox/base-kobos:latest
 
 
-ENV KOBOCAT_SRC_DIR=/srv/src/kobocat \
-    KOBOCAT_TMP_DIR=/srv/kobocat_tmp \
+ENV KOBOCAT_TMP_DIR=/srv/kobocat_tmp \
     # Store editable packages (pulled from VCS repos) in their own directory.
     PIP_EDITABLE_PACKAGES_DIR=/srv/pip_editable_packages
 
