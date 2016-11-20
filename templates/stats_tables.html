@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
 {% load lookup_filter %}
+{% load static %}
 
 {% block additional-headers %}
 {% load i18n %}
-<link rel="stylesheet" href="{{STATIC_URL}}css/stats_tables.css" />
-<link rel="stylesheet" href="{{STATIC_URL}}bower_components/backgrid/lib/backgrid.min.css" />
+<link rel="stylesheet" href="{% static "css/stats_tables.css" %}" />
+<link rel="stylesheet" href="{% static "bower_components/backgrid/lib/backgrid.min.css" %}" />
 
 <div class="sub-header-bar">
   <div class="container__wide">
@@ -76,11 +77,11 @@
 
 {% block javascript %}
 {{ block.super }}
-<script src="{{STATIC_URL}}bower_components/underscore/underscore-min.js"></script>
-<script src="{{STATIC_URL}}bower_components/backbone/backbone-min.js"></script>
-<script src="{{STATIC_URL}}bower_components/backgrid/lib/backgrid.js"></script>
-<script src="{{STATIC_URL}}js/xform.js"></script>
-<script src="{{STATIC_URL}}js/stats_tables.js"></script>
+<script src="{% static "bower_components/underscore/underscore-min.js" %}"></script>
+<script src="{% static "bower_components/backbone/backbone-min.js" %}"></script>
+<script src="{% static "bower_components/backgrid/lib/backgrid.js" %}"></script>
+<script src="{% static "js/xform.js" %}"></script>
+<script src="{% static "js/stats_tables.js" %}"></script>
 <script type="text/javascript">
     var formUrl = "{% url "download_jsonform" xform.user.username xform.id_string %}";
     var statsUrl = "{% url "stats-detail" xform.pk %}";
