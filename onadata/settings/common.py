@@ -57,7 +57,7 @@ LANGUAGE_CODE = 'en-us'
 
 ugettext = lambda s: s
 
-SITE_ID = 1
+SITE_ID = os.environ.get('DJANGO_SITE_ID', '1')
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
