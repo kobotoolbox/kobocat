@@ -3,6 +3,9 @@ set -e
 source /etc/profile
 
 KOBOCAT_MEDIA_URL="${KOBOCAT_MEDIA_URL:-media}"
+BACKUPS_DIR="${BACKUPS_DIR:-/srv/backups}"
+
+mkdir -p "${BACKUPS_DIR}"
 
 timestamp="$(date +%Y.%m.%d.%H_%M)"
 backup_filename="kobocat_media__${timestamp}.tar"
