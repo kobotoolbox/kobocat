@@ -1,4 +1,5 @@
 import re
+import logging
 import dateutil.parser
 from xml.dom import minidom, Node
 from django.utils.encoding import smart_unicode, smart_str
@@ -272,7 +273,12 @@ class XFormInstanceParser(object):
 
     def __init__(self, xml_str, data_dictionary):
         self.dd = data_dictionary
-        self.parse(xml_str)
+        try:
+            self.parse(xml_str)
+        except Exception as err:
+            logger = logging.getLogger("console_logger")
+            logging.error(
+                "Failed to parse instance '%s'" % xml_str, exc_info=True)
 
     def parse(self, xml_str):
         self._xml_obj = clean_and_parse_xml(xml_str)
@@ -315,7 +321,6 @@ class XFormInstanceParser(object):
             try:
                 assert key not in self._attributes
             except AssertionError:
-                import logging
                 logger = logging.getLogger("console_logger")
                 logger.debug("Skipping duplicate attribute: %s"
                              " with value %s" % (key, value))
