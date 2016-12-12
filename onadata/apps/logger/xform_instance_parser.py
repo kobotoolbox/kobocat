@@ -277,7 +277,7 @@ class XFormInstanceParser(object):
             self.parse(xml_str)
         except Exception as err:
             logger = logging.getLogger("console_logger")
-            logging.error(
+            logger.error(
                 "Failed to parse instance '%s'" % xml_str, exc_info=True)
 
     def parse(self, xml_str):
