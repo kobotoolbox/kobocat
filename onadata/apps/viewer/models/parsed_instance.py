@@ -1,6 +1,7 @@
 import base64
 import datetime
 import json
+import logging
 import re
 
 from bson import json_util, ObjectId
@@ -17,7 +18,6 @@ from onadata.apps.restservice.utils import call_service
 from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
     SUBMISSION_TIME, MONGO_STRFTIME, BAMBOO_DATASET_ID, DELETEDAT, TAGS,\
     NOTES, SUBMITTED_BY
-
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 
@@ -90,7 +90,7 @@ def update_mongo_instance(record):
     try:
         return xform_instances.save(record)
     except Exception:
-        # todo: mail admins about the exception
+        logging.getLogger().warning('Submission could not be saved to Mongo.', exc_info=True)
         pass
 
 
