@@ -12,8 +12,8 @@ def upload_to(attachment, filename):
     xform = instance.xform
     return os.path.join(
         xform.user.username,
-        xform.uuid,
-        instance.uuid,
+        xform.uuid or 'form',
+        instance.uuid or 'instance',
         'attachments',
         os.path.split(filename)[1])
 
