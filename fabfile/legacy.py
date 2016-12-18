@@ -1,14 +1,9 @@
-import glob
-import os
-from subprocess import check_call
-import sys
 import json
-import re
-import requests
+import os
+import sys
 
 from fabric.api import cd, env, prefix, run as run_
-from fabric.contrib import files
-from fabric.operations import put
+
 
 DEPLOYMENTS = {}
 
@@ -45,7 +40,7 @@ def check_key_filename(deployment_configs):
             deployment_configs['key_filename']
         )
         if not os.path.exists(deployment_configs['key_filename']):
-            exit_with_error("Cannot find required permissions file: %s" %
+            exit_with_error("Cannot find required SSH key file: %s" %
                             deployment_configs['key_filename'])
 
 
