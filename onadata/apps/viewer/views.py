@@ -1,5 +1,8 @@
 import json
 import os
+import re
+import logging
+
 from datetime import datetime
 from tempfile import NamedTemporaryFile
 from time import strftime, strptime
@@ -44,6 +47,8 @@ from onadata.libs.utils.user_auth import has_permission, get_xform_and_perms,\
     helper_auth_helper, has_edit_permission
 from xls_writer import XlsWriter
 from onadata.libs.utils.chart_tools import build_chart_data
+
+media_file_logger = logging.getLogger('media_files')
 
 
 def _set_submission_time_to_query(query, request):
@@ -721,18 +726,32 @@ def attachment_url(request, size='medium'):
     media_file = request.GET.get('media_file')
     # TODO: how to make sure we have the right media file,
     # this assumes duplicates are the same file
-    result = Attachment.objects.filter(media_file=media_file)[0:1]
+    if media_file:
+        mtch = re.search('^([^\/]+)/attachments(/[^\/]+)$', media_file)
+        if mtch:
+            # in cases where the media_file url created by instance.html's
+            # _attachment_url function is in the wrong format, this will
+            # match attachments with the correct owner and the same file name
+            (username, filename) = mtch.groups()
+            result = Attachment.objects.filter(**{
+                  'instance__xform__user__username': username,
+                }).filter(**{
+                  'media_file__endswith': filename,
+                })[0:1]
+        else:
+            # search for media_file with exact matching name
+            result = Attachment.objects.filter(media_file=media_file)[0:1]
     if result.count() == 0:
+        media_file_logger.info('attachment not found')
         return HttpResponseNotFound(_(u'Attachment not found'))
     attachment = result[0]
     if not attachment.mimetype.startswith('image'):
         return redirect(attachment.media_file.url)
+
     try:
         media_url = image_url(attachment, size)
     except:
-        # TODO: log this somewhere
-        # image not found, 404, S3ResponseError timeouts
-        pass
+        media_file_logger.error('could not get thumbnail for image', exc_info=True)
     else:
         if media_url:
             return redirect(media_url)
