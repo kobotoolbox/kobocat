@@ -7,16 +7,20 @@ from django.db import models
 from instance import Instance
 
 
-def upload_to(instance, filename):
+def upload_to(attachment, filename):
+    instance = attachment.instance
+    xform = instance.xform
     return os.path.join(
-        instance.instance.xform.user.username,
+        xform.user.username,
         'attachments',
+        xform.uuid or 'form',
+        instance.uuid or 'instance',
         os.path.split(filename)[1])
 
 
 class Attachment(models.Model):
     instance = models.ForeignKey(Instance, related_name="attachments")
-    media_file = models.FileField(upload_to=upload_to)
+    media_file = models.FileField(upload_to=upload_to, max_length=380)
     mimetype = models.CharField(
         max_length=50, null=False, blank=True, default='')
 
