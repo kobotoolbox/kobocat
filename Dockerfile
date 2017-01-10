@@ -1,7 +1,9 @@
 FROM kobotoolbox/kobocat_base:latest
 
-ENV KOBOCAT_SRC_DIR=/srv/src/kobocat \
-    BACKUPS_DIR=/srv/backups
+ENV DJANGO_SETTINGS_MODULE=onadata.settings.kc_environ \
+    KOBOCAT_SRC_DIR=/srv/src/kobocat \
+    BACKUPS_DIR=/srv/backups \
+    KOBOCAT_LOGS_DIR=/srv/logs
 
 # Install post-base-image `apt` additions from `apt_requirements.txt`, if modified.
 COPY ./apt_requirements.txt "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt"
@@ -36,8 +38,10 @@ RUN mkdir -p /etc/service/uwsgi && \
     cp "${KOBOCAT_SRC_DIR}/docker/init.bash" /etc/my_init.d/10_init_kobocat.bash && \
     cp "${KOBOCAT_SRC_DIR}/docker/sync_static.sh" /etc/my_init.d/11_sync_static.bash && \
     mkdir -p "${KOBOCAT_SRC_DIR}/emails/" && \
-    chown -R wsgi "${KOBOCAT_SRC_DIR}/emails/" && \
-    mkdir -p "${BACKUPS_DIR}"
+    chown -R "${RUNTIME_USER}" "${KOBOCAT_SRC_DIR}/emails/" && \
+    mkdir -p "${BACKUPS_DIR}" && \
+    mkdir -p "${KOBOCAT_LOGS_DIR}" && \
+    chown -R "${RUNTIME_USER}" "${KOBOCAT_LOGS_DIR}"
 
 RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
     chmod 600 /root/.pgpass

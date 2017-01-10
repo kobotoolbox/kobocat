@@ -1,4 +1,7 @@
 import os
+
+import dj_database_url
+
 from onadata.settings.common import *
 
 
@@ -8,7 +11,6 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
 TEMPLATE_STRING_IF_INVALID = ''
 
-import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
@@ -51,7 +53,7 @@ STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
-if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
+if os.environ.get('KOBOCAT_ROOT_URI_PREFIX') and (os.environ['KOBOCAT_ROOT_URI_PREFIX'] != '/'):
     KOBOCAT_ROOT_URI_PREFIX= '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
     MEDIA_URL= KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
     STATIC_URL= KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
