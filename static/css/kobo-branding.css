@@ -5,7 +5,7 @@
   font-family: 'Open Sans';
   font-style: normal;
   font-weight: normal;
-  src: local("Open Sans"), local("OpenSans"), url("/static/fonts/open-sans/opensans-regular.woff2") format("woff2"), url("/static/fonts/open-sans/opensans-regular.woff") format("woff");
+  src: local("Open Sans"), local("OpenSans"), url("../fonts/open-sans/opensans-regular.woff2") format("woff2"), url("../fonts/open-sans/opensans-regular.woff") format("woff");
 }
 
 
@@ -14,7 +14,7 @@
   font-family: 'Open Sans';
   font-style: normal;
   font-weight: 600;
-  src: local("Open Sans Semibold"), local("OpenSans-Semibold"), url("/static/fonts/open-sans/opensans-semibold.woff2") format("woff2"), url("/static/fonts/open-sans/opensans-semibold.woff") format("woff");
+  src: local("Open Sans Semibold"), local("OpenSans-Semibold"), url("../fonts/open-sans/opensans-semibold.woff2") format("woff2"), url("../fonts/open-sans/opensans-semibold.woff") format("woff");
 }
 
 
@@ -23,7 +23,7 @@
   font-family: 'Open Sans';
   font-style: italic;
   font-weight: normal;
-  src: url("/static/fonts/open-sans/opensans-italic.woff2") format("woff2"), url("/static/fonts/open-sans/opensans-italic.woff") format("woff");
+  src: url("../fonts/open-sans/opensans-italic.woff2") format("woff2"), url("../fonts/open-sans/opensans-italic.woff") format("woff");
 }
 
 
@@ -32,7 +32,7 @@
   font-family: 'Open Sans';
   font-style: italic;
   font-weight: 600;
-  src: url("/static/fonts/open-sans/opensans-semibolditalic.woff2") format("woff2"), url("/static/fonts/open-sans/opensans-semibolditalic.woff") format("woff");
+  src: url("../fonts/open-sans/opensans-semibolditalic.woff2") format("woff2"), url("../fonts/open-sans/opensans-semibolditalic.woff") format("woff");
 }
 
 
@@ -199,7 +199,7 @@ section {
 }
 
 .header-bar__top-logo {
-  background: url(/static/images/kobologo.svg);
+  background: url(../images/kobologo.svg);
   background-size: 120px 27px;
   background-repeat: none;
   width: 120px;

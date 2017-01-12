@@ -1,6 +1,7 @@
 {% extends 'ona_base.html' %}
 {% load humanize %}
 {% load i18n %}
+{% load static %}
 
 {% block styles %}
     {{block.super}}
@@ -50,7 +51,7 @@
 </div>
 <div class="row">
     <div class="col-md-8">
-        <img src="{{STATIC_URL}}images/kobocat_photo.png" width="497" height="363"/>
+        <img src="{% static "images/kobocat_photo.png" %}" width="497" height="363"/>
     </div>
     <div class="col-md-4">
         {% url "auth_login" as login_url %}

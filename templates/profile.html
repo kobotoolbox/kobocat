@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load static %}
 
 {% block additional-headers %}
 {% load i18n %}
@@ -57,8 +58,8 @@
 {% endblock %}
 <!--
   <script type="text/javascript">$('#gravatar').tooltip();</script>
-  <script type="text/javascript" src="{{STATIC_URL}}js/jquery.dataTables.js"></script>
-  <script type="text/javascript" src="{{STATIC_URL}}js/jquery.dataTables.pagination.js"></script>
+  <script type="text/javascript" src="{% static "js/jquery.dataTables.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/jquery.dataTables.pagination.js" %}"></script>
   <script type="text/javascript">
 /*
         $.extend( $.fn.dataTableExt.oStdClasses, {
