@@ -2,7 +2,7 @@ import json
 import os
 import sys
 
-from fabric.api import cd, env, prefix, run as run_
+from fabric.api import cd, env, prefix, run
 
 
 DEPLOYMENTS = {}
@@ -14,13 +14,10 @@ if os.path.exists(deployments_file):
         DEPLOYMENTS.update(imported_deployments)
 
 
-def run(*args, **kwargs):
-    '''
-    Workaround for mangled output that's returned after sourcing
-    $NVM_DIR/nvm.sh
-    '''
+def run_no_pty(*args, **kwargs):
+    # Avoids control characters being returned in the output
     kwargs['pty'] = False
-    return run_(*args, **kwargs)
+    return run(*args, **kwargs)
 
 
 def kobo_workon(_virtualenv_name):
@@ -90,7 +87,8 @@ def deploy_ref(deployment_name, ref):
     with cd(env.kc_path):
         run("git fetch origin")
         # Make sure we're not moving to an older codebase
-        git_output = run('git rev-list {}..HEAD --count 2>&1'.format(ref))
+        git_output = run_no_pty(
+            'git rev-list {}..HEAD --count 2>&1'.format(ref))
         if int(git_output) > 0:
             raise Exception("The server's HEAD is already in front of the "
                 "commit to be deployed.")
@@ -98,7 +96,7 @@ def deploy_ref(deployment_name, ref):
         # detached. Perhaps consider using `git reset`.
         run('git checkout {}'.format(ref))
         # Report if the working directory is unclean.
-        git_output = run('git status --porcelain')
+        git_output = run_no_pty('git status --porcelain')
         if len(git_output):
             run('git status')
             print('WARNING: The working directory is unclean. See above.')
