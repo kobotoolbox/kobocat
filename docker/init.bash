@@ -24,6 +24,12 @@ else
     echo "KoBoCAT media automatic backup schedule: ${KOBOCAT_MEDIA_BACKUP_SCHEDULE}"
 fi
 
+rm -rf /etc/profile.d/pydev_debugger.bash.sh
+if [[ -d /srv/pydev_orig && ! -z "${KOBOCAT_PATH_FROM_ECLIPSE_TO_PYTHON_PAIRS}" ]]; then
+    echo 'Enabling PyDev remote debugging.'
+    "${KOBOCAT_SRC_DIR}/docker/setup_pydev.bash"
+fi
+
 echo 'KoBoCAT initialization complete.'
 
 cd $oldpwd
