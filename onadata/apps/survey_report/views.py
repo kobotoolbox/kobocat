@@ -55,7 +55,9 @@ def build_formpack(username, id_string):
 
 def build_export_context(request, username, id_string):
 
-    hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
+    hierarchy_in_labels = request.REQUEST.get(
+        'hierarchy_in_labels', ''
+    ).lower() == 'true'
     group_sep = request.REQUEST.get('group_sep', '/')
 
     user, xform, formpack = build_formpack(username, id_string)
@@ -106,10 +108,6 @@ def export_menu(request, username, id_string):
     req = request.REQUEST
     export_type = req.get('type', None)
     if export_type:
-        lang = req.get('lang', None)
-        hierarchy_in_labels = req.get('hierarchy_in_labels')
-        group_sep = req.get('group_sep', '/')
-        
         q = QueryDict('', mutable=True)
         q['lang'] = req.get('lang')
         q['hierarchy_in_labels'] = req.get('hierarchy_in_labels')
