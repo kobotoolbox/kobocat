@@ -61,10 +61,10 @@ def build_export_context(request, username, id_string):
     group_sep = request.REQUEST.get('group_sep', '/')
 
     user, xform, formpack = build_formpack(username, id_string)
- 
+
     translations = formpack.available_translations
     lang = request.REQUEST.get('lang', None) or next(iter(translations), None)
- 
+
     options = {'versions': 'v1',
                'group_sep': group_sep,
                'lang': lang,
@@ -72,14 +72,14 @@ def build_export_context(request, username, id_string):
                'copy_fields': ('_id', '_uuid', '_submission_time'),
                'force_index': True
                }
- 
+
     return {
         'username': username,
         'id_string': id_string,
         'languages': translations,
         'headers_lang': lang,
         'formpack': formpack,
-        'xform': xform, 
+        'xform': xform,
         'group_sep': group_sep,
         'lang': lang,
         'hierarchy_in_labels': hierarchy_in_labels,
@@ -112,7 +112,7 @@ def export_menu(request, username, id_string):
         q['lang'] = req.get('lang')
         q['hierarchy_in_labels'] = req.get('hierarchy_in_labels')
         q['group_sep'] = req.get('group_sep', '/')
-        
+
         if export_type == "xlsx":
             url = reverse('formpack_xlsx_export', args=(username, id_string))
             return redirect(url + '?' + q.urlencode())
@@ -128,7 +128,7 @@ def export_menu(request, username, id_string):
 def autoreport_menu(request, username, id_string):
 
     user, xform, form_pack = build_formpack(username, id_string)
-    
+
     # exclude fields in repeat group
     split_by_fields = form_pack.get_fields_for_versions(data_types="select_one")
 
@@ -194,7 +194,7 @@ def html_export(request, username, id_string):
 
     data = [("v1", page.object_list)]
     context = build_export_context(request, username, id_string)
-    
+
     context.update({
         'page': page,
         'table': [],
@@ -205,7 +205,7 @@ def html_export(request, username, id_string):
     sections = list(export.labels.items())
     section, labels = sections[0]
     id_index = labels.index('_id')
-        
+
     # generator dublicating the "_id" to allow to make a link to each
     # submission
     def make_table(submissions):
@@ -226,9 +226,9 @@ def auto_report(request, username, id_string):
 
     user, xform, formpack = build_formpack(username, id_string)
     report = formpack.autoreport()
-    
+
     limit = int(request.REQUEST.get('limit', 20))
-    split_by = request.REQUEST.get('split_by') or None    
+    split_by = request.REQUEST.get('split_by') or None
 
     fields = [field.name for field in formpack.get_fields_for_versions()]
     paginator = Paginator(fields, limit, request=request)
@@ -263,12 +263,12 @@ def auto_report(request, username, id_string):
     ctx['stats'] = report.get_stats(data, page.object_list, lang, split_by)
 
     if split_by:
-        
+
         return render(request, 'survey_report/auto_report_split_by.html', ctx)
 
     return render(request, 'survey_report/auto_report.html', ctx)
-    
-    
+
+
 @readable_xform_required
 def view_one_submission(request, username, id_string, submission):
 
@@ -277,7 +277,7 @@ def view_one_submission(request, username, id_string, submission):
     instances = list(instances)
     if not instances:
         raise Http404('Unable to find this submission')
-        
+
     context = {
         'title': id_string
     }
