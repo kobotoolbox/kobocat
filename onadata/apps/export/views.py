@@ -52,7 +52,9 @@ def build_formpack(username, id_string):
 
 def build_export(request, username, id_string):
 
-    hierarchy_in_labels = request.REQUEST.get('hierarchy_in_labels', None)
+    hierarchy_in_labels = request.REQUEST.get(
+        'hierarchy_in_labels', ''
+    ).lower() == 'true'
     group_sep = request.REQUEST.get('groupsep', '/')
     lang = request.REQUEST.get('lang', None)
 
