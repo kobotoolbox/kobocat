@@ -159,7 +159,7 @@ def get_client_ip(request):
 
 
 def enketo_url(form_url, id_string, instance_xml=None,
-               instance_id=None, return_url=None):
+               instance_id=None, return_url=None, instance_attachments=None):
     if not hasattr(settings, 'ENKETO_URL')\
             and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
         return False
@@ -175,7 +175,8 @@ def enketo_url(form_url, id_string, instance_xml=None,
         values.update({
             'instance': instance_xml,
             'instance_id': instance_id,
-            'return_url': return_url
+            'return_url': return_url,
+            'instance_attachments': instance_attachments
         })
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)

@@ -577,7 +577,8 @@ def edit_data(request, username, id_string, data_id):
     try:
         url = enketo_url(
             form_url, xform.id_string, instance_xml=injected_xml,
-            instance_id=instance.uuid, return_url=return_url
+            instance_id=instance.uuid, return_url=return_url,
+            instance_attachments=None
         )
     except Exception as e:
         context.message = {
