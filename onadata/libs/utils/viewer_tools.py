@@ -50,6 +50,19 @@ def image_urls(instance):
         urls.append(url)
     return urls
 
+def image_urls_dict(instance):
+    default_storage = get_storage_class()()
+    urls = dict()
+    suffix = settings.THUMB_CONF['medium']['suffix']
+    for a in instance.attachments.all():
+        filename = a.media_file.name
+        if default_storage.exists(get_path(a.media_file.name, suffix)):
+            url = default_storage.url(
+                get_path(a.media_file.name, suffix))
+        else:
+            url = a.media_file.url
+        urls[filename]=url
+    return urls
 
 def parse_xform_instance(xml_str):
     """

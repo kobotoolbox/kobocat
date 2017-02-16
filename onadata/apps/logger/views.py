@@ -46,6 +46,7 @@ from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.ziggy_instance import ZiggyInstance
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.viewer_tools import enketo_url
+from onadata.libs.utils.viewer_tools import image_urls_dict
 from onadata.libs.utils.logger_tools import (
     safe_create_instance,
     OpenRosaResponseBadRequest,
@@ -555,6 +556,7 @@ def edit_data(request, username, id_string, data_id):
         XForm, user__username__iexact=username, id_string__exact=id_string)
     instance = get_object_or_404(
         Instance, pk=data_id, xform=xform)
+    instance_attachments = image_urls_dict(instance)
     if not has_edit_permission(xform, owner, request, xform.shared):
         return HttpResponseForbidden(_(u'Not shared.'))
     if not hasattr(settings, 'ENKETO_URL'):
@@ -578,7 +580,7 @@ def edit_data(request, username, id_string, data_id):
         url = enketo_url(
             form_url, xform.id_string, instance_xml=injected_xml,
             instance_id=instance.uuid, return_url=return_url,
-            instance_attachments=None
+            instance_attachments=instance_attachments
         )
     except Exception as e:
         context.message = {
