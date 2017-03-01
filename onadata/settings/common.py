@@ -82,6 +82,8 @@ STATIC_ROOT = os.path.join(ONADATA_DIR, 'static')
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
+KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kobocat.kobotoolbox.org')
+
 # Enketo URL.
 # Configurable settings.
 ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')

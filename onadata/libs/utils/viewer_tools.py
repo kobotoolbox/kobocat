@@ -61,7 +61,10 @@ def image_urls_dict(instance):
                 get_path(a.media_file.name, suffix))
         else:
             url = a.media_file.url
-        urls[filename]=url
+	file_basename = os.path.basename(filename)
+	if url.startswith('/') and hasattr(settings,'KOBOCAT_URL'):
+	    url=settings.KOBOCAT_URL+url
+        urls[file_basename]=url
     return urls
 
 def parse_xform_instance(xml_str):
