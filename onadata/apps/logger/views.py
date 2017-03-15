@@ -556,7 +556,7 @@ def edit_data(request, username, id_string, data_id):
         XForm, user__username__iexact=username, id_string__exact=id_string)
     instance = get_object_or_404(
         Instance, pk=data_id, xform=xform)
-    instance_attachments = json.dumps(image_urls_dict(instance))
+    instance_attachments = image_urls_dict(instance)
     if not has_edit_permission(xform, owner, request, xform.shared):
         return HttpResponseForbidden(_(u'Not shared.'))
     if not hasattr(settings, 'ENKETO_URL'):
