@@ -278,7 +278,11 @@ urlpatterns = patterns(
     # Statistics for superusers. The username is irrelevant, but leave it as
     # the first part of the path to avoid collisions
     url(r"^(?P<username>[^/]+)/superuser_stats/$",
-        'onadata.apps.logger.views.superuser_stats'))
+        'onadata.apps.logger.views.superuser_stats'),
+    url(r"^(?P<username>[^/]+)/superuser_stats/(?P<base_filename>[^/]+)$",
+        'onadata.apps.logger.views.retrieve_superuser_stats'),
+
+)
 
 urlpatterns += patterns('django.contrib.staticfiles.views',
                         url(r'^static/(?P<path>.*)$', 'serve'))
