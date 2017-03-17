@@ -1,7 +1,7 @@
 # pybamboo has deps in common but on newer versions.
 # on top so those will be overwritten
 pybamboo==0.5.8.1
-pytz==2014.7
+pytz==2016.10
 
 Django>=1.8,<1.9
 dj-database-url==0.4.0
