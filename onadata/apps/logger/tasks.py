@@ -15,6 +15,7 @@ def fix_root_node_names(minimum_instance_id):
 
 import csv
 import datetime
+import pytz
 import zipfile
 from io import BytesIO
 from django.contrib.auth.models import User
@@ -50,7 +51,15 @@ def generate_stats_zip(output_filename):
             year=any_date.year if any_date.month > 1 else any_date.year - 1,
             month=any_date.month - 1 if any_date.month > 1 else 12,
             day=1
-    )
+        )
+
+    def utc_midnight(any_date):
+        return datetime.datetime(
+            year=any_date.year,
+            month=any_date.month,
+            day=any_date.day,
+            tzinfo=pytz.UTC
+        )
 
     def list_created_by_month(model, date_field):
         today = datetime.date.today()
@@ -71,8 +80,8 @@ def generate_stats_zip(output_filename):
             this_start_date = first_day_of_previous_month(last_date)
             this_end_date = last_date
             criteria = {
-                '{}__gte'.format(date_field): this_start_date,
-                '{}__lt'.format(date_field): this_end_date
+                '{}__gte'.format(date_field): utc_midnight(this_start_date),
+                '{}__lt'.format(date_field): utc_midnight(this_end_date)
             }
             objects_this_month = model.objects.filter(**criteria).count()
             year_month_count.append((
