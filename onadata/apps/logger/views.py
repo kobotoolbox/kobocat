@@ -779,17 +779,17 @@ def superuser_stats(request, username):
         }
     }
 
-    def first_day_of_next_month(any_day):
+    def first_day_of_next_month(any_date):
         return datetime_module.date(
-            year=any_day.year if any_day.month < 12 else any_day.year + 1,
-            month=any_day.month + 1 if any_day.month < 12 else 1,
+            year=any_date.year if any_date.month < 12 else any_date.year + 1,
+            month=any_date.month + 1 if any_date.month < 12 else 1,
             day=1
         )
 
-    def first_day_of_previous_month(any_day):
+    def first_day_of_previous_month(any_date):
         return datetime_module.date(
-            year=any_day.year if any_day.month > 1 else any_day.year - 1,
-            month=any_day.month - 1 if any_day.month > 1 else 12,
+            year=any_date.year if any_date.month > 1 else any_date.year - 1,
+            month=any_date.month - 1 if any_date.month > 1 else 12,
             day=1
     )
 
@@ -804,7 +804,8 @@ def superuser_stats(request, username):
             month=1,
             day=1
         )
-        last_object = model.objects.last()
+        # We *ASSUME* that primary keys increase cronologically!
+        last_object = model.objects.order_by('pk').last()
         last_date = first_day_of_next_month(getattr(last_object, date_field))
         year_month_count = []
         while last_date > first_date:
