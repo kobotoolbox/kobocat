@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load static %}
 
 {% block additional-headers %}
 {% load i18n %}
@@ -777,18 +778,18 @@
 {% block styles %}
 {{ block.super }}
   <!-- NEW SANDBOX STYLES -->
-  <link href="/static/css/ios-switches.css" rel="stylesheet">
-  <link href="/static/css/kobo-single-project.css" rel="stylesheet">
+  <link href="{% static "css/ios-switches.css" %}" rel="stylesheet">
+  <link href="{% static "css/kobo-single-project.css" %}" rel="stylesheet">
   <!-- END NEW SANDBOX STYLES -->
- <!-- <link href="{{STATIC_URL}}css/iphone-btn-style.css" rel="stylesheet"/> -->
+ <!-- <link href="{% static "css/iphone-btn-style.css" %}" rel="stylesheet"/> -->
 {% endblock %}
 
 {% block javascript %}
 {{ block.super }}
-<script src="/static/js/jquery.poshytip.js"></script>
+<script src="{% static "js/jquery.poshytip.js" %}"></script>
   {% if user.is_authenticated %}
-    <script type="text/javascript" src="{{STATIC_URL}}js/form_actions.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="{% static "js/form_actions.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.cookie.js" %}"></script>
   {% endif %}
 
 

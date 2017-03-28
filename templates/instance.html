@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load static %}
 
 {% block additional-headers %}
 {% load i18n %}
@@ -23,7 +24,7 @@
 {% load i18n %}
 <div id="loading">
   <p> {% trans "Loading..." %} </p>
-  <img id="loading-image" src="{{STATIC_URL}}images/ajax-loader.gif" alt="Loading..." />
+  <img id="loading-image" src="{% static "images/ajax-loader.gif" %}" alt="Loading..." />
 </div>
 {% if messages %}
 <div>{{messages}}</div>
@@ -47,10 +48,10 @@
 
 {% block javascript %}
 {{ block.super }}
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.dataTables.js"></script>
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.dataTables.pagination.js"></script>
-<script type="text/javascript" charset="utf-8" src="{{STATIC_URL}}js/sammy-0.7.1.min.js"></script>
-<script type="text/javascript" charset="utf-8" src="{{STATIC_URL}}js/sammy-plugins/sammy.meld-0.7.1.min.js"></script>
+<script type="text/javascript" src="{% static "js/jquery.dataTables.js" %}"></script>
+<script type="text/javascript" src="{% static "js/jquery.dataTables.pagination.js" %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static "js/sammy-0.7.1.min.js" %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static "js/sammy-plugins/sammy.meld-0.7.1.min.js" %}"></script>
 
 <script type="text/javascript">
 var formJSONUrl = "{% url "onadata.apps.logger.views.download_jsonform" username id_string %}";
@@ -172,7 +173,7 @@ function _attachment_url(name, size)
 
 </script>
 
-<script type="text/javascript" charset="utf-8" src="{{STATIC_URL}}js/instance.js"></script>
+<script type="text/javascript" charset="utf-8" src="{% static "js/instance.js" %}"></script>
 
 <script type="text/javascript">
 $(document).ready(function(){

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 
 {% block additional-headers %}
@@ -35,6 +36,7 @@
             </div>
             </span>
     </form>
+    <p>{% trans "Note: exports include only questions that remain in the most recent version of the form." %}</p>
     {% endif %}
 
     <div id="advanced-export-modal" class="modal hide fade">
@@ -135,11 +137,11 @@
 
 {% block javascript %}
 {{ block.super }}
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.dataTables.js"></script>
-<script type="text/javascript" src="{{STATIC_URL}}js/jquery.dataTables.pagination.js"></script>
-<script type="text/javascript" src="{{STATIC_URL}}js/form_actions.js"></script>
-<script type="text/javascript" charset="utf-8" src="{{STATIC_URL}}js/underscore-min.js"></script>
-<script type="text/javascript" charset="utf-8" src="{{STATIC_URL}}js/export_list.js"></script>
+<script type="text/javascript" src="{% static "js/jquery.dataTables.js" %}"></script>
+<script type="text/javascript" src="{% static "js/jquery.dataTables.pagination.js" %}"></script>
+<script type="text/javascript" src="{% static "js/form_actions.js" %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static "js/underscore-min.js" %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static "js/export_list.js" %}"></script>
 <script type="text/javascript">
     var progress_url = '{% url "onadata.apps.viewer.views.export_progress" username xform.id_string export_type %}';
 </script>
