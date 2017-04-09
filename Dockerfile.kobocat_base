@@ -7,7 +7,7 @@ ENV KOBOCAT_TMP_DIR=/srv/kobocat_tmp \
     # Store editable packages (pulled from VCS repos) in their own directory.
     PIP_EDITABLE_PACKAGES_DIR=/srv/pip_editable_packages \
     UWSGI_USER=wsgi \
-    UWSGI_GROUP=wsgi 
+    UWSGI_GROUP=wsgi
 
 
 ###########################
