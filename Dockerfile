@@ -1,4 +1,4 @@
-FROM kobotoolbox/kobocat_base:latest
+FROM qeddockerhub/kobocat_base:kpi-716-fix
 
 ENV KOBOCAT_SRC_DIR=/srv/src/kobocat \
     BACKUPS_DIR=/srv/backups
