@@ -36,5 +36,5 @@ RUN mkdir -p ${PIP_EDITABLE_PACKAGES_DIR} && \
 
 RUN mkdir -p /srv/src && \
     cd /srv/src && \
-    git clone --depth 1 https://github.com/kobotoolbox/kobocat-template.git -b kpi-716-fix && \
+    git clone --depth 1 https://github.com/qedsoftware/kobocat-template.git -b master && \
     chown -R wsgi /srv/src/kobocat-template
