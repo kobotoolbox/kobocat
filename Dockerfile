@@ -46,10 +46,6 @@ RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
 RUN echo 'source /etc/profile' >> /root/.bashrc
 
 
-
-# FIXME: Remove.
-VOLUME ["${KOBOCAT_SRC_DIR}", "${KOBOCAT_SRC_DIR}/media", "/srv/src/kobocat-template"]
-
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
 EXPOSE 8000
