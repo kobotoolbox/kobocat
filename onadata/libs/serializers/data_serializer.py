@@ -30,6 +30,7 @@ class DataListSerializer(serializers.Serializer):
             ParsedInstance.USERFORM_ID:
             u'%s_%s' % (obj.user.username, obj.id_string)
         }
+        limit = query_params.pop('limit', False)
 
         try:
             query.update(json.loads(query_params.get('query', '{}')))
@@ -42,6 +43,8 @@ class DataListSerializer(serializers.Serializer):
             'fields': query_params.get('fields'),
             'sort': query_params.get('sort')
         }
+        if limit:
+            query_kwargs['limit'] = limit
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
         return list(cursor)
 
