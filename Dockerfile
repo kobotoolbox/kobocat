@@ -1,7 +1,8 @@
 FROM kobotoolbox/kobocat_base:latest
 
 ENV KOBOCAT_SRC_DIR=/srv/src/kobocat \
-    BACKUPS_DIR=/srv/backups
+    BACKUPS_DIR=/srv/backups \
+    KOBOCAT_LOGS_DIR=/srv/logs
 
 # Install post-base-image `apt` additions from `apt_requirements.txt`, if modified.
 COPY ./apt_requirements.txt "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt"
