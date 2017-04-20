@@ -38,7 +38,9 @@ RUN mkdir -p /etc/service/uwsgi && \
     cp "${KOBOCAT_SRC_DIR}/docker/sync_static.sh" /etc/my_init.d/11_sync_static.bash && \
     mkdir -p "${KOBOCAT_SRC_DIR}/emails/" && \
     chown -R wsgi "${KOBOCAT_SRC_DIR}/emails/" && \
-    mkdir -p "${BACKUPS_DIR}"
+    mkdir -p "${BACKUPS_DIR}" && \
+    mkdir -p "${KOBOCAT_LOGS_DIR}" && \
+    chown -R wsgi "${KOBOCAT_LOGS_DIR}"
 
 RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
     chmod 600 /root/.pgpass
