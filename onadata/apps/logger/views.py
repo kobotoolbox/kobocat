@@ -34,7 +34,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_digest import HttpDigestAuthenticator
-from pyxform import survey_from
+from pyxform import Survey
 from pyxform.spss import survey_to_spss_label_zip
 from wsgiref.util import FileWrapper
 
@@ -464,7 +464,7 @@ def download_spss_labels(request, username, form_id_string):
     except:
         return HttpResponseServerError('Error retrieving XLSForm.')
 
-    survey= survey_from.xls(filelike_obj=xlsform_io)
+    survey= Survey.from_xls(filelike_obj=xlsform_io)
     zip_filename= '{}_spss_labels.zip'.format(xform.id_string)
     zip_io= survey_to_spss_label_zip(survey, xform.id_string)
 
