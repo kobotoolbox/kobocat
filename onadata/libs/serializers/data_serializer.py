@@ -30,8 +30,8 @@ class DataListSerializer(serializers.Serializer):
             ParsedInstance.USERFORM_ID:
             u'%s_%s' % (obj.user.username, obj.id_string)
         }
-        limit = query_params.pop('limit', False)
-        start = query_params.pop('start', False)
+        limit = query_params.get('limit', False)
+        start = query_params.get('start', False)
 
         try:
             query.update(json.loads(query_params.get('query', '{}')))
