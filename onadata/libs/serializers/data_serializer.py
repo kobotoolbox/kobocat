@@ -45,10 +45,10 @@ class DataListSerializer(serializers.Serializer):
             'sort': query_params.get('sort')
         }
         if limit:
-            query_kwargs['limit'] = limit
+            query_kwargs['limit'] = int(limit)
 
         if start:
-            query_kwargs['start'] = start
+            query_kwargs['start'] = int(start)
 
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
         return list(cursor)
