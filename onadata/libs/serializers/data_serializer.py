@@ -31,6 +31,7 @@ class DataListSerializer(serializers.Serializer):
             u'%s_%s' % (obj.user.username, obj.id_string)
         }
         limit = query_params.pop('limit', False)
+        start = query_params.pop('start', False)
 
         try:
             query.update(json.loads(query_params.get('query', '{}')))
@@ -45,6 +46,10 @@ class DataListSerializer(serializers.Serializer):
         }
         if limit:
             query_kwargs['limit'] = limit
+
+        if start:
+            query_kwargs['start'] = start
+
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
         return list(cursor)
 
