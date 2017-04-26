@@ -226,8 +226,8 @@ class ParsedInstance(models.Model):
         if start < 0 or limit < 0:
             raise ValueError(_("Invalid start/limit params"))
 
-        if limit > DEFAULT_LIMIT:
-            limit = DEFAULT_LIMIT
+        if limit > cls.DEFAULT_LIMIT:
+            limit = cls.DEFAULT_LIMIT
 
         cursor.skip(start).limit(limit)
         if type(sort) == dict and len(sort) == 1:
