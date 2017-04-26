@@ -1,7 +1,8 @@
 FROM kobotoolbox/kobocat_base:latest
 
 ENV KOBOCAT_SRC_DIR=/srv/src/kobocat \
-    BACKUPS_DIR=/srv/backups
+    BACKUPS_DIR=/srv/backups \
+    KOBOCAT_LOGS_DIR=/srv/logs
 
 # Install post-base-image `apt` additions from `apt_requirements.txt`, if modified.
 COPY ./apt_requirements.txt "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt"
@@ -37,7 +38,9 @@ RUN mkdir -p /etc/service/uwsgi && \
     cp "${KOBOCAT_SRC_DIR}/docker/sync_static.sh" /etc/my_init.d/11_sync_static.bash && \
     mkdir -p "${KOBOCAT_SRC_DIR}/emails/" && \
     chown -R wsgi "${KOBOCAT_SRC_DIR}/emails/" && \
-    mkdir -p "${BACKUPS_DIR}"
+    mkdir -p "${BACKUPS_DIR}" && \
+    mkdir -p "${KOBOCAT_LOGS_DIR}" && \
+    chown -R wsgi "${KOBOCAT_LOGS_DIR}"
 
 RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
     chmod 600 /root/.pgpass
@@ -45,10 +48,6 @@ RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo 'source /etc/profile' >> /root/.bashrc
 
-
-
-# FIXME: Remove.
-VOLUME ["${KOBOCAT_SRC_DIR}", "${KOBOCAT_SRC_DIR}/media", "/srv/src/kobocat-template"]
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
