@@ -63,6 +63,19 @@ body.in-iframe {
   padding-top: 15px !important;
 }
 
+body.in-iframe .main {
+  height: calc(100% - 20px);
+  padding-top: 0px;
+}
+
+body.in-iframe .formpack_html_export__options {
+  margin-top: 0px;
+}
+
+body.in-iframe .formpack_html_export table {
+  max-height: calc(100% - 60px);
+}
+
 /* iframe handling end */
 
 html, button, input, select, textarea, body,
