@@ -48,7 +48,7 @@ DATABASES = {
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'Africa/Lagos'
+TIME_ZONE = os.environ.get('TIME_ZONE', 'Africa/Lagos')
 
 TOUCHFORMS_URL = 'http://localhost:9000/'
 
