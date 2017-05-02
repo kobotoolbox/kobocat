@@ -49,7 +49,7 @@ DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/New_York'
+TIME_ZONE = os.environ.get('TIME_ZONE', 'America/New_York')
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
