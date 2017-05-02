@@ -3,10 +3,7 @@ import datetime as datetime_module
 import json
 import os
 import tempfile
-import csv
 import re
-import zipfile
-from io import BytesIO
 
 import pytz
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -23,6 +20,7 @@ from django.http import (HttpResponse,
                          HttpResponseRedirect,
                          HttpResponseServerError,
                          StreamingHttpResponse,
+                         Http404,
                          )
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
@@ -34,7 +32,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_digest import HttpDigestAuthenticator
-from pyxform import survey_from
+from pyxform import Survey
 from pyxform.spss import survey_to_spss_label_zip
 from wsgiref.util import FileWrapper
 
@@ -66,6 +64,7 @@ from onadata.libs.utils.user_auth import (helper_auth_helper,
                                           )
 from onadata.libs.utils.viewer_tools import _get_form_url
 from ...koboform.pyxform_utils import convert_csv_to_xls
+from .tasks import generate_stats_zip
 
 IO_ERROR_STRINGS = [
     'request data read error',
@@ -465,7 +464,7 @@ def download_spss_labels(request, username, form_id_string):
     except:
         return HttpResponseServerError('Error retrieving XLSForm.')
 
-    survey= survey_from.xls(filelike_obj=xlsform_io)
+    survey= Survey.from_xls(filelike_obj=xlsform_io)
     zip_filename= '{}_spss_labels.zip'.format(xform.id_string)
     zip_io= survey_to_spss_label_zip(survey, xform.id_string)
 
@@ -767,90 +766,38 @@ def ziggy_submissions(request, username):
 
 @user_passes_test(lambda u: u.is_superuser)
 def superuser_stats(request, username):
-    REPORTS = {
-        'instances.csv': {
-            'model': Instance,
-            'date_field': 'date_created'
-        },
-        'xforms.csv': {
-            'model': XForm,
-            'date_field': 'date_created'
-        },
-        'users.csv': {
-            'model': User,
-            'date_field': 'date_joined'
-        }
-    }
-
-    def first_day_of_next_month(any_day):
-        return datetime_module.date(
-            year=any_day.year if any_day.month < 12 else any_day.year + 1,
-            month=any_day.month + 1 if any_day.month < 12 else 1,
-            day=1
-        )
-
-    def first_day_of_previous_month(any_day):
-        return datetime_module.date(
-            year=any_day.year if any_day.month > 1 else any_day.year - 1,
-            month=any_day.month - 1 if any_day.month > 1 else 12,
-            day=1
-    )
-
-    def list_created_by_month(model, date_field):
-        today = datetime_module.date.today()
-        # Just start at January 1 of the previous year. Going back to the
-        # oldest object would be great, but it's too slow right now. Django
-        # 1.10 will provide a more efficient way:
-        # https://docs.djangoproject.com/en/1.10/ref/models/database-functions/#trunc
-        first_date = datetime_module.date(
-            year=today.year - 1,
-            month=1,
-            day=1
-        )
-        last_object = model.objects.last()
-        last_date = first_day_of_next_month(getattr(last_object, date_field))
-        year_month_count = []
-        while last_date > first_date:
-            this_start_date = first_day_of_previous_month(last_date)
-            this_end_date = last_date
-            criteria = {
-                '{}__gte'.format(date_field): this_start_date,
-                '{}__lt'.format(date_field): this_end_date
-            }
-            objects_this_month = model.objects.filter(**criteria).count()
-            year_month_count.append((
-                this_start_date.year,
-                this_start_date.month,
-                objects_this_month
-            ))
-            last_date = this_start_date
-        return year_month_count
-
-    response = HttpResponse(content_type='application/zip')
-    response['Content-Disposition'] = 'attachment;filename="{}_{}.zip"'.format(
+    base_filename = '{}_{}_{}.zip'.format(
         re.sub('[^a-zA-Z0-9]', '-', request.META['HTTP_HOST']),
-        datetime_module.date.today()
+        datetime_module.date.today(),
+        datetime_module.datetime.now().microsecond
     )
-    zip_file = zipfile.ZipFile(response, 'w', zipfile.ZIP_DEFLATED)
+    filename = os.path.join(
+        request.user.username,
+        'superuser_stats',
+        base_filename
+    )
+    generate_stats_zip.delay(filename)
+    template_ish = (
+        '<html><head><title>Hello, superuser.</title></head>'
+        '<body>Your report is being generated. Once finished, it will be '
+        'available at <a href="{0}">{0}</a>. If you receive a 404, please '
+        'refresh your browser periodically until your request succeeds.'
+        '</body></html>'
+    ).format(base_filename)
+    return HttpResponse(template_ish)
 
-    for filename, report_settings in REPORTS.iteritems():
-        model_name_plural = report_settings['model']._meta.verbose_name_plural
-        fieldnames = [
-            'Year',
-            'Month',
-            'New {}'.format(model_name_plural.capitalize()),
-            'NOTE: Records created prior to January 1 of last '
-            'year are NOT included in this report!'
-        ]
-        data = list_created_by_month(
-            report_settings['model'], report_settings['date_field'])
-        csv_io = BytesIO()
-        writer = csv.DictWriter(csv_io, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in data:
-            writer.writerow(dict(zip(fieldnames, row)))
-        zip_file.writestr(filename, csv_io.getvalue())
-        csv_io.close()
-
-    zip_file.close()
-    return response
+@user_passes_test(lambda u: u.is_superuser)
+def retrieve_superuser_stats(request, username, base_filename):
+    filename = os.path.join(
+        request.user.username,
+        'superuser_stats',
+        base_filename
+    )
+    default_storage = get_storage_class()()
+    if not default_storage.exists(filename):
+        raise Http404
+    with default_storage.open(filename) as f:
+        response = StreamingHttpResponse(f, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment;filename="{}"'.format(
+            base_filename)
+        return response

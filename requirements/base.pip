@@ -1,7 +1,7 @@
 # pybamboo has deps in common but on newer versions.
 # on top so those will be overwritten
 pybamboo==0.5.8.1
-pytz==2014.7
+pytz==2016.10
 
 Django>=1.8,<1.9
 dj-database-url==0.4.0
@@ -21,7 +21,7 @@ lxml==3.4.0
 #-e git+https://github.com/onaio/pyxform.git@onaio#egg=pyxform
 # kobo fork supports csvs with utf, character escaping, etc.
 -e git+https://github.com/kobotoolbox/pyxform.git#egg=pyxform-dev
-django-reversion==1.8.4
+django-reversion==2.0.8
 xlrd==0.9.3
 xlwt==0.7.5
 openpyxl==2.0.5
