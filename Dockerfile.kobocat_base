@@ -5,7 +5,9 @@ FROM kobotoolbox/base-kobos:latest
 
 ENV KOBOCAT_TMP_DIR=/srv/kobocat_tmp \
     # Store editable packages (pulled from VCS repos) in their own directory.
-    PIP_EDITABLE_PACKAGES_DIR=/srv/pip_editable_packages
+    PIP_EDITABLE_PACKAGES_DIR=/srv/pip_editable_packages \
+    UWSGI_USER=wsgi \
+    UWSGI_GROUP=wsgi 
 
 
 ###########################
@@ -37,4 +39,4 @@ RUN mkdir -p ${PIP_EDITABLE_PACKAGES_DIR} && \
 RUN mkdir -p /srv/src && \
     cd /srv/src && \
     git clone --depth 1 https://github.com/kobotoolbox/kobocat-template.git -b master && \
-    chown -R wsgi /srv/src/kobocat-template
+    chown -R ${UWSGI_USER} /srv/src/kobocat-template

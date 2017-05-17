@@ -12,7 +12,7 @@ echo "Collecting static files..."
 python manage.py collectstatic -v 0 --noinput
 echo "Done"
 echo "Fixing permissions..."
-chown -R wsgi "${KOBOCAT_SRC_DIR}"
+chown -R "${UWSGI_USER}" "${KOBOCAT_SRC_DIR}"
 echo "Done."
 echo "Syncing to nginx folder..."
 rsync -aq ${KOBOCAT_SRC_DIR}/onadata/static/* /srv/static/
