@@ -3,4 +3,10 @@ set -e
 
 source /etc/profile
 
-exec /sbin/setuser wsgi /usr/local/bin/uwsgi --ini "${KOBOCAT_SRC_DIR}/docker/kobocat.ini"
+
+if [[ "$(stat -c '%U' ${KOBOCAT_LOGS_DIR})" != "${UWSGI_USER}" ]]; then
+    echo 'Restoring ownership of Logs directory.'
+    chown -R "${UWSGI_USER}" "${KOBOCAT_LOGS_DIR}"
+fi
+
+exec /sbin/setuser "${UWSGI_USER}" /usr/local/bin/uwsgi --ini "${KOBOCAT_SRC_DIR}/docker/kobocat.ini"
