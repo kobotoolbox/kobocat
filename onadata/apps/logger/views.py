@@ -590,7 +590,7 @@ def edit_data(request, username, id_string, data_id):
             context.enketo = url
             return HttpResponseRedirect(url)
     return HttpResponseRedirect(
-        reverse('onadata.apps.main.views.show',
+        reverse('onadata.apps.survey_report.views.html_export',
                 kwargs={'username': username,
                         'id_string': id_string}))
 
