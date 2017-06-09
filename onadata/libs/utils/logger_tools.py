@@ -222,15 +222,23 @@ def create_instance(username, xml_file, media_files,
             username = username.lower()
 
         xml = xml_file.read()
+        xml_hash = Instance.get_hash(xml)
         xform = get_xform_from_submission(xml, username, uuid)
         check_submission_permissions(request, xform)
 
-        existing_instance_count = Instance.objects.filter(
-            xml=xml, xform__user=xform.user).count()
+        # Check if an instance whose content hashes to the same value is already in the DB.
+        duplicate_instances_exist = Instance.objects.filter(xml_hash=xml_hash).exists()
+        # Also check against instances without stored hash values.
+        # NOTE: If there was a hash match, the `or` effectively short-circuits this into a `pass`.
+        duplicate_instances_exist = duplicate_instances_exist or Instance.objects.filter(
+            xml_hash=Instance.DEFAULT_XML_HASH, xml=xml, xform__user=xform.user).exists()
 
-        if existing_instance_count > 0:
-            existing_instance = Instance.objects.filter(
-                xml=xml, xform__user=xform.user)[0]
+        if duplicate_instances_exist:
+            duplicate_instances = Instance.objects.filter(xml_hash=xml_hash)
+            if not duplicate_instances.exists():
+                duplicate_instances = Instance.objects.filter(
+                    xml_hash=Instance.DEFAULT_XML_HASH, xml=xml, xform__user=xform.user)
+            existing_instance = duplicate_instances[0]
             if not existing_instance.xform or\
                     existing_instance.xform.has_start_time:
                 # Ignore submission as a duplicate IFF
@@ -239,7 +247,7 @@ def create_instance(username, xml_file, media_files,
                 #    has already been submitted for that user.
                 raise DuplicateInstance()
 
-        # get new and depracated uuid's
+        # get new and deprecated uuid's
         new_uuid = get_uuid_from_xml(xml)
         duplicate_instances = Instance.objects.filter(uuid=new_uuid)
 
