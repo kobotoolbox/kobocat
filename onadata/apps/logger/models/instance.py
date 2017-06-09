@@ -1,6 +1,7 @@
-import reversion
-
 from datetime import datetime
+from hashlib import sha256
+
+import reversion
 
 from django.contrib.gis.db import models
 from django.db.models.signals import post_save
@@ -101,8 +102,13 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
 
 @reversion.register
 class Instance(models.Model):
+    XML_HASH_LENGTH = 64
+    DEFAULT_XML_HASH = ''
+
     json = JSONField(default={}, null=False)
     xml = models.TextField()
+    xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, blank=True,
+                                default=DEFAULT_XML_HASH)
     user = models.ForeignKey(User, related_name='instances', null=True)
     xform = models.ForeignKey(XForm, null=True, related_name='instances')
     survey_type = models.ForeignKey(SurveyType)
@@ -203,6 +209,48 @@ class Instance(models.Model):
                 self.uuid = uuid
         set_uuid(self)
 
+    def _populate_xml_hash(self):
+        self.xml_hash = self.get_hash(self.xml)
+
+    @classmethod
+    def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None,
+                                          repopulate=False):
+        '''
+        Populate the `xml_hash` field for `Instance` instances limited to the specified users
+        and/or primary keys in the DB.
+
+        :param list[str] usernames: Optional list of usernames for whom `Instance`s will be
+        populated with hashes.
+        :param list[int] pk__in: Optional list of primary keys for `Instance`s that should be
+        populated with hashes.
+        :param bool repopulate: Optional argument to force repopulation of existing hashes.
+        :returns: Total number of `Instance`s updated.
+        :rtype: int
+        '''
+
+        filter_kwargs = dict()
+        if usernames:
+            user__in = User.objects.filter(username__in=usernames)
+            filter_kwargs.update({'user__in': user__in})
+        if pk__in:
+            filter_kwargs.update({'pk__in': pk__in})
+        # By default, skip over instances previously populated with hashes.
+        if not repopulate:
+            filter_kwargs.update({'xml_hash': cls.DEFAULT_XML_HASH})
+
+        queryset = cls.objects.filter(**filter_kwargs).only('pk', 'xml')
+        instances_updated_total = 0
+        for instance in queryset:
+            pk = instance.pk
+            xml = instance.xml
+            # Do a `Queryset.update()` on this individual instance to avoid signals triggering
+            # things like `Reversion` versioning.
+            instances_updated_count = Instance.objects.filter(pk=pk).update(
+                xml_hash=cls.get_hash(xml))
+            instances_updated_total += instances_updated_count
+
+        return instances_updated_total
+
     def get(self, abbreviated_xpath):
         self._set_parser()
         return self._parser.get(abbreviated_xpath)
@@ -249,6 +297,17 @@ class Instance(models.Model):
         self._set_parser()
         return self._parser.get_root_node_name()
 
+    @staticmethod
+    def get_hash(input_string):
+        '''
+        A wrapper to statndardize hash computation.
+
+        :param basestring input_sting: The string to be hashed.
+        :return: The resulting hash.
+        :rtype: str
+        '''
+        return sha256(input_string).hexdigest()
+
     @property
     def point(self):
         gc = self.geom
@@ -268,6 +327,7 @@ class Instance(models.Model):
         self._set_json()
         self._set_survey_type()
         self._set_uuid()
+        self._populate_xml_hash()
         super(Instance, self).save(*args, **kwargs)
 
     def set_deleted(self, deleted_at=timezone.now()):
@@ -283,6 +343,13 @@ post_save.connect(update_xform_submission_count, sender=Instance,
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
+
+if Instance.XML_HASH_LENGTH / 2 != sha256().digest_size:
+    raise AssertionError('SHA256 hash `digest_size` expected to be `{}`, not `{}`'.format(
+        Instance.XML_HASH_LENGTH, sha256().digest_size))
+if len(Instance.DEFAULT_XML_HASH) == Instance.XML_HASH_LENGTH:
+    raise AssertionError("In order for `Instance.DEFAULT_XML_HASH` to function as a guard value,"
+                         " it's length must not be equal to `Instance.XML_HASH_LENGTH`.")
 
 
 class InstanceHistory(models.Model):
