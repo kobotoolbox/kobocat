@@ -1,156 +1,204 @@
+import math
 import time
-from xml.dom import minidom
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connections
+from django.db.models import Func, F, Value
 from onadata.apps.logger.models import XForm, Instance
-
-AUTO_NAME_INSTANCE_XML_SEARCH_STRING = 'uploaded_form_'
 
 def replace_first_and_last(s, old, new):
     s = s.replace(old, new, 1)
     # credit: http://stackoverflow.com/a/2556252
     return new.join(s.rsplit(old, 1))
 
-def get_xform_root_node_name(xform):
-    parsed = minidom.parseString(xform.xml.encode('utf-8'))
-    instance_xml = parsed.getElementsByTagName('instance')[0]
-    root_node_name = None
-    for child in instance_xml.childNodes:
-        if child.nodeType == child.ELEMENT_NODE:
-            root_node_name = child.nodeName
-            break
-    return root_node_name
-
-def write_same_line(stdout, output, last_len=[0]):
-    stdout.write(u'\r{}'.format(output), ending='')
+def write_same_line(dest_file, output, last_len=[0]):
+    dest_file.write(u'\r{}'.format(output), ending='')
     this_len = len(output)
     too_short = last_len[0] - this_len
     last_len[0] = this_len
     if too_short > 0:
-        stdout.write(' ' * too_short, ending='')
-    stdout.flush()
+        dest_file.write(' ' * too_short, ending='')
+    dest_file.flush()
+
+XFORM_ROOT_NODE_NAME_PATTERN = '<instance>[^<]*< *([^ ]+)'
+INSTANCE_ROOT_NODE_NAME_PATTERN = '\/ *([^\/> ]+) *>[^<>]*$'
 
 class Command(BaseCommand):
     ''' This command cleans up inconsistences between the root instance node
     name specified in the form XML and the actual instance XML. Where a
     discrepancy exists, the instance will be changed to match the form.
     The cause of these mismatches is documented at
-    https://github.com/kobotoolbox/kobocat/issues/222. See also
+    https://github.com/kobotoolbox/kobocat/issues/222 and
+    https://github.com/kobotoolbox/kobocat/issues/358. See also
     https://github.com/kobotoolbox/kobocat/issues/242. '''
 
     help = 'fixes instances whose root node names do not match their forms'
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--minimum-instance-id',
+            '--minimum-instance-pk',
             type=int,
+            dest='pk__gte',
             help='consider only instances whose ID is greater than or equal '\
                  'to this number'
         )
         parser.add_argument(
-            '--minimum-form-id',
-            type=int,
-            help='consider only forms whose ID is greater than or equal '\
-                 'to this number'
+            '--form-id-string',
+            dest='xform__id_string',
+            help='consider only forms matching this `id_string`. combine '\
+                 'with --username to ensure an exact match'
         )
         parser.add_argument(
             '--username',
+            dest='xform__user__username',
             help='consider only forms belonging to a particular user'
+        )
+        parser.add_argument(
+            '--instance-xml-search-string',
+            dest='xml__contains',
+            help='consider only instances whose XML contains this string'\
         )
 
     def handle(self, *args, **options):
-        t0 = time.time()
-        forms_complete = 0
-        mismatch_count = 0
-        failed_forms = 0
-        failed_instances = 0
-        criteria = {'xml__contains': AUTO_NAME_INSTANCE_XML_SEARCH_STRING}
-        if options['minimum_instance_id']:
-            criteria['id__gte'] = options['minimum_instance_id']
-        if options['username']:
-            criteria['xform__user__username'] = options['username']
-        last_instance = Instance.objects.last()
-        kpi_auto_named_instances = Instance.objects.filter(**criteria)
-        affected_xforms = XForm.objects.filter(
-            id__in=kpi_auto_named_instances.values_list(
-                'xform_id', flat=True).distinct()
-        ).order_by('id')
-        if options['minimum_form_id']:
-            affected_xforms = affected_xforms.filter(
-                id__gte=options['minimum_form_id'])
-        if options['verbosity']:
-            self.stdout.write('Running slow query... ', ending='')
-            self.stdout.flush()
-        total_forms = affected_xforms.count()
-        for xform in affected_xforms.iterator():
-            try:
-                xform_root_node_name = get_xform_root_node_name(xform)
-            except Exception as e:
-                if options['verbosity']:
-                    self.stderr.write(
-                        '!!! Failed to get root node name for form {}: ' \
-                        '{}'.format(xform.id, e.message)
+        verbosity = options['verbosity']
+        if len(list(connections)) > 1:
+            raise NotImplementedError(
+                "This management command does not support multiple-database "
+                "configurations"
+            )
+        connection = connections['default']
+        if connection.Database.__name__ != 'psycopg2':
+            raise NotImplementedError(
+                "Only the `psycopg2` database backend is supported")
+
+        instances = Instance.objects.all().order_by('pk')
+        xforms = XForm.objects.all()
+        for option in (
+                'pk__gte',
+                'xform__id_string',
+                'xform__user__username',
+                'xml__contains'
+        ):
+            if options[option]:
+                instances = instances.filter(**{option: options[option]})
+                if option.startswith('xform__'):
+                    xforms = xforms.filter(
+                        **{option[len('xform__'):]: options[option]}
                     )
-                failed_forms += 1
-                continue
-            affected_instances = xform.instances.exclude(
-                xml__endswith='</{}>'.format(xform_root_node_name)
-            ).order_by('id')
-            for instance in affected_instances:
-                try:
-                    root_node_name = instance.get_root_node_name()
-                except Exception as e:
-                    if options['verbosity']:
-                        self.stderr.write(
-                            '!!! Failed to get root node name for instance ' \
-                            '{}: {}'.format(instance.id, e.message)
-                        )
-                    failed_instances += 1
-                    continue
-                # Our crude `affected_instances` filter saves us a lot of work,
-                # but it doesn't account for things like trailing
-                # whitespace--so there might not really be a discrepancy
-                if xform_root_node_name != root_node_name:
-                    instance.xml = replace_first_and_last(
-                        instance.xml, root_node_name, xform_root_node_name)
-                    instance.save(force=True)
-                    mismatch_count += 1
-                if options['verbosity'] > 1:
-                    write_same_line(
-                        self.stdout,
-                        u'Form {} ({}): corrected instance {}. ' \
-                        'Completed {} of {} forms.'.format(
-                            xform_root_node_name,
-                            xform.id,
-                            instance.id,
-                            forms_complete,
-                            total_forms
-                    ))
-            forms_complete += 1
-            if options['verbosity'] > 1:
+
+        instances = instances.annotate(
+            root_node_name=Func(
+                F('xml'),
+                Value(INSTANCE_ROOT_NODE_NAME_PATTERN),
+                function='regexp_matches'
+            )
+        ).values_list('pk', 'xform_id', 'root_node_name')
+        if not instances.exists():
+            self.stderr.write('No Instances found.')
+            return
+        t0 = time.time()
+        self.stderr.write(
+            'Fetching Instances; please allow several minutes...', ending='')
+        instances = list(instances)
+        self.stderr.write(
+            'got {} in {} seconds.'.format(
+                len(instances),
+                int(time.time() - t0)
+            )
+        )
+
+        # Getting the XForm root node names separately is far more efficient
+        # than calling `regexp_matches` on `xform__xml` in the `Instance` query
+        xforms = xforms.annotate(
+            root_node_name=Func(
+                F('xml'),
+                Value(XFORM_ROOT_NODE_NAME_PATTERN),
+                function='regexp_matches'
+           )
+        ).values_list('pk', 'root_node_name')
+        self.stderr.write('Fetching XForm root node names...', ending='')
+        t0 = time.time()
+        xform_root_node_names = dict(xforms)
+        self.stderr.write(
+            'got {} in {} seconds.'.format(
+                len(xform_root_node_names),
+                int(time.time() - t0)
+            )
+        )
+
+        completed_instances = 0
+        changed_instances = 0
+        failed_instances = 0
+        progress_interval = 1 # second
+        t0 = time.time()
+        t_last = t0
+
+        self.stdout.write(
+            'Instance\tXForm\tOld Root Node Name\tNew Root Node Name')
+        for instance in instances:
+            t_now = time.time()
+            if (verbosity > 1 and t_now - t_last >= progress_interval
+                    and completed_instances):
+                t_last = t_now
+                t_elapsed = t_now - t0
                 write_same_line(
-                    self.stdout,
-                    u'Form {} ({}). Completed {} of {} forms.'.format(
-                        xform_root_node_name,
-                        xform.id,
-                        forms_complete,
-                        total_forms
-                ))
-        t1 = time.time()
-        if options['verbosity']:
-            self.stdout.write('')
-            self.stdout.write(
-                'Corrected {} instances in {} minutes and {} seconds.'.format(
-                    mismatch_count,
-                    int((t1 - t0) / 60),
-                    (t1 - t0) % 60
-            ))
-            if failed_forms or failed_instances:
-                self.stderr.write(
-                    'Failed to process {} forms and {} instances'.format(
-                        failed_forms, failed_instances
+                    self.stderr,
+                    'Completed {} Instances: {} changed, {} failed; '
+                    '{}s elapsed, {} Instance/sec.'.format(
+                        completed_instances,
+                        changed_instances,
+                        failed_instances,
+                        int(t_elapsed),
+                        int(completed_instances / t_elapsed)
                     )
                 )
-            self.stdout.write(
-                'At the start of processing, the last instance ID ' \
-                'was {}.'.format(last_instance.id)
+
+            instance_id = instance[0]
+            xform_id = instance[1]
+            # `regexp_matches` results come back as `list`s from the ORM
+            instance_root_node_name = instance[2]
+            xform_root_node_name = xform_root_node_names[xform_id]
+            if not len(instance_root_node_name) == 1:
+                self.stderr.write(
+                    '!!! Failed to get root node name for Instance {}'.format(
+                        instance_id)
+                )
+                failed_instances += 1
+                completed_instances += 1
+                continue
+            if not len(xform_root_node_name) == 1:
+                self.stderr.write(
+                    '!!! Failed to get root node name for XForm {}'.format(
+                        xform_id)
+                )
+                failed_instances += 1
+                completed_instances += 1
+                continue
+
+            instance_root_node_name = instance_root_node_name[0]
+            xform_root_node_name = xform_root_node_name[0]
+            if instance_root_node_name == xform_root_node_name:
+                completed_instances += 1
+                continue
+
+            queryset = Instance.objects.filter(pk=instance_id).only('xml')
+            fixed_xml = replace_first_and_last(
+                queryset[0].xml, instance_root_node_name, xform_root_node_name)
+            queryset.update(xml=fixed_xml)
+            self.stdout.write('{}\t{}\t{}\t{}'.format(
+                instance_id, xform_id,
+                instance_root_node_name, xform_root_node_name
+            ))
+            changed_instances += 1
+            completed_instances += 1
+
+        self.stderr.write(
+            '\nFinished {} Instances: {} changed, {} failed.'.format(
+                completed_instances,
+                changed_instances,
+                failed_instances
             )
+        )
+        self.stdout.write(
+            'At the start of processing, the last instance PK '
+            'was {}.'.format(instance_id)
+        )

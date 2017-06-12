@@ -5,10 +5,10 @@ from celery import shared_task
 from django.core.management import call_command
 
 @shared_task(soft_time_limit=600, time_limit=900)
-def fix_root_node_names(minimum_instance_id):
+def fix_root_node_names(**kwargs):
     call_command(
         'fix_root_node_names',
-        minimum_instance_id=minimum_instance_id,
+        **kwargs
     )
 
 ###### END ISSUE 242 FIX ######
