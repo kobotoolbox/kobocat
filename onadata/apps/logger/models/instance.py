@@ -300,13 +300,13 @@ class Instance(models.Model):
     @staticmethod
     def get_hash(input_string):
         '''
-        A wrapper to statndardize hash computation.
+        A wrapper to standardize hash computation.
 
         :param basestring input_sting: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
         '''
-        return sha256(input_string).hexdigest()
+        return sha256(input_string.encode('UTF-8')).hexdigest()
 
     @property
     def point(self):
