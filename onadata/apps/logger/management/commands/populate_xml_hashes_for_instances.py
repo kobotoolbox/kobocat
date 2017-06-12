@@ -3,7 +3,7 @@ Django management command to populate `Instance` instances with hashes used for 
 detection.
 '''
 
-import time
+from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
@@ -32,8 +32,8 @@ class Command(BaseCommand):
 
     def handle(self, *_, **options):
         populate_kwargs = {key: options[key] for key in ['usernames', 'repopulate']}
-        start_time = time.time()
+        start_time = datetime.datetime.now()
         instances_updated_total = Instance.populate_xml_hashes_for_instances(**populate_kwargs)
-        execution_time = time.time() - start_time
-        print('Populated {} `Instance` hashes in {:.2} seconds.'.format(instances_updated_total,
-                                                                        execution_time))
+        execution_time = datetime.datetime.now() - start_time
+        print('Populated {} `Instance` hashes in {}.'.format(instances_updated_total,
+                                                             execution_time))
