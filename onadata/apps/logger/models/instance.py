@@ -103,11 +103,11 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
 @reversion.register
 class Instance(models.Model):
     XML_HASH_LENGTH = 64
-    DEFAULT_XML_HASH = ''
+    DEFAULT_XML_HASH = None
 
     json = JSONField(default={}, null=False)
     xml = models.TextField()
-    xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, blank=True,
+    xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,
                                 default=DEFAULT_XML_HASH)
     user = models.ForeignKey(User, related_name='instances', null=True)
     xform = models.ForeignKey(XForm, null=True, related_name='instances')
@@ -347,9 +347,6 @@ post_delete.connect(update_xform_submission_count_delete, sender=Instance,
 if Instance.XML_HASH_LENGTH / 2 != sha256().digest_size:
     raise AssertionError('SHA256 hash `digest_size` expected to be `{}`, not `{}`'.format(
         Instance.XML_HASH_LENGTH, sha256().digest_size))
-if len(Instance.DEFAULT_XML_HASH) == Instance.XML_HASH_LENGTH:
-    raise AssertionError("In order for `Instance.DEFAULT_XML_HASH` to function as a guard value,"
-                         " it's length must not be equal to `Instance.XML_HASH_LENGTH`.")
 
 
 class InstanceHistory(models.Model):

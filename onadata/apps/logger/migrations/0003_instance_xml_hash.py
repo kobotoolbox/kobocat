@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='xml_hash',
-            field=models.CharField(default=b'', max_length=64, db_index=True, blank=True),
+            field=models.CharField(default=None, max_length=64, null=True, db_index=True),
         ),
     ]
