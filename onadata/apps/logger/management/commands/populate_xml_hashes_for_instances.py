@@ -32,8 +32,8 @@ class Command(BaseCommand):
 
     def handle(self, *_, **options):
         populate_kwargs = {key: options[key] for key in ['usernames', 'repopulate']}
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
         instances_updated_total = Instance.populate_xml_hashes_for_instances(**populate_kwargs)
-        execution_time = datetime.datetime.now() - start_time
+        execution_time = datetime.now() - start_time
         print('Populated {} `Instance` hashes in {}.'.format(instances_updated_total,
                                                              execution_time))
