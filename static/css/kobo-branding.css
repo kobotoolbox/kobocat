@@ -8,7 +8,6 @@
   src: local("Open Sans"), local("OpenSans"), url("../fonts/open-sans/opensans-regular.woff2") format("woff2"), url("../fonts/open-sans/opensans-regular.woff") format("woff");
 }
 
-
 /* Open Sans Semibold */
 @font-face {
   font-family: 'Open Sans';
@@ -16,7 +15,6 @@
   font-weight: 600;
   src: local("Open Sans Semibold"), local("OpenSans-Semibold"), url("../fonts/open-sans/opensans-semibold.woff2") format("woff2"), url("../fonts/open-sans/opensans-semibold.woff") format("woff");
 }
-
 
 /* Open Sans Regular Italic */
 @font-face {
@@ -26,7 +24,6 @@
   src: url("../fonts/open-sans/opensans-italic.woff2") format("woff2"), url("../fonts/open-sans/opensans-italic.woff") format("woff");
 }
 
-
 /* Open Sans Semibold Italic */
 @font-face {
   font-family: 'Open Sans';
@@ -34,7 +31,6 @@
   font-weight: 600;
   src: url("../fonts/open-sans/opensans-semibolditalic.woff2") format("woff2"), url("../fonts/open-sans/opensans-semibolditalic.woff") format("woff");
 }
-
 
 /* iframe handling */
 /* hide header, footer, unless body has class "not-in-iframe" */
@@ -73,7 +69,7 @@ body.in-iframe .formpack_html_export__options {
 }
 
 body.in-iframe .formpack_html_export table {
-  max-height: calc(100% - 60px);
+  max-height: calc(100% - 80px);
 }
 
 /* iframe handling end */
@@ -618,7 +614,7 @@ i.fa-trash-o {
   color: #DC6561;
 }
 
-.modal-footer .btn+.btn {
+.modal-footer .btn + .btn {
   margin-bottom: 5px;
 }
 
@@ -641,10 +637,12 @@ i.fa-trash-o {
     padding-left: 0px;
     padding-right: 0px;
   }
+
   .single-project__header, .projects-list__header, .data-page__header {
     padding-left: 20px;
     padding-right: 20px;
   }
+
   .container__wide .row {
     margin-left: 0;
   }
@@ -677,6 +675,7 @@ i.fa-trash-o {
   .projects__advanced {
     display: none;
   }
+
   th.footable-first-column,
   td.footable-first-column {
     padding-right: 0px !important;
