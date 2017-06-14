@@ -1,6 +1,13 @@
 '''
-Django management command to populate `Instance` instances with hashes used for duplicate
+Django management command to populate `Instance` instances with hashes for use in duplicate
 detection.
+
+Relies solely on the `argparse` capabilities of `BaseCommand` for argument parsing and validation.
+
+
+:Example:
+    python manage.py populate_xml_hashes_for_instances --repopulate --usernames someuser anotheruser
+    python manage.py populate_xml_hashes_for_instances --all
 '''
 
 from datetime import datetime
@@ -27,13 +34,17 @@ class Command(BaseCommand):
         parser.add_argument(
             '--repopulate',
             action='store_true',
-            help='Don\'t skip over `Instance` objects that already have hashes.',
+            help='''Don't skip over `Instance` objects that already have hashes.''',
         )
 
     def handle(self, *_, **options):
+        # Copy arguments to be passed to `populate_xml_hashes_for_instances()`.
         populate_kwargs = {key: options[key] for key in ['usernames', 'repopulate']}
+
+        # Populate the `Instance` hashes and track how long it took.
         start_time = datetime.now()
         instances_updated_total = Instance.populate_xml_hashes_for_instances(**populate_kwargs)
         execution_time = datetime.now() - start_time
+
         print('Populated {} `Instance` hashes in {}.'.format(instances_updated_total,
                                                              execution_time))
