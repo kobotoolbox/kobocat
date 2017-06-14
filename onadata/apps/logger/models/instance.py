@@ -210,14 +210,17 @@ class Instance(models.Model):
         set_uuid(self)
 
     def _populate_xml_hash(self):
+        '''
+        Populate the `xml_hash` attribute of this `Instance` based on the content of the `xml`
+        attribute.
+        '''
         self.xml_hash = self.get_hash(self.xml)
 
     @classmethod
-    def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None,
-                                          repopulate=False):
+    def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None, repopulate=False):
         '''
         Populate the `xml_hash` field for `Instance` instances limited to the specified users
-        and/or primary keys in the DB.
+        and/or DB primary keys.
 
         :param list[str] usernames: Optional list of usernames for whom `Instance`s will be
         populated with hashes.
@@ -230,6 +233,7 @@ class Instance(models.Model):
 
         filter_kwargs = dict()
         if usernames:
+            # Convert usernames to `User` objects.
             user__in = User.objects.filter(username__in=usernames)
             filter_kwargs.update({'user__in': user__in})
         if pk__in:
@@ -238,16 +242,27 @@ class Instance(models.Model):
         if not repopulate:
             filter_kwargs.update({'xml_hash': cls.DEFAULT_XML_HASH})
 
-        queryset = cls.objects.filter(**filter_kwargs).only('pk', 'xml')
+        # Query for the target `Instance`s, keeping in mind we'll only need the `pk` and `xml`
+        # attributes (for efficiency purposes).
+        target_instances_queryset = cls.objects.filter(**filter_kwargs).only('pk', 'xml')
         instances_updated_total = 0
-        for instance in queryset:
-            pk = instance.pk
-            xml = instance.xml
-            # Do a `Queryset.update()` on this individual instance to avoid signals triggering
-            # things like `Reversion` versioning.
-            instances_updated_count = Instance.objects.filter(pk=pk).update(
-                xml_hash=cls.get_hash(xml))
-            instances_updated_total += instances_updated_count
+
+        # Break the potentially large `target_instances_queryset` into chunks to avoid memory
+        # exhaustion.
+        chunk_size = 2000
+        target_instances_count = target_instances_queryset.count()
+        for i_chunk_start in xrange(0, target_instances_count, chunk_size):
+            i_chunk_end = min(i_chunk_start + chunk_size, target_instances_count)
+            trgt_insntcs_qryst_chunk = target_instances_queryset[i_chunk_start:i_chunk_end]
+
+            for instance in trgt_insntcs_qryst_chunk:
+                pk = instance.pk
+                xml = instance.xml
+                # Do a `Queryset.update()` on this individual instance to avoid signals triggering
+                # things like `Reversion` versioning.
+                instances_updated_count = Instance.objects.filter(pk=pk).update(
+                    xml_hash=cls.get_hash(xml))
+                instances_updated_total += instances_updated_count
 
         return instances_updated_total
 
@@ -300,7 +315,7 @@ class Instance(models.Model):
     @staticmethod
     def get_hash(input_string):
         '''
-        A wrapper to standardize hash computation.
+        Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
         :param basestring input_sting: The string to be hashed.
         :return: The resulting hash.
