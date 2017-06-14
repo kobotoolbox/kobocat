@@ -76,6 +76,7 @@ def _get_instance(xml, new_uuid, submitted_by, status, xform):
         InstanceHistory.objects.create(
             xml=instance.xml, xform_instance=instance, uuid=old_uuid)
         instance.xml = xml
+        instance._populate_xml_hash()
         instance.uuid = new_uuid
         instance.save()
     else:
@@ -228,8 +229,7 @@ def create_instance(username, xml_file, media_files,
 
         # Check if an instance whose content hashes to the same value is already in the DB.
         duplicate_instances_exist = Instance.objects.filter(xml_hash=xml_hash).exists()
-        # Also check against instances without stored hash values.
-        # NOTE: If there was a hash match, the `or` effectively short-circuits this into a `pass`.
+        # Also check against unhashed `Instance`s if no matching hash was found.
         duplicate_instances_exist = duplicate_instances_exist or Instance.objects.filter(
             xml_hash=Instance.DEFAULT_XML_HASH, xml=xml, xform__user=xform.user).exists()
 
