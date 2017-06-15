@@ -242,19 +242,27 @@ class Instance(models.Model):
         if not repopulate:
             filter_kwargs.update({'xml_hash': cls.DEFAULT_XML_HASH})
 
-        # Query for the target `Instance`s, keeping in mind we'll only need the `pk` and `xml`
-        # attributes (for efficiency purposes).
-        target_instances_queryset = cls.objects.filter(**filter_kwargs).only('pk', 'xml')
+        # Query for the target `Instance`s.
+        target_instances_queryset = cls.objects.filter(**filter_kwargs)
+
+        # Exit quickly if there's nothing to do.
+        if not target_instances_queryset.exists():
+            return 0
+
+        # Limit our queryset result content since we'll only need the `pk` and `xml` attributes.
+        target_instances_queryset = target_instances_queryset.only('pk', 'xml')
         instances_updated_total = 0
 
         # Break the potentially large `target_instances_queryset` into chunks to avoid memory
         # exhaustion.
         chunk_size = 2000
-        target_instances_count = target_instances_queryset.count()
-        for i_chunk_start in xrange(0, target_instances_count, chunk_size):
-            i_chunk_end = min(i_chunk_start + chunk_size, target_instances_count)
-            trgt_insntcs_qryst_chunk = target_instances_queryset[i_chunk_start:i_chunk_end]
-
+        while target_instances_queryset.exists():
+            try:
+                # Take a chunk of the target `Instance`s.
+                trgt_insntcs_qryst_chunk = target_instances_queryset[0:chunk_size]
+            except IndexError:
+                # If there weren't `chunk_size` target `Instance`s, just get them all.
+                trgt_insntcs_qryst_chunk = target_instances_queryset
             for instance in trgt_insntcs_qryst_chunk:
                 pk = instance.pk
                 xml = instance.xml
