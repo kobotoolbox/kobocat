@@ -469,6 +469,7 @@ os.environ['wsgi.url_scheme'] = 'https'
 SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
     'image/png',
+    'image/svg+xml',
     'audio/mpeg',
     'video/3gpp',
     'audio/wav',
