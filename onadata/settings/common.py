@@ -85,7 +85,7 @@ STATIC_URL = '/static/'
 # Enketo URL.
 # Configurable settings.
 ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
-KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kobocat.kobotoolbox.org')
+KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kc.kobotoolbox.org')
 ENKETO_URL= ENKETO_URL.rstrip('/')
 ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
 ENKETO_VERSION= os.environ.get('ENKETO_VERSION', 'Legacy').lower()
