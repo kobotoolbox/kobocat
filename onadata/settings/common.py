@@ -120,6 +120,14 @@ ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
+# XXX: Since KoBo Toolbox's set of applications is using multiple subdomains,
+# the CSRF cookie is established on a wildcard domain, so that it is accessible
+# on all of the subdomains. That said, the generic `csrftoken` name might cause
+# collisions with other django apps deployed on the same domain. This leads to
+# issue where wrong CSRF token might be accepted in the django app, thus,
+# breaking POST requests in the django app.
+CSRF_COOKIE_NAME = 'kobo_csrftoken'
+
 # URL prefix for admin static files -- CSS, JavaScript and images.
 # Make sure to use a trailing slash.
 # Examples: "http://foo.com/static/admin/", "/static/admin/".
