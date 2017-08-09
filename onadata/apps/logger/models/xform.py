@@ -32,7 +32,8 @@ except ImportError:
 
 
 XFORM_TITLE_LENGTH = 255
-title_pattern = re.compile(r"<h:title>([^<]+)</h:title>")
+xml_title = "<h:title>{}</h:title>"
+title_pattern = re.compile(xml_title.format(r'([^<]+)'))
 
 
 def upload_to(instance, filename):

@@ -1,5 +1,6 @@
 import os
 import re
+import json
 
 from django.db import models
 from django.db.models.signals import post_save
@@ -11,7 +12,7 @@ from pyxform.section import RepeatingSection
 from pyxform.xform2json import create_survey_element_from_xml
 from xml.dom import Node
 
-from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.models.xform import XForm, title_pattern, xml_title
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.apps.viewer.models.parsed_instance import _encode_for_mongo
 from onadata.libs.utils.common_tags import UUID, SUBMISSION_TIME, TAGS, NOTES
@@ -145,6 +146,10 @@ class DataDictionary(XForm):
             obs.append(_dict_organizer.get_observation_from_dict(d))
         return obs
 
+    def _set_title_in_xml(self):
+        title = json.loads(self.json)['title']
+        self.xml = re.sub(title_pattern, xml_title.format(title), self.xml)
+
     def save(self, *args, **kwargs):
         if self.xls:
             survey = create_survey_from_xls(self.xls)
@@ -153,6 +158,7 @@ class DataDictionary(XForm):
             })
             self.json = survey.to_json()
             self.xml = survey.to_xml()
+            self._set_title_in_xml()
             self._mark_start_time_boolean()
             set_uuid(self)
             self._set_uuid_in_xml()
