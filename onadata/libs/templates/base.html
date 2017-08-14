@@ -51,7 +51,9 @@
     {% else %}
 
     <body class='authenticated'>
-		{% include "topbar.html"%}
+    {% block navbar %}
+  		{% include "topbar.html"%}
+    {% endblock navbar %}
 
     {% endif %}
 

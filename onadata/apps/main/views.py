@@ -421,7 +421,7 @@ def show(request, username=None, id_string=None, uuid=None):
 
     return render(request, "show.html", data)
 
-# SETTINGS SCREEN FOR KPI, LOADED IN IFRAME 
+# SETTINGS SCREEN FOR KPI, LOADED IN IFRAME
 @require_GET
 def show_form_settings(request, username=None, id_string=None, uuid=None):
     if uuid:
@@ -797,8 +797,8 @@ def edit(request, username, id_string):
         if request.is_ajax():
             return HttpResponse(_(u'Updated succeeded.'))
         else:
-            if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip(): 
-                return HttpResponseRedirect(request.META['HTTP_REFERER'])               
+            if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip():
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
             return HttpResponseRedirect(reverse(show, kwargs={
                 'username': username,
@@ -1010,8 +1010,8 @@ def download_media_data(request, username, id_string, data_id):
                         'id_string': xform.id_string,
                         'filename': os.path.basename(data.data_file.name)
                     }, audit, request)
-                if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip(): 
-                    return HttpResponseRedirect(request.META['HTTP_REFERER'])               
+                if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip():
+                    return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
                 return HttpResponseRedirect(reverse(show, kwargs={
                     'username': username,
@@ -1190,8 +1190,8 @@ def set_perm(request, username, id_string):
         return HttpResponse(
             json.dumps(
                 {'status': 'success'}), content_type='application/json')
-    if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip(): 
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])               
+    if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip():
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     return HttpResponseRedirect(reverse(show, kwargs={
         'username': username,
