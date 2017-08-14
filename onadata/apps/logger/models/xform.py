@@ -21,6 +21,7 @@ from guardian.shortcuts import \
 from cStringIO import StringIO
 from taggit.managers import TaggableManager
 
+from onadata.apps.logger.data_migration.xformtree import XFormTree
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
@@ -330,3 +331,38 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
             assign_perm(perm.codename, instance.user, instance)
 post_save.connect(set_object_permissions, sender=XForm,
                   dispatch_uid='xform_object_permissions')
+
+
+def change_id_string(xform, new_id_string):
+    xform.id_string = new_id_string
+    xformtree = XFormTree(xform.xml)
+    xformtree.set_id_string(new_id_string)
+    xform.xml = xformtree.to_xml()
+    return xform
+
+
+def create_xform_copy(xform, id_string_suffix='temp'):
+    """Create copy of xform.
+    https://docs.djangoproject.com/en/dev/topics/db/queries/#copying-model-instances
+    """
+    temp_xform = xform
+    temp_xform.pk = None
+    new_id_string = '%s-%s' % (temp_xform.id_string, id_string_suffix)
+    change_id_string(temp_xform, new_id_string)
+    temp_xform.sms_id_string += '-' + id_string_suffix
+
+    temp_xform.save()
+    return temp_xform
+
+
+def copy_xform_data(from_xform, to_xform):
+    """
+    Copy only fields that can be changed by user during new xls file upload
+    """
+    to_xform.xls = from_xform.xls
+    to_xform.xml = from_xform.xml
+    to_xform.json = from_xform.json
+    change_id_string(to_xform, to_xform.id_string)
+    to_xform.description = from_xform.description
+    to_xform.date_created = from_xform.date_created
+    to_xform.save()
