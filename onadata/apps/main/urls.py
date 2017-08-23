@@ -173,7 +173,7 @@ urlpatterns = patterns(
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/edit-data/(?P<data_id>"
         "\d+)$", 'onadata.apps.logger.views.edit_data', name='edit_data'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/view-data",
-        'onadata.apps.viewer.views.data_view'),
+        'onadata.apps.viewer.views.data_view', name='view-data'),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
         "/new$", 'onadata.apps.viewer.views.create_export'),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
@@ -190,6 +190,8 @@ urlpatterns = patterns(
     url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
 
     url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),
+
+    url(r'^(?P<username>[^/]+)/forms/', include('onadata.apps.logger.urls')),
 
     # odk data urls
     url(r"^submission$",
