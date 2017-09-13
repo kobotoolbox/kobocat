@@ -74,3 +74,14 @@ class MigrationViewsTests(MigrationTestCase):
         self.assertEqual(response.status_code,  302)
         self.assertEqual(XForm.objects.count(), 1)
         self.assertEqual(Instance.objects.count(), 1)
+
+    def test_api_data_migration(self):
+        data = {
+            'username': self.user.username,
+            'id_string': self.xform.id_string,
+        }
+        url = reverse('api-migration-endpoint', kwargs=data)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertCountEqual(XForm.objects.all(), [self.xform, self.xform_new])
+        self.assertEqual(Instance.objects.count(), 1)
