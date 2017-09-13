@@ -5,7 +5,7 @@ class MigrationDecisioner(object):
     This class provides an neat encapsulation of user decisions format.
     Migration decisions format specification:
 
-    1) determine_<field_name>: <modified_field> OR
+    1) determine_<new_field_name>: <field_name>
       Each tag of given <field_name> will be updated with new,
       modified value. Data remains unchanged.
       Use case: user fix typo in field name
@@ -18,7 +18,7 @@ class MigrationDecisioner(object):
 
     Example:
     decisions = {
-        'determine_geender': 'gender',
+        'determine_gender': 'geender',
         'determine_age': '__new_field__',
         'prepopulate_name': 'Martin',
         'prepopulate_last_name': 'Fowler',
