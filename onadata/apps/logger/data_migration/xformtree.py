@@ -88,7 +88,7 @@ class XFormTree(object):
         """
         binds = self.get_binds()
         return {
-            self.get_cleaned_nodeset(bind): bind.attrib['type']
+            self.get_cleaned_nodeset(bind): bind.attrib.get('type', '')
             for bind in binds
         }
 
