@@ -1,7 +1,9 @@
+import json
+
 from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST, require_GET
@@ -17,6 +19,28 @@ from .compare_xml import XFormsComparator
 
 
 @is_owner
+def api_data_migration(request, username, id_string):
+    if request.method == 'GET':
+        return JsonResponse({
+            'info': ('API version of data migration. Required POST request '
+                     'sending updated xls form file and migration decisions')
+        })
+    prepare_migration_data = {
+        'username': username,
+        'id_string': id_string,
+        'is_api_call': True,
+    }
+    response = update_xform_and_prepare_migration(request, **prepare_migration_data)
+    response_data = json.loads(response.content)
+    payload = {
+        'username': username,
+        'old_id_string': response_data['old_id_string'],
+        'new_id_string': response_data['new_id_string'],
+    }
+    return migrate_xform_data(request, **payload)
+
+
+@is_owner
 def pre_migration_view(request, username, id_string):
     return render(request, 'pre_migration_view.html', {
         'username': username,
@@ -26,7 +50,8 @@ def pre_migration_view(request, username, id_string):
 
 @require_POST
 @is_owner
-def update_xform_and_prepare_migration(request, username, id_string):
+def update_xform_and_prepare_migration(request, username, id_string,
+                                       is_api_call=False):
     xform = get_object_or_404(
         XForm, user__username=username, id_string=id_string)
     owner = xform.user
@@ -57,6 +82,9 @@ def update_xform_and_prepare_migration(request, username, id_string):
         'old_id_string': old_xform.id_string,
         'new_id_string': id_string,
     }
+    if is_api_call:
+        return JsonResponse(data)
+
     # XXX: On successful form publish (neither errors nor exceptions occurs),
     # type of message returned by set_form() will be set to alert-success.
     # Following code decision is based on presentation layer, however, this
@@ -107,7 +135,6 @@ def migrate_xform_data(request, username, old_id_string, new_id_string):
         {
             'id_string': new_id_string,
         }, audit, request)
-
     view_data_url = reverse('view-data', kwargs={
         'username': username,
         'id_string': new_id_string,
