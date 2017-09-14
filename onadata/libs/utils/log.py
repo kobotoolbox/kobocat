@@ -39,6 +39,7 @@ Actions = Enum(
     FORM_ENTER_DATA_REQUESTED="form-enter-data-requested",
     FORM_MAP_VIEWED="form-map-viewed",
     FORM_DATA_VIEWED="form-data-viewed",
+    FORM_DATA_MIGRATED="form-data-migrated",
     EXPORT_CREATED="export-created",
     EXPORT_DOWNLOADED="export-downloaded",
     EXPORT_DELETED="export-deleted",

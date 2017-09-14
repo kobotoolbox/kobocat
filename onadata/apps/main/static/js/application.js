@@ -1,5 +1,7 @@
 $(document).ready(function(){
 
+    var CSRF_TOKEN_KEY = 'kobo_csrftoken';
+
     // table sort example
     // ==================
 
@@ -76,7 +78,7 @@ $(document).ready(function(){
         }
 
         if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
-            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            xhr.setRequestHeader("X-CSRFToken", getCookie(CSRF_TOKEN_KEY));
         }
     });
     // END CSRF Protection for AJAX
