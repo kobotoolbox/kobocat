@@ -36,8 +36,10 @@ class MigrationDecisioner(object):
         self.modifications = self.get_fields_modifications(potentiall_removed)
 
     def _extract_migration_decisions(self, **data):
+        def get_value(value):
+            return value[0] if isinstance(value, list) else value
         return {
-            key: value[0] for key, value in data.iteritems()
+            key: get_value(value) for key, value in data.iteritems()
             if 'prepopulate_' in key or 'determine_' in key
         }
 
