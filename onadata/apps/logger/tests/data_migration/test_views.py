@@ -70,7 +70,7 @@ class MigrationViewsTests(MigrationTestCase):
         url = reverse('update-xform-and-prepare-migration', kwargs=initial_data)
         self.client.post(url)
         url = reverse('migrate-xform-data', kwargs=self.get_data())
-        response = self.client.post(url)
+        response = self.client.post(url, self.get_migration_decisions())
         self.assertEqual(response.status_code,  302)
         self.assertEqual(XForm.objects.count(), 1)
         self.assertEqual(Instance.objects.count(), 1)
@@ -81,7 +81,9 @@ class MigrationViewsTests(MigrationTestCase):
             'id_string': self.xform.id_string,
         }
         url = reverse('api-migration-endpoint', kwargs=data)
-        response = self.client.post(url)
-        self.assertEqual(response.status_code, 302)
-        self.assertCountEqual(XForm.objects.all(), [self.xform, self.xform_new])
+        self.client.post(url, self.get_migration_decisions())
         self.assertEqual(Instance.objects.count(), 1)
+        self.assertEqual(
+            sorted(XForm.objects.values_list('id', flat=True)),
+            sorted([self.xform.id, self.xform_new.id])
+        )
