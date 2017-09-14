@@ -1,12 +1,13 @@
-import json
-
 from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST, require_GET
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 from onadata.apps.logger.models import XForm, create_xform_copy, copy_xform_data
 from onadata.libs.utils.log import audit_log, Actions
@@ -18,26 +19,29 @@ from .factories import data_migrator_factory
 from .compare_xml import XFormsComparator
 
 
-@is_owner
-def api_data_migration(request, username, id_string):
-    if request.method == 'GET':
-        return JsonResponse({
+class DataMigrationEndpoint(APIView):
+    def get(self, request):
+        return Response({
             'info': ('API version of data migration. Required POST request '
                      'sending updated xls form file and migration decisions')
         })
-    prepare_migration_data = {
-        'username': username,
-        'id_string': id_string,
-        'is_api_call': True,
-    }
-    response = update_xform_and_prepare_migration(request, **prepare_migration_data)
-    response_data = json.loads(response.content)
-    payload = {
-        'username': username,
-        'old_id_string': response_data['old_id_string'],
-        'new_id_string': response_data['new_id_string'],
-    }
-    return migrate_xform_data(request, **payload)
+
+    def post(self, request, username, id_string):
+        update_xform_data = {
+            'request': request,
+            'username': username,
+            'id_string': id_string,
+            'add_message': False,
+        }
+        update_xform_results = _update_xform(**update_xform_data)
+        success = update_xform_results.pop('success')
+        if success:
+            update_xform_results['migration_decisions'] = request.POST
+            _migrate_xform(**update_xform_results)
+            return Response({'info': 'Form updated successfully'})
+        else:
+            _abandon_migration_handler(**update_xform_results)
+            return Response({'info': 'Could not update xform'}, status=500)
 
 
 @is_owner
@@ -48,10 +52,7 @@ def pre_migration_view(request, username, id_string):
     })
 
 
-@require_POST
-@is_owner
-def update_xform_and_prepare_migration(request, username, id_string,
-                                       is_api_call=False):
+def _update_xform(request, username, id_string, add_message=True):
     xform = get_object_or_404(
         XForm, user__username=username, id_string=id_string)
     owner = xform.user
@@ -75,26 +76,34 @@ def update_xform_and_prepare_migration(request, username, id_string,
                         }
         }
     message = publish_form(set_form)
-    messages.add_message(
-        request, messages.INFO, message['text'], extra_tags=message['type'])
-    data = {
-        'username': username,
-        'old_id_string': old_xform.id_string,
-        'new_id_string': id_string,
-    }
-    if is_api_call:
-        return JsonResponse(data)
+
+    if add_message:
+        messages.add_message(request, messages.INFO, message['text'],
+                             extra_tags=message['type'])
 
     # XXX: On successful form publish (neither errors nor exceptions occurs),
     # type of message returned by set_form() will be set to alert-success.
     # Following code decision is based on presentation layer, however, this
     # convention is used application-wide, and we do not have to construct try
     # except clauses in order to catch all set_form() errors.
-    if message['type'] == 'alert-success':
+    return {
+        'success': message['type'] == 'alert-success',
+        'username': username,
+        'old_id_string': old_xform.id_string,
+        'new_id_string': xform.id_string,
+    }
+
+
+@require_POST
+@is_owner
+def update_xform_and_prepare_migration(request, username, id_string):
+    xform_results = _update_xform(request, username, id_string)
+    success = xform_results.pop('success')
+    if success:
         return HttpResponseRedirect(reverse('xform-migration-gui',
-                                    kwargs=data))
+                                            **xform_results))
     else:
-        return abandon_xform_data_migration(request, **data)
+        return abandon_xform_data_migration(request, **xform_results)
 
 
 @require_GET
@@ -105,28 +114,35 @@ def xform_migration_gui(request, username, old_id_string, new_id_string):
     new_xform = get_object_or_404(
         XForm, user__username=username, id_string=new_id_string)
     xform_comparator = XFormsComparator(old_xform.xml, new_xform.xml)
-    expected_results = xform_comparator.comparison_results()
+    comparison_results = xform_comparator.comparison_results()
 
     return render(request, 'migration_gui.html', {
         'old_id_string': old_xform.id_string,
         'new_id_string': new_xform.id_string,
-        'results': expected_results,
-        'any_results_present': any(expected_results.values()),
+        'results': comparison_results,
+        'any_results_present': any(comparison_results.values()),
     })
+
+
+def _migrate_xform(username, old_id_string, new_id_string, migration_decisions):
+    old_xform = get_object_or_404(
+        XForm, user__username=username, id_string=old_id_string)
+    new_xform = get_object_or_404(
+        XForm, user__username=username, id_string=new_id_string)
+
+    data_migrator = data_migrator_factory(old_xform, new_xform,
+                                          **migration_decisions)
+    data_migrator.migrate()
+    old_xform.delete()  # Delete copy of form's old version
+
+    return new_xform
 
 
 @transaction.atomic
 @require_POST
 @is_owner
 def migrate_xform_data(request, username, old_id_string, new_id_string):
-    old_xform = get_object_or_404(
-        XForm, user__username=username, id_string=old_id_string)
-    new_xform = get_object_or_404(
-        XForm, user__username=username, id_string=new_id_string)
-
-    data_migrator = data_migrator_factory(old_xform, new_xform, **request.POST)
-    data_migrator.migrate()
-    old_xform.delete()  # Delete copy of form's old version
+    new_xform = _migrate_xform(username, old_id_string, new_id_string, request.POST)
 
     audit = {'xform': new_id_string}
     audit_log(
@@ -152,10 +168,7 @@ def migrate_xform_data(request, username, old_id_string, new_id_string):
     }))
 
 
-@transaction.atomic
-@require_POST
-@is_owner
-def abandon_xform_data_migration(request, username, old_id_string, new_id_string):
+def _abandon_migration_handler(username, old_id_string, new_id_string):
     old_xform = get_object_or_404(
         XForm, user__username=username, id_string=old_id_string)
     new_xform = get_object_or_404(
@@ -164,6 +177,14 @@ def abandon_xform_data_migration(request, username, old_id_string, new_id_string
     # Bring back pre-migration form version and delete copy
     copy_xform_data(from_xform=old_xform, to_xform=new_xform)
     old_xform.delete()
+    return new_xform
+
+
+@transaction.atomic
+@require_POST
+@is_owner
+def abandon_xform_data_migration(request, username, old_id_string, new_id_string):
+    new_xform = _abandon_migration_handler(username, old_id_string, new_id_string)
 
     view_data_url = reverse('view-data', kwargs={
         'username': username,
