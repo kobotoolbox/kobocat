@@ -1,3 +1,5 @@
+import json
+
 from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.contrib import messages
@@ -36,7 +38,8 @@ class DataMigrationEndpoint(APIView):
         update_xform_results = _update_xform(**update_xform_data)
         success = update_xform_results.pop('success')
         if success:
-            update_xform_results['migration_decisions'] = request.POST
+            decisions = json.loads(request.POST['json'])
+            update_xform_results['migration_decisions'] = decisions
             _migrate_xform(**update_xform_results)
             return Response({'info': 'Form updated successfully'})
         else:
@@ -90,7 +93,7 @@ def _update_xform(request, username, id_string, add_message=True):
         'success': message['type'] == 'alert-success',
         'username': username,
         'old_id_string': old_xform.id_string,
-        'new_id_string': xform.id_string,
+        'new_id_string': id_string,
     }
 
 
@@ -101,7 +104,7 @@ def update_xform_and_prepare_migration(request, username, id_string):
     success = xform_results.pop('success')
     if success:
         return HttpResponseRedirect(reverse('xform-migration-gui',
-                                            **xform_results))
+                                            kwargs=xform_results))
     else:
         return abandon_xform_data_migration(request, **xform_results)
 
