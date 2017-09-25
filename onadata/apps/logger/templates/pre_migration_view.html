@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block navbar %}
+{# Exclude navbar #}
+{% endblock navbar %}
+{% block additional-headers %}
+    <link href="{% static 'css/data_migration.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <h1>Update data</h1>
+    <a tabindex="-1" href="#update-{{ id_string }}" class="confirm" role="button" data-toggle="modal">{% trans 'Update' %}</a>
+
+    <div id="xls-update-and-migrate">
+        <div id="update-{{ id_string }}" class="modal fade">
+            <form action="{% url "update-xform-and-prepare-migration" username id_string %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <a data-dismiss="modal" class="close">&times;</a>
+                    <h3>{% trans "Update XLS and migrate data" %}</h3>
+                    <p>{% trans "Upload xform and migrate (modify) previous survey answers according to new schema. You will be redirected to intermediary migration interface, where more details will be available." %}</p>
+                </div>
+                <div class="modal-body">
+                    <input type="file" name="xls_file" id="id_xls_file" />
+                    <input type="submit" class="btn large btn-primary" value="{% trans "Update and migrate data" %}" data-original-title="" />
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

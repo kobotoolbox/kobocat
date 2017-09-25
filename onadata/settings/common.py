@@ -49,7 +49,7 @@ DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/New_York'
+TIME_ZONE = os.environ.get('TIME_ZONE', 'America/New_York')
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -119,6 +119,14 @@ ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 # Login URLs
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
+
+# XXX: Since KoBo Toolbox's set of applications is using multiple subdomains,
+# the CSRF cookie is established on a wildcard domain, so that it is accessible
+# on all of the subdomains. That said, the generic `csrftoken` name might cause
+# collisions with other django apps deployed on the same domain. This leads to
+# issue where wrong CSRF token might be accepted in the django app, thus,
+# breaking POST requests in the django app.
+CSRF_COOKIE_NAME = 'kobo_csrftoken'
 
 # URL prefix for admin static files -- CSS, JavaScript and images.
 # Make sure to use a trailing slash.
@@ -333,6 +341,10 @@ def skip_suspicious_operations(record):
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'root': {
+        'level': 'WARNING',
+        'handlers': ['sentry'],
+    },
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s' +
@@ -353,6 +365,10 @@ LOGGING = {
         },
     },
     'handlers': {
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false', 'skip_suspicious_operations'],
@@ -372,6 +388,16 @@ LOGGING = {
         },
     },
     'loggers': {
+        'raven': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'sentry.errors': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
         'django.request': {
             'handlers': ['mail_admins', 'console'],
             'level': 'DEBUG',

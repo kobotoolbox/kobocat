@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block navbar %}
+{# Exclude navbar #}
+{% endblock navbar %}
+
+{% block additional-headers %}
+    <link href="{% static 'css/data_migration.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <div class="migration-gui">
+        <h1>{% trans "Data migration" %}</h1>
+        <h3>{% trans "User interface" %}</h3>
+
+        <div class="bordered migration-gui__data">
+          <p><strong>
+            {% trans "Updating existing xform with submissions." %}
+          </strong></p>
+
+          {% trans "Differences between forms:" %}
+          <br>
+          {% if not any_results_present %}
+            <p> {% trans "The forms are the same. Are you sure you have picked the right file?" %}</p>
+          {% else %}
+            <ul>
+                {% if results.new_title %}
+                  <li>{% trans "Changed title:" %} {{ results.new_title }}</li>
+                {% endif %}
+
+                {% if results.fields_added %}
+                  <li>{% trans "Added fields:" %}
+                    <strong>
+                    {% for field_added in results.fields_added %}
+                      {{ field_added }} ,
+                    {% empty %}
+                      -
+                    {% endfor %}
+                    </strong>
+                  </li>
+                {% endif %}
+
+                {% if results.fields_removed %}
+                  <li>{% trans "Removed fields:" %}
+                    <strong>
+                    {% for field_removed in results.fields_removed %}
+                      {{ field_removed }} ,
+                    {% empty %}
+                      -
+                    {% endfor %}
+                    </strong>
+                  </li>
+                {% endif %}
+
+                {% if results.fields_type_diff %}
+                  <li>
+                      {% trans "Changed fields types:" %}<br>
+                      {{ results.fields_type_diff }}
+                  </li>
+                {% endif %}
+
+                {% if results.input_obligation_diff %}
+                  <li>
+                      {% trans "Changed input obligation:" %}<br>
+                      {{ results.input_obligation_diff }}
+                  </li>
+                {% endif %}
+           </ul>
+         {% endif %}
+       </div>
+      <form action="{% url "migrate-xform-data" user.username old_id_string new_id_string %}"
+            method="POST" class="form-controler">
+          {% csrf_token %}
+
+        {% if results.fields_added %}
+          <div class="fields-resolver">
+            <h4>{% trans "Determine if field is modified or new one" %}
+            </h4>
+            <p>
+              {% trans "Please match modified fields with their old correspondents or select them to be the new ones" %}
+            </p>
+              <ul>
+              {% for new_field in results.fields_added %}
+                <li>
+                  <p>{% trans "Field:" %} <strong>{{ new_field }}</strong></p>
+
+                  <select class="field-resolver" name="determine_{{ new_field }}">
+                    <option value="__new_field__">{% trans "-- new field --" %}</option>
+                    {% for replaced_field in results.fields_removed %}
+                      <option value="{{ replaced_field }}">
+                        {{ replaced_field }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </li>
+              {% endfor %}
+              </ul>
+          </div>
+
+          <div class="fields-filler">
+            <h4>{% trans "Prepopulate new fields" %}</h4>
+            {% blocktrans %}
+            <div class="fields-filler__info">
+              <p>
+                The new fields that you have just added to your survey, will now be
+                added not only to the future records, but also to all previously submitted ones.
+              </p>
+              <p>
+                Would you like to pre-populate all previous records with a particular value?
+                If so, please provide this value in the space below or leave it blank
+                if you would like these fields to be empty in previous records.
+              </p>
+            </div>
+            {% endblocktrans %}
+
+            {% for new_field in results.fields_added %}
+              <div class="fields-filler__input">
+                <label for="prepopulate_{{ new_field }}">{{ new_field }}</label>
+                <input type="text" name="prepopulate_{{ new_field }}" value="">
+              </div>
+            {% endfor %}
+            <i></i>
+          </div>
+
+        {% endif %}
+          <input type="submit" class="btn btn-success btn-controler"
+                 name="submit" value="Migrate data">
+      </form>
+
+      <form action="{% url "abandon-xform-data-migration" user.username old_id_string new_id_string %}"
+            method="POST" class="form-controler form-controler--block">
+          {% csrf_token %}
+          <input type="submit" class="btn btn-danger btn-controler"
+                 name="submit" value="Abandon migration">
+      </form>
+
+    </div>
+{% endblock %}
+{% block additional-javascript %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      var NEW_FIELD = '__new_field__'
+      var SELECT_PREFIX = 'determine_'
+      var PREPOPULATE_PREFIX = 'prepopulate_'
+
+      var fieldsAdded = "{{ results.fields_added|safe }}";
+      fieldsAdded = JSON.parse(fieldsAdded.replace(/'/g, '"'));
+
+      (function () {
+        for (var fieldName of fieldsAdded) {
+          var prevValue;
+
+          $('select[name="' + SELECT_PREFIX + fieldName + '"]').bind('focus', function() {
+            prevValue = this.value;
+          }).change(function() {
+            var selectName = $(this).attr('name').replace(SELECT_PREFIX, '');
+
+            if (prevValue !== NEW_FIELD) {
+              toggleOption(prevValue);
+
+              if (this.value === NEW_FIELD) {
+                togglePrepopulateField(selectName);
+              }
+            } else if (this.value !== NEW_FIELD) {
+                togglePrepopulateField(selectName);
+                toggleOption(this.value);
+            }
+            prevValue = this.value;
+          });
+        };
+      })();
+
+      function toggleOption(value) {
+        var options = $('.field-resolver option');
+        for (var option of options) {
+          if (option.value === value) {
+            $(option).toggle();
+          }
+        }
+      }
+
+      function togglePrepopulateField(name) {
+        var fields = $('.fields-filler .fields-filler__input');
+        for (field of fields) {
+          var fieldName = $(field).find('input').attr('name').replace(PREPOPULATE_PREFIX, '');
+          if (fieldName === name) {
+            $(field).toggle();
+          }
+        }
+        hidePrepopulateMessageIfAllHidden(fields);
+      }
+
+      function hidePrepopulateMessageIfAllHidden(fields) {
+        var fieldsFiller = $('.fields-filler');
+        var allHidden = true;
+        for (field of fields) {
+          if (field.style.display !== 'none') {
+            allHidden = false;
+          }
+        }
+        $(fieldsFiller).css({'display': allHidden ? 'none' : 'block'});
+      }
+    });
+  </script>
+{% endblock additional-javascript %}
