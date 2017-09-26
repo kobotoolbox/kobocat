@@ -1,5 +1,4 @@
 
-
 class MigrationDecisioner(object):
     """
     This class provides an neat encapsulation of user decisions format.
@@ -25,6 +24,8 @@ class MigrationDecisioner(object):
     }
     """
     NEW_FIELD = '__new_field__'
+    DETERMINE_KEY = 'determine_'
+    PREPOPULATE_KEY = 'prepopulate_'
 
     def __init__(self, xforms_comparator, **data):
         self._decisions = self._extract_migration_decisions(**data)
@@ -35,29 +36,60 @@ class MigrationDecisioner(object):
         self.new_fields = self.get_new_fields(added)
         self.modifications = self.get_fields_modifications(potentiall_removed)
 
+    @property
+    def fields_changes(self):
+        return {
+            'new_fields': self.new_fields,
+            'removed_fields': self.removed_fields,
+            'modified_fields': self.modifications,
+        }
+
+    @staticmethod
+    def reverse_changes(changes):
+        return {
+            'new_fields': changes.get('removed_fields', []),
+            'removed_fields': changes.get('new_fields', []),
+            'modified_fields': {
+                v: k for k, v in changes.get('modified_fields', {}).items()
+            }
+        }
+
+    def convert_changes_to_decisions(self, changes):
+        new_fields_decisions = {
+            self.DETERMINE_KEY + new_field: self.NEW_FIELD
+            for new_field in changes.get('new_fields', [])
+        }
+        modified_fields = changes.get('modified_fields', {}).items()
+        modified_fields_decisions = {
+            self.DETERMINE_KEY + new_value: old_value
+            for old_value, new_value in modified_fields
+        }
+        new_fields_decisions.update(modified_fields_decisions)
+        return new_fields_decisions
+
     def _extract_migration_decisions(self, **data):
         def get_value(value):
             return value[0] if isinstance(value, list) else value
         return {
             key: get_value(value) for key, value in data.iteritems()
-            if 'prepopulate_' in key or 'determine_' in key
+            if self.PREPOPULATE_KEY in key or self.DETERMINE_KEY in key
         }
 
     def _get_determined_field(self, field_name):
-        return self._decisions.get('determine_' + field_name)
+        return self._decisions.get(self.DETERMINE_KEY + field_name)
 
     def _get_decision_key_by_value(self, field_name):
         for key, value in self._decisions.iteritems():
             if value == field_name:
-                return key.replace('determine_', '')
+                return key.replace(self.DETERMINE_KEY, '')
         return ''
 
     def get_prepopulate_text(self, field_name):
-        return self._decisions.get('prepopulate_' + field_name) or ''
+        return self._decisions.get(self.PREPOPULATE_KEY + field_name) or ''
 
-    def get_removed_fields(self, potentiall_removed):
+    def get_removed_fields(self, potentially_removed):
         return [
-            removed_field for removed_field in potentiall_removed
+            removed_field for removed_field in potentially_removed
             if not self._get_decision_key_by_value(removed_field)
         ]
 
@@ -67,10 +99,12 @@ class MigrationDecisioner(object):
             if self._get_determined_field(added_field) == self.NEW_FIELD
         ]
 
-    def get_fields_modifications(self, potentiall_removed):
-        result = {}
-        for removed_field in potentiall_removed:
-            decision_val = self._get_decision_key_by_value(removed_field)
-            if decision_val and decision_val != self.NEW_FIELD:
-                result.update({removed_field: decision_val})
-        return result
+    def get_fields_modifications(self, potentially_removed):
+        decision_values = map(self._get_decision_key_by_value,
+                              potentially_removed)
+        return {
+            p_removed_field: decision_val
+            for p_removed_field, decision_val in zip(potentially_removed,
+                                                     decision_values)
+            if decision_val and decision_val != self.NEW_FIELD
+        }

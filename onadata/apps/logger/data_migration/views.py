@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST, require_GET
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 from onadata.apps.logger.models import XForm, create_xform_copy, copy_xform_data
 from onadata.libs.utils.log import audit_log, Actions
@@ -17,6 +18,7 @@ from onadata.libs.utils.decorators import is_owner
 from onadata.libs.utils.logger_tools import publish_form
 from onadata.apps.main.forms import QuickConverter
 from onadata.apps.main.views import show
+from .restore_backup import BackupRestorer, BackupRestoreError
 from .factories import data_migrator_factory
 from .compare_xml import XFormsComparator
 
@@ -204,3 +206,43 @@ def abandon_xform_data_migration(request, username, old_id_string, new_id_string
         'username': username,
         'id_string': new_id_string
     }))
+
+
+@is_owner
+def pre_restore_backup(request, username, id_string):
+    return render(request, 'pre_restore_backup.html', {
+        'username': username,
+        'id_string': id_string,
+    })
+
+
+def handle_restoring_backup(request, username, id_string):
+    response = restore_backup(request, username, id_string)
+
+    if response.status_code == 200:
+        msg_text = 'Backup successfully restored'
+        msg_tags = 'alert-success'
+    else:
+        msg_text = 'Could not restore backup. Please contact us for more details'
+        msg_tags = 'alert-error'
+
+    messages.add_message(request, messages.INFO, msg_text, extra_tags=msg_tags)
+
+    return HttpResponseRedirect(reverse(show, kwargs={
+        'username': username,
+        'id_string': id_string
+    }))
+
+
+@api_view(['POST'])
+def restore_backup(request, username, id_string):
+    version = request.POST.get('version')
+    restore_last = request.POST.get('restore_last')
+    xform = get_object_or_404(XForm, user__username=username,
+                              id_string=id_string)
+    try:
+        BackupRestorer(xform, version, restore_last).restore_xform_backup()
+    except BackupRestoreError as e:
+        return Response({'info': str(e)}, status=400)
+
+    return Response({'info': 'Backup restored successfully'})

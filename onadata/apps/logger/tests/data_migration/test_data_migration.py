@@ -2,7 +2,7 @@ from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.data_migration.surveytree import SurveyTree
 from onadata.apps.logger.models.backup import BackupXForm, BackupInstance
 
-from .utils import MigrationTestCase
+from .common import MigrationTestCase, SecondMigrationTestCase
 from . import fixtures
 
 
@@ -52,21 +52,7 @@ class DataMigratorIntegrationTests(MigrationTestCase):
         )
 
 
-class DataMigratorIntegrationSecondTestsCase(MigrationTestCase):
-    def setUp(self):
-        self.user = self.create_user('alfred_tarski')
-        self.xform = self.create_xform(fixtures.form_xml_case_2)
-        self.xform_new = self.create_xform(fixtures.form_xml_case_2_after)
-        self.survey = self.create_survey(self.xform_new, fixtures.survey_xml_2)
-        self.setup_data_migrator(self.xform, self.xform_new)
-
-    def get_migration_decisions(self):
-        return {
-            'determine_your_name': ['name'],
-            'determine_mood': ['__new_field__'],
-            'prepopulate_mood': [fixtures.DEFAULT_MOOD],
-        }
-
+class DataMigratorIntegrationSecondTestsCase(SecondMigrationTestCase):
     def test_migration__second_case(self):
         self.data_migrator.migrate()
         self.xform.refresh_from_db()

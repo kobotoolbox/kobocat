@@ -1,3 +1,4 @@
+from onadata.apps.logger.models.instance import save_survey
 from .surveytree import SurveyTree
 from . import backup_data
 
@@ -12,9 +13,16 @@ class DataMigrator(object):
       All the previous records will share common value.
     - Can *determine* which fields are modified, and which are the new ones
     """
-    def __init__(self, xform, fields_handler):
+    def __init__(self, xform, fields_handler,
+                 backup_data=True, xform_backup=None):
         self.xform = xform
         self.fields_handler = fields_handler
+        self.backup_data = backup_data
+        self.xform_backup = xform_backup
+
+    @property
+    def decisioner(self):
+        return self.fields_handler.decisioner
 
     def __call__(self):
         self.migrate()
@@ -29,13 +37,12 @@ class DataMigrator(object):
         survey_tree = SurveyTree(survey)
         self.fields_handler.alter_fields(survey_tree)
         survey.xml = survey_tree.to_string()
-        survey.save()
-        survey.parsed_instance.save(async=True)
+        save_survey(survey)
 
     def migrate(self):
-        backup_xform = backup_data.backup_xform(self.xform)
         for survey in self.get_surveys_iter(self.xform):
-            backup_data.backup_survey(survey, backup_xform)
+            if self.backup_data:
+                backup_data.backup_survey(survey, self.xform_backup)
             self.migrate_survey(survey)
 
 
