@@ -188,7 +188,7 @@ if 'RAVEN_DSN' in os.environ:
         # https://docs.getsentry.com/hosted/clients/python/integrations/django/#integration-with-logging
         LOGGING = {
             'version': 1,
-            'disable_existing_loggers': False, # Was `True` in Sentry documentation
+            'disable_existing_loggers': True, # Follows Sentry docs; `False` contributes to a deadlock (issue #377)
             'root': {
                 'level': 'WARNING',
                 'handlers': ['sentry'],

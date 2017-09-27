@@ -20,7 +20,7 @@ pymongo==2.7.2
 lxml==3.4.0
 #-e git+https://github.com/onaio/pyxform.git@onaio#egg=pyxform
 # kobo fork supports csvs with utf, character escaping, etc.
--e git+https://github.com/kobotoolbox/pyxform.git#egg=pyxform-dev
+-e git+https://github.com/kobotoolbox/pyxform.git@2.017.36#egg=pyxform
 django-reversion==2.0.8
 xlrd==0.9.3
 xlwt==0.7.5
@@ -32,7 +32,7 @@ librabbitmq==1.5.2
 amqp>1.4,<2.0
 django-nose==1.4.2
 python-digest==1.7
-raven==5.32.0
+raven==6.1.0
 -e git+https://github.com/dimagi/django-digest@0eb1c921329dd187c343b61acfbec4e98450136e#egg=django_digest
 -e git+https://github.com/onaio/python-json2xlsclient.git@5a39387752d819cb6387f75569dbea9a5288aa6f#egg=python_json2xlsclient
 
