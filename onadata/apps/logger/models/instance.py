@@ -297,3 +297,8 @@ class InstanceHistory(models.Model):
 
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
+
+
+def save_survey(survey):
+    survey.save()
+    survey.parsed_instance.save(async=True)

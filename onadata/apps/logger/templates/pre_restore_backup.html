@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block navbar %}
+{# Exclude navbar #}
+{% endblock navbar %}
+{% block additional-headers %}
+    <link href="{% static 'css/data_migration.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <h1>Restore xform backup</h1>
+    <p>XForm and all of the submissions will be restored from last saved version</p>
+
+    <form action="{% url 'handle-restoring-backup' username id_string %}"
+          method="POST" class="form-controler form-controler--block">
+          {% csrf_token %}
+          <input type="hidden" value="True" name="restore_last">
+          <input type="submit" class="btn btn-danger btn-controler"
+                 name="submit" value="Restore last backup"/>
+    </form>
+
+{% endblock %}

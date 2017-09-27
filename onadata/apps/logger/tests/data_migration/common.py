@@ -52,8 +52,40 @@ class MigrationTestCase(TestCase):
             'determine_last_name': ['__new_field__'],
         }
 
+    def get_field_changes(self):
+        return {
+            'new_fields': ['birthday', 'last_name'],
+            'removed_fields': ['date'],
+            'modified_fields': {
+                'name': 'first_name',
+            },
+        }
+
     def assertEqualIgnoringWhitespaces(self, result, expected):
         self.assertEqual(
             remove_whitespaces(result),
             remove_whitespaces(expected),
         )
+
+    def assertXMLsEqual(self, result_xml, expected_xml):
+        single_to_double_quotes = lambda s: s.replace("'", '"')
+        self.assertEqualIgnoringWhitespaces(
+            single_to_double_quotes(result_xml),
+            single_to_double_quotes(expected_xml),
+        )
+
+
+class SecondMigrationTestCase(MigrationTestCase):
+    def setUp(self):
+        self.user = self.create_user('alfred_tarski')
+        self.xform = self.create_xform(fixtures.form_xml_case_2)
+        self.xform_new = self.create_xform(fixtures.form_xml_case_2_after)
+        self.survey = self.create_survey(self.xform_new, fixtures.survey_xml_2)
+        self.setup_data_migrator(self.xform, self.xform_new)
+
+    def get_migration_decisions(self):
+        return {
+            'determine_your_name': ['name'],
+            'determine_mood': ['__new_field__'],
+            'prepopulate_mood': [fixtures.DEFAULT_MOOD],
+        }

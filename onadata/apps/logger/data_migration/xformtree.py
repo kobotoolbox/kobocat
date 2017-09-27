@@ -23,6 +23,10 @@ class XFormTree(object):
     def to_string(self, pretty=True):
         return etree.tostring(self.root, pretty_print=pretty)
 
+    def to_xml(self, pretty=True):
+        return etree.tostring(self.root, pretty_print=pretty,
+                              xml_declaration=True, encoding='utf-8')
+
     def clean_tag(self, tag):
         """
         Remove w3 header that each tag contains.
@@ -43,9 +47,6 @@ class XFormTree(object):
         cleaned_tag = self.clean_tag(el.tag)
         el.tag = el.tag.replace(cleaned_tag, value)
         return el
-
-    def to_xml(self, pretty=True):
-        return etree.tostring(self.root, pretty_print=pretty)
 
     def get_head_content(self):
         """XML Heads content."""
@@ -138,10 +139,34 @@ class XFormTree(object):
     def get_id_string(self):
         return self.get_head_instance().attrib['id']
 
-    def set_id_string(self, id_string):
+    def get_head_binds(self):
+        return filter(
+            lambda node: self.clean_tag(node.tag) == 'bind',
+            self.get_head_content().getchildren()
+        )
+
+    def set_id_string(self, new_id_string):
+        old_id_string = self.get_id_string()
+        self.rename_head_tag(new_id_string)
+        self._replace_in_nodeset_paths(old_id_string, new_id_string)
+        self._replace_in_body_refs(old_id_string, new_id_string)
+
+    def rename_head_tag(self, name):
         instance = self.get_head_instance()
-        instance.attrib['id'] = id_string
-        self.set_tag(instance.tag, id_string)
+        instance.attrib['id'] = name
+        self.set_tag(instance.tag, name)
+
+    def _replace_in_nodeset_paths(self, old_val, new_val):
+        bind_nodesets = self.get_head_binds()
+        for el in bind_nodesets:
+            el.attrib['nodeset'] = el.attrib['nodeset'] \
+                .replace(old_val, new_val)
+
+    def _replace_in_body_refs(self, old_val, new_val):
+        body_els_with_refs = filter(lambda el: el.attrib.get('ref'),
+                                    self.get_body_content())
+        for el in body_els_with_refs:
+            el.attrib['ref'] = el.attrib['ref'].replace(old_val, new_val)
 
     def added_fields(self, other_tree):
         """Return new fields in actual tree compared to other_tree."""
@@ -172,6 +197,6 @@ class XFormTree(object):
         return {
             name: self._added_to_list(other_options[name], values)
             for name, values in actual_options.items()
-            if name in other_options and \
-                self._added_to_list(other_options[name], values)
+            if name in other_options and
+            self._added_to_list(other_options[name], values)
         }
