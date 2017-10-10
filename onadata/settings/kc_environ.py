@@ -201,7 +201,7 @@ if 'RAVEN_DSN' in os.environ:
             },
             'handlers': {
                 'sentry': {
-                    'level': 'WARNING',
+                    'level': 'ERROR',
                     'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
                 },
                 'console': {
