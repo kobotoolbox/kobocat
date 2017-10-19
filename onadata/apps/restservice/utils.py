@@ -40,7 +40,12 @@ def call_service(parsed_instance):
                 raise
             else:
                 # TODO: Handle gracefully | requeue/resend
-                pass
+                logging.warning(
+                    u'RestService {} failed; service_url={}'.format(
+                        sv.name, sv.service_url
+                    ),
+                    exc_info=True
+                )
 
 
 def call_ziggy_services(ziggy_instance, uuid):

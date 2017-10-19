@@ -147,7 +147,7 @@ if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
 
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
-if 'RAVEN_DSN' in os.environ:
+if os.environ.get('RAVEN_DSN', False):
     try:
         import raven
     except ImportError:
