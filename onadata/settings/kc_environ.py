@@ -232,6 +232,23 @@ CELERYBEAT_SCHEDULE = {
     },
 }
 
+# WARNING! Enabling this allows users to THROW AWAY ALL SUBMISSION DATA!
+# When used, the Destructive REST Service places the ENTIRE responsibility for
+# storing incoming submissions on the user-specified external service
+ENABLE_DESTRUCTIVE_REST_SERVICE = os.environ.get(
+    'ENABLE_DESTRUCTIVE_REST_SERVICE', 'False') == 'True'
+
+# Force all submissions to be sent to the specified type of REST service.
+# Choose from among `onadata.apps.restservice.SERVICE_CHOICES` and set
+# `FORCE_REST_SERVICE_URL` to the desired HTTP endpoint
+FORCE_REST_SERVICE_NAME = os.environ.get('FORCE_REST_SERVICE_NAME', False)
+FORCE_REST_SERVICE_URL = os.environ.get('FORCE_REST_SERVICE_URL', False)
+
+# When set to True, Raise an unhandled exception (and return a HTTP 500 to the
+# client) if any external REST service fails during the submission process
+FAILED_REST_SERVICE_BLOCKS_SUBMISSION = os.environ.get(
+    'FAILED_REST_SERVICE_BLOCKS_SUBMISSION', 'False') == 'True'
+
 ### ISSUE 242 TEMPORARY FIX ###
 # See https://github.com/kobotoolbox/kobocat/issues/242
 ISSUE_242_MINIMUM_INSTANCE_ID = os.environ.get(
