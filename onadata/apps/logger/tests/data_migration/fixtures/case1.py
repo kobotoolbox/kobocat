@@ -41,7 +41,7 @@ form_xml_case_1 = '''<?xml version="1.0" encoding="utf-8"?>
         </Survey>
       </instance>
       <bind nodeset="/Survey/name" required="true()" type="string"/>
-      <bind constraint=" /Survey/age  &gt; 0 and  /Survey/age  &lt; 120" jr:constraintMsg="That's not a valid age!" nodeset="/Survey/age" required="true()" type="int"/>
+      <bind nodeset="/Survey/age" required="true()" type="int"/>
       <bind nodeset="/Survey/gender" required="true()" type="select1"/>
       <bind nodeset="/Survey/photo" type="binary"/>
       <bind nodeset="/Survey/date" required="true()" type="date"/>
@@ -105,7 +105,7 @@ form_xml_case_1_after = '''<?xml version="1.0" encoding="utf-8"?>
       <bind nodeset="/Survey2/first_name" required="true()" type="string"/>
       <bind nodeset="/Survey2/last_name" required="true()" type="string"/>
       <bind nodeset="/Survey2/birthday" required="true()" type="date"/>
-      <bind constraint=" /Survey2/age  &gt; 0 and  /Survey2/age  &lt; 120" jr:constraintMsg="That's not a valid age!" nodeset="/Survey2/age" required="true()" type="decimal"/>
+      <bind nodeset="/Survey2/age" required="true()" type="decimal"/>
       <bind nodeset="/Survey2/gender" required="true()" type="select1"/>
       <bind nodeset="/Survey2/location" required="false()" type="geopoint"/>
     </model>
@@ -171,6 +171,7 @@ survey_after_migration = '''<Survey xmlns:jr="http://openrosa.org/javarosa" xmln
   <first_name>Alonzo Church</first_name>
   <gender>male</gender>
   <photo/>
+  <date>2000-01-01</date>
   <location>-1 1.1 1 2</location>
   <age>50</age>
   <thanks/>

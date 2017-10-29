@@ -114,10 +114,10 @@ class SurveyTreeOperationsTest(TestCase):
     def test_create_element(self):
         self.assertTrue(etree.iselement(self.survey.create_element('name')))
 
-    def test_remove_field(self):
+    def test_permamently_remove_field(self):
         expected = fixtures.FIELDS[:]
         expected.remove('name')
-        self.survey.remove_field('name')
+        self.survey.permamently_remove_field('name')
         self.assertEqual(self.survey.get_fields_names(), expected)
 
     def test_modify_field(self):

@@ -14,7 +14,7 @@ def data_migrator_factory(old_xform, new_xform, backup_data=True, **request_data
     migration_decisioner = migration_decisioner_factory(old_xform, new_xform,
                                                         **request_data)
     xform_backup = backup_xform(
-        old_xform, new_xform.id, migration_decisioner.fields_changes,
+        old_xform, new_xform, migration_decisioner.fields_changes, bind=True,
     ) if backup_data else None
 
     fields_handler = SurveyFieldsHandler(migration_decisioner)

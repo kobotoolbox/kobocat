@@ -62,8 +62,11 @@ class SurveyFieldsHandler(object):
             survey_tree.add_field(field_to_add, text)
 
     def remove_fields(self, survey_tree, removed):
-        for field_to_remove in removed:
-            survey_tree.remove_field(field_to_remove)
+        """
+        In order to make it possible to have an inverse function to
+        data migration, we do not remove any data
+        """
+        pass
 
     def modify_fields(self, survey_tree, modifications):
         for prev_field, new_field in modifications.iteritems():

@@ -18,7 +18,6 @@ class DataMigrationUnitTests(MigrationTestCase):
         expected = fixtures.FIELDS[:]
         expected.append('last_name')
         expected.append('birthday')
-        expected.remove('date')
         pos = expected.index('name')
         expected[pos] = 'first_name'
         self.assertEqual(survey_tree.get_fields_names(), expected)

@@ -45,7 +45,8 @@ class SurveyTree(object):
     def create_element(self, field_name):
         return etree.XML('<{name}></{name}>'.format(name=field_name))
 
-    def remove_field(self, field_name):
+    def permamently_remove_field(self, field_name):
+        """WARNING: It is not possible to revert this operation"""
         field = self.get_field(field_name)
         field.getparent().remove(field)
 
