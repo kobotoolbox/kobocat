@@ -209,3 +209,5 @@ survey_2_after_migration = '''<tutorial2 xmlns:jr="http://openrosa.org/javarosa"
   <mood>good</mood>
 </tutorial2>
 '''
+
+append_extra_data_2 = lambda survey, data: survey.replace('</tutorial2>', data + '</tutorial2>')

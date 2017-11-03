@@ -6,12 +6,14 @@ class VersionTreeException(Exception):
 
 
 class VersionManager(models.Manager):
-    def get_root_path(self, vt):
+    @staticmethod
+    def get_root_path(vt):
+        """Get path from root to given vt"""
         path = []
         while vt is not None:
             path.append(vt)
             vt = vt.parent
-        return path
+        return list(reversed(path))
 
     def find_path(self, vt1, vt2):
         """Find and return path from vt1 to vt2
@@ -20,15 +22,23 @@ class VersionManager(models.Manager):
         vt1_root_path = self.get_root_path(vt1)
         vt2_root_path = self.get_root_path(vt2)
 
-        for i, node in enumerate(vt1_root_path):
-            if node in vt2_root_path:
-                j = vt2_root_path.index(node)
-                return (vt1_root_path[:i + 1], vt2_root_path[:j + 1][::-1])
-        else:
+        if vt1_root_path[0] != vt2_root_path[0]:
             raise VersionTreeException(
                 'Path not found. Passed nodes (vt1 = %s, vt2 = %s) '
                 'are from different version trees' % (str(vt1), str(vt2))
             )
+        last_common_node = last_common_item(vt1_root_path, vt2_root_path)
+        return (vt1_root_path[last_common_node:][::-1],
+                vt2_root_path[last_common_node + 1:])
+
+
+def last_common_item(xs, ys):
+    """Search for index of last common item in two lists."""
+    max_i = min(len(xs), len(ys)) - 1
+    for i, (x, y) in enumerate(zip(xs, ys)):
+        if x == y and (i == max_i or xs[i+1] != ys[i+1]):
+            return i
+    return -1
 
 
 class VersionTree(models.Model):
@@ -44,8 +54,8 @@ class VersionTree(models.Model):
 
     def __str__(self):
         if self.version:
-            return "VersionTree: form=%s, version=%s" % (
+            return "VersionTree: form={}, version={}".format(
                 self.version.xform_id,
                 self.version.backup_version,
             )
-        return "VersionTree %s" % self.id
+        return "VersionTree {}".format(self.id)

@@ -1,9 +1,4 @@
 
-NEW_FIELDS_KEY = 'new_fields'
-RM_FIELDS_KEY = 'removed_fields'
-MOD_FIELDS_KEY = 'modified_fields'
-
-
 class MigrationDecisioner(object):
     """
     This class provides an neat encapsulation of user decisions format.
@@ -32,6 +27,10 @@ class MigrationDecisioner(object):
     DETERMINE_KEY = 'determine_'
     PREPOPULATE_KEY = 'prepopulate_'
 
+    NEW_FIELDS_KEY = 'new_fields'
+    RM_FIELDS_KEY = 'removed_fields'
+    MOD_FIELDS_KEY = 'modified_fields'
+
     def __init__(self, xforms_comparator, **data):
         self._decisions = self._extract_migration_decisions(**data)
         self.xforms_comparator = xforms_comparator
@@ -51,37 +50,37 @@ class MigrationDecisioner(object):
             {<prev_name>: <new_name>}
         """
         return {
-            NEW_FIELDS_KEY: self.new_fields,
-            RM_FIELDS_KEY: self.removed_fields,
-            MOD_FIELDS_KEY: self.modifications,
+            self.NEW_FIELDS_KEY: self.new_fields,
+            self.RM_FIELDS_KEY: self.removed_fields,
+            self.MOD_FIELDS_KEY: self.modifications,
         }
 
-    @staticmethod
-    def construct_changes(new=None, removed=None, modified=None):
-        """Invoke function withot parameters to get empty changes template"""
+    @classmethod
+    def construct_changes(cls, new=None, removed=None, modified=None):
+        """Invoke function without parameters to get empty changes template"""
         return {
-            NEW_FIELDS_KEY: new or [],
-            RM_FIELDS_KEY: removed or [],
-            MOD_FIELDS_KEY: modified or {},
+            cls.NEW_FIELDS_KEY: new or [],
+            cls.RM_FIELDS_KEY: removed or [],
+            cls.MOD_FIELDS_KEY: modified or {},
         }
 
     @classmethod
     def reverse_changes(cls, changes):
-        return cls.construct_changes(**{
-            'new': changes.get(RM_FIELDS_KEY),
-            'removed': changes.get(NEW_FIELDS_KEY),
-            'modified': {
-                v: k for k, v in changes.get(MOD_FIELDS_KEY, {}).items()
+        return cls.construct_changes(
+            new=changes.get(cls.RM_FIELDS_KEY),
+            removed=changes.get(cls.NEW_FIELDS_KEY),
+            modified={
+                v: k for k, v in changes.get(cls.MOD_FIELDS_KEY, {}).items()
             }
-        })
+        )
 
     @classmethod
     def convert_changes_to_decisions(cls, changes):
         new_fields_decisions = {
             cls.DETERMINE_KEY + new_field: cls.NEW_FIELD
-            for new_field in changes.get(NEW_FIELDS_KEY, [])
+            for new_field in changes.get(cls.NEW_FIELDS_KEY, [])
         }
-        modified_fields = changes.get(MOD_FIELDS_KEY, {}).items()
+        modified_fields = changes.get(cls.MOD_FIELDS_KEY, {}).items()
         modified_fields_decisions = {
             cls.DETERMINE_KEY + new_value: old_value
             for old_value, new_value in modified_fields

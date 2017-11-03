@@ -53,20 +53,12 @@ class SurveyFieldsHandler(object):
 
     def alter_fields(self, survey_tree):
         self.add_fields(survey_tree, self.decisioner.new_fields)
-        self.remove_fields(survey_tree, self.decisioner.removed_fields)
         self.modify_fields(survey_tree, self.decisioner.modifications)
 
     def add_fields(self, survey_tree, new_fields):
         for field_to_add in new_fields:
             text = self.decisioner.get_prepopulate_text(field_to_add)
             survey_tree.add_field(field_to_add, text)
-
-    def remove_fields(self, survey_tree, removed):
-        """
-        In order to make it possible to have an inverse function to
-        data migration, we do not remove any data
-        """
-        pass
 
     def modify_fields(self, survey_tree, modifications):
         for prev_field, new_field in modifications.iteritems():

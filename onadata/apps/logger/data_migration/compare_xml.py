@@ -21,6 +21,9 @@ class XFormsComparator(object):
         self.prev_tree = XFormTree(prev_xml)
         self.new_tree = XFormTree(new_xml)
 
+    def __str__(self):
+        return self.comparison_results()
+
     def clean_tag(self, tag):
         return self.prev_tree.clean_tag(tag)
 

@@ -17,6 +17,10 @@ urlpatterns = patterns(
         views.restore_backup,
         name='restore-backup'),
 
+    url(r'(?P<id_string>[^/]+)/compare-xforms$',
+        views.compare_xforms,
+        name='compare-xforms'),
+
     url(r'(?P<id_string>[^/]+)/handle-restoring-backup$',
         views.handle_restoring_backup,
         name='handle-restoring-backup'),

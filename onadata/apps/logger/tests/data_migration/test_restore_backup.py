@@ -41,6 +41,9 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
             {'d1.x': 'new-x-value', 'd1.y': 'y-value'}
         )
 
+    def _append_survey_data(self, survey):
+        return fixtures.append_extra_data(survey, '<last_name>Fowler</last_name><birthday/>')
+
     def test_restoring_last_backup(self):
         """Test if migration composed with restore is identity"""
         self._migrate_and_restore(restore_last=True)
@@ -50,15 +53,28 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
         )
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.instances.first().xml,
-            fixtures.survey_xml,
+            self._append_survey_data(fixtures.survey_xml)
         )
 
-    def test_migrate_survey_to_prev_schema(self):
-        restorer = self._migrate_and_restore(restore_last=True)
-        survey = self.create_survey(
-            xform=self.xform_new, xml=fixtures.survey_after_migration
+    def test_restoring_last_backup__submission_after_migration(self):
+        """Submission created after migration should also be restored."""
+        self.data_migrator.migrate()
+        mid_survey = self.create_survey(self.xform_new, fixtures.survey_after_migration_second)
+        BackupRestorer(self.xform_new, restore_last=True).restore_xform_backup()
+
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.instances.get(id=self.survey.id).xml,
+            self._append_survey_data(fixtures.survey_xml),
         )
-        restorer.migrate_survey_to_prev_schema(survey)
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.instances.get(id=mid_survey.id).xml,
+            self._append_survey_data(fixtures.survey_xml_second),
+        )
+
+    def test_migrate_surveys_to_prev_schema(self):
+        self.data_migrator.migrate()
+        restorer = BackupRestorer(self.xform_new, restore_last=True)
+        restorer.migrate_surveys_to_prev_schema()
         self.assertEqualIgnoringWhitespaces(
             self.survey.xml,
             fixtures.survey_xml,
@@ -176,12 +192,16 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
         result = BackupRestorer._get_migration_changes_in_between(self.xform, backup_to_restore)
         self.assertEqual([
             self._construct_changes([], ['name'], {'g': 'f'}),
+            self._construct_changes(removed=['age']),
             self._construct_changes([], ['mood'], {'f': 'h'}),
         ], result)
 
 
 class BackupRestoreSecondTestCase(CommonBackupRestoreTestCase,
                                   SecondMigrationTestCase):
+    def _append_survey_data(self, survey):
+        return fixtures.append_extra_data_2(survey, '<mood>good</mood>')
+
     def test_restoring_last_backup(self):
         self._migrate_and_restore(restore_last=True)
         self.assertXMLsEqual(
@@ -190,5 +210,5 @@ class BackupRestoreSecondTestCase(CommonBackupRestoreTestCase,
         )
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.instances.first().xml,
-            fixtures.survey_xml_2,
+            self._append_survey_data(fixtures.survey_xml_2),
         )

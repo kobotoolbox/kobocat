@@ -5,7 +5,6 @@ from django.core.urlresolvers import reverse
 
 from onadata.apps.logger.models import Instance, XForm
 
-from . import fixtures
 from .common import MigrationTestCase
 
 

@@ -53,9 +53,9 @@ class BackupSurveysTests(MigrationTestCase):
         backup_second = BackupXForm.objects.latest_backup(self.xform_new.id)
 
         self.assertEqual({
-            'Latest backup': self.xform.latest_backup,
-            'Older backup': self.xform.latest_backup.parent,
+            'Latest backup': self.xform_new.latest_backup,
+            'Older backup': self.xform_new.version_tree.parent.version,
         }, {
-            'Latest backup': backup_first,
-            'Older backup': backup_second,
+            'Latest backup': backup_second,
+            'Older backup': backup_first,
         })
