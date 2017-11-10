@@ -741,20 +741,23 @@ def attachment_url(request, size='medium'):
         else:
             # search for media_file with exact matching name
             result = Attachment.objects.filter(media_file=media_file)[0:1]
-    if result.count() == 0:
-        media_file_logger.info('attachment not found')
-        return HttpResponseNotFound(_(u'Attachment not found'))
-    attachment = result[0]
-    if not attachment.mimetype.startswith('image'):
-        return redirect(attachment.media_file.url)
 
-    try:
-        media_url = image_url(attachment, size)
-    except:
-        media_file_logger.error('could not get thumbnail for image', exc_info=True)
-    else:
-        if media_url:
-            return redirect(media_url)
+        if len(result) == 0:
+            media_file_logger.info('attachment not found')
+            return HttpResponseNotFound(_(u'Attachment not found'))
+
+        attachment = result[0]
+
+        if not attachment.mimetype.startswith('image'):
+            return redirect(attachment.media_file.url)
+
+        try:
+            media_url = image_url(attachment, size)
+        except:
+            media_file_logger.error('could not get thumbnail for image', exc_info=True)
+        else:
+            if media_url:
+                return redirect(media_url)
 
     return HttpResponseNotFound(_(u'Error: Attachment not found'))
 
