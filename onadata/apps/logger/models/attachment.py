@@ -20,9 +20,9 @@ def upload_to(attachment, filename):
 
 class Attachment(models.Model):
     instance = models.ForeignKey(Instance, related_name="attachments")
-    media_file = models.FileField(upload_to=upload_to, max_length=380)
+    media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
     mimetype = models.CharField(
-        max_length=50, null=False, blank=True, default='')
+        max_length=100, null=False, blank=True, default='')
 
     class Meta:
         app_label = 'logger'
