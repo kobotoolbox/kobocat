@@ -4,7 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from onadata.apps.restservice import SERVICE_CHOICES
 from onadata.apps.restservice.models import RestService
 
-valid_service_names = (x[0] for x in SERVICE_CHOICES)
+valid_service_names = [x[0] for x in SERVICE_CHOICES]
 
 def call_service(parsed_instance):
     # lookup service
