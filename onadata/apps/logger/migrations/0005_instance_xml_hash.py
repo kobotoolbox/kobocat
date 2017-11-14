@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0002_attachment_filename_length'),
+        ('logger', '0004_increase-length-of-attachment-mimetype-field'),
     ]
 
     operations = [
