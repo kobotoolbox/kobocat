@@ -233,14 +233,12 @@ class Instance(models.Model):
 
         filter_kwargs = dict()
         if usernames:
-            # Convert usernames to `User` objects.
-            user__in = User.objects.filter(username__in=usernames)
-            filter_kwargs.update({'user__in': user__in})
+            filter_kwargs['xform__user__username__in'] = usernames
         if pk__in:
-            filter_kwargs.update({'pk__in': pk__in})
+            filter_kwargs['pk__in'] = pk__in
         # By default, skip over instances previously populated with hashes.
         if not repopulate:
-            filter_kwargs.update({'xml_hash': cls.DEFAULT_XML_HASH})
+            filter_kwargs['xml_hash'] = cls.DEFAULT_XML_HASH
 
         # Query for the target `Instance`s.
         target_instances_queryset = cls.objects.filter(**filter_kwargs)
@@ -256,14 +254,13 @@ class Instance(models.Model):
         # Break the potentially large `target_instances_queryset` into chunks to avoid memory
         # exhaustion.
         chunk_size = 2000
-        while target_instances_queryset.exists():
-            try:
-                # Take a chunk of the target `Instance`s.
-                trgt_insntcs_qryst_chunk = target_instances_queryset[0:chunk_size]
-            except IndexError:
-                # If there weren't `chunk_size` target `Instance`s, just get them all.
-                trgt_insntcs_qryst_chunk = target_instances_queryset
-            for instance in trgt_insntcs_qryst_chunk:
+        target_instances_queryset = target_instances_queryset.order_by('pk')
+        target_instances_qs_chunk = target_instances_queryset
+        while target_instances_qs_chunk.exists():
+            # Take a chunk of the target `Instance`s.
+            target_instances_qs_chunk = target_instances_qs_chunk[0:chunk_size]
+
+            for instance in target_instances_qs_chunk:
                 pk = instance.pk
                 xml = instance.xml
                 # Do a `Queryset.update()` on this individual instance to avoid signals triggering
@@ -271,6 +268,10 @@ class Instance(models.Model):
                 instances_updated_count = Instance.objects.filter(pk=pk).update(
                     xml_hash=cls.get_hash(xml))
                 instances_updated_total += instances_updated_count
+
+            # Set up the next chunk
+            target_instances_qs_chunk = target_instances_queryset.filter(
+                pk__gt=instance.pk)
 
         return instances_updated_total
 
