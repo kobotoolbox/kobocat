@@ -15,6 +15,7 @@ from django.core.mail import mail_admins
 from django.core.servers.basehttp import FileWrapper
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.http import HttpResponse, HttpResponseNotFound, \
     StreamingHttpResponse
@@ -227,18 +228,22 @@ def create_instance(username, xml_file, media_files,
         xform = get_xform_from_submission(xml, username, uuid)
         check_submission_permissions(request, xform)
 
-        # Check if an instance whose content hashes to the same value is already in the DB.
-        duplicate_instances_exist = Instance.objects.filter(xml_hash=xml_hash).exists()
-        # Also check against unhashed `Instance`s if no matching hash was found.
-        duplicate_instances_exist = duplicate_instances_exist or Instance.objects.filter(
-            xml_hash=Instance.DEFAULT_XML_HASH, xml=xml, xform__user=xform.user).exists()
-
-        if duplicate_instances_exist:
-            duplicate_instances = Instance.objects.filter(xml_hash=xml_hash)
-            if not duplicate_instances.exists():
-                duplicate_instances = Instance.objects.filter(
-                    xml_hash=Instance.DEFAULT_XML_HASH, xml=xml, xform__user=xform.user)
+        # Duplicate instances are identified by identical content hash OR, when
+        # a content hash is not present, by string comparison of the full
+        # content
+        duplicate_instances = Instance.objects.filter(
+            Q(xml_hash=xml_hash) |
+                Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
+            xform__user=xform.user,
+        )
+        try:
+            # Due to lazy QuerySet evaluation, the `filter()` above should not
+            # hit the database. This index retrieval is our single query
             existing_instance = duplicate_instances[0]
+        except IndexError:
+            # No duplicate found
+            pass
+        else:
             if not existing_instance.xform or\
                     existing_instance.xform.has_start_time:
                 # Ignore submission as a duplicate IFF
@@ -249,6 +254,7 @@ def create_instance(username, xml_file, media_files,
 
         # get new and deprecated uuid's
         new_uuid = get_uuid_from_xml(xml)
+        # TODO: Make sure `uuid` is indexed by the DB!
         duplicate_instances = Instance.objects.filter(uuid=new_uuid)
 
         if duplicate_instances:
