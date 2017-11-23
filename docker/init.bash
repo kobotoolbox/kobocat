@@ -12,7 +12,6 @@ echo 'Synchronizing database.'
 python manage.py syncdb --noinput
 
 echo 'Running migrations.'
-python manage.py makemigrations
 python manage.py migrate --noinput
 
 rm -f /etc/cron.d/backup_media_crontab
