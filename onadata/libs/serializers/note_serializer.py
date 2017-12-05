@@ -12,6 +12,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Note
+        fields = '__all__'
 
     def save(self, user=None):
         # This used to be in note_viewset
