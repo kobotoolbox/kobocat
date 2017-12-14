@@ -1,0 +1,1 @@
+50 * * * * root find /tmp/ -mmin +60 -print -delete >/dev/null 2>&1
