@@ -17,7 +17,7 @@ from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
 from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
     SUBMISSION_TIME, MONGO_STRFTIME, BAMBOO_DATASET_ID, DELETEDAT, TAGS,\
-    NOTES, SUBMITTED_BY
+    NOTES, SUBMITTED_BY, VALIDATION_STATUS
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 
@@ -255,6 +255,7 @@ class ParsedInstance(models.Model):
                 MONGO_STRFTIME),
             TAGS: list(self.instance.tags.names()),
             NOTES: self.get_notes(),
+            VALIDATION_STATUS: self.instance.get_validation_status(),
             SUBMITTED_BY: self.instance.user.username
             if self.instance.user else None
         }

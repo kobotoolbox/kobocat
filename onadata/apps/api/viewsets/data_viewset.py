@@ -13,7 +13,7 @@ from rest_framework.exceptions import ParseError
 from rest_framework.settings import api_settings
 
 from onadata.apps.api.viewsets.xform_viewset import custom_response_handler
-from onadata.apps.api.tools import add_tags_to_instance
+from onadata.apps.api.tools import add_tags_to_instance, add_validation_status_to_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
 from onadata.libs.renderers import renderers
@@ -284,6 +284,55 @@ https://example.com/api/v1/data/28058/20/labels/hello%20world
 >
 >        HTTP 200 OK
 
+
+## Query submitted validation status of a specific submission
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/data/<code>{pk}</code>/<code>{dataid}</code>/validation_status</pre>
+
+> Example
+>
+>       curl -X GET https://example.com/api/v1/data/22845/56/validation_status
+
+> Response
+>
+>       {
+>           "timestamp": 1513299978,
+>           "by_whom ": "John Doe",
+>           "uid": "validation_status_approved",
+>           "label: "Approved"
+>       }
+
+## Change validation status of a submission data point
+
+A `PATCH` payload of parameter `validation_status`.
+
+<pre class="prettyprint">
+<b>PATCH</b> /api/v1/data/<code>{pk}</code>/<code>{dataid}</code>/validation_status</pre>
+
+Payload
+
+>       {
+>           "validation_status":
+>           {
+>              "by_whom ": "John Doe",
+>              "uid": "validation_status_not_approved"
+>           }
+>       }
+
+> Example
+>
+>       curl -X GET https://example.com/api/v1/data/22845/56/validation_status
+
+> Response
+>
+>       {
+>           "timestamp": 1513299978,
+>           "by_whom ": "John Doe",
+>           "uid": "validation_status_not_approved",
+>           "label": "Not Approved"
+>       }
+
 ## Get list of public data endpoints
 
 <pre class="prettyprint">
@@ -430,6 +479,31 @@ Delete a specific submission in a form
                 qs = self._filtered_or_shared_qs(qs, pk)
 
         return qs
+
+    @detail_route(methods=["GET", "PATCH"])
+    def validation_status(self, request, *args, **kwargs):
+        """
+        View or modify validation status of specific instance.
+        User needs 'validate_xform' permission to update the data.
+
+        :param request: Request
+        :return: Response
+        """
+        http_status = status.HTTP_200_OK
+        instance = self.get_object()
+        data = {}
+
+        if request.method == "PATCH":
+            if request.user.has_perm("validate_xform", instance.asset):
+                if not add_validation_status_to_instance(request, instance):
+                    http_status = status.HTTP_400_BAD_REQUEST
+            else:
+                raise PermissionDenied(_(u"You do not have validate permissions."))
+
+        if http_status == status.HTTP_200_OK:
+            data = instance.validation_status
+
+        return Response(data, status=http_status)
 
     @detail_route(methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
     def labels(self, request, *args, **kwargs):
