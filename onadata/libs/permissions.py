@@ -29,6 +29,7 @@ IS_ORGANIZATION_OWNER = 'is_org_owner'
 
 # Xform Permissions
 CAN_CHANGE_XFORM = 'change_xform'
+CAN_VALIDATE_XFORM = 'validate_xform'
 CAN_ADD_XFORM = 'add_xform'
 CAN_DELETE_XFORM = 'delete_xform'
 CAN_VIEW_XFORM = 'view_xform'
@@ -125,6 +126,17 @@ class EditorRole(Role):
         (CAN_VIEW_XFORM, XForm),
     )
 
+class ValidatorRole(Role):
+    name = 'validator'
+    permissions = (
+        (CAN_ADD_SUBMISSIONS, XForm),
+        (CAN_ADD_XFORM, Project),
+        (CAN_VIEW_ORGANIZATION_PROFILE, OrganizationProfile),
+        (CAN_VIEW_PROJECT, Project),
+        (CAN_VIEW_XFORM, XForm),
+        (CAN_VALIDATE_XFORM, XForm),
+    )
+
 
 class ManagerRole(Role):
     name = 'manager'
@@ -195,6 +207,7 @@ class OwnerRole(Role):
         (CAN_CHANGE_DATADICTIONARY, XForm),
         (CAN_DELETE_DATADICTIONARY, XForm),
         (CAN_ADD_SUBMISSIONS, XForm),
+        (CAN_VALIDATE_XFORM, XForm),
     )
 
 ROLES_ORDERED = [ReadOnlyRole,

@@ -4,7 +4,9 @@ from datetime import datetime
 import numpy as np
 import inspect
 import re
+import time
 
+import logging
 from django import forms
 from django.conf import settings
 from django.core.files.storage import get_storage_class
@@ -415,8 +417,45 @@ def add_tags_to_instance(request, instance):
 
         if tags:
             for tag in tags:
-                instance.instance.tags.add(tag)
+                instance.tags.add(tag)
             instance.save()
+
+
+def add_validation_status_to_instance(request, instance):
+    """
+    Saves instance validation status if it's valid.
+
+    :param request: REST framework's Request object
+    :param instance: Instance object
+    :return: Boolean
+    """
+    validation_status = request.data.get("validation_status")
+    success = False
+
+    # Payload must contain validation_status property.
+    if validation_status:
+
+        # Validate validation_status value It must belong to asset statuses.
+        available_statuses = {status.get("uid"): status.get("label")
+                                for status in instance.asset.settings.get("validation_statuses")}
+
+        which_status = validation_status.get("uid")
+
+        if which_status in available_statuses.keys():
+            instance.validation_status = {
+                "timestamp": int(time.time()),
+                "uid": validation_status.get("uid"),
+                "by_whom": validation_status.get("by_whom"),
+                "label": available_statuses.get(validation_status.get("uid"))
+            }
+            try:
+                instance.save()
+                instance.parsed_instance.update_mongo()
+                success = True
+            except Exception as e:
+                logging.error("add_validation_status_to_instance: {}".format(str(e)))
+
+    return success
 
 
 def get_media_file_response(metadata):

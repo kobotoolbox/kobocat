@@ -135,8 +135,21 @@ class Instance(models.Model):
 
     tags = TaggableManager()
 
+    validation_status = JSONField(null=False, default=dict)
+
     class Meta:
         app_label = 'logger'
+
+    @property
+    def asset(self):
+        """
+        The goal of this property is to make the code future proof.
+        We can run the tests on kpi backend or kobocat backend.
+        Instance.asset will exist for both
+        It's used for validation_statuses.
+        :return: XForm
+        """
+        return self.xform
 
     @classmethod
     def set_deleted_at(cls, instance_id, deleted_at=timezone.now()):
@@ -360,6 +373,15 @@ class Instance(models.Model):
         # force submission count re-calculation
         self.xform.submission_count(force_update=True)
         self.parsed_instance.save()
+
+    def get_validation_status(self):
+        """
+        Returns instance validation status.
+
+        :return: object
+        """
+        # This method can be tweaked to implement default validation status (on submission creation for example)
+        return self.validation_status
 
 
 post_save.connect(update_xform_submission_count, sender=Instance,
