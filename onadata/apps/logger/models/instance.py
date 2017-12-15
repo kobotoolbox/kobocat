@@ -380,7 +380,10 @@ class Instance(models.Model):
 
         :return: object
         """
-        # This method can be tweaked to implement default validation status (on submission creation for example)
+        # This method can be tweaked to implement default validation status
+        # For example:
+        # if not self.validation_status:
+        #    self.validation_status = self.asset.settings.get("validation_statuses")[0]
         return self.validation_status
 
 
