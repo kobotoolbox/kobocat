@@ -313,16 +313,12 @@ A `PATCH` payload of parameter `validation_status`.
 Payload
 
 >       {
->           "validation_status":
->           {
->              "by_whom ": "John Doe",
->              "uid": "validation_status_not_approved"
->           }
+>           "validation_status_uid": "validation_status_not_approved"
 >       }
 
 > Example
 >
->       curl -X GET https://example.com/api/v1/data/22845/56/validation_status
+>       curl -X PATCH https://example.com/api/v1/data/22845/56/validation_status
 
 > Response
 >
