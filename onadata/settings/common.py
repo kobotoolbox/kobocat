@@ -516,15 +516,18 @@ SOUTH_MIGRATION_MODULES = {
 
 DEFAULT_VALIDATION_STATUSES = [
     {
-        'uid': 'validation_status_approved',
-        'color': '#00ff00',
-    },
-    {
         'uid': 'validation_status_not_approved',
         'color': '#ff0000',
+        'label': 'Not Approved'
+    },
+    {
+        'uid': 'validation_status_approved',
+        'color': '#00ff00',
+        'label': 'Approved'
     },
     {
         'uid': 'validation_status_on_hold',
         'color': '#0000ff',
+        'label': 'On Hold'
     },
 ]

@@ -316,27 +316,7 @@ class XForm(BaseModel):
         # As soon as we need to add custom validation statuses in Asset settings,
         # validation in add_validation_status_to_instance
         # (kobocat/onadata/apps/api/tools.py) should still work
-
-        # TODO add labels to PO.
-        # Labels are:
-        # - label_validation_status_approved
-        # - label_validation_status_not_approved
-        # - label_validation_status_on_hold
-        def label_updater(d):
-            """
-            Adds localized label to validation status.
-            :param d: dict
-            :return: dict
-            """
-            d.update({
-                "label": _("label_{}".format(d.get("uid")))
-            })
-            return d
-
-        default_validation_statuses = [
-            label_updater(validation_status)
-            for validation_status in getattr(settings, "DEFAULT_VALIDATION_STATUSES", [])
-        ]
+        default_validation_statuses = getattr(settings, "DEFAULT_VALIDATION_STATUSES", [])
 
         # Later purpose, default_validation_statuses could be merged with a custom validation statuses dict
         # for example:
