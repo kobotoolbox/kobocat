@@ -436,15 +436,17 @@ def add_validation_status_to_instance(request, instance):
     if validation_status_uid:
 
         # Validate validation_status value It must belong to asset statuses.
-        available_statuses = {status.get("uid"): status.get("label")
+        available_statuses = {status.get("uid"): status
                                 for status in instance.asset.settings.get("validation_statuses")}
 
         if validation_status_uid in available_statuses.keys():
+            available_status = available_statuses.get(validation_status_uid)
             instance.validation_status = {
                 "timestamp": int(time.time()),
                 "uid": validation_status_uid,
                 "by_whom": request.user.username,
-                "label": available_statuses.get(validation_status_uid)
+                "color": available_status.get("color"),
+                "label": available_status.get("label")
             }
             try:
                 instance.save()
