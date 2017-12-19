@@ -300,6 +300,7 @@ https://example.com/api/v1/data/28058/20/labels/hello%20world
 >           "timestamp": 1513299978,
 >           "by_whom ": "John Doe",
 >           "uid": "validation_status_approved",
+>           "color": "#00ff00",
 >           "label: "Approved"
 >       }
 
@@ -326,6 +327,7 @@ Payload
 >           "timestamp": 1513299978,
 >           "by_whom ": "John Doe",
 >           "uid": "validation_status_not_approved",
+>           "color": "#ff0000",
 >           "label": "Not Approved"
 >       }
 
