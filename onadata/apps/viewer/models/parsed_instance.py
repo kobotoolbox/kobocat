@@ -153,15 +153,7 @@ class ParsedInstance(models.Model):
         if start < 0 or limit < 0:
             raise ValueError(_("Invalid start/limit params"))
 
-        cursor.skip(start).limit(limit)
-        if type(sort) == dict and len(sort) == 1:
-            sort_key = sort.keys()[0]
-            # TODO: encode sort key if it has dots
-            sort_dir = int(sort[sort_key])  # -1 for desc, 1 for asc
-            cursor.sort(_encode_for_mongo(sort_key), sort_dir)
-        # set batch size
-        cursor.batch_size = cls.DEFAULT_BATCHSIZE
-        return cursor
+        return cls._get_paginated_and_sorted_cursor(cursor, start, limit, sort)
 
     @classmethod
     @apply_form_field_names
@@ -229,12 +221,38 @@ class ParsedInstance(models.Model):
         if limit > cls.DEFAULT_LIMIT:
             limit = cls.DEFAULT_LIMIT
 
+        return cls._get_paginated_and_sorted_cursor(cursor, start, limit, sort)
+
+
+    @classmethod
+    def _get_paginated_and_sorted_cursor(cls, cursor, start, limit, sort):
+        """
+        Applies pagination and sorting on mongo cursor.
+
+        :param mongo_cursor: pymongo.cursor.Cursor
+        :param start: integer
+        :param limit: integer
+        :param sort: dict
+        :return: pymongo.cursor.Cursor
+        """
         cursor.skip(start).limit(limit)
+
         if type(sort) == dict and len(sort) == 1:
             sort_key = sort.keys()[0]
-            # TODO: encode sort key if it has dots
             sort_dir = int(sort[sort_key])  # -1 for desc, 1 for asc
-            cursor.sort(_encode_for_mongo(sort_key), sort_dir)
+            # Mongo doesn't support keys with dot. We must use _encode_for_mongo to replace
+            # $ and . to their encoded counterparts.
+            # Because Mongo uses dots to represent nested JSON level, we use a home-syntax to make a difference
+            # between dotted names and nested JSON objects.
+            # Strings wrapped into curly brackets will be a nested JSON object otherwise will be a dotted name
+            if sort_key[0] == "{" and sort_key[-1] == "}":
+                sort_key_parts = [_encode_for_mongo(part) for part in sort_key[1:-1].split(".")]
+                encoded_sort_key = ".".join(sort_key_parts)
+            else:
+                encoded_sort_key = _encode_for_mongo(sort_key)
+
+            cursor.sort(encoded_sort_key, sort_dir)
+
         # set batch size
         cursor.batch_size = cls.DEFAULT_BATCHSIZE
         return cursor
