@@ -330,7 +330,7 @@ class Instance(models.Model):
         :return: The resulting hash.
         :rtype: str
         '''
-        return sha256(input_string.encode('UTF-8')).hexdigest()
+        return sha256(input_string).hexdigest()
 
     @property
     def point(self):
