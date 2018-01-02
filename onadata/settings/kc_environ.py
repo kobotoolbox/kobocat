@@ -145,6 +145,11 @@ if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
     if not os.path.isdir(EMAIL_FILE_PATH):
         os.mkdir(EMAIL_FILE_PATH)
 
+# Default value for the `UserProfile.require_auth` attribute
+REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
+        'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
+        'False') == 'True'
+
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
 if 'RAVEN_DSN' in os.environ:
