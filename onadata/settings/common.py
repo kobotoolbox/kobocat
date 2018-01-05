@@ -158,7 +158,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'readonly.context_processors.readonly',
     'onadata.apps.main.context_processors.google_analytics',
     'onadata.apps.main.context_processors.site_name',
-    'onadata.apps.main.context_processors.base_url'
+    'onadata.apps.main.context_processors.base_url',
+    'onadata.apps.main.context_processors.kobocat_root_uri_prefix'
 )
 
 MIDDLEWARE_CLASSES = (
