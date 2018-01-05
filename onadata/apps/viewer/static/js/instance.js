@@ -410,7 +410,7 @@ function reDraw(context, data, canEdit)
                 var n = notes[note];
                 notesHTML += '<tr><td>' + n['note'] + '</td><td>' + n['date_modified'] + '</td><td>'
                     + '<button  onclick="editNote(this)" data-instance="' + n["instance"] + '" data-note="' + n['note'] + '" data-note-id="' + n['id'] + '" type="button" id="edit_note_' + n["id"] + '" class="btn btn-small btn-primary" >' + gettext("Edit note") + '</button>'
-                    + '&nbsp;&nbsp;<i onclick="deleteNote(this)" data-instance="' + n["instance"] + '" data-note="' + n['note'] + '" data-note-id="' + n['id'] + '" class="remove-note icon-remove"></i>'
+                    + '&nbsp;&nbsp;<button onclick="deleteNote(this)" data-instance="' + n["instance"] + '" data-note="' + n['note'] + '" data-note-id="' + n['id'] + '" class="btn btn-small btn-danger">' + gettext("Delete") + '</button>'
                     + '</td></tr>';
             }
             var nHTML = notesHTML + '</table>';
