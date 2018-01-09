@@ -244,13 +244,11 @@ class ParsedInstance(models.Model):
             # $ and . to their encoded counterparts.
             # Because Mongo uses dots to represent nested JSON level, we use a home-syntax to make a difference
             # between keys with dots and nested JSON objects.
-            # Strings wrapped into curly brackets will be a nested JSON object otherwise will be a key with dots
-            if sort_key[0] == "{" and sort_key[-1] == "}":
-                sort_key_parts = [_encode_for_mongo(part) for part in sort_key[1:-1].split(".")]
-                encoded_sort_key = ".".join(sort_key_parts)
-            else:
-                encoded_sort_key = _encode_for_mongo(sort_key)
+            # Strings with double underscores will be a nested JSON object otherwise will be a key with dots
+            # my__string vs my.string
 
+            sort_key_parts = [_encode_for_mongo(part) for part in sort_key.split("__")]
+            encoded_sort_key = ".".join(sort_key_parts)
             cursor.sort(encoded_sort_key, sort_dir)
 
         # set batch size
