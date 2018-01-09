@@ -61,6 +61,13 @@ def dict_for_mongo(d):
         if _is_invalid_for_mongo(key):
             del d[key]
             d[_encode_for_mongo(key)] = value
+        # We want to restore nested objects. We don't want to replace keys which start or end with __
+        elif key.count("__") and not (key.startswith("__") or key.endswith("__")) > 0:
+            del d[key]
+            key_parts = [_encode_for_mongo(part) for part in key.split("__")]
+            new_key = ".".join(key_parts)
+            d[new_key] = value
+
     return d
 
 
@@ -196,7 +203,9 @@ class ParsedInstance(models.Model):
         # using the API when json.loads fails
         query = json.loads(
             query, object_hook=json_util.object_hook) if query else {}
+
         query = dict_for_mongo(query)
+
         if hide_deleted:
             # display only active elements
             # join existing query with deleted_at_query on an $and
