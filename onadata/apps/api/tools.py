@@ -429,25 +429,16 @@ def add_validation_status_to_instance(request, instance):
     :param instance: Instance object
     :return: Boolean
     """
-    validation_status_uid = request.data.get("validation_status_uid")
+    validation_status_uid = request.data.get("validation_status__uid")
     success = False
 
     # Payload must contain validation_status property.
     if validation_status_uid:
 
-        # Validate validation_status value It must belong to asset statuses.
-        available_statuses = {status.get("uid"): status
-                                for status in instance.asset.settings.get("validation_statuses")}
-
-        if validation_status_uid in available_statuses.keys():
-            available_status = available_statuses.get(validation_status_uid)
-            instance.validation_status = {
-                "timestamp": int(time.time()),
-                "uid": validation_status_uid,
-                "by_whom": request.user.username,
-                "color": available_status.get("color"),
-                "label": available_status.get("label")
-            }
+        validation_status = get_validation_status(
+            validation_status_uid,instance.asset, request.user.username)
+        if validation_status:
+            instance.validation_status = validation_status
             try:
                 instance.save()
                 instance.parsed_instance.update_mongo()
@@ -456,6 +447,26 @@ def add_validation_status_to_instance(request, instance):
                 logging.error("add_validation_status_to_instance: {}".format(str(e)))
 
     return success
+
+
+def get_validation_status(validation_status_uid, asset, username):
+    # Validate validation_status value It must belong to asset statuses.
+    available_statuses = {status.get("uid"): status
+                          for status in asset.settings.get("validation_statuses")}
+
+    validation_status = {}
+
+    if validation_status_uid in available_statuses.keys():
+        available_status = available_statuses.get(validation_status_uid)
+        validation_status = {
+            "timestamp": int(time.time()),
+            "uid": validation_status_uid,
+            "by_whom": username,
+            "color": available_status.get("color"),
+            "label": available_status.get("label")
+        }
+
+    return validation_status
 
 
 def get_media_file_response(metadata):
