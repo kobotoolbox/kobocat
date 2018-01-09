@@ -2,7 +2,7 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.views.generic import RedirectView
 
-from onadata.apps.api.urls import router
+from onadata.apps.api.urls import router, router_with_patch_list
 from onadata.apps.api.urls import XFormListApi
 from onadata.apps.api.urls import XFormSubmissionApi
 from onadata.apps.api.urls import BriefcaseApi
@@ -17,6 +17,7 @@ urlpatterns = patterns(
     # change Language
     (r'^i18n/', include('django.conf.urls.i18n')),
     url('^api/v1/', include(router.urls)),
+    url('^api/v1/', include(router_with_patch_list.urls)),
     url(r'^service_health/$',
         'onadata.apps.main.service_health.service_health'),
     url(r'^api-docs/', RedirectView.as_view(url='/api/v1/')),

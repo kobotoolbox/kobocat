@@ -608,3 +608,6 @@ Delete a specific submission in a form
             return res
 
         return custom_response_handler(request, xform, query, export_type)
+
+    def modify(self, request, *args, **kwargs):
+        return Response({}, status.HTTP_200_OK)
