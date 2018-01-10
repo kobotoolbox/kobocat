@@ -624,61 +624,71 @@ Delete a specific submission in a form
             userform_id = "{}_{}".format(owner.username, xform.id_string)
             query = {ParsedInstance.USERFORM_ID: userform_id}  # Query used for MongoDB
             filter_ = {"xform_id": xform.id}  # Filter for Django ORM
-            new_validation_status_uid = request.data.get("validation_status__uid")
+            payload = {}
 
-            if new_validation_status_uid is None:
+            try:
+                payload = json.loads(request.data.get("payload", {}))
+            except Exception as e:
                 http_status = status.HTTP_400_BAD_REQUEST
-                response = {"detail": _("No validation_status__uid provided")}
-            else:
-                # Create new validation_status object
-                new_validation_status = get_validation_status(
-                    new_validation_status_uid, xform, request.user.username)
+                response = {"detail": _("Invalid payload")}
 
-                # 3 scenarios to update submissions
+            if http_status == status.HTTP_200_OK:
 
-                # First scenario / Modify submissions based on user's query
-                if request.data.get("query"):
-                    # Validate if query is valid.
-                    try:
-                        query.update(request.data.get("query"))
-                    except ValueError:
-                        raise ParseError(_("Invalid query: %(query)s"
-                                           % {'query': json.dumps(request.data.get("query"))}))
+                new_validation_status_uid = payload.get("validation_status__uid")
 
-                    query_kwargs = {
-                        "query": json.dumps(query),
-                        "fields": '["_id"]',
-                        "sort": None
-                    }
-
-                    cursor = ParsedInstance.query_mongo_no_paging(**query_kwargs)
-                    submissions_ids = [record.get("_id") for record in list(cursor)]
-                    filter_.update({"id__in": submissions_ids})
-
-                # Second scenario / Modify submissions based on list of ids
-                elif request.data.get("submissions_ids"):
-                    try:
-                        # Use int() to test if list of integers is valid.
-                        submissions_ids = request.data.get("submissions_ids", [])
-                        or_ = {u"$or": [{u"_id": int(submission_id)} for submission_id in submissions_ids]}
-                        query.update(or_)
-                    except ValueError:
-                        raise ParseError(_("Invalid submissions ids: %(submissions_ids)s"
-                                           % {'submissions_ids': json.dumps(request.data.get("submissions_ids"))}))
-
-                    filter_.update({"id__in": submissions_ids})
-                # Third scenario / Modify all submissions in form, but confirmation param must be among payload
-                elif request.data.get("confirm", False) is not True:
+                if new_validation_status_uid is None:
                     http_status = status.HTTP_400_BAD_REQUEST
-                    response = {"detail": _("No confirmations provided")}
+                    response = {"detail": _("No validation_status__uid provided")}
+                else:
+                    # Create new validation_status object
+                    new_validation_status = get_validation_status(
+                        new_validation_status_uid, xform, request.user.username)
 
-                # If everything is OK, submit data to DBs
-                if http_status == status.HTTP_200_OK:
-                    # Update Postgres & Mongo
-                    updated_records_count = Instance.objects.\
-                        filter(**filter_).update(validation_status=new_validation_status)
-                    ParsedInstance.bulk_update_validation_statuses(query, new_validation_status)
-                    response = {"detail": _("{} submissions have been updated").format(updated_records_count)}
+                    # 3 scenarios to update submissions
+
+                    # First scenario / Modify submissions based on user's query
+                    if payload.get("query"):
+                        # Validate if query is valid.
+                        try:
+                            query.update(payload.get("query"))
+                        except ValueError:
+                            raise ParseError(_("Invalid query: %(query)s"
+                                               % {'query': json.dumps(payload.get("query"))}))
+
+                        query_kwargs = {
+                            "query": json.dumps(query),
+                            "fields": '["_id"]',
+                            "sort": None
+                        }
+
+                        cursor = ParsedInstance.query_mongo_no_paging(**query_kwargs)
+                        submissions_ids = [record.get("_id") for record in list(cursor)]
+                        filter_.update({"id__in": submissions_ids})
+
+                    # Second scenario / Modify submissions based on list of ids
+                    elif payload.get("submissions_ids"):
+                        try:
+                            # Use int() to test if list of integers is valid.
+                            submissions_ids = payload.get("submissions_ids", [])
+                            or_ = {u"$or": [{u"_id": int(submission_id)} for submission_id in submissions_ids]}
+                            query.update(or_)
+                        except ValueError:
+                            raise ParseError(_("Invalid submissions ids: %(submissions_ids)s"
+                                               % {'submissions_ids': json.dumps(payload.get("submissions_ids"))}))
+
+                        filter_.update({"id__in": submissions_ids})
+                    # Third scenario / Modify all submissions in form, but confirmation param must be among payload
+                    elif payload.get("confirm", False) is not True:
+                        http_status = status.HTTP_400_BAD_REQUEST
+                        response = {"detail": _("No confirmations provided")}
+
+                    # If everything is OK, submit data to DBs
+                    if http_status == status.HTTP_200_OK:
+                        # Update Postgres & Mongo
+                        updated_records_count = Instance.objects.\
+                            filter(**filter_).update(validation_status=new_validation_status)
+                        ParsedInstance.bulk_update_validation_statuses(query, new_validation_status)
+                        response = {"detail": _("{} submissions have been updated").format(updated_records_count)}
 
             return Response(response, http_status)
 
