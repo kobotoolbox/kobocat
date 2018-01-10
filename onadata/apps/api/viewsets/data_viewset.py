@@ -634,8 +634,7 @@ Delete a specific submission in a form
                 new_validation_status = get_validation_status(
                     new_validation_status_uid, xform, request.user.username)
 
-                # Trivial scenario, all xform submissions are modified.
-                # Two scenarios (described below) modify only specific submissions
+                # 3 scenarios to update submissions
 
                 # First scenario / Modify submissions based on user's query
                 if request.data.get("query"):
@@ -652,7 +651,7 @@ Delete a specific submission in a form
                         "sort": None
                     }
 
-                    cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
+                    cursor = ParsedInstance.query_mongo_no_paging(**query_kwargs)
                     submissions_ids = [record.get("_id") for record in list(cursor)]
                     filter_.update({"id__in": submissions_ids})
 
@@ -668,12 +667,18 @@ Delete a specific submission in a form
                                            % {'submissions_ids': json.dumps(request.data.get("submissions_ids"))}))
 
                     filter_.update({"id__in": submissions_ids})
+                # Third scenario / Modify all submissions in form, but confirmation param must be among payload
+                elif request.data.get("confirm", False) is not True:
+                    http_status = status.HTTP_400_BAD_REQUEST
+                    response = {"detail": _("No confirmations provided")}
 
-                # Update Postgres & Mongo
-                updated_records_count = Instance.objects.\
-                    filter(**filter_).update(validation_status=new_validation_status)
-                ParsedInstance.bulk_update_validation_statuses(query, new_validation_status)
-                response = {"detail": _("{} submissions have been updated").format(updated_records_count)}
+                # If everything is OK, submit data to DBs
+                if http_status == status.HTTP_200_OK:
+                    # Update Postgres & Mongo
+                    updated_records_count = Instance.objects.\
+                        filter(**filter_).update(validation_status=new_validation_status)
+                    ParsedInstance.bulk_update_validation_statuses(query, new_validation_status)
+                    response = {"detail": _("{} submissions have been updated").format(updated_records_count)}
 
             return Response(response, http_status)
 
