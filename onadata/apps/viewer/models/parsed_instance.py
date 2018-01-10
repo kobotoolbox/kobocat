@@ -175,12 +175,12 @@ class ParsedInstance(models.Model):
 
         cursor = cls._get_mongo_cursor(query, fields, hide_deleted)
 
+        if count:
+            return [{"count": cursor.count()}]
+
         if isinstance(sort, basestring):
             sort = json.loads(sort, object_hook=json_util.object_hook)
         sort = sort if sort else {}
-
-        if count:
-            return [{"count": cursor.count()}]
 
         if start < 0 or limit < 0:
             raise ValueError(_("Invalid start/limit params"))
@@ -203,7 +203,16 @@ class ParsedInstance(models.Model):
 
     @classmethod
     def _get_mongo_cursor(cls, query, fields, hide_deleted, username=None, id_string=None):
+        """
+        Returns a Mongo cursor based on the query.
 
+        :param query: JSON string
+        :param fields: Array string
+        :param hide_deleted: boolean
+        :param username: string
+        :param id_string: string
+        :return: pymongo Cursor
+        """
         fields_to_select = {cls.USERFORM_ID: 0}
         # TODO: give more detailed error messages to 3rd parties
         # using the API when json.loads fails
