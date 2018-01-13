@@ -32,6 +32,7 @@ from onadata.apps.main.models import UserProfile
 from onadata.apps.api import tools as utils
 from onadata.apps.api.permissions import XFormPermissions
 from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.models.backup import BackupXForm
 from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
 from onadata.apps.viewer.models.export import Export
 from onadata.libs.exceptions import NoRecordsFoundError, J2XException
@@ -904,4 +905,11 @@ data (instance/submission per row)
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
             status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['GET'])
+    def backup_versions(self, request, *args, **kwargs):
+        xform = self.get_object()
+        backups = BackupXForm.objects.form_backups(xform.id)
+        versions = map(lambda b: str(b.backup_version), list(backups))
+        return Response(data={'data': versions})
 

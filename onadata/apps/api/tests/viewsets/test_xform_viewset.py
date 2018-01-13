@@ -17,6 +17,7 @@ from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.logger.models import XForm
+from onadata.apps.logger.data_migration.backup_data import backup_xform
 from onadata.libs.permissions import (
     OwnerRole, ReadOnlyRole, ManagerRole, DataEntryRole, EditorRole)
 from onadata.libs.serializers.xform_serializer import XFormSerializer
@@ -668,3 +669,15 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = view(request, pk=self.xform.id)
         self.assertEqual(response.status_code, 400)
         self.assertIsNotNone(response.data.get('error'))
+
+    def test_getting_backup_versions(self):
+        backups = [backup_xform(self.form) for i in range(10)]
+        view = XFormViewSet.as_view({'get': 'backup_versions'})
+        request = self.factory.get('/', **self.extra)
+        response = view(request, pk=self.form.id)
+
+        self.assertEqual(
+            response.data,
+            {'data': map(lambda b: str(b.backup_version), list(backups))}
+        )
+
