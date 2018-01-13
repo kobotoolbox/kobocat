@@ -1,6 +1,10 @@
 from lxml import etree
 
 
+class MissingFieldException(Exception):
+    pass
+
+
 class SurveyTree(object):
     """
     Parse XForm Instance from xml string into tree.
@@ -41,11 +45,13 @@ class SurveyTree(object):
         for field in fields:
             if field.tag == name:
                 return field
+        raise MissingFieldException("Field name '{}' does not exist in survey tree".format(name))
 
     def create_element(self, field_name):
         return etree.XML('<{name}></{name}>'.format(name=field_name))
 
-    def remove_field(self, field_name):
+    def permanently_remove_field(self, field_name):
+        """WARNING: It is not possible to revert this operation"""
         field = self.get_field(field_name)
         field.getparent().remove(field)
 
@@ -54,6 +60,9 @@ class SurveyTree(object):
         field.tag = new_tag
 
     def add_field(self, field_name, text=''):
-        field = self.create_element(field_name)
-        field.text = text
-        self.root.append(field)
+        try:
+            self.get_field(field_name)
+        except MissingFieldException:
+            field = self.create_element(field_name)
+            field.text = text
+            self.root.append(field)

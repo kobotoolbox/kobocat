@@ -209,6 +209,17 @@ def abandon_xform_data_migration(request, username, old_id_string, new_id_string
 
 
 @is_owner
+def compare_xforms(request, username, id_string):
+    existing_xform = get_object_or_404(
+        XForm, user__username=username, id_string=id_string)
+
+    comparable_xform = QuickConverter(request.POST, request.FILES)
+    xform_comparator = XFormsComparator(existing_xform.xml, comparable_xform.xml)
+    comparison_results = xform_comparator.comparison_results()
+    return Response(comparison_results)
+
+
+@is_owner
 def pre_restore_backup(request, username, id_string):
     return render(request, 'pre_restore_backup.html', {
         'username': username,

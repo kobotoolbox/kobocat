@@ -53,17 +53,12 @@ class SurveyFieldsHandler(object):
 
     def alter_fields(self, survey_tree):
         self.add_fields(survey_tree, self.decisioner.new_fields)
-        self.remove_fields(survey_tree, self.decisioner.removed_fields)
         self.modify_fields(survey_tree, self.decisioner.modifications)
 
     def add_fields(self, survey_tree, new_fields):
         for field_to_add in new_fields:
             text = self.decisioner.get_prepopulate_text(field_to_add)
             survey_tree.add_field(field_to_add, text)
-
-    def remove_fields(self, survey_tree, removed):
-        for field_to_remove in removed:
-            survey_tree.remove_field(field_to_remove)
 
     def modify_fields(self, survey_tree, modifications):
         for prev_field, new_field in modifications.iteritems():

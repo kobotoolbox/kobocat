@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from onadata.apps.logger.models import Instance, XForm
+from onadata.apps.logger.models import Instance, XForm, BackupXForm
 from onadata.apps.viewer.models import ParsedInstance
 from onadata.apps.logger.data_migration.factories import data_migrator_factory
 
@@ -39,8 +39,8 @@ class MigrationTestCase(TestCase):
             instance=survey)
         return survey
 
-    def setup_data_migrator(self, xform, xform_new):
-        self.migration_decisions = self.get_migration_decisions()
+    def setup_data_migrator(self, xform, xform_new, decisions=None):
+        self.migration_decisions = decisions or self.get_migration_decisions()
         self.data_migrator = data_migrator_factory(xform, xform_new,
                                                    **self.migration_decisions)
 

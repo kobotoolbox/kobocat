@@ -18,7 +18,6 @@ class DataMigrationUnitTests(MigrationTestCase):
         expected = fixtures.FIELDS[:]
         expected.append('last_name')
         expected.append('birthday')
-        expected.remove('date')
         pos = expected.index('name')
         expected[pos] = 'first_name'
         self.assertEqual(survey_tree.get_fields_names(), expected)
@@ -53,6 +52,21 @@ class DataMigratorIntegrationTests(MigrationTestCase):
 
 
 class DataMigratorIntegrationSecondTestsCase(SecondMigrationTestCase):
+    def test_migration__second_case(self):
+        self.data_migrator.migrate()
+        self.xform.refresh_from_db()
+        self.xform_new.refresh_from_db()
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.xml,
+            fixtures.form_xml_case_2_after,
+        )
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.instances.first().xml,
+            fixtures.survey_2_after_migration,
+        )
+
+
+class DataMigratorIntegrationGroupsTestCase(SecondMigrationTestCase):
     def test_migration__second_case(self):
         self.data_migrator.migrate()
         self.xform.refresh_from_db()

@@ -3,7 +3,9 @@ from lxml import etree
 from django.test import TestCase
 
 from onadata.apps.logger.data_migration.xformtree import XFormTree
-from onadata.apps.logger.data_migration.surveytree import SurveyTree
+from onadata.apps.logger.data_migration.surveytree import (
+    SurveyTree, MissingFieldException
+)
 
 from . import fixtures
 
@@ -30,10 +32,10 @@ class XFormTreeOperationsTestCase(TestCase):
         )
 
     def test_get_fields(self):
-        expected1 = ['name',  'gender',  'photo',  'age',  'date',  'location']
+        expected1 = ['name', 'gender', 'photo', 'age', 'date', 'location']
         expected2 = [
             'first_name', 'last_name', 'birthday',
-            'gender',  'photo',  'age',  'location'
+            'gender', 'photo', 'age', 'location'
         ]
         self.assertEqual(
             (self.prev_tree.get_fields(), self.new_tree.get_fields()),
@@ -111,13 +113,17 @@ class SurveyTreeOperationsTest(TestCase):
         self.assertTrue(etree.iselement(self.survey.get_field('name')))
         self.assertTrue(etree.iselement(self.survey.get_field('photo')))
 
+    def test_get_field__no_such_field(self):
+        with self.assertRaises(MissingFieldException):
+            self.survey.get_field('i_am_sure_no_such_field_exist')
+
     def test_create_element(self):
         self.assertTrue(etree.iselement(self.survey.create_element('name')))
 
-    def test_remove_field(self):
+    def test_permanently_remove_field(self):
         expected = fixtures.FIELDS[:]
         expected.remove('name')
-        self.survey.remove_field('name')
+        self.survey.permanently_remove_field('name')
         self.assertEqual(self.survey.get_fields_names(), expected)
 
     def test_modify_field(self):
@@ -132,3 +138,7 @@ class SurveyTreeOperationsTest(TestCase):
         expected.append('opinion')
         self.survey.add_field('opinion')
         self.assertEqual(self.survey.get_fields_names(), expected)
+
+    def test_add_field__should_add_if_already_exist(self):
+        self.survey.add_field('name')
+        self.assertEqual(self.survey.get_fields_names(), fixtures.FIELDS[:])

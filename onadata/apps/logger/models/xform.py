@@ -25,6 +25,8 @@ from onadata.apps.logger.data_migration.xformtree import XFormTree
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
+from .version import VersionTree
+
 
 try:
     from formpack.utils.xls_to_ss_structure import xls_to_dicts
@@ -64,6 +66,8 @@ class XForm(BaseModel):
     downloadable = models.BooleanField(default=True)
     allows_sms = models.BooleanField(default=False)
     encrypted = models.BooleanField(default=False)
+
+    version_tree = models.ForeignKey(VersionTree, blank=True, null=True)
 
     # the following fields are filled in automatically
     sms_id_string = models.SlugField(
@@ -307,6 +311,10 @@ class XForm(BaseModel):
             return xlsform_io
         else:
             return None
+
+    @property
+    def latest_backup(self):
+        return self.version_tree.version
 
 
 def update_profile_num_submissions(sender, instance, **kwargs):

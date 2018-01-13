@@ -6,3 +6,4 @@ from onadata.apps.logger.xform_instance_parser import InstanceParseError
 from onadata.apps.logger.models.ziggy_instance import ZiggyInstance
 from onadata.apps.logger.models.note import Note
 from onadata.apps.logger.models.backup import BackupXForm, BackupInstance
+from onadata.apps.logger.models.version import VersionTree
