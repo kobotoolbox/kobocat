@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='validation_status',
-            field=jsonfield.fields.JSONField(default=dict),
+            field=jsonfield.fields.JSONField(default=None, null=True),
         ),
     ]

@@ -135,7 +135,7 @@ class Instance(models.Model):
 
     tags = TaggableManager()
 
-    validation_status = JSONField(null=False, default=dict)
+    validation_status = JSONField(null=True, default=None)
 
     class Meta:
         app_label = 'logger'
@@ -365,6 +365,11 @@ class Instance(models.Model):
         self._set_survey_type()
         self._set_uuid()
         self._populate_xml_hash()
+
+        # Force validation_status to be dict
+        if self.validation_status is None:
+            self.validation_status = {}
+
         super(Instance, self).save(*args, **kwargs)
 
     def set_deleted(self, deleted_at=timezone.now()):
