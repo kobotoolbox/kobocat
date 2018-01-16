@@ -657,8 +657,7 @@ Delete a specific submission in a form
 
                         query_kwargs = {
                             "query": json.dumps(query),
-                            "fields": '["_id"]',
-                            "sort": None
+                            "fields": '["_id"]'
                         }
 
                         cursor = ParsedInstance.query_mongo_no_paging(**query_kwargs)
