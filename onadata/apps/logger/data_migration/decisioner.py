@@ -129,3 +129,6 @@ class MigrationDecisioner(object):
                                                      decision_values)
             if decision_val and decision_val != self.NEW_FIELD
         }
+
+    def get_fields_groups(self):
+        return self.xforms_comparator.fields_groups()

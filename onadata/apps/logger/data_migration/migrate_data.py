@@ -36,6 +36,8 @@ class DataMigrator(object):
     def migrate_survey(self, survey):
         survey_tree = SurveyTree(survey)
         self.fields_handler.alter_fields(survey_tree)
+        # TODO: test group migration
+        self.fields_handler.migrate_groups(survey_tree)
         survey.xml = survey_tree.to_string()
         save_survey(survey)
 
@@ -49,6 +51,7 @@ class DataMigrator(object):
 class SurveyFieldsHandler(object):
     """Handle fields operations."""
     def __init__(self, migration_decisioner):
+        # FIXME: perhaps survey_tree should also be a class attribute
         self.decisioner = migration_decisioner
 
     def alter_fields(self, survey_tree):
@@ -63,3 +66,14 @@ class SurveyFieldsHandler(object):
     def modify_fields(self, survey_tree, modifications):
         for prev_field, new_field in modifications.iteritems():
             survey_tree.modify_field(prev_field, new_field)
+
+    def migrate_groups(self, survey_tree):
+        fields_groups = self.decisioner.get_fields_groups()
+        for field_name, groups in fields_groups.iteritems():
+            # TODO: migrate iff groups has changed
+            self._migrate_field_groups(survey_tree, field_name, groups)
+
+    def _migrate_field_groups(self, survey_tree, field_name, groups):
+        field = survey_tree.permanently_remove_field(field_name)
+        survey_tree.insert_field_into_group_chain(field)
+

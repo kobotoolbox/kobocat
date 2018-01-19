@@ -1,4 +1,7 @@
+from functools import reduce
+
 from .xformtree import XFormTree
+from .common import compose, merge_dicts
 
 
 class XFormsComparator(object):
@@ -75,6 +78,32 @@ class XFormsComparator(object):
             for key, val in prev_oblig.items()
             if key in new_oblig and val != new_oblig[key]
         }
+
+    def fields_groups(self):
+        """For each field return list of groups in which field is wrapped
+
+        :rtype: dict, format: {'field_name': ['group1', 'group2']}
+        """
+        fields_tree = self.new_tree.get_structured_fields_as_tree()
+        fields = self.new_tree.get_fields()
+        field_groups = lambda field: self.extract_groups(fields_tree, field)
+        merge_field = lambda state, field: merge_dicts(
+            state, {field: field_groups(field)})
+        return reduce(merge_field, fields, {})
+
+    @classmethod
+    def extract_groups(cls, tree, field):
+        return compose(
+            reversed,
+            cls.remove_root_element,
+            tree.extract_ancestors_labels,
+            tree.search_node_by_label,
+        )(field)
+
+    @staticmethod
+    def remove_root_element(list):
+        list.remove('root')
+        return list
 
     def pprint_dict(self, **data):
         result = ''

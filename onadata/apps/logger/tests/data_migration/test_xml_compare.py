@@ -73,3 +73,23 @@ class CompareXMLTestCase(TestCase):
             self.RealComparator.selects_diff(),
             ({'gender': ['unknown']}, {}),
         )
+
+
+class CompareXMLWithGroupsTestCase(TestCase):
+    def setUp(self):
+        self.comparator = XFormsComparator(
+            fixtures.form_xml_groups_before__second,
+            fixtures.form_xml_groups_after__second)
+
+    def test_fields_groups(self):
+        fields_groups = self.comparator.fields_groups()
+        self.assertEqual(
+            fields_groups, {
+                'isomorphism': ['group_transformations', 'bijective'],
+                'automorphism': ['group_transformations', 'bijective'],
+                'endomorphism': ['group_transformations'],
+                'math_degree': [],
+                'current_date': [],
+            }
+        )
+

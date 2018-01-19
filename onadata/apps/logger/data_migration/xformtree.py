@@ -1,5 +1,8 @@
 from lxml import etree
 
+from .tree import Tree
+from .common import concat_map, compose
+
 
 def encode_xml_to_ascii(xml):
     # Without proper encoding, lxml throws ValueError for Unicode string.
@@ -14,6 +17,8 @@ class XFormTree(object):
     xls forms: http://xlsform.org/
     w3c xforms: https://www.w3.org/MarkUp/Forms/#waXForms
     """
+    NOT_RELEVANT = ['formhub', 'meta']
+
     def __init__(self, xml):
         self.root = etree.XML(encode_xml_to_ascii(xml))
 
@@ -27,7 +32,8 @@ class XFormTree(object):
         return etree.tostring(self.root, pretty_print=pretty,
                               xml_declaration=True, encoding='utf-8')
 
-    def clean_tag(self, tag):
+    @staticmethod
+    def clean_tag(tag):
         """
         Remove w3 header that each tag contains.
         Example: '{http://www.w3.org/1999/xhtml}head'
@@ -64,17 +70,47 @@ class XFormTree(object):
         title = self.root[0][0]
         return title.text
 
+    @classmethod
+    def is_relevant(cls, tag):
+        return cls.clean_tag(tag) in cls.NOT_RELEVANT
+
+    @classmethod
+    def retrieve_leaf_elems(cls, element):
+        if cls.is_relevant(element.tag):
+            return []
+        if element.getchildren():
+            return concat_map(cls.retrieve_leaf_elems, element)
+        return [cls.clean_tag(element.tag)]
+
+    @classmethod
+    def is_group(cls, element):
+        return element.getchildren() and cls.is_relevant(element.tag)
+
     def get_fields(self):
-        """
-        Parse and return list of all fields in form.
-        Returns: list of fields.
+        """Parse and return list of all fields in form."""
+        instance = self.get_head_instance()
+        return self.retrieve_leaf_elems(instance)
+
+    def get_groups(self):
+        instance = self.get_head_instance()
+        return filter(self.is_group, instance)
+
+    def get_structured_fields(self):
+        """Return fields structured into groups.
+
+        Format: [field_1, field_2, {'group_name': [field_3, field_4]}, field_5]
         """
         instance = self.get_head_instance()
-        not_relevant = ['formhub', 'meta']
-        return [
-            self.clean_tag(field.tag) for field in instance
-            if self.clean_tag(field.tag) not in not_relevant
-        ]
+        return map(self.retrieve_fields, instance)
+
+    def get_structured_fields_as_tree(self):
+        return Tree.construct_tree(self.get_structured_fields())
+
+    @classmethod
+    def retrieve_fields(cls, element):
+        if cls.is_group(element):
+            return {cls.clean_tag(element), map(cls.retrieve_fields, element)}
+        return element
 
     def get_binds(self):
         head = self.get_head_content()
