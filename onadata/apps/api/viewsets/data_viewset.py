@@ -627,8 +627,8 @@ Delete a specific submission in a form
             payload = {}
 
             try:
-                payload = json.loads(request.data.get("payload", {}))
-            except Exception as e:
+                payload = json.loads(request.data.get("payload", "{}"))
+            except ValueError:
                 http_status = status.HTTP_400_BAD_REQUEST
                 response = {"detail": _("Invalid payload")}
 
