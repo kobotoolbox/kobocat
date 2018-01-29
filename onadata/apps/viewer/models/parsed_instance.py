@@ -62,7 +62,7 @@ def dict_for_mongo(d):
             del d[key]
             d[_encode_for_mongo(key)] = value
         # We want to restore nested objects. We don't want to replace keys which start or end with __
-        elif key.count("__") and not (key.startswith("__") or key.endswith("__")) > 0:
+        elif key.count("__") and not (key.startswith("__") or key.endswith("__")):
             del d[key]
             key_parts = [_encode_for_mongo(part) for part in key.split("__")]
             new_key = ".".join(key_parts)
