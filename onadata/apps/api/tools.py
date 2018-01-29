@@ -439,12 +439,9 @@ def add_validation_status_to_instance(request, instance):
             validation_status_uid,instance.asset, request.user.username)
         if validation_status:
             instance.validation_status = validation_status
-            try:
-                instance.save()
-                instance.parsed_instance.update_mongo()
-                success = True
-            except Exception as e:
-                logging.error("add_validation_status_to_instance: {}".format(str(e)))
+            instance.save()
+            instance.parsed_instance.update_mongo()
+            success = True
 
     return success
 
