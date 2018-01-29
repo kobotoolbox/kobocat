@@ -35,7 +35,8 @@ class XFormPermissions(DjangoObjectPermissions):
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['HEAD'] = ['%(app_label)s.view_%(model_name)s']
-        self.perms_map['PATCH'] = ['%(app_label)s.view_%(model_name)s']
+        self.perms_map['PATCH'] = ['%(app_label)s.change_%(model_name)s']
+
         return super(XFormPermissions, self).__init__(*args, **kwargs)
 
     def has_permission(self, request, view):
