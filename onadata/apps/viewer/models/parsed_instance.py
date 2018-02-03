@@ -1,5 +1,6 @@
 import base64
 import datetime
+from importlib import import_module
 import json
 import logging
 import re
@@ -12,6 +13,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext as _
 
+
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
@@ -21,6 +23,8 @@ from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 
+# Needed to retrieve all variables in this file
+common_tags_module = import_module("onadata.libs.utils.common_tags")
 
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
@@ -44,29 +48,44 @@ def datetime_from_str(text):
         return None
     return dt
 
-
-def dict_for_mongo(d):
+def dict_for_mongo(d, reading=False):
     for key, value in list(d.items()):
         if type(value) == list:
-            value = [dict_for_mongo(e)
+            value = [dict_for_mongo(e, reading=reading)
                      if type(e) == dict else e for e in value]
         elif type(value) == dict:
-            value = dict_for_mongo(value)
+            value = dict_for_mongo(value, reading=reading)
         elif key == '_id':
             try:
                 d[key] = int(value)
             except ValueError:
                 # if it is not an int don't convert it
                 pass
-        if _is_invalid_for_mongo(key):
+
+        if _is_nested_reserved_property(key):
+            # If we want to write into Mongo, we need to transform the dot delimited string into a dict
+            # Otherwise, for reading, Mongo query engine reads dot delimited string as a nested object.
+            # Drawback, if a user uses a reserved property with dots, it will be converted as well.
+            if not reading and key.count(".") > 0:
+                tree = {}
+                t = tree
+                parts = key.split(".")
+                for part in parts:
+                    v = value if part == parts[-1] else {}
+                    t = t.setdefault(part, v)
+                del d[key]
+                first_part = parts[0]
+                if first_part not in d:
+                    d[first_part] = {}
+
+                # We update the main dict with new dict.
+                # We use dict_for_mongo again on the dict to ensure, no invalid characters are children
+                # elements
+                d[first_part].update(dict_for_mongo(tree[first_part]))
+
+        elif _is_invalid_for_mongo(key):
             del d[key]
             d[_encode_for_mongo(key)] = value
-        # We want to restore nested objects. We don't want to replace keys which start or end with __
-        elif key.count("__") and not (key.startswith("__") or key.endswith("__")):
-            del d[key]
-            key_parts = [_encode_for_mongo(part) for part in key.split("__")]
-            new_key = ".".join(key_parts)
-            d[new_key] = value
 
     return d
 
@@ -81,6 +100,23 @@ def _decode_from_mongo(key):
     re_dot = re.compile(r"\%s" % base64.b64encode("."))
     return reduce(lambda s, c: c[0].sub(c[1], s),
                   [(re_dollar, '$'), (re_dot, '.')], key)
+
+
+def _is_nested_reserved_property(k):
+    """
+    Checks if key starts with one of variables values declared in onadata.libs.utils.common_tags
+
+    :param k: string
+    :return: boolean
+    """
+    # Can't declare this globally cause of circular imports.
+    reserved_properties = [property for property in dir(common_tags_module)
+                           if not (property.startswith("__") and property.endswith("__"))]
+
+    for reserved_property in reserved_properties:
+        if k.startswith(u"{}.".format(getattr(common_tags_module, reserved_property))):
+            return True
+    return False
 
 
 def _is_invalid_for_mongo(key):
@@ -219,7 +255,7 @@ class ParsedInstance(models.Model):
         if isinstance(query, basestring):
             query = json.loads(query, object_hook=json_util.object_hook)
         query = query if query else {}
-        query = dict_for_mongo(query)
+        query = dict_for_mongo(query, reading=True)
 
         if username and id_string:
             query[cls.USERFORM_ID] = u'%s_%s' % (username, id_string)
