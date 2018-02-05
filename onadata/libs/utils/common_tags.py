@@ -61,3 +61,9 @@ MAX = u"max"
 RANGE = u"range"
 MEDIAN = u"median"
 MODE = u"mode"
+
+
+# List of nested properties which bypass 'dots' encoding
+NESTED_RESERVED_PROPERTIES = [
+    VALIDATION_STATUS,
+]
