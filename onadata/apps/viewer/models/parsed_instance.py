@@ -1,6 +1,5 @@
 import base64
 import datetime
-from importlib import import_module
 import json
 import logging
 import re
@@ -19,17 +18,15 @@ from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
 from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
     SUBMISSION_TIME, MONGO_STRFTIME, BAMBOO_DATASET_ID, DELETEDAT, TAGS,\
-    NOTES, SUBMITTED_BY, VALIDATION_STATUS
+    NOTES, SUBMITTED_BY, VALIDATION_STATUS, NESTED_RESERVED_PROPERTIES
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
-
-# Needed to retrieve all variables in this file
-common_tags_module = import_module("onadata.libs.utils.common_tags")
 
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
 key_whitelist = ['$or', '$and', '$exists', '$in', '$gt', '$gte',
                  '$lt', '$lte', '$regex', '$options', '$all']
+
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
@@ -109,12 +106,8 @@ def _is_nested_reserved_property(k):
     :param k: string
     :return: boolean
     """
-    # Can't declare this globally cause of circular imports.
-    reserved_properties = [property for property in dir(common_tags_module)
-                           if not (property.startswith("__") and property.endswith("__"))]
-
-    for reserved_property in reserved_properties:
-        if k.startswith(u"{}.".format(getattr(common_tags_module, reserved_property))):
+    for reserved_property in NESTED_RESERVED_PROPERTIES:
+        if k.startswith(u"{}.".format(reserved_property)):
             return True
     return False
 

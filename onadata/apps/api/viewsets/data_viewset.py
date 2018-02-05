@@ -634,11 +634,11 @@ Delete a specific submission in a form
 
             if http_status == status.HTTP_200_OK:
 
-                new_validation_status_uid = payload.get("validation_status__uid")
+                new_validation_status_uid = payload.get("validation_status.uid")
 
                 if new_validation_status_uid is None:
                     http_status = status.HTTP_400_BAD_REQUEST
-                    response = {"detail": _("No validation_status__uid provided")}
+                    response = {"detail": _("No validation_status.uid provided")}
                 else:
                     # Create new validation_status object
                     new_validation_status = get_validation_status(

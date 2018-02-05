@@ -429,7 +429,7 @@ def add_validation_status_to_instance(request, instance):
     :param instance: Instance object
     :return: Boolean
     """
-    validation_status_uid = request.data.get("validation_status__uid")
+    validation_status_uid = request.data.get("validation_status.uid")
     success = False
 
     # Payload must contain validation_status property.
