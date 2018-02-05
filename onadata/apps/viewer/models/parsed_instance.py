@@ -12,7 +12,6 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete
 from django.utils.translation import ugettext as _
 
-
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
@@ -22,11 +21,11 @@ from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 
+
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
 key_whitelist = ['$or', '$and', '$exists', '$in', '$gt', '$gte',
                  '$lt', '$lte', '$regex', '$options', '$all']
-
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 
@@ -101,7 +100,7 @@ def _decode_from_mongo(key):
 
 def _is_nested_reserved_property(k):
     """
-    Checks if key starts with one of variables values declared in onadata.libs.utils.common_tags
+    Checks if key starts with one of variables values declared in NESTED_RESERVED_PROPERTIES
 
     :param k: string
     :return: boolean
