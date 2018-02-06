@@ -4,8 +4,7 @@ import json
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.views import api
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance, \
-    _encode_for_mongo, _decode_from_mongo
+from onadata.apps.api.mongo_helper import MongoHelper
 from test_base import TestBase
 
 
@@ -125,12 +124,12 @@ class TestFormAPI(TestBase):
 
     def test_api_decode_from_mongo(self):
         field = "$section1.group01.question1"
-        encoded = _encode_for_mongo(field)
+        encoded = MongoHelper.encode(field)
         self.assertEqual(encoded, (
             "%(dollar)ssection1%(dot)sgroup01%(dot)squestion1" % {
                 "dollar": base64.b64encode("$"),
                 "dot": base64.b64encode(".")}))
-        decoded = _decode_from_mongo(encoded)
+        decoded = MongoHelper.decode(encoded)
         self.assertEqual(field, decoded)
 
     def test_api_with_or_query(self):

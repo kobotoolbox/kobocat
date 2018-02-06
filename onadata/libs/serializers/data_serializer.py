@@ -6,6 +6,7 @@ from rest_framework.exceptions import ParseError
 
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.api.mongo_helper import MongoHelper
 
 
 class DataSerializer(serializers.HyperlinkedModelSerializer):
@@ -61,7 +62,10 @@ class DataListSerializer(serializers.Serializer):
 
         # if we want the count, we only need the first index of the list.
         casted_cursor = list(cursor)
-        return casted_cursor[0] if count else casted_cursor
+        if count:
+            return casted_cursor[0]
+        else:
+            return [MongoHelper.to_readable_dict(record) for record in casted_cursor]
 
 
 class DataInstanceSerializer(serializers.Serializer):
@@ -84,7 +88,8 @@ class DataInstanceSerializer(serializers.Serializer):
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
         records = list(record for record in cursor)
 
-        return (len(records) and records[0]) or records
+        returned_dict = (len(records) and records[0]) or records
+        return MongoHelper.to_readable_dict(returned_dict)
 
 
 class SubmissionSerializer(serializers.Serializer):
