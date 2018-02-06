@@ -63,7 +63,7 @@ MEDIAN = u"median"
 MODE = u"mode"
 
 
-# List of nested properties which bypass 'dots' encoding
-NESTED_RESERVED_PROPERTIES = [
+# List of nested attributes which bypass 'dots' encoding
+NESTED_RESERVED_ATTRIBUTES = [
     VALIDATION_STATUS,
 ]
