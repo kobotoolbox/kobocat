@@ -516,6 +516,7 @@ def _set_xform_permission(role, user, xform):
     if role_class:
         role_class.add(user, xform)
 
+
 def get_view_name(view_cls, suffix=None):
     ''' Override Django REST framework's name for the base API class '''
     # The base API class should inherit directly from APIView. We can't use
@@ -526,6 +527,7 @@ def get_view_name(view_cls, suffix=None):
     except KeyError:
         pass
     return rest_framework_views.get_view_name(view_cls, suffix)
+
 
 def get_view_description(view_cls, html=False):
     ''' Replace example.com in Django REST framework's default API description
