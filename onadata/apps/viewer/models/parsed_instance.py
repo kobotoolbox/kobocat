@@ -66,8 +66,9 @@ def dict_for_mongo(d, reading=False):
                 tree = {}
                 t = tree
                 parts = key.split(".")
-                for part in parts:
-                    v = value if part == parts[-1] else {}
+                last_index = len(parts) - 1
+                for index, part in enumerate(parts):
+                    v = value if index == last_index else {}
                     t = t.setdefault(part, v)
                 del d[key]
                 first_part = parts[0]
