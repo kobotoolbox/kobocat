@@ -116,6 +116,10 @@ KPI_URL = os.environ.get('KPI_URL', False)
 # specifically for site urls sent to enketo for form retrieval
 ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 
+# Default value for the `UserProfile.require_auth` attribute. Even though it's
+# set in kc_environ, include it here as well to support legacy installations
+REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = False
+
 # Login URLs
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
