@@ -343,6 +343,8 @@ class Instance(models.Model):
         :return: The resulting hash.
         :rtype: str
         '''
+        if isinstance(input_string, unicode):
+            input_string = input_string.encode('utf-8')
         return sha256(input_string).hexdigest()
 
     @property
