@@ -78,7 +78,7 @@ class MongoHelper(object):
                     # elements
                     d[first_part].update(cls.to_safe_dict(tree[first_part]))
 
-            elif cls._is_attribute_encoded(key):
+            elif cls.is_attribute_invalid(key):
                 del d[key]
                 d[cls.encode(key)] = value
 
