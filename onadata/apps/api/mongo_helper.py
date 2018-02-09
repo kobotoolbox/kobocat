@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import base64
 
 from onadata.libs.utils.common_tags import NESTED_RESERVED_ATTRIBUTES
 
@@ -8,6 +9,14 @@ class MongoHelper(object):
 
     KEY_WHITELIST = ['$or', '$and', '$exists', '$in', '$gt', '$gte',
                      '$lt', '$lte', '$regex', '$options', '$all']
+    ENCODING_SUBSTITUTIONS = [
+        (re.compile(r'^\$'), base64.encodestring('$').strip()),
+        (re.compile(r'\.'), base64.encodestring('.').strip()),
+    ]
+    DECODING_SUBSTITUTIONS = [
+        (re.compile(r'^' + base64.encodestring('$').strip()), '$'),
+        (re.compile(base64.encodestring('.').strip()), '.'),
+    ]
 
     @classmethod
     def to_readable_dict(cls, d):
@@ -109,32 +118,30 @@ class MongoHelper(object):
 
         return d
 
-    @staticmethod
-    def encode(key):
+    @classmethod
+    def encode(cls, key):
         """
-        Replace `$` at the beginning of `key` and `.` anywhere in `key` with
-        their base64-encoded representations: `JA==` and `Lg==`
+        Replace characters not allowed in Mongo keys with their base64-encoded
+        representations
 
         :param key: string
         :return: string
         """
-        if key.startswith('$'):
-            key = key.replace('$', 'JA==', 1)
-        key = key.replace('.', 'Lg==')
+        for pattern, repl in cls.ENCODING_SUBSTITUTIONS:
+            key = re.sub(pattern, repl, key)
         return key
 
-    @staticmethod
-    def decode(key):
+    @classmethod
+    def decode(cls, key):
         """
-        Replace `JA==` at the beginning of `key` and `Lg==` anywhere in `key`
-        with their base64-decoded representations: `$` and `.`
+        Replace base64-encoded characters not allowed in Mongo keys with their
+        original representations
 
         :param key: string
         :return: string
         """
-        if key.startswith('JA=='):
-            key = key.replace('JA==', '$', 1)
-        key = key.replace('Lg==', '.')
+        for pattern, repl in cls.DECODING_SUBSTITUTIONS:
+            key = re.sub(pattern, repl, key)
         return key
 
     @classmethod
