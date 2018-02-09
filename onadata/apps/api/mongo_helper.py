@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import base64
 import re
 
 from onadata.libs.utils.common_tags import NESTED_RESERVED_ATTRIBUTES
@@ -37,11 +36,37 @@ class MongoHelper(object):
     @classmethod
     def to_safe_dict(cls, d, reading=False):
         """
-        Updates invalid attributes of a dict with encoded 'mongo compliant' attributes.
+        Updates invalid attributes of a dict by encoding disallowed characters
+        and, when `reading=False`, expanding dotted keys into nested dicts for
+        `NESTED_RESERVED_ATTRIBUTES`
 
         :param d: dict
         :param reading: boolean.
         :return: dict
+
+        Example:
+
+            >>> d = {
+                    '_validation_status.other.nested': 'lorem',
+                    '_validation_status.uid': 'approved',
+                    'my.string.with.dots': 'yes'
+                }
+            >>> MongoHelper.to_safe_dict(d)
+                {
+                    'myLg==stringLg==withLg==dots': 'yes',
+                    '_validation_status': {
+                        'other': {
+                            'nested': 'lorem'
+                        },
+                        'uid': 'approved'
+                    }
+                }
+            >>> MongoHelper.to_safe_dict(d, reading=True)
+                {
+                    'myLg==stringLg==withLg==dots': 'yes',
+                    '_validation_status.other.nested': 'lorem',
+                    '_validation_status.uid': 'approved'
+                }
         """
         for key, value in list(d.items()):
             if type(value) == list:
@@ -87,24 +112,30 @@ class MongoHelper(object):
     @staticmethod
     def encode(key):
         """
-        Encodes invalid characters of an attribute
+        Replace `$` at the beginning of `key` and `.` anywhere in `key` with
+        their base64-encoded representations: `JA==` and `Lg==`
+
         :param key: string
         :return: string
         """
-        return reduce(lambda s, c: re.sub(c[0], base64.b64encode(c[1]), s),
-                      [(r'^\$', '$'), (r'\.', '.')], key)
+        if key.startswith('$'):
+            key = key.replace('$', 'JA==', 1)
+        key = key.replace('.', 'Lg==')
+        return key
 
     @staticmethod
     def decode(key):
         """
-        Decodes invalid characters of an attribute
+        Replace `JA==` at the beginning of `key` and `Lg==` anywhere in `key`
+        with their base64-decoded representations: `$` and `.`
+
         :param key: string
         :return: string
         """
-        re_dollar = re.compile(r"^%s" % base64.b64encode("$"))
-        re_dot = re.compile(r"\%s" % base64.b64encode("."))
-        return reduce(lambda s, c: c[0].sub(c[1], s),
-                      [(re_dollar, '$'), (re_dot, '.')], key)
+        if key.startswith('JA=='):
+            key = key.replace('JA==', '$', 1)
+        key = key.replace('Lg==', '.')
+        return key
 
     @classmethod
     def is_attribute_invalid(cls, key):
@@ -124,8 +155,12 @@ class MongoHelper(object):
         :param key: string
         :return: string
         """
-        return key not in \
-               cls.KEY_WHITELIST and (key.startswith(base64.b64encode("$")) or key.count(base64.b64encode(".")) > 0)
+        return (
+            key not in cls.KEY_WHITELIST and (
+                key.startswith('JA==') or
+                    key.count('Lg==') > 0
+            )
+        )
 
     @staticmethod
     def _is_nested_reserved_attribute(key):
