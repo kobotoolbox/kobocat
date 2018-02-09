@@ -61,11 +61,10 @@ class DataListSerializer(serializers.Serializer):
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
 
         # if we want the count, we only need the first index of the list.
-        casted_cursor = list(cursor)
         if count:
-            return casted_cursor[0]
+            return cursor[0]
         else:
-            return [MongoHelper.to_readable_dict(record) for record in casted_cursor]
+            return [MongoHelper.to_readable_dict(record) for record in cursor]
 
 
 class DataInstanceSerializer(serializers.Serializer):

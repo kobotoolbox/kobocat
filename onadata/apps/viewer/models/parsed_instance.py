@@ -212,20 +212,10 @@ class ParsedInstance(models.Model):
         cursor.skip(start).limit(limit)
 
         if type(sort) == dict and len(sort) == 1:
+            sort = MongoHelper.to_safe_dict(sort, reading=True)
             sort_key = sort.keys()[0]
             sort_dir = int(sort[sort_key])  # -1 for desc, 1 for asc
-
-            # Mongo doesn't support keys with dot. We must use _encode_for_mongo to replace
-            # $ and . to their encoded counterparts.
-            # Because Mongo uses dots to represent nested JSON level, we use a home-syntax to make a difference
-            # between keys with dots and nested JSON objects.
-            # Strings with double underscores will be a nested JSON object otherwise will be a key with dots
-            # my__string vs my.string
-
-            #TODO to fix. Review this. '__' is not used anymore
-            sort_key_parts = [MongoHelper.encode(part) for part in sort_key.split("__")]
-            encoded_sort_key = ".".join(sort_key_parts)
-            cursor.sort(encoded_sort_key, sort_dir)
+            cursor.sort(sort_key, sort_dir)
 
         # set batch size
         cursor.batch_size = cls.DEFAULT_BATCHSIZE
