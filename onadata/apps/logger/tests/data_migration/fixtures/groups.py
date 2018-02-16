@@ -1,10 +1,15 @@
+GROUPS_FIELDS_AFTER = [
+    'start', 'end', 'math_degree', 'current_date', 'group_transformations',
+    'bijective', 'isomorphism', 'automorphism', 'endomorphism',
+]
+
 form_xml_groups_before = """<?xml version="1.0"?>
 <h:html xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <h:head>
     <h:title>Test groups</h:title>
     <model>
       <instance>
-        <data id="snapshot_xml">
+        <data id="groups">
           <start/>
           <end/>
           <homomorphism/>
@@ -33,7 +38,7 @@ form_xml_groups_after = """<?xml version="1.0"?>
     <h:title>Test groups</h:title>
     <model>
       <instance>
-        <data id="snapshot_xml">
+        <data id="groups2">
           <start/>
           <end/>
           <group_transformations>
@@ -66,9 +71,12 @@ survey_xml_groups_before = """
   <formhub>
     <uuid>30760c2faa6c498a83f0c6a7ff761f83</uuid>
   </formhub>
+  
   <start>2017-11-10T17:57:48.000+01:00</start>
   <end>2017-11-10T18:00:02.000+01:00</end>
+  
   <homomorphism>identity</homomorphism>
+  
   <__version__>vaEytJG3RWgRJMAuCnKWtC</__version__>
   <meta>
     <instanceID>uuid:ec5f2a1c-1cbd-49ac-8ab7-8be1ba33c14f</instanceID>
@@ -77,19 +85,23 @@ survey_xml_groups_before = """
 """
 
 survey_xml_groups_after = """
-<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vkvzz5RQzsTvnNJvsQdJ4R">
+<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vaEytJG3RWgRJMAuCnKWtC">
   <formhub>
-    <uuid>66c4d258f30e40cf91348688b5b88dc6</uuid>
+    <uuid>30760c2faa6c498a83f0c6a7ff761f83</uuid>
   </formhub>
-  <start>2017-11-10T17:47:11.000+01:00</start>
-  <end>2017-11-10T17:47:49.000+01:00</end>
-  <group_transformations>
-    <homomorphism>identity</homomorphism>
-  </group_transformations>
+  
+  <start>2017-11-10T17:57:48.000+01:00</start>
+  <end>2017-11-10T18:00:02.000+01:00</end>
+  
   <__version__>vaEytJG3RWgRJMAuCnKWtC</__version__>
   <meta>
     <instanceID>uuid:ec5f2a1c-1cbd-49ac-8ab7-8be1ba33c14f</instanceID>
   </meta>
+
+  <group_transformations>
+    <homomorphism>identity</homomorphism>
+  </group_transformations>
+  
 </TestGroup>
 """
 
@@ -99,7 +111,7 @@ form_xml_groups_before__second = """<?xml version="1.0"?>
     <h:title>Test groups</h:title>
     <model>
       <instance>
-        <data id="snapshot_xml">
+        <data id="AlgebraicTypes">
           <start/>
           <end/>
           <isomorphism/>
@@ -146,7 +158,7 @@ form_xml_groups_after__second = """<?xml version="1.0"?>
     <h:title>Test groups</h:title>
     <model>
       <instance>
-        <data id="snapshot_xml">
+        <data id="AlgebraicTypes2">
           <start/>
           <end/>
           <group_transformations>
@@ -168,7 +180,7 @@ form_xml_groups_after__second = """<?xml version="1.0"?>
       <bind nodeset="/data/group_transformations/homomorphism" required="false()" type="string"/>
       <bind nodeset="/data/group_transformations/isomorphism" required="false()" type="string"/>
       <bind nodeset="/data/group_transformations/endomorphism" required="false()" type="string"/>
-      <bind nodeset="/data/math_degree" required="false()" type="number"/>
+      <bind nodeset="/data/math_degree" required="false()" type="string"/>
       <bind nodeset="/data/current_date" required="false()" type="dateTime"/>
       <bind calculate="concat('uuid:', uuid())" nodeset="/data/meta/instanceID" readonly="true()" type="string"/>
     </model>
@@ -191,7 +203,7 @@ form_xml_groups_after__second = """<?xml version="1.0"?>
 """
 
 survey_xml_groups_before__second = """
-<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vaEytJG3RWgRJMAuCnKWtC">
+<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vkvxz56QzsTUnnJvSQDj4R">
   <formhub>
     <uuid>30760c2faa6c498a83f0c6a7ff761f83</uuid>
   </formhub>
@@ -212,28 +224,28 @@ survey_xml_groups_before__second = """
 """
 
 survey_xml_groups_after__second = """
-<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vkvzz5RQzsTvnNJvsQdJ4R">
+<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vkvxz56QzsTUnnJvSQDj4R">
   <formhub>
-    <uuid>66c4d258f30e40cf91348688b5b88dc6</uuid>
+    <uuid>30760c2faa6c498a83f0c6a7ff761f83</uuid>
   </formhub>
-  <start>2017-11-10T17:47:11.000+01:00</start>
-  <end>2017-11-10T17:47:49.000+01:00</end>
+  <start>2017-11-10T17:57:48.000+01:00</start>
+  <end>2017-11-10T18:00:02.000+01:00</end>
   
   <math_degree>Ph.D</math_degree>
   <current_date>3.11.1971</current_date>
- 
-  <group_transformations>
-    <bijective>
-        <isomorphism>canonical</isomorphism>
-        <automorphism>id</automorphism>
-    </bijective>
-    <endomorphism>f: G -> G</endomorphism>
-  </group_transformations>
-  
+
   <__version__>vaEytJG3RWgRJMAuCnKWtC</__version__>
   <meta>
     <instanceID>uuid:ec5f2a1c-1cbd-49ac-8ab7-8be1ba33c14f</instanceID>
   </meta>
+
+  <group_transformations>
+    <endomorphism>f: G -&gt; G</endomorphism>
+    <bijective>
+        <isomorphism>canonical</isomorphism>
+        <automorphism>id</automorphism>
+    </bijective>
+  </group_transformations>
+ 
 </TestGroup>
 """
-

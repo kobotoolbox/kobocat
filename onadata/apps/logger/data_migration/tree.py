@@ -9,16 +9,15 @@ class Tree(object):
             self.add_child(child)
 
     def __repr__(self):
-        return self.label
+        return "Tree label: {}, children: {}".format(self.label, self.children)
 
     def add_child(self, node):
         assert isinstance(node, Tree)
         self.children.append(node)
 
     def find_child_by_label(self, label):
-        return next(
-            [child for child in self.children if child.label == label], None
-        )
+        results = [child for child in self.children if child.label == label]
+        return next(iter(results), None)
 
     def get_child_attribs(self, attrib):
         rev_getattr = lambda obj: getattr(obj, attrib)
@@ -41,9 +40,11 @@ class Tree(object):
                 return child_search
         return None
 
-    def extract_ancestors_labels(self):
+    @staticmethod
+    def extract_ancestors_labels(node):
+        """Return a list of ancestors labels"""
         labels = []
-        current_parent = self.parent
+        current_parent = node.parent
         while current_parent is not None:
             labels.append(current_parent.label)
             current_parent = current_parent.parent
@@ -65,22 +66,22 @@ class Tree(object):
         :rtype: Tree
         """
         root = root or Tree()
-        cls.construct_children(root, iterable)
+        cls._construct_children(root, iterable)
         return root
 
     @classmethod
-    def construct_children(cls, root, children):
+    def _construct_children(cls, root, children):
         for child in children:
-            cls._construct_child(root, child)
+            node = cls._construct_child(root, child)
+            root.add_child(node)
 
     @classmethod
     def _construct_child(cls, root, elem):
-        node_label, node_children = elem.iteritems()[0]
-        node = (cls._construct_node_with_children(root, node_label,
-                                                  node_children)
-                if type(elem) == dict
-                else Tree(label=elem, parent=root))
-        root.add_child(node)
+        if type(elem) == dict:
+            node_label, node_children = next(elem.iteritems())
+            return cls._construct_node_with_children(root, node_label,
+                                                     node_children)
+        return Tree(label=elem, parent=root)
 
     @classmethod
     def _construct_node_with_children(cls, root, root_label, children):

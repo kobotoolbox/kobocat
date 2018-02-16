@@ -79,26 +79,35 @@ class XFormsComparator(object):
             if key in new_oblig and val != new_oblig[key]
         }
 
-    def fields_groups(self):
+    @classmethod
+    def _fields_groups(cls, tree):
         """For each field return list of groups in which field is wrapped
 
         :rtype: dict, format: {'field_name': ['group1', 'group2']}
         """
-        fields_tree = self.new_tree.get_structured_fields_as_tree()
-        fields = self.new_tree.get_fields()
-        field_groups = lambda field: self.extract_groups(fields_tree, field)
+        fields_tree = tree.get_structured_fields_as_tree()
+        field_groups = lambda field: cls.extract_groups(fields_tree, field)
         merge_field = lambda state, field: merge_dicts(
             state, {field: field_groups(field)})
+        fields = tree.get_fields()
         return reduce(merge_field, fields, {})
 
+    def fields_groups_prev(self):
+        return self._fields_groups(self.prev_tree)
+
+    def fields_groups_new(self):
+        return self._fields_groups(self.new_tree)
+
     @classmethod
-    def extract_groups(cls, tree, field):
+    def extract_groups(cls, tree, field_label):
+        """Get a list of groups in which :field: is wrapped in given :tree:"""
         return compose(
+            list,
             reversed,
             cls.remove_root_element,
             tree.extract_ancestors_labels,
             tree.search_node_by_label,
-        )(field)
+        )(field_label)
 
     @staticmethod
     def remove_root_element(list):

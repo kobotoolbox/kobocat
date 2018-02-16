@@ -2,11 +2,11 @@ from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.data_migration.surveytree import SurveyTree
 from onadata.apps.logger.models.backup import BackupXForm, BackupInstance
 
-from .common import MigrationTestCase, SecondMigrationTestCase
+from . import common as test_case
 from . import fixtures
 
 
-class DataMigrationUnitTests(MigrationTestCase):
+class DataMigrationUnitTests(test_case.MigrationTestCase):
     def setUp(self):
         super(DataMigrationUnitTests, self).setUp()
         self.added = ['birthday', 'first_name']
@@ -20,7 +20,7 @@ class DataMigrationUnitTests(MigrationTestCase):
         expected.append('birthday')
         pos = expected.index('name')
         expected[pos] = 'first_name'
-        self.assertEqual(survey_tree.get_fields_names(), expected)
+        self.assertCountEqual(expected, survey_tree.get_fields_names())
 
     def test_field_prepopulate(self):
         self.data_migrator.migrate_survey(self.survey)
@@ -29,7 +29,7 @@ class DataMigrationUnitTests(MigrationTestCase):
         self.assertEqual(last_name_field.text, 'Fowler')
 
 
-class DataMigratorIntegrationTests(MigrationTestCase):
+class DataMigratorIntegrationTests(test_case.MigrationTestCase):
     def test_migrator_smoke_test(self):
         # Assure that everything won't break apart after running migrator
         self.data_migrator.migrate()
@@ -51,7 +51,7 @@ class DataMigratorIntegrationTests(MigrationTestCase):
         )
 
 
-class DataMigratorIntegrationSecondTestsCase(SecondMigrationTestCase):
+class DataMigratorIntegrationSecondTestsCase(test_case.SecondMigrationTestCase):
     def test_migration__second_case(self):
         self.data_migrator.migrate()
         self.xform.refresh_from_db()
@@ -66,16 +66,16 @@ class DataMigratorIntegrationSecondTestsCase(SecondMigrationTestCase):
         )
 
 
-class DataMigratorIntegrationGroupsTestCase(SecondMigrationTestCase):
-    def test_migration__second_case(self):
+class DataMigratorIntegrationGroupsTestCase(test_case.GroupedMigrationTestCase):
+    def test_migration__grouped_case(self):
         self.data_migrator.migrate()
         self.xform.refresh_from_db()
         self.xform_new.refresh_from_db()
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.xml,
-            fixtures.form_xml_case_2_after,
+            fixtures.form_xml_groups_after__second,
         )
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.instances.first().xml,
-            fixtures.survey_2_after_migration,
+            fixtures.survey_xml_groups_after__second,
         )

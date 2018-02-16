@@ -1,15 +1,9 @@
-from lxml import etree
-
 from .tree import Tree
-from .common import concat_map, compose
+from .xmltree import XMLTree
+from .common import concat_map
 
 
-def encode_xml_to_ascii(xml):
-    # Without proper encoding, lxml throws ValueError for Unicode string.
-    return xml.decode('utf-8').encode('ascii')
-
-
-class XFormTree(object):
+class XFormTree(XMLTree):
     """
     Parse XML string into tree and operate on nodes.
 
@@ -17,30 +11,6 @@ class XFormTree(object):
     xls forms: http://xlsform.org/
     w3c xforms: https://www.w3.org/MarkUp/Forms/#waXForms
     """
-    NOT_RELEVANT = ['formhub', 'meta']
-
-    def __init__(self, xml):
-        self.root = etree.XML(encode_xml_to_ascii(xml))
-
-    def __repr__(self):
-        return self.to_string()
-
-    def to_string(self, pretty=True):
-        return etree.tostring(self.root, pretty_print=pretty)
-
-    def to_xml(self, pretty=True):
-        return etree.tostring(self.root, pretty_print=pretty,
-                              xml_declaration=True, encoding='utf-8')
-
-    @staticmethod
-    def clean_tag(tag):
-        """
-        Remove w3 header that each tag contains.
-        Example: '{http://www.w3.org/1999/xhtml}head'
-        """
-        header_end = tag.find('}')
-        return tag[header_end+1:] if header_end != -1 else tag
-
     def find_element_in_tree(self, searched_tag):
         query = "//*[local-name()='%s']" % self.clean_tag(searched_tag)
         try:
@@ -50,7 +20,7 @@ class XFormTree(object):
 
     def set_tag(self, tag_name, value):
         el = self.find_element_in_tree(tag_name)
-        cleaned_tag = self.clean_tag(el.tag)
+        cleaned_tag = self.field_tag(el)
         el.tag = el.tag.replace(cleaned_tag, value)
         return el
 
@@ -70,30 +40,14 @@ class XFormTree(object):
         title = self.root[0][0]
         return title.text
 
-    @classmethod
-    def is_relevant(cls, tag):
-        return cls.clean_tag(tag) in cls.NOT_RELEVANT
-
-    @classmethod
-    def retrieve_leaf_elems(cls, element):
-        if cls.is_relevant(element.tag):
-            return []
-        if element.getchildren():
-            return concat_map(cls.retrieve_leaf_elems, element)
-        return [cls.clean_tag(element.tag)]
-
-    @classmethod
-    def is_group(cls, element):
-        return element.getchildren() and cls.is_relevant(element.tag)
-
     def get_fields(self):
         """Parse and return list of all fields in form."""
         instance = self.get_head_instance()
-        return self.retrieve_leaf_elems(instance)
+        return self.retrieve_leaf_elems_tags(instance)
 
     def get_groups(self):
         instance = self.get_head_instance()
-        return filter(self.is_group, instance)
+        return concat_map(self.retrieve_groups, instance)
 
     def get_structured_fields(self):
         """Return fields structured into groups.
@@ -101,16 +55,21 @@ class XFormTree(object):
         Format: [field_1, field_2, {'group_name': [field_3, field_4]}, field_5]
         """
         instance = self.get_head_instance()
-        return map(self.retrieve_fields, instance)
+        return filter(lambda e: e is not None,
+                      map(self.retrieve_fields, instance))
 
     def get_structured_fields_as_tree(self):
         return Tree.construct_tree(self.get_structured_fields())
 
     @classmethod
     def retrieve_fields(cls, element):
-        if cls.is_group(element):
-            return {cls.clean_tag(element), map(cls.retrieve_fields, element)}
-        return element
+        if cls.is_group(element) and cls.is_relevant(element.tag):
+            return {
+                cls.field_tag(element):
+                    filter(lambda e: e is not None,
+                           map(cls.retrieve_fields, element))
+            }
+        return cls.field_tag(element) if cls.is_relevant(element.tag) else None
 
     def get_binds(self):
         head = self.get_head_content()
@@ -177,7 +136,7 @@ class XFormTree(object):
 
     def get_head_binds(self):
         return filter(
-            lambda node: self.clean_tag(node.tag) == 'bind',
+            lambda node: self.field_tag(node) == 'bind',
             self.get_head_content().getchildren()
         )
 
@@ -219,7 +178,7 @@ class XFormTree(object):
         return {
             input_name: self.get_select_values(items[0].getparent())
             for input_name, items in inputs.items()
-            if len(items) > 1 and self.clean_tag(items[1].tag) == 'item'
+            if len(items) > 1 and self.field_tag(items[1]) == 'item'
         }
 
     def _added_to_list(self, basic, extended):

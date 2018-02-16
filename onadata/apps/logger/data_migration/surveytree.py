@@ -1,20 +1,19 @@
 from functools import partial
+from itertools import ifilter
 from lxml import etree
 
-from .common import compose
+from .xmltree import XMLTree
+from .common import compose, concat_map
 
 
 class MissingFieldException(Exception):
     pass
 
 
-class SurveyTree(object):
+class SurveyTree(XMLTree):
     """
     Parse XForm Instance from xml string into tree.
     """
-    # XML elements that should not be considered as fields
-    NOT_RELEVANT = ['formhub', 'meta', 'imei']
-
     def __init__(self, survey):
         # Handle both cases when instance or string is passed.
         try:
@@ -22,29 +21,28 @@ class SurveyTree(object):
         except AttributeError:
             self.root = etree.XML(survey)
 
-    def __repr__(self):
-        return self.to_string()
-
-    def to_string(self, pretty=True):
-        return etree.tostring(self.root, pretty_print=pretty)
-
     def get_fields(self):
-        """Return fields as list with tree Elements."""
-        return [
-            field for field in self.root.getchildren()
-            if field.tag not in self.NOT_RELEVANT
-        ]
+        """Parse and return list of all fields in form."""
+        return self.retrieve_leaf_elems(self.root)
+
+    def get_groups(self):
+        return concat_map(self.retrieve_groups, self.root.getchildren())
+
+    def get_all_elems(self):
+        """Return a list of both groups and fields"""
+        return concat_map(self.retrieve_all_elems, self.root.getchildren())
 
     def get_fields_names(self):
         """Return fields as list of string with field names."""
-        return [
-            field.tag for field in self.root.getchildren()
-            if field.tag not in self.NOT_RELEVANT
-        ]
+        return map(lambda f: f.tag, self.get_fields())
 
-    def _get_matching_fields(self, condition_func):
-        """Return fields that match condition"""
-        return iter(filter(condition_func, self.get_fields()))
+    def get_groups_names(self):
+        """Return fields as list of string with field names."""
+        return map(lambda g: g.tag, self.get_groups())
+
+    def _get_matching_elems(self, condition_func):
+        """Return elems that match condition"""
+        return ifilter(condition_func, self.get_all_elems())
 
     @staticmethod
     def _get_first_element(name):
@@ -58,11 +56,8 @@ class SurveyTree(object):
 
     def get_field(self, name):
         """Get field Element by name."""
-        matching_fields = self._get_matching_fields(lambda f: f.tag == name)
-        return self._get_first_element(name)(matching_fields)
-
-    def create_element(self, field_name):
-        return etree.XML('<{name}></{name}>'.format(name=field_name))
+        matching_elems = self._get_matching_elems(lambda f: f.tag == name)
+        return self._get_first_element(name)(matching_elems)
 
     def permanently_remove_field(self, field_name):
         """WARNING: It is not possible to revert this operation"""
@@ -75,7 +70,7 @@ class SurveyTree(object):
         field.tag = new_tag
 
     def add_field(self, field_name, text='', parent=None):
-        parent = parent or self.root
+        parent = parent if parent is not None else self.root
         try:
             field = self.get_field(field_name)
         except MissingFieldException:
@@ -86,12 +81,10 @@ class SurveyTree(object):
 
     def find_group(self, name):
         """Find group named :group_name: or throw exception"""
-        matching_fields = self._get_matching_fields(lambda f: f.tag == name)
         return compose(
             self._get_first_element(name),
-            iter,
-            partial(filter, lambda e: e.getchildren != []),
-        )(matching_fields)
+            partial(ifilter, lambda e: e.tag == name),
+        )(self.get_groups())
 
     def insert_field_into_group_chain(self, field, group_chain):
         """Insert field into a chain of groups. Function handles group field
@@ -105,4 +98,3 @@ class SurveyTree(object):
             parent = group_field
 
         parent.append(field)
-

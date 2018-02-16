@@ -3,6 +3,7 @@ from lxml import etree
 from django.test import TestCase
 
 from onadata.apps.logger.data_migration.xformtree import XFormTree
+from .common import CommonTestCase
 from . import fixtures
 
 
@@ -91,7 +92,7 @@ class XFormTreeOperationsTestCase(TestCase):
         )
 
 
-class XFormTreeGroupsOperationsTestCase(TestCase):
+class XFormTreeGroupsOperationsTestCase(CommonTestCase):
     def setUp(self):
         self.prev_tree = XFormTree(fixtures.form_xml_groups_before__second)
         self.new_tree = XFormTree(fixtures.form_xml_groups_after__second)
@@ -103,8 +104,8 @@ class XFormTreeGroupsOperationsTestCase(TestCase):
 
     def test_get_groups(self):
         get_tags = lambda xs: map(lambda x: self.new_tree.clean_tag(x.tag), xs)
-        self.assertEqual(get_tags(self.new_tree.get_groups()),
-                         ['group_transformations'])
+        self.assertCountEqual(get_tags(self.new_tree.get_groups()),
+                              ['bijective', 'group_transformations'])
         self.assertEqual(self.prev_tree.get_groups(), [])
 
     def test_get_fields(self):
@@ -119,12 +120,11 @@ class XFormTreeGroupsOperationsTestCase(TestCase):
     def test_get_structured_fields(self):
         expected_prev = self.get_all_fields()
         new_group = {'group_transformations': [
-            'isomorphism', 'endomorphism', 'automorphism'
-        ]},
+            {'bijective': ['isomorphism', 'automorphism']},
+            'endomorphism',
+        ]}
         expected_new = ['start', 'end', 'current_date',
                         'math_degree', new_group]
-        self.assertEqual(
-            (expected_prev, expected_new),
-            (self.prev_tree.get_structured_fields(),
-             self.new_tree.get_structured_fields()))
+        self.assertCountEqual(expected_prev, self.prev_tree.get_structured_fields())
+        self.assertCountEqual(expected_new, self.new_tree.get_structured_fields())
 
