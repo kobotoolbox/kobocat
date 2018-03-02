@@ -11,11 +11,11 @@ class BackupSurveysTests(MigrationTestCase):
         xform_backup = backup_xform(self.xform)
         self.assertEqual(self.xform.xml, xform_backup.xml)
         self.assertEqual({
-            'Backups': BackupXForm.objects.all(),
-            'Form user': self.xform.user,
+            'Backups': BackupXForm.objects.first().backup_version,
+            'Form user': self.xform.user.id,
         }, {
-            'Backups': [xform_backup],
-            'Form user': xform_backup.user,
+            'Backups': xform_backup.backup_version,
+            'Form user': xform_backup.user.id,
         })
 
     def test_multiple_xform_backups(self):

@@ -1,17 +1,19 @@
+from functools import partial
+from itertools import ifilter
 from lxml import etree
+
+from .xmltree import XMLTree
+from .common import compose, concat_map
 
 
 class MissingFieldException(Exception):
     pass
 
 
-class SurveyTree(object):
+class SurveyTree(XMLTree):
     """
     Parse XForm Instance from xml string into tree.
     """
-    # XML elements that should not be considered as fields
-    NOT_RELEVANT = ['formhub', 'meta', 'imei']
-
     def __init__(self, survey):
         # Handle both cases when instance or string is passed.
         try:
@@ -19,50 +21,80 @@ class SurveyTree(object):
         except AttributeError:
             self.root = etree.XML(survey)
 
-    def __repr__(self):
-        return self.to_string()
-
-    def to_string(self, pretty=True):
-        return etree.tostring(self.root, pretty_print=pretty)
-
     def get_fields(self):
-        """Return fields as list with tree Elements."""
-        return [
-            field for field in self.root.getchildren()
-            if field.tag not in self.NOT_RELEVANT
-        ]
+        """Parse and return list of all fields in form."""
+        return self.retrieve_leaf_elems(self.root)
+
+    def get_groups(self):
+        return concat_map(self.retrieve_groups, self.root.getchildren())
+
+    def get_all_elems(self):
+        """Return a list of both groups and fields"""
+        return concat_map(self.retrieve_all_elems, self.root.getchildren())
 
     def get_fields_names(self):
         """Return fields as list of string with field names."""
-        return [
-            field.tag for field in self.root.getchildren()
-            if field.tag not in self.NOT_RELEVANT
-        ]
+        return map(lambda f: f.tag, self.get_fields())
+
+    def get_groups_names(self):
+        """Return fields as list of string with field names."""
+        return map(lambda g: g.tag, self.get_groups())
+
+    def _get_matching_elems(self, condition_func):
+        """Return elems that match condition"""
+        return ifilter(condition_func, self.get_all_elems())
+
+    @staticmethod
+    def _get_first_element(name):
+        def get_next_from_iterator(iterator):
+            try:
+                return next(iterator)
+            except StopIteration:
+                raise MissingFieldException("Element '{}' does not exist in "
+                                            "survey tree".format(name))
+        return get_next_from_iterator
 
     def get_field(self, name):
         """Get field Element by name."""
-        fields = self.get_fields()
-        for field in fields:
-            if field.tag == name:
-                return field
-        raise MissingFieldException("Field name '{}' does not exist in survey tree".format(name))
-
-    def create_element(self, field_name):
-        return etree.XML('<{name}></{name}>'.format(name=field_name))
+        matching_elems = self._get_matching_elems(lambda f: f.tag == name)
+        return self._get_first_element(name)(matching_elems)
 
     def permanently_remove_field(self, field_name):
         """WARNING: It is not possible to revert this operation"""
         field = self.get_field(field_name)
         field.getparent().remove(field)
+        return field
 
     def modify_field(self, field_name, new_tag):
         field = self.get_field(field_name)
         field.tag = new_tag
 
-    def add_field(self, field_name, text=''):
+    def add_field(self, field_name, text='', parent=None):
+        parent = parent if parent is not None else self.root
         try:
-            self.get_field(field_name)
+            field = self.get_field(field_name)
         except MissingFieldException:
             field = self.create_element(field_name)
             field.text = text
-            self.root.append(field)
+            parent.append(field)
+        return field
+
+    def find_group(self, name):
+        """Find group named :group_name: or throw exception"""
+        return compose(
+            self._get_first_element(name),
+            partial(ifilter, lambda e: e.tag == name),
+        )(self.get_groups())
+
+    def insert_field_into_group_chain(self, field, group_chain):
+        """Insert field into a chain of groups. Function handles group field
+        creation if one does not exist
+        """
+        assert etree.iselement(field)
+        parent = self.root
+
+        for group in group_chain:
+            group_field = self.add_field(group, parent=parent)
+            parent = group_field
+
+        parent.append(field)

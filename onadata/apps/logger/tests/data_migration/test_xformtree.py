@@ -3,10 +3,7 @@ from lxml import etree
 from django.test import TestCase
 
 from onadata.apps.logger.data_migration.xformtree import XFormTree
-from onadata.apps.logger.data_migration.surveytree import (
-    SurveyTree, MissingFieldException
-)
-
+from .common import CommonTestCase
 from . import fixtures
 
 
@@ -95,50 +92,39 @@ class XFormTreeOperationsTestCase(TestCase):
         )
 
 
-class SurveyTreeOperationsTest(TestCase):
+class XFormTreeGroupsOperationsTestCase(CommonTestCase):
     def setUp(self):
-        self.survey = SurveyTree(fixtures.survey_xml)
+        self.prev_tree = XFormTree(fixtures.form_xml_groups_before__second)
+        self.new_tree = XFormTree(fixtures.form_xml_groups_after__second)
 
-    def test_get_fields_names(self):
-        self.assertEqual(
-            self.survey.get_fields_names(),
-            fixtures.FIELDS
-        )
+    @staticmethod
+    def get_all_fields():
+        return ['start', 'end', 'isomorphism', 'current_date',
+                'endomorphism', 'math_degree', 'automorphism']
+
+    def test_get_groups(self):
+        get_tags = lambda xs: map(lambda x: self.new_tree.clean_tag(x.tag), xs)
+        self.assertCountEqual(get_tags(self.new_tree.get_groups()),
+                              ['bijective', 'group_transformations'])
+        self.assertEqual(self.prev_tree.get_groups(), [])
 
     def test_get_fields(self):
-        for field in self.survey.get_fields():
-            self.assertTrue(etree.iselement(field))
+        expected_prev = sorted(self.get_all_fields())
+        expected_new = expected_prev
 
-    def test_get_field(self):
-        self.assertTrue(etree.iselement(self.survey.get_field('name')))
-        self.assertTrue(etree.iselement(self.survey.get_field('photo')))
+        self.assertEqual(
+            (expected_prev, expected_new),
+            (sorted(self.prev_tree.get_fields()),
+             sorted(self.new_tree.get_fields())))
 
-    def test_get_field__no_such_field(self):
-        with self.assertRaises(MissingFieldException):
-            self.survey.get_field('i_am_sure_no_such_field_exist')
+    def test_get_structured_fields(self):
+        expected_prev = self.get_all_fields()
+        new_group = {'group_transformations': [
+            {'bijective': ['isomorphism', 'automorphism']},
+            'endomorphism',
+        ]}
+        expected_new = ['start', 'end', 'current_date',
+                        'math_degree', new_group]
+        self.assertCountEqual(expected_prev, self.prev_tree.get_structured_fields())
+        self.assertCountEqual(expected_new, self.new_tree.get_structured_fields())
 
-    def test_create_element(self):
-        self.assertTrue(etree.iselement(self.survey.create_element('name')))
-
-    def test_permanently_remove_field(self):
-        expected = fixtures.FIELDS[:]
-        expected.remove('name')
-        self.survey.permanently_remove_field('name')
-        self.assertEqual(self.survey.get_fields_names(), expected)
-
-    def test_modify_field(self):
-        expected = fixtures.FIELDS[:]
-        pos = expected.index('name')
-        expected[pos] = 'first_name'
-        self.survey.modify_field('name', 'first_name')
-        self.assertEqual(self.survey.get_fields_names(), expected)
-
-    def test_add_field(self):
-        expected = fixtures.FIELDS[:]
-        expected.append('opinion')
-        self.survey.add_field('opinion')
-        self.assertEqual(self.survey.get_fields_names(), expected)
-
-    def test_add_field__should_add_if_already_exist(self):
-        self.survey.add_field('name')
-        self.assertEqual(self.survey.get_fields_names(), fixtures.FIELDS[:])

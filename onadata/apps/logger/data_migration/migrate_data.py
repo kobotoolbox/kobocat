@@ -54,6 +54,7 @@ class SurveyFieldsHandler(object):
     def alter_fields(self, survey_tree):
         self.add_fields(survey_tree, self.decisioner.new_fields)
         self.modify_fields(survey_tree, self.decisioner.modifications)
+        self.migrate_groups(survey_tree)
 
     def add_fields(self, survey_tree, new_fields):
         for field_to_add in new_fields:
@@ -63,3 +64,13 @@ class SurveyFieldsHandler(object):
     def modify_fields(self, survey_tree, modifications):
         for prev_field, new_field in modifications.iteritems():
             survey_tree.modify_field(prev_field, new_field)
+
+    def migrate_groups(self, survey_tree):
+        changed_fields_groups = self.decisioner.changed_fields_groups()
+        for field_name, groups in changed_fields_groups.iteritems():
+            self._migrate_field_groups(survey_tree, field_name, groups)
+
+    def _migrate_field_groups(self, survey_tree, field_name, groups):
+        field = survey_tree.permanently_remove_field(field_name)
+        survey_tree.insert_field_into_group_chain(field, groups)
+

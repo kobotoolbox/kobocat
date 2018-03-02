@@ -129,3 +129,27 @@ class MigrationDecisioner(object):
                                                      decision_values)
             if decision_val and decision_val != self.NEW_FIELD
         }
+
+    def prev_fields_groups_migrated(self):
+        fields_changes = self.fields_changes
+        fields_groups_prev = self.xforms_comparator.fields_groups_prev()
+        get_migrated_field_name = (
+            lambda field: fields_changes[self.MOD_FIELDS_KEY].get(field, field)
+        )
+        return {
+            get_migrated_field_name(field): groups
+            for field, groups in fields_groups_prev.iteritems()
+            if field not in fields_changes[self.RM_FIELDS_KEY]
+        }
+
+    def changed_fields_groups(self):
+        fields_changes = self.fields_changes
+        fields_groups_new = self.xforms_comparator.fields_groups_new()
+        migrated_fields_groups_prev = self.prev_fields_groups_migrated()
+        return {
+            field_name: groups
+            for field_name, groups in fields_groups_new.iteritems()
+            if field_name not in fields_changes[self.NEW_FIELDS_KEY] and
+               groups != migrated_fields_groups_prev[field_name]
+        }
+

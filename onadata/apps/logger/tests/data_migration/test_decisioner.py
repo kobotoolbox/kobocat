@@ -1,6 +1,4 @@
-from onadata.apps.logger.data_migration.factories import migration_decisioner_factory
-
-from .common import MigrationTestCase
+from .common import MigrationTestCase, GroupedMigrationTestCase
 
 
 class MigrationDecisionerUnitTests(MigrationTestCase):
@@ -8,8 +6,7 @@ class MigrationDecisionerUnitTests(MigrationTestCase):
         super(MigrationDecisionerUnitTests, self).setUp()
         self.added = ['birthday', 'first_name']
         self.potentially_removed = ['name']
-        self.migration_decisioner = migration_decisioner_factory(
-            self.xform, self.xform_new, **self.migration_decisions)
+        self.migration_decisioner = self.create_migration_decisioner()
 
     def _get_field_changes(self):
         return {
@@ -111,3 +108,35 @@ class MigrationDecisionerUnitTests(MigrationTestCase):
             'determine_birthday': '__new_field__',
             'determine_last_name': '__new_field__',
         }, result)
+
+    def test_prev_fields_groups_migrated(self):
+        prev_fields_groups = self.migration_decisioner\
+            .prev_fields_groups_migrated()
+        self.assertEqual({
+          'first_name': [],
+          'gender': [],
+          'photo': [],
+          'age': [],
+          'location': [],
+        }, prev_fields_groups)
+
+    def test_changed_fields_groups(self):
+        changed_fields_groups = self.migration_decisioner\
+            .changed_fields_groups()
+        self.assertEqual({}, changed_fields_groups)
+
+
+class GroupedMigrationDecisionerUnitTests(GroupedMigrationTestCase):
+    def setUp(self):
+        super(GroupedMigrationDecisionerUnitTests, self).setUp()
+        self.migration_decisioner = self.create_migration_decisioner()
+
+    def test_changed_fields_groups(self):
+        changed_fields_groups = self.migration_decisioner.changed_fields_groups()
+        self.assertEqual(
+            changed_fields_groups, {
+                'isomorphism': ['group_transformations', 'bijective'],
+                'automorphism': ['group_transformations', 'bijective'],
+                'endomorphism': ['group_transformations'],
+            }
+        )
