@@ -3,11 +3,6 @@ from lxml import etree
 from .common import concat_map
 
 
-def encode_xml_to_ascii(xml):
-    # Without proper encoding, lxml throws ValueError for Unicode string.
-    return xml.decode('utf-8').encode('ascii')
-
-
 class XMLTree(object):
     """
     Common class for handling XML trees
@@ -16,7 +11,9 @@ class XMLTree(object):
     NOT_RELEVANT = ['formhub', 'meta', 'imei', '__version__']
 
     def __init__(self, xml):
-        self.root = etree.XML(encode_xml_to_ascii(xml))
+        # xml is stored in database as unicode, thus, in order to
+        # match with xml declaration, we need to encode it to utf-8
+        self.root = etree.XML(xml.encode('utf-8'))
 
     def __repr__(self):
         return self.to_string()
