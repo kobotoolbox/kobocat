@@ -19,7 +19,7 @@ FIELDS = [
     'age', 'thanks', 'start_time', 'end_time', 'today',
 ]
 
-form_xml_case_1 = '''<?xml version="1.0" encoding="utf-8"?>
+form_xml_case_1 = u'''<?xml version="1.0" encoding="utf-8"?>
 <h:html xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <h:head>
     <h:title>Survey</h:title>
@@ -50,10 +50,10 @@ form_xml_case_1 = '''<?xml version="1.0" encoding="utf-8"?>
   </h:head>
   <h:body>
     <input ref="/Survey/name">
-      <label>What is your name?</label>
+      <label>What is your name?\u2019</label>
     </input>
     <input ref="/Survey/age">
-      <label>How old are you?</label>
+      <label>How old are you?\u2018</label>
     </input>
     <select1 ref="/Survey/gender">
       <label>Gender</label>
@@ -80,7 +80,7 @@ form_xml_case_1 = '''<?xml version="1.0" encoding="utf-8"?>
 </h:html>
 '''
 
-form_xml_case_1_after = '''<?xml version="1.0" encoding="utf-8"?>
+form_xml_case_1_after = u'''<?xml version="1.0" encoding="utf-8"?>
 <h:html xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <h:head>
     <h:title>Survey2</h:title>
@@ -112,10 +112,10 @@ form_xml_case_1_after = '''<?xml version="1.0" encoding="utf-8"?>
   </h:head>
   <h:body>
     <input ref="/Survey2/name">
-      <label>What is your name?</label>
+      <label>What is your name?\u2019</label>
     </input>
     <input ref="/Survey2/age">
-      <label>How old are you?</label>
+      <label>How old are you?\u2018</label>
     </input>
     <select1 ref="/Survey2/gender">
       <label>Gender</label>
