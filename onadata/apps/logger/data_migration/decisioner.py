@@ -132,7 +132,7 @@ class MigrationDecisioner(object):
 
     def prev_fields_groups_migrated(self):
         fields_changes = self.fields_changes
-        fields_groups_prev = self.xforms_comparator.fields_groups_prev()
+        fields_groups_prev = self.fields_groups_prev()
         get_migrated_field_name = (
             lambda field: fields_changes[self.MOD_FIELDS_KEY].get(field, field)
         )
@@ -142,9 +142,15 @@ class MigrationDecisioner(object):
             if field not in fields_changes[self.RM_FIELDS_KEY]
         }
 
+    def fields_groups_new(self):
+        return self.xforms_comparator.fields_groups_new()
+
+    def fields_groups_prev(self):
+        return self.xforms_comparator.fields_groups_prev()
+
     def changed_fields_groups(self):
         fields_changes = self.fields_changes
-        fields_groups_new = self.xforms_comparator.fields_groups_new()
+        fields_groups_new = self.fields_groups_new()
         migrated_fields_groups_prev = self.prev_fields_groups_migrated()
         return {
             field_name: groups
@@ -152,4 +158,3 @@ class MigrationDecisioner(object):
             if field_name not in fields_changes[self.NEW_FIELDS_KEY] and
                groups != migrated_fields_groups_prev[field_name]
         }
-

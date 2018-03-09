@@ -54,7 +54,6 @@ class DataMigratorIntegrationTests(test_case.MigrationTestCase):
 class DataMigratorIntegrationSecondTestsCase(test_case.SecondMigrationTestCase):
     def test_migration__second_case(self):
         self.data_migrator.migrate()
-        self.xform.refresh_from_db()
         self.xform_new.refresh_from_db()
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.xml,
@@ -66,10 +65,23 @@ class DataMigratorIntegrationSecondTestsCase(test_case.SecondMigrationTestCase):
         )
 
 
+class DataMigratorIntegrationBasicGroupsTestCase(test_case.BasicGroupedMigrationTestCase):
+    def test_migration__basic_grouped_case(self):
+        self.data_migrator.migrate()
+        self.xform_new.refresh_from_db()
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.xml,
+            fixtures.form_xml_groups_after,
+        )
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.instances.first().xml,
+            fixtures.survey_xml_groups_after,
+        )
+
+
 class DataMigratorIntegrationGroupsTestCase(test_case.GroupedMigrationTestCase):
     def test_migration__grouped_case(self):
         self.data_migrator.migrate()
-        self.xform.refresh_from_db()
         self.xform_new.refresh_from_db()
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.xml,

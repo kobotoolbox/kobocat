@@ -1,6 +1,7 @@
 GROUPS_FIELDS_AFTER = [
     'start', 'end', 'math_degree', 'current_date', 'group_transformations',
-    'bijective', 'isomorphism', 'automorphism', 'endomorphism',
+    'bijective', 'isomorphism', 'automorphism', 'endomorphism', 'homeomorphism',
+    'continuous',
 ]
 
 form_xml_groups_before = """<?xml version="1.0"?>
@@ -13,6 +14,7 @@ form_xml_groups_before = """<?xml version="1.0"?>
           <start/>
           <end/>
           <homomorphism/>
+          <isooomorphism/>
           <meta>
             <instanceID/>
           </meta>
@@ -42,6 +44,7 @@ form_xml_groups_after = """<?xml version="1.0"?>
           <start/>
           <end/>
           <group_transformations>
+            <isomorphism/>
             <homomorphism/>
           </group_transformations>
           <meta>
@@ -99,6 +102,7 @@ survey_xml_groups_after = """
   </meta>
 
   <group_transformations>
+    <isomorphism/>
     <homomorphism>identity</homomorphism>
   </group_transformations>
   
@@ -163,6 +167,9 @@ form_xml_groups_after__second = """<?xml version="1.0"?>
           <end/>
           <group_transformations>
             <bijective>
+                <continuous>
+                    <homeomorphism/>
+                </continuous>
                 <isomorphism/>
                 <automorphism/>
             </bijective>
@@ -240,11 +247,14 @@ survey_xml_groups_after__second = """
   </meta>
 
   <group_transformations>
-    <endomorphism>f: G -&gt; G</endomorphism>
     <bijective>
+        <continuous>
+            <homeomorphism/>
+        </continuous>
         <isomorphism>canonical</isomorphism>
         <automorphism>id</automorphism>
     </bijective>
+    <endomorphism>f: G -&gt; G</endomorphism>
   </group_transformations>
  
 </TestGroup>

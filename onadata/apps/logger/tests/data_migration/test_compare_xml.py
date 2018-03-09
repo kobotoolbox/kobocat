@@ -83,10 +83,12 @@ class CompareXMLWithGroupsTestCase(TestCase):
 
     def test_fields_groups(self):
         fields_groups = self.comparator.fields_groups_new()
+        bijective_group = ['group_transformations', 'bijective']
         self.assertEqual(
             fields_groups, {
-                'isomorphism': ['group_transformations', 'bijective'],
-                'automorphism': ['group_transformations', 'bijective'],
+                'isomorphism': bijective_group,
+                'automorphism': bijective_group,
+                'homeomorphism': bijective_group + ['continuous'],
                 'endomorphism': ['group_transformations'],
                 'start': [],
                 'end': [],

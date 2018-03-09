@@ -1,5 +1,5 @@
 from onadata.apps.logger.models.instance import save_survey
-from .surveytree import SurveyTree
+from .surveytree import SurveyTree, MissingFieldException
 from . import backup_data
 
 
@@ -56,21 +56,31 @@ class SurveyFieldsHandler(object):
         self.modify_fields(survey_tree, self.decisioner.modifications)
         self.migrate_groups(survey_tree)
 
-    def add_fields(self, survey_tree, new_fields):
-        for field_to_add in new_fields:
-            text = self.decisioner.get_prepopulate_text(field_to_add)
-            survey_tree.add_field(field_to_add, text)
+    def add_fields(self, survey_tree, new_fields_tags):
+        for field_to_add_tag in new_fields_tags:
+            text = self.decisioner.get_prepopulate_text(field_to_add_tag)
+            groups = self.decisioner.fields_groups_new().get(field_to_add_tag, [])
+            try:
+                survey_tree.get_field(field_to_add_tag)
+            except MissingFieldException:
+                field = survey_tree.create_element(field_to_add_tag, text)
+                survey_tree.insert_field_into_group_chain(field, groups)
 
     def modify_fields(self, survey_tree, modifications):
-        for prev_field, new_field in modifications.iteritems():
-            survey_tree.modify_field(prev_field, new_field)
+        for prev_tag, new_tag in modifications.iteritems():
+            groups = self.decisioner.fields_groups_new().get(prev_tag, [])
+            field = survey_tree.get_or_create_field(prev_tag, groups=groups)
+            survey_tree.modify_field(field, new_tag)
 
     def migrate_groups(self, survey_tree):
         changed_fields_groups = self.decisioner.changed_fields_groups()
-        for field_name, groups in changed_fields_groups.iteritems():
-            self._migrate_field_groups(survey_tree, field_name, groups)
+        for field_tag, groups in changed_fields_groups.iteritems():
+            self._migrate_field_groups(survey_tree, field_tag, groups)
 
-    def _migrate_field_groups(self, survey_tree, field_name, groups):
-        field = survey_tree.permanently_remove_field(field_name)
+    def _migrate_field_groups(self, survey_tree, field_tag, groups):
+        try:
+            field = survey_tree.get_field(field_tag)
+            survey_tree.permanently_remove_field(field)
+        except MissingFieldException:
+            field = survey_tree.create_element(field_tag)
         survey_tree.insert_field_into_group_chain(field, groups)
-

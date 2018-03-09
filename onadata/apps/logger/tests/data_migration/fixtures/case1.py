@@ -183,7 +183,7 @@ survey_after_migration_template = '''<Survey xmlns:jr="http://openrosa.org/javar
     <instanceID>uuid:{}</instanceID>
   </meta>
   <last_name>Fowler</last_name>
-  <birthday></birthday>
+  <birthday/>
 </Survey>
 '''
 
