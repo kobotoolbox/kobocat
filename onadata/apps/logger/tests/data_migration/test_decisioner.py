@@ -133,10 +133,11 @@ class GroupedMigrationDecisionerUnitTests(GroupedMigrationTestCase):
 
     def test_changed_fields_groups(self):
         changed_fields_groups = self.migration_decisioner.changed_fields_groups()
+        bijective_group = ['group_transformations', 'bijective']
         self.assertEqual(
             changed_fields_groups, {
-                'isomorphism': ['group_transformations', 'bijective'],
-                'automorphism': ['group_transformations', 'bijective'],
                 'endomorphism': ['group_transformations'],
+                'isomorphism': bijective_group,
+                'automorphism': bijective_group,
             }
         )

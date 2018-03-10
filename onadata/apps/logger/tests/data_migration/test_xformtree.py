@@ -104,13 +104,13 @@ class XFormTreeGroupsOperationsTestCase(CommonTestCase):
 
     def test_get_groups(self):
         get_tags = lambda xs: map(lambda x: self.new_tree.clean_tag(x.tag), xs)
-        self.assertCountEqual(get_tags(self.new_tree.get_groups()),
-                              ['bijective', 'group_transformations'])
+        groups = ['bijective', 'group_transformations', 'continuous']
+        self.assertCountEqual(get_tags(self.new_tree.get_groups()), groups)
         self.assertEqual(self.prev_tree.get_groups(), [])
 
     def test_get_fields(self):
         expected_prev = sorted(self.get_all_fields())
-        expected_new = expected_prev
+        expected_new = sorted(expected_prev + ['homeomorphism'])
 
         self.assertEqual(
             (expected_prev, expected_new),
@@ -120,7 +120,11 @@ class XFormTreeGroupsOperationsTestCase(CommonTestCase):
     def test_get_structured_fields(self):
         expected_prev = self.get_all_fields()
         new_group = {'group_transformations': [
-            {'bijective': ['isomorphism', 'automorphism']},
+            {'bijective': [
+                {'continuous': ['homeomorphism']},
+                'isomorphism',
+                'automorphism',
+            ]},
             'endomorphism',
         ]}
         expected_new = ['start', 'end', 'current_date',

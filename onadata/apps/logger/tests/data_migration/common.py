@@ -106,6 +106,20 @@ class SecondMigrationTestCase(MigrationTestCase):
         }
 
 
+class BasicGroupedMigrationTestCase(MigrationTestCase):
+    def get_fixtures(self):
+        return {
+            'xform': fixtures.form_xml_groups_before,
+            'xform_new': fixtures.form_xml_groups_after,
+            'survey': fixtures.survey_xml_groups_before,
+        }
+
+    def get_migration_decisions(self):
+        return {
+            'determine_isomorphism': ['isooomorphism']
+        }
+
+
 class GroupedMigrationTestCase(MigrationTestCase):
     def get_fixtures(self):
         return {
@@ -115,4 +129,6 @@ class GroupedMigrationTestCase(MigrationTestCase):
         }
 
     def get_migration_decisions(self):
-        return {}
+        return {
+            'determine_homeomorphism': ['__new_field__'],
+        }

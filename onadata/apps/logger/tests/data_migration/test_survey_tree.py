@@ -33,33 +33,36 @@ class SurveyTreeOperationsTest(CommonTestCase):
     def test_permanently_remove_field(self):
         expected = fixtures.FIELDS[:]
         expected.remove('name')
-        self.survey.permanently_remove_field('name')
+        field = self.survey.get_field('name')
+        self.survey.permanently_remove_field(field)
         self.assertEqual(self.survey.get_fields_names(), expected)
 
     def test_modify_field(self):
         expected = fixtures.FIELDS[:]
         pos = expected.index('name')
         expected[pos] = 'first_name'
-        self.survey.modify_field('name', 'first_name')
+        field = self.survey.get_field('name')
+        self.survey.modify_field(field, 'first_name')
         self.assertEqual(self.survey.get_fields_names(), expected)
 
-    def test_add_field(self):
+    def test_get_or_create_field(self):
         expected = fixtures.FIELDS[:]
         expected.append('opinion')
-        self.survey.add_field('opinion')
+        self.survey.get_or_create_field('opinion')
+        self.survey.get_or_create_field('name')
         self.assertEqual(self.survey.get_fields_names(), expected)
 
-    def test_add_field__should_add_if_already_exist(self):
-        self.survey.add_field('name')
+    def test_get_or_create_field__should_add_if_already_exist(self):
+        self.survey.get_or_create_field('name')
         self.assertEqual(self.survey.get_fields_names(), fixtures.FIELDS[:])
 
-    def test_add_field_for_given_parent(self):
+    def test_get_or_create_field_with_groups(self):
         survey = SurveyTree('<AlgebraicTypes>'
                             '<functor></functor>'
                             '</AlgebraicTypes>')
-        functor = survey.get_field('functor')
-        applicative = survey.add_field('applicative', parent=functor)
-        survey.add_field('monad', parent=applicative, text='Either')
+        survey.get_or_create_field('functor')
+        survey.get_or_create_field('applicative', groups=['functor'])
+        survey.get_or_create_field('monad', groups=['applicative'], text='Either')
         self.assertXMLsEqual(survey.to_string(), '''
             <AlgebraicTypes>
                 <functor> 
@@ -85,7 +88,7 @@ class SurveyTreeWithGroupsOperationsTest(CommonTestCase):
 
     def test_get_groups_names(self):
         self.assertEqual(sorted(self.survey.get_groups_names()),
-                         ['bijective', 'group_transformations'])
+                         ['bijective', 'continuous', 'group_transformations'])
 
     def test_find_group__raises_on_normal_field(self):
         with self.assertRaises(MissingFieldException):
@@ -122,11 +125,14 @@ class SurveyTreeWithGroupsOperationsTest(CommonTestCase):
         ''')
 
     def test_insert_field_into_group_chain__real_world_scenario(self):
-        fields_names = ['endomorphism', 'isomorphism', 'automorphism']
-        fields = map(self.survey_prev.get_field, fields_names)
-        fields_groups = [['group_transformations'],
+        fields_names = ['isomorphism', 'automorphism', 'endomorphism']
+        new_field = self.survey_prev.create_element('homeomorphism')
+        fields = [new_field] + list(map(self.survey_prev.get_field, fields_names))
+        fields_groups = [['group_transformations', 'bijective', 'continuous'],
                          ['group_transformations', 'bijective'],
-                         ['group_transformations', 'bijective']]
+                         ['group_transformations', 'bijective'],
+                         ['group_transformations']]
+
         for field, groups in zip(fields, fields_groups):
             self.survey_prev.insert_field_into_group_chain(field, groups)
 

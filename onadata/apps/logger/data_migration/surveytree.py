@@ -59,24 +59,20 @@ class SurveyTree(XMLTree):
         matching_elems = self._get_matching_elems(lambda f: f.tag == name)
         return self._get_first_element(name)(matching_elems)
 
-    def permanently_remove_field(self, field_name):
+    def permanently_remove_field(self, field):
         """WARNING: It is not possible to revert this operation"""
-        field = self.get_field(field_name)
         field.getparent().remove(field)
-        return field
 
-    def modify_field(self, field_name, new_tag):
-        field = self.get_field(field_name)
+    def modify_field(self, field, new_tag):
         field.tag = new_tag
 
-    def add_field(self, field_name, text='', parent=None):
-        parent = parent if parent is not None else self.root
+    def get_or_create_field(self, field_tag, text='', groups=None):
+        groups = groups if groups is not None else []
         try:
-            field = self.get_field(field_name)
+            field = self.get_field(field_tag)
         except MissingFieldException:
-            field = self.create_element(field_name)
-            field.text = text
-            parent.append(field)
+            field = self.create_element(field_tag, text)
+            self.insert_field_into_group_chain(field, groups)
         return field
 
     def find_group(self, name):
@@ -93,8 +89,12 @@ class SurveyTree(XMLTree):
         assert etree.iselement(field)
         parent = self.root
 
-        for group in group_chain:
-            group_field = self.add_field(group, parent=parent)
+        for group_tag in group_chain:
+            try:
+                group_field = self.get_field(group_tag)
+            except MissingFieldException:
+                group_field = self.create_element(group_tag)
+                parent.append(group_field)
             parent = group_field
 
         parent.append(field)
