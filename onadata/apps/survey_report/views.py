@@ -57,7 +57,7 @@ def build_export_context(request, username, id_string):
 
     hierarchy_in_labels = request.REQUEST.get(
         'hierarchy_in_labels', ''
-    ).lower() == 'true'
+    ).lower() in ('true', 'on')
     group_sep = request.REQUEST.get('group_sep', '/')
 
     user, xform, formpack = build_formpack(username, id_string)
