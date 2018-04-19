@@ -7,8 +7,7 @@ from django.db import models
 from instance import Instance
 
 
-def upload_to(attachment, filename):
-    instance = attachment.instance
+def generate_attachment_filename(instance, filename):
     xform = instance.xform
     return os.path.join(
         xform.user.username,
@@ -16,6 +15,14 @@ def upload_to(attachment, filename):
         xform.uuid or 'form',
         instance.uuid or 'instance',
         os.path.split(filename)[1])
+
+
+def upload_to(attachment, filename):
+    return generate_attachment_filename(attachment.instance, filename)
+
+
+def hash_attachment_contents(contents):
+    return u'%s' % md5(contents).hexdigest()
 
 
 class Attachment(models.Model):
@@ -38,7 +45,11 @@ class Attachment(models.Model):
     @property
     def file_hash(self):
         if self.media_file.storage.exists(self.media_file.name):
-            return u'%s' % md5(self.media_file.read()).hexdigest()
+            media_file_position = self.media_file.tell()
+            self.media_file.seek(0)
+            media_file_hash = hash_attachment_contents(self.media_file.read())
+            self.media_file.seek(media_file_position)
+            return media_file_hash
         return u''
 
     @property
