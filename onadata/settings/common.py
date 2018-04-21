@@ -308,7 +308,10 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
-# Settings for Django Registration
+# All registration should be done through KPI, so Django Registration should
+# never be enabled here. It'd be best to remove all references to the
+# `registration` app in the future.
+REGISTRATION_OPEN = False
 ACCOUNT_ACTIVATION_DAYS = 1
 
 
