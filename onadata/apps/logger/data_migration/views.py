@@ -64,11 +64,12 @@ def _update_xform(request, username, id_string, add_message=True):
     old_xform = create_xform_copy(xform)
 
     def _rename_migrated_files(files):
-        # XXX: hack - later stages of form processing assume that filename
-        # is form's id_string, therefore we must match it
-        file = files['xls_file']
-        id_string_name = '{}.xlsx'.format(id_string)
-        file._set_name(id_string_name)
+        # XXX: later stages of form processing assume that filename
+        # is form's id_string
+        file = files.get('xls_file')
+        if file is not None:
+            id_string_name = '{}.xlsx'.format(id_string)
+            file._set_name(id_string_name)
 
     def set_form():
         _rename_migrated_files(request.FILES)
