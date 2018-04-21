@@ -164,7 +164,7 @@ survey_template = '''<Survey xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="
 </Survey>
 '''
 
-survey_after_migration_template = '''<Survey xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms/" id="Survey">
+survey_after_migration_template = '''<Survey2 xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms/" id="Survey2">
   <formhub>
     <uuid>{}</uuid>
   </formhub>
@@ -184,7 +184,7 @@ survey_after_migration_template = '''<Survey xmlns:jr="http://openrosa.org/javar
   </meta>
   <last_name>Fowler</last_name>
   <birthday/>
-</Survey>
+</Survey2>
 '''
 
 
@@ -196,8 +196,6 @@ _second_survey_data = (
 )
 
 survey_xml = survey_template.format(*_first_survey_data)
-survey_xml_second = survey_template.format(*_second_survey_data)
-
 survey_xml_second = survey_template.format(*_second_survey_data)
 
 survey_after_migration = survey_after_migration_template.format(*_first_survey_data)

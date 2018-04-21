@@ -1,4 +1,5 @@
 from onadata.apps.logger.models.instance import save_survey
+
 from .surveytree import SurveyTree, MissingFieldException
 from . import backup_data
 
@@ -33,8 +34,16 @@ class DataMigrator(object):
     def get_surveys_iter(self, xform):
         return xform.instances.iterator()
 
+    @staticmethod
+    def set_proper_root_node(xform, survey_tree):
+        new_root_id = xform.id_string
+        survey_tree.change_field_tag(survey_tree.root, new_root_id)
+        survey_tree.set_field_attrib(survey_tree.root, attrib='id',
+                                     new_value=new_root_id)
+
     def migrate_survey(self, survey):
         survey_tree = SurveyTree(survey)
+        self.set_proper_root_node(self.xform, survey_tree)
         self.fields_handler.alter_fields(survey_tree)
         survey.xml = survey_tree.to_string()
         save_survey(survey)
@@ -70,7 +79,7 @@ class SurveyFieldsHandler(object):
         for prev_tag, new_tag in modifications.iteritems():
             groups = self.decisioner.fields_groups_new().get(prev_tag, [])
             field = survey_tree.get_or_create_field(prev_tag, groups=groups)
-            survey_tree.modify_field(field, new_tag)
+            survey_tree.change_field_tag(field, new_tag)
 
     def migrate_groups(self, survey_tree):
         changed_fields_groups = self.decisioner.changed_fields_groups()

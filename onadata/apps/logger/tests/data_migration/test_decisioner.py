@@ -126,6 +126,7 @@ class MigrationDecisionerUnitTests(MigrationTestCase):
         self.assertEqual({}, changed_fields_groups)
 
 
+
 class GroupedMigrationDecisionerUnitTests(GroupedMigrationTestCase):
     def setUp(self):
         super(GroupedMigrationDecisionerUnitTests, self).setUp()

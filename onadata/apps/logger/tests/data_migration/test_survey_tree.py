@@ -37,12 +37,12 @@ class SurveyTreeOperationsTest(CommonTestCase):
         self.survey.permanently_remove_field(field)
         self.assertEqual(self.survey.get_fields_names(), expected)
 
-    def test_modify_field(self):
+    def test_change_field_tag(self):
         expected = fixtures.FIELDS[:]
         pos = expected.index('name')
         expected[pos] = 'first_name'
         field = self.survey.get_field('name')
-        self.survey.modify_field(field, 'first_name')
+        self.survey.change_field_tag(field, 'first_name')
         self.assertEqual(self.survey.get_fields_names(), expected)
 
     def test_get_or_create_field(self):
@@ -136,5 +136,6 @@ class SurveyTreeWithGroupsOperationsTest(CommonTestCase):
         for field, groups in zip(fields, fields_groups):
             self.survey_prev.insert_field_into_group_chain(field, groups)
 
-        self.assertXMLsEqual(self.survey_prev.to_string(),
-                             fixtures.survey_xml_groups_after__second)
+        expected_xml = self.survey_prev.to_string()\
+            .replace('TestGroup', 'AlgebraicTypes2')
+        self.assertXMLsEqual(expected_xml, fixtures.survey_xml_groups_after__second)

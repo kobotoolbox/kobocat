@@ -66,12 +66,17 @@ def _update_xform(request, username, id_string, add_message=True):
     def _rename_migrated_files(files):
         # XXX: later stages of form processing assume that filename
         # is form's id_string
-        file = files.get('xls_file')
-        if file is not None:
-            id_string_name = '{}.xlsx'.format(id_string)
-            file._set_name(id_string_name)
+        file = files['xls_file']
+        id_string_name = '{}.xlsx'.format(id_string)
+        file._set_name(id_string_name)
 
     def set_form():
+        if request.FILES.get('xls_file') is None:
+            return {
+                'type': 'alert-error',
+                'text': _(u'Form does not exist. Please provide new form'
+                          u'version in order to update')
+            }
         _rename_migrated_files(request.FILES)
         form = QuickConverter(request.POST, request.FILES)
         form.publish(request.user, id_string)
