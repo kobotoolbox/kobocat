@@ -63,8 +63,11 @@ class SurveyTree(XMLTree):
         """WARNING: It is not possible to revert this operation"""
         field.getparent().remove(field)
 
-    def modify_field(self, field, new_tag):
+    def change_field_tag(self, field, new_tag):
         field.tag = new_tag
+
+    def set_field_attrib(self, field, attrib, new_value):
+        field.attrib[attrib] = new_value
 
     def get_or_create_field(self, field_tag, text='', groups=None):
         groups = groups if groups is not None else []

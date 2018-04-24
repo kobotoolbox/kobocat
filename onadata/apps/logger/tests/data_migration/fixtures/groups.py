@@ -88,7 +88,7 @@ survey_xml_groups_before = """
 """
 
 survey_xml_groups_after = """
-<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vaEytJG3RWgRJMAuCnKWtC">
+<groups2 xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="groups2" version="vaEytJG3RWgRJMAuCnKWtC">
   <formhub>
     <uuid>30760c2faa6c498a83f0c6a7ff761f83</uuid>
   </formhub>
@@ -106,7 +106,7 @@ survey_xml_groups_after = """
     <homomorphism>identity</homomorphism>
   </group_transformations>
   
-</TestGroup>
+</groups2>
 """
 
 form_xml_groups_before__second = """<?xml version="1.0"?>
@@ -231,7 +231,7 @@ survey_xml_groups_before__second = """
 """
 
 survey_xml_groups_after__second = """
-<TestGroup xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="TestGroup" version="vkvxz56QzsTUnnJvSQDj4R">
+<AlgebraicTypes2 xmlns:jr="http://openrosa.org/javarosa" xmlns:orx="http://openrosa.org/xforms" id="AlgebraicTypes2" version="vkvxz56QzsTUnnJvSQDj4R">
   <formhub>
     <uuid>30760c2faa6c498a83f0c6a7ff761f83</uuid>
   </formhub>
@@ -257,5 +257,5 @@ survey_xml_groups_after__second = """
     <endomorphism>f: G -&gt; G</endomorphism>
   </group_transformations>
  
-</TestGroup>
+</AlgebraicTypes2>
 """

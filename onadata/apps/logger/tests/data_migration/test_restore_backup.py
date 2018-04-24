@@ -53,7 +53,7 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
         )
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.instances.first().xml,
-            self._append_survey_data(fixtures.survey_xml)
+            self._append_survey_data(fixtures.survey_xml).replace('Survey', 'Survey2')
         )
 
     def test_restoring_last_backup__submission_after_migration(self):
@@ -64,11 +64,11 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
 
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.instances.get(id=self.survey.id).xml,
-            self._append_survey_data(fixtures.survey_xml),
+            self._append_survey_data(fixtures.survey_xml).replace('Survey', 'Survey2'),
         )
         self.assertEqualIgnoringWhitespaces(
             self.xform_new.instances.get(id=mid_survey.id).xml,
-            self._append_survey_data(fixtures.survey_xml_second),
+            self._append_survey_data(fixtures.survey_xml_second).replace('Survey', 'Survey2'),
         )
 
     def test_migrate_surveys_to_prev_schema(self):
