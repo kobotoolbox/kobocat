@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 
 from onadata.libs.utils import common_tags
@@ -222,20 +223,17 @@ def create_attachments_zipfile(attachments, temporary_file=None):
     return temporary_file
 
 
-def _get_form_url(request, username, protocol='https'):
+def _get_form_url(request, username):
     if settings.TESTING_MODE:
-        http_host = settings.TEST_HTTP_HOST
         username = settings.TEST_USERNAME
-    else:
-        http_host = request.META.get('HTTP_HOST', 'ona.io')
 
-    return '%s://%s/%s' % (protocol, http_host, username)
+    return request.build_absolute_uri(
+        reverse('user_profile', kwargs={'username': username}))
 
 
 def get_enketo_edit_url(request, instance, return_url):
     form_url = _get_form_url(request,
-                             request.user.username,
-                             settings.ENKETO_PROTOCOL)
+                             request.user.username)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
         instance_id=instance.uuid, return_url=return_url)
