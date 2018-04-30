@@ -50,6 +50,22 @@ def image_urls(instance):
         urls.append(url)
     return urls
 
+def image_urls_dict(instance):
+    default_storage = get_storage_class()()
+    urls = dict()
+    suffix = settings.THUMB_CONF['medium']['suffix']
+    for a in instance.attachments.all():
+        filename = a.media_file.name
+        if default_storage.exists(get_path(a.media_file.name, suffix)):
+            url = default_storage.url(
+                get_path(a.media_file.name, suffix))
+        else:
+            url = a.media_file.url
+        file_basename = os.path.basename(filename)
+        if url.startswith('/'):
+            url = settings.KOBOCAT_URL + url
+        urls[file_basename] = url
+    return urls
 
 def parse_xform_instance(xml_str):
     """
@@ -159,10 +175,13 @@ def get_client_ip(request):
 
 
 def enketo_url(form_url, id_string, instance_xml=None,
-               instance_id=None, return_url=None):
+               instance_id=None, return_url=None, instance_attachments=None):
     if not hasattr(settings, 'ENKETO_URL')\
             and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
         return False
+
+    if instance_attachments is None:
+        instance_attachments = {}
 
     url = settings.ENKETO_URL + settings.ENKETO_API_SURVEY_PATH
 
@@ -177,6 +196,10 @@ def enketo_url(form_url, id_string, instance_xml=None,
             'instance_id': instance_id,
             'return_url': return_url
         })
+        for key, value in instance_attachments.iteritems():
+            values.update({
+                'instance_attachments[' + key + ']': value
+            })
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
     if req.status_code in [200, 201]:
@@ -236,7 +259,9 @@ def get_enketo_edit_url(request, instance, return_url):
     form_url = _get_form_url(request,
                              request.user.username,
                              settings.ENKETO_PROTOCOL)
+    instance_attachments = image_urls_dict(instance)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
-        instance_id=instance.uuid, return_url=return_url)
+        instance_id=instance.uuid, return_url=return_url,
+        instance_attachments=instance_attachments)
     return url
