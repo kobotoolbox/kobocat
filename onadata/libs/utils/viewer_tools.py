@@ -61,9 +61,9 @@ def image_urls_dict(instance):
                 get_path(a.media_file.name, suffix))
         else:
             url = a.media_file.url
-	file_basename = os.path.basename(filename)
-	if url.startswith('/'):
-	    url = settings.KOBOCAT_URL + url
+        file_basename = os.path.basename(filename)
+        if url.startswith('/'):
+            url = settings.KOBOCAT_URL + url
         urls[file_basename] = url
     return urls
 
@@ -180,6 +180,9 @@ def enketo_url(form_url, id_string, instance_xml=None,
             and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
         return False
 
+    if instance_attachments is None:
+        instance_attachments = {}
+
     url = settings.ENKETO_URL + settings.ENKETO_API_SURVEY_PATH
 
     values = {
@@ -256,7 +259,9 @@ def get_enketo_edit_url(request, instance, return_url):
     form_url = _get_form_url(request,
                              request.user.username,
                              settings.ENKETO_PROTOCOL)
+    instance_attachments = image_urls_dict(instance)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
-        instance_id=instance.uuid, return_url=return_url)
+        instance_id=instance.uuid, return_url=return_url,
+        instance_attachments=instance_attachments)
     return url
