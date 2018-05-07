@@ -20,6 +20,7 @@ from guardian.shortcuts import \
     get_perms_for_model
 from cStringIO import StringIO
 from taggit.managers import TaggableManager
+from xml.sax import saxutils
 
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
@@ -145,6 +146,7 @@ class XForm(BaseModel):
 
         if self.title and title_xml != self.title:
             title_xml = self.title[:XFORM_TITLE_LENGTH]
+            title_xml = saxutils.escape(title_xml)
             if isinstance(self.xml, str):
                 self.xml = self.xml.decode('utf-8')
             self.xml = title_pattern.sub(
