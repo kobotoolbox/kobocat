@@ -273,6 +273,9 @@ class XFormInstanceParser(object):
 
     def __init__(self, xml_str, data_dictionary):
         self.dd = data_dictionary
+        # The two following variables need to be initialized in the constructor, in case parsing fails.
+        self._flat_dict = {}
+        self._attributes = {}
         try:
             self.parse(xml_str)
         except Exception as err:
@@ -286,7 +289,6 @@ class XFormInstanceParser(object):
         repeats = [e.get_abbreviated_xpath()
                    for e in self.dd.get_survey_elements_of_type(u"repeat")]
         self._dict = _xml_node_to_dict(self._root_node, repeats)
-        self._flat_dict = {}
         if self._dict is None:
             raise InstanceEmptyError
         for path, value in _flatten_dict_nest_repeats(self._dict, []):
@@ -312,7 +314,6 @@ class XFormInstanceParser(object):
         return self._attributes
 
     def _set_attributes(self):
-        self._attributes = {}
         all_attributes = list(_get_all_attributes(self._root_node))
         for key, value in all_attributes:
             # commented since enketo forms may have the template attribute in
@@ -329,7 +330,7 @@ class XFormInstanceParser(object):
                 self._attributes[key] = value
 
     def get_xform_id_string(self):
-        return self._attributes[u"id"]
+        return self._attributes.get(u"id")
 
     def get_flat_dict_with_attributes(self):
         result = self.to_flat_dict().copy()

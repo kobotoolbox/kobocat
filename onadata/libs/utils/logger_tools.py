@@ -592,13 +592,18 @@ def update_mongo_for_xform(xform, only_update_missing=True):
     done = 0
     for id, instance in instances.items():
         (pi, created) = ParsedInstance.objects.get_or_create(instance=instance)
-        pi.save(async=False)
-        done += 1
+        if not pi.save(async=False):
+            print("\033[91m[ERROR] - Instance #{}/uuid:{} - Could not save the parsed instance\033[0m".format(
+                id, instance.uuid))
+        else:
+            done += 1
+
         # if 1000 records are done, flush mongo
-        if (done % 1000) == 0:
+        if (done > 0 and done % 1000) == 0:
             sys.stdout.write(
                 'Updated %d records, flushing MongoDB...\n' % done)
-        settings.MONGO_CONNECTION.admin.command({'fsync': 1})
+            settings.MONGO_CONNECTION.admin.command({'fsync': 1})
+
         progress = "\r%.2f %% done..." % ((float(done) / float(total)) * 100)
         sys.stdout.write(progress)
         sys.stdout.flush()

@@ -251,10 +251,16 @@ class ParsedInstance(models.Model):
 
     def update_mongo(self, async=True):
         d = self.to_dict_for_mongo()
-        if async:
-            update_mongo_instance.apply_async((), {"record": d})
+        if d.get("_xform_id_string") is None:
+            # if _xform_id_string, Instance could not be parsed.
+            # so, we don't update mongo.
+            return False
         else:
-            update_mongo_instance(d)
+            if async:
+                update_mongo_instance.apply_async((), {"record": d})
+            else:
+                update_mongo_instance(d)
+        return True
 
     @staticmethod
     def bulk_update_validation_statuses(query, validation_status):
@@ -312,7 +318,7 @@ class ParsedInstance(models.Model):
         self._set_geopoint()
         super(ParsedInstance, self).save(*args, **kwargs)
         # insert into Mongo
-        self.update_mongo(async)
+        return self.update_mongo(async)
 
     def add_note(self, note):
         note = Note(instance=self.instance, note=note)
