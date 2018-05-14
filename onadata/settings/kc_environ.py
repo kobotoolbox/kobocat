@@ -217,6 +217,11 @@ if 'RAVEN_DSN' in os.environ:
                     'handlers': ['console'],
                     'propagate': False,
                 },
+                'console_logger': {
+                    'handlers': ['console'],
+                    'level': 'DEBUG',
+                    'propagate': True
+                },
                 'sentry.errors': {
                     'level': 'DEBUG',
                     'handlers': ['console'],
