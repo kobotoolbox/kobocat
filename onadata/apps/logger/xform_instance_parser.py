@@ -166,9 +166,18 @@ def _xml_node_to_dict(node, repeats=[]):
                 if child_name not in value:
                     value[child_name] = d[child_name]
                 else:
-                    raise InstanceMultipleNodeError(
-                        _(u"Multiple nodes with the same name '%s'"
-                          u" while not a repeat" % child_name))
+                    # Duplicate Ona solution when repeating group is not present,
+                    # but some nodes are still making references to it.
+                    # Ref: https://github.com/onaio/onadata/commit/7d65fd30348b2f9c6ed6379c7bf79a523cc5750d
+                    node_value = value[child_name]
+                    # 1. check if the node values is a list
+                    if not isinstance(node_value, list):
+                        # if not a list, create one
+                        value[child_name] = [node_value]
+                    # 2. parse the node
+                    d = _xml_node_to_dict(child, repeats)
+                    # 3. aggregate
+                    value[child_name].append(d[child_name])
             else:
                 if child_name not in value:
                     value[child_name] = [d[child_name]]

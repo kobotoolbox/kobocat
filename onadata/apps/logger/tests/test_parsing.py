@@ -7,8 +7,10 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser,\
     xpath_from_xml_node
 from onadata.apps.logger.xform_instance_parser import get_uuid_from_xml,\
-    get_meta_from_xml, get_deprecated_uuid_from_xml
+    get_meta_from_xml, get_deprecated_uuid_from_xml,\
+    _xml_node_to_dict, clean_and_parse_xml
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
+
 
 XML = u"xml"
 DICT = u"dict"
@@ -166,6 +168,21 @@ class TestXFormInstanceParser(TestBase):
             "multiple_nodes_error.xml"
         )
         self._make_submission(xml_submission_file_path)
-        self.assertContains(self.response,
-                            "Multiple nodes with the same name",
-                            status_code=400)
+        self.assertEquals(201, self.response.status_code)
+
+    def test_xml_repeated_group_to_dict(self):
+        xml_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../fixtures/repeated_group/repeated_group.xml"
+        )
+        json_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../fixtures/repeated_group/repeated_group.json"
+        )
+        with open(xml_file) as file:
+            dict_ = _xml_node_to_dict(clean_and_parse_xml(file.read()))
+            self.assertTrue(dict_['#document']['form']['question_group'])
+            self.assertEqual(2, len(dict_['#document']['form']['question_group']))
+            with open(json_file) as jfile:
+                import json
+                self.assertEqual(jfile.read(), json.dumps(dict_))
