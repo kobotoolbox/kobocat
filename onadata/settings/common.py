@@ -86,6 +86,8 @@ STATIC_URL = '/static/'
 # Configurable settings.
 ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
 KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kc.kobotoolbox.org')
+
+
 ENKETO_URL= ENKETO_URL.rstrip('/')
 ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
 ENKETO_VERSION= os.environ.get('ENKETO_VERSION', 'Legacy').lower()
@@ -115,7 +117,18 @@ ENKETO_API_INSTANCE_IFRAME_URL = ENKETO_URL + ENKETO_API_ROOT + ENKETO_API_ENDPO
 KPI_URL = os.environ.get('KPI_URL', False)
 
 # specifically for site urls sent to enketo for form retrieval
+# `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.
+# All internal communications between containers must be HTTP only.
 ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
+
+# These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
+# See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
+KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
+    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
+    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
+KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
+    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
+    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
 
 # Default value for the `UserProfile.require_auth` attribute. Even though it's
 # set in kc_environ, include it here as well to support legacy installations
