@@ -252,6 +252,15 @@ def _get_form_url(request, username, protocol='https'):
     else:
         http_host = request.META.get('HTTP_HOST', 'ona.io')
 
+    # In case INTERNAL_DOMAIN_NAME is equal to PUBLIC_DOMAIN_NAME,
+    # configuration doesn't use docker internal network.
+    # Don't overwrite `protocol.
+    is_call_internal = settings.KOBOCAT_INTERNAL_HOSTNAME == http_host and \
+                       settings.KOBOCAT_PUBLIC_HOSTNAME != http_host
+
+    # Make sure protocol is enforced to `http` when calling `kc` internally
+    protocol = "http" if is_call_internal else protocol
+
     return '%s://%s/%s' % (protocol, http_host, username)
 
 
