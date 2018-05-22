@@ -1,6 +1,7 @@
-import reversion
-
 from datetime import datetime
+from hashlib import sha256
+
+import reversion
 
 from django.contrib.gis.db import models
 from django.db.models.signals import post_save
@@ -101,8 +102,13 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
 
 @reversion.register
 class Instance(models.Model):
+    XML_HASH_LENGTH = 64
+    DEFAULT_XML_HASH = None
+
     json = JSONField(default={}, null=False)
     xml = models.TextField()
+    xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,
+                                default=DEFAULT_XML_HASH)
     user = models.ForeignKey(User, related_name='instances', null=True)
     xform = models.ForeignKey(XForm, null=True, related_name='instances')
     survey_type = models.ForeignKey(SurveyType)
@@ -129,8 +135,21 @@ class Instance(models.Model):
 
     tags = TaggableManager()
 
+    validation_status = JSONField(null=True, default=None)
+
     class Meta:
         app_label = 'logger'
+
+    @property
+    def asset(self):
+        """
+        The goal of this property is to make the code future proof.
+        We can run the tests on kpi backend or kobocat backend.
+        Instance.asset will exist for both
+        It's used for validation_statuses.
+        :return: XForm
+        """
+        return self.xform
 
     @classmethod
     def set_deleted_at(cls, instance_id, deleted_at=timezone.now()):
@@ -203,6 +222,72 @@ class Instance(models.Model):
                 self.uuid = uuid
         set_uuid(self)
 
+    def _populate_xml_hash(self):
+        '''
+        Populate the `xml_hash` attribute of this `Instance` based on the content of the `xml`
+        attribute.
+        '''
+        self.xml_hash = self.get_hash(self.xml)
+
+    @classmethod
+    def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None, repopulate=False):
+        '''
+        Populate the `xml_hash` field for `Instance` instances limited to the specified users
+        and/or DB primary keys.
+
+        :param list[str] usernames: Optional list of usernames for whom `Instance`s will be
+        populated with hashes.
+        :param list[int] pk__in: Optional list of primary keys for `Instance`s that should be
+        populated with hashes.
+        :param bool repopulate: Optional argument to force repopulation of existing hashes.
+        :returns: Total number of `Instance`s updated.
+        :rtype: int
+        '''
+
+        filter_kwargs = dict()
+        if usernames:
+            filter_kwargs['xform__user__username__in'] = usernames
+        if pk__in:
+            filter_kwargs['pk__in'] = pk__in
+        # By default, skip over instances previously populated with hashes.
+        if not repopulate:
+            filter_kwargs['xml_hash'] = cls.DEFAULT_XML_HASH
+
+        # Query for the target `Instance`s.
+        target_instances_queryset = cls.objects.filter(**filter_kwargs)
+
+        # Exit quickly if there's nothing to do.
+        if not target_instances_queryset.exists():
+            return 0
+
+        # Limit our queryset result content since we'll only need the `pk` and `xml` attributes.
+        target_instances_queryset = target_instances_queryset.only('pk', 'xml')
+        instances_updated_total = 0
+
+        # Break the potentially large `target_instances_queryset` into chunks to avoid memory
+        # exhaustion.
+        chunk_size = 2000
+        target_instances_queryset = target_instances_queryset.order_by('pk')
+        target_instances_qs_chunk = target_instances_queryset
+        while target_instances_qs_chunk.exists():
+            # Take a chunk of the target `Instance`s.
+            target_instances_qs_chunk = target_instances_qs_chunk[0:chunk_size]
+
+            for instance in target_instances_qs_chunk:
+                pk = instance.pk
+                xml = instance.xml
+                # Do a `Queryset.update()` on this individual instance to avoid signals triggering
+                # things like `Reversion` versioning.
+                instances_updated_count = Instance.objects.filter(pk=pk).update(
+                    xml_hash=cls.get_hash(xml))
+                instances_updated_total += instances_updated_count
+
+            # Set up the next chunk
+            target_instances_qs_chunk = target_instances_queryset.filter(
+                pk__gt=instance.pk)
+
+        return instances_updated_total
+
     def get(self, abbreviated_xpath):
         self._set_parser()
         return self._parser.get(abbreviated_xpath)
@@ -249,6 +334,19 @@ class Instance(models.Model):
         self._set_parser()
         return self._parser.get_root_node_name()
 
+    @staticmethod
+    def get_hash(input_string):
+        '''
+        Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
+
+        :param basestring input_sting: The string to be hashed.
+        :return: The resulting hash.
+        :rtype: str
+        '''
+        if isinstance(input_string, unicode):
+            input_string = input_string.encode('utf-8')
+        return sha256(input_string).hexdigest()
+
     @property
     def point(self):
         gc = self.geom
@@ -268,6 +366,12 @@ class Instance(models.Model):
         self._set_json()
         self._set_survey_type()
         self._set_uuid()
+        self._populate_xml_hash()
+
+        # Force validation_status to be dict
+        if self.validation_status is None:
+            self.validation_status = {}
+
         super(Instance, self).save(*args, **kwargs)
 
     def set_deleted(self, deleted_at=timezone.now()):
@@ -277,12 +381,28 @@ class Instance(models.Model):
         self.xform.submission_count(force_update=True)
         self.parsed_instance.save()
 
+    def get_validation_status(self):
+        """
+        Returns instance validation status.
+
+        :return: object
+        """
+        # This method can be tweaked to implement default validation status
+        # For example:
+        # if not self.validation_status:
+        #    self.validation_status = self.asset.settings.get("validation_statuses")[0]
+        return self.validation_status
+
 
 post_save.connect(update_xform_submission_count, sender=Instance,
                   dispatch_uid='update_xform_submission_count')
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
+
+if Instance.XML_HASH_LENGTH / 2 != sha256().digest_size:
+    raise AssertionError('SHA256 hash `digest_size` expected to be `{}`, not `{}`'.format(
+        Instance.XML_HASH_LENGTH, sha256().digest_size))
 
 
 class InstanceHistory(models.Model):

@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from onadata.apps.viewer.models.parsed_instance import dict_for_mongo,\
-    _encode_for_mongo, DATETIME_FORMAT
+from onadata.apps.viewer.models.parsed_instance import DATETIME_FORMAT
+from onadata.apps.api.mongo_helper import MongoHelper
 
 audit = settings.MONGO_DB.auditlog
 DEFAULT_LIMIT = 1000
@@ -23,7 +23,7 @@ class AuditLog(object):
     @classmethod
     def query_mongo(cls, username, query=None, fields=None, sort=None, start=0,
                     limit=DEFAULT_LIMIT, count=False):
-        query = dict_for_mongo(query) if query else {}
+        query = MongoHelper.to_safe_dict(query) if query else {}
         query[cls.ACCOUNT] = username
         # TODO find better method
         # check for the created_on key in query and turn its values into dates
@@ -53,7 +53,7 @@ class AuditLog(object):
         # cant mix including and excluding fields in a single query
         fields_to_select = None
         if type(fields) == list and len(fields) > 0:
-            fields_to_select = dict([(_encode_for_mongo(field), 1)
+            fields_to_select = dict([(MongoHelper.encode(field), 1)
                                      for field in fields])
         cursor = audit.find(query, fields_to_select)
         if count:
@@ -61,10 +61,10 @@ class AuditLog(object):
 
         cursor.skip(max(start, 0)).limit(limit)
         if type(sort) == dict and len(sort) == 1:
+            sort = MongoHelper.to_safe_dict(sort, reading=True)
             sort_key = sort.keys()[0]
-            # TODO: encode sort key if it has dots
             sort_dir = int(sort[sort_key])  # -1 for desc, 1 for asc
-            cursor.sort(_encode_for_mongo(sort_key), sort_dir)
+            cursor.sort(sort_key, sort_dir)
         # set batch size for cursor iteration
         cursor.batch_size = cls.DEFAULT_BATCHSIZE
         return cursor

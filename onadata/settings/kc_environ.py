@@ -154,6 +154,11 @@ if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
 # system time zone.
 TIME_ZONE = os.environ.get('TIME_ZONE', 'America/New_York')
 
+# Default value for the `UserProfile.require_auth` attribute
+REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
+        'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
+        'False') == 'True'
+
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
 if 'RAVEN_DSN' in os.environ:
@@ -220,6 +225,11 @@ if 'RAVEN_DSN' in os.environ:
                     'level': 'DEBUG',
                     'handlers': ['console'],
                     'propagate': False,
+                },
+                'console_logger': {
+                    'handlers': ['console'],
+                    'level': 'DEBUG',
+                    'propagate': True
                 },
                 'sentry.errors': {
                     'level': 'DEBUG',

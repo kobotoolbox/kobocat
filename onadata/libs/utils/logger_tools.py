@@ -15,6 +15,7 @@ from django.core.mail import mail_admins
 from django.core.servers.basehttp import FileWrapper
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.http import HttpResponse, HttpResponseNotFound, \
     StreamingHttpResponse
@@ -29,6 +30,10 @@ import sys
 
 from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.models import Attachment
+from onadata.apps.logger.models.attachment import (
+    generate_attachment_filename,
+    hash_attachment_contents,
+)
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models.instance import (
     FormInactiveError,
@@ -76,6 +81,7 @@ def _get_instance(xml, new_uuid, submitted_by, status, xform):
         InstanceHistory.objects.create(
             xml=instance.xml, xform_instance=instance, uuid=old_uuid)
         instance.xml = xml
+        instance._populate_xml_hash()
         instance.uuid = new_uuid
         instance.save()
     else:
@@ -171,6 +177,32 @@ def check_submission_permissions(request, xform):
                   'form_title': xform.title}))
 
 
+def save_attachments(instance, media_files):
+    '''
+    Returns `True` if any new attachment was saved, `False` if all attachments
+    were duplicates or none were provided
+    '''
+    any_new_attachment = False
+    for f in media_files:
+        attachment_filename = generate_attachment_filename(instance, f.name)
+        existing_attachment = Attachment.objects.filter(
+            instance=instance,
+            media_file=attachment_filename,
+            mimetype=f.content_type,
+        ).first()
+        if existing_attachment and (existing_attachment.file_hash ==
+                                    hash_attachment_contents(f.read())):
+            # We already have this attachment!
+            continue
+        f.seek(0)
+        # This is a new attachment; save it!
+        Attachment.objects.create(
+            instance=instance,
+            media_file=f, mimetype=f.content_type)
+        any_new_attachment = True
+    return any_new_attachment
+
+
 def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
                     date_created_override):
     if not date_created_override:
@@ -178,9 +210,7 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
 
     instance = _get_instance(xml, new_uuid, submitted_by, status, xform)
 
-    for f in media_files:
-        Attachment.objects.get_or_create(
-            instance=instance, media_file=f, mimetype=f.content_type)
+    save_attachments(instance, media_files)
 
     # override date created if required
     if date_created_override:
@@ -201,67 +231,62 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     return instance
 
 
+@transaction.atomic # paranoia; redundant since `ATOMIC_REQUESTS` set to `True`
 def create_instance(username, xml_file, media_files,
                     status=u'submitted_via_web', uuid=None,
                     date_created_override=None, request=None):
     """
-    I used to check if this file had been submitted already, I've
-    taken this out because it was too slow. Now we're going to create
-    a way for an admin to mark duplicate instances. This should
-    simplify things a bit.
     Submission cases:
         If there is a username and no uuid, submitting an old ODK form.
         If there is a username and a uuid, submitting a new ODK form.
     """
-    with transaction.atomic():
-        instance = None
-        submitted_by = request.user \
-            if request and request.user.is_authenticated() else None
+    instance = None
+    submitted_by = request.user \
+        if request and request.user.is_authenticated() else None
 
-        if username:
-            username = username.lower()
+    if username:
+        username = username.lower()
 
-        xml = xml_file.read()
-        xform = get_xform_from_submission(xml, username, uuid)
-        check_submission_permissions(request, xform)
+    xml = xml_file.read()
+    xml_hash = Instance.get_hash(xml)
+    xform = get_xform_from_submission(xml, username, uuid)
+    check_submission_permissions(request, xform)
 
-        existing_instance_count = Instance.objects.filter(
-            xml=xml, xform__user=xform.user).count()
+    # Dorey's rule from 2012 (commit 890a67aa):
+    #   Ignore submission as a duplicate IFF
+    #    * a submission's XForm collects start time
+    #    * the submitted XML is an exact match with one that
+    #      has already been submitted for that user.
+    if xform.has_start_time:
+        # XML matches are identified by identical content hash OR, when a
+        # content hash is not present, by string comparison of the full
+        # content, which is slow! Use the management command
+        # `populate_xml_hashes_for_instances` to hash existing submissions
+        existing_instance = Instance.objects.filter(
+            Q(xml_hash=xml_hash) |
+                Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
+            xform__user=xform.user,
+        ).first()
+    else:
+        existing_instance = None
 
-        if existing_instance_count > 0:
-            existing_instance = Instance.objects.filter(
-                xml=xml, xform__user=xform.user)[0]
-            if not existing_instance.xform or\
-                    existing_instance.xform.has_start_time:
-                # Ignore submission as a duplicate IFF
-                #  * a submission's XForm collects start time
-                #  * the submitted XML is an exact match with one that
-                #    has already been submitted for that user.
-                raise DuplicateInstance()
+    # get new and deprecated uuid's
+    new_uuid = get_uuid_from_xml(xml)
 
-        # get new and depracated uuid's
-        new_uuid = get_uuid_from_xml(xml)
-        duplicate_instances = Instance.objects.filter(uuid=new_uuid)
-
-        if duplicate_instances:
-            # ensure we have saved the extra attachments
-            for f in media_files:
-                Attachment.objects.get_or_create(
-                    instance=duplicate_instances[0],
-                    media_file=f, mimetype=f.content_type)
+    if existing_instance:
+        # ensure we have saved the extra attachments
+        any_new_attachment = save_attachments(existing_instance, media_files)
+        if not any_new_attachment:
+            raise DuplicateInstance()
         else:
-            instance = save_submission(xform, xml, media_files, new_uuid,
-                                       submitted_by, status,
-                                       date_created_override)
-            return instance
-
-    if duplicate_instances:
-        # We are now outside the atomic block, so we can raise an exception
-        # without rolling back the extra attachments we created earlier
-        # NB: Since `ATOMIC_REQUESTS` is set at the database level, everything
-        # could still be rolled back if the calling view fails to handle an
-        # exception
-        raise DuplicateInstance()
+            # Update Mongo via the related ParsedInstance
+            existing_instance.parsed_instance.save(async=False)
+            return existing_instance
+    else:
+        instance = save_submission(xform, xml, media_files, new_uuid,
+                                   submitted_by, status,
+                                   date_created_override)
+        return instance
 
 
 def safe_create_instance(username, xml_file, media_files, uuid, request):
@@ -567,13 +592,18 @@ def update_mongo_for_xform(xform, only_update_missing=True):
     done = 0
     for id, instance in instances.items():
         (pi, created) = ParsedInstance.objects.get_or_create(instance=instance)
-        pi.save(async=False)
-        done += 1
+        if not pi.save(async=False):
+            print("\033[91m[ERROR] - Instance #{}/uuid:{} - Could not save the parsed instance\033[0m".format(
+                id, instance.uuid))
+        else:
+            done += 1
+
         # if 1000 records are done, flush mongo
-        if (done % 1000) == 0:
+        if (done > 0 and done % 1000) == 0:
             sys.stdout.write(
                 'Updated %d records, flushing MongoDB...\n' % done)
-        settings.MONGO_CONNECTION.admin.command({'fsync': 1})
+            settings.MONGO_CONNECTION.admin.command({'fsync': 1})
+
         progress = "\r%.2f %% done..." % ((float(done) / float(total)) * 100)
         sys.stdout.write(progress)
         sys.stdout.flush()
