@@ -1,2 +1,5 @@
-boto==2.46.1
-django-storages==1.5.2
+boto==2.48.1
+
+# Change this back to the PyPI package once
+# https://github.com/jschneier/django-storages/pull/504 is merged and released
+-e git+https://github.com/jnm/django-storages@175ad806098fd1d139b6e1d2585fdf9295395e43#egg=django_storages
