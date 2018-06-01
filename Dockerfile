@@ -12,12 +12,18 @@ RUN if ! diff "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt" "${KOBOCAT_TMP_D
         apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     ; fi
 
+# Version 8 of pip doesn't really seem to upgrade packages when switching from
+# PyPI to editable Git
+RUN pip install --upgrade 'pip>=10,<11'
+
 # Install post-base-image `pip` additions/upgrades from `requirements/base.pip`, if modified.
 COPY ./requirements/ "${KOBOCAT_TMP_DIR}/current_requirements/"
 # FIXME: Replace this with the much simpler command `pip-sync ${KOBOCAT_TMP_DIR}/current_requirements/base.pip`.
 RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" "${KOBOCAT_TMP_DIR}/base_requirements/base.pip"; then \
         pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" \
     ; fi
+
+# Install post-base-image `pip` additions/upgrades from `requirements/s3.pip`, if modified.
 RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" "${KOBOCAT_TMP_DIR}/base_requirements/s3.pip"; then \
         pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" \
     ; fi
