@@ -18,6 +18,9 @@ COPY ./requirements/ "${KOBOCAT_TMP_DIR}/current_requirements/"
 RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" "${KOBOCAT_TMP_DIR}/base_requirements/base.pip"; then \
         pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" \
     ; fi
+RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" "${KOBOCAT_TMP_DIR}/base_requirements/s3.pip"; then \
+        pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" \
+    ; fi
 
 # Uninstall `pip` packages installed in the base image from `requirements/uninstall.pip`, if present.
 # FIXME: Replace this with the much simpler `pip-sync` command equivalent.
