@@ -1,4 +1,4 @@
-boto==2.48.1
+boto==2.48.0
 
 # Change this back to the PyPI package once
 # https://github.com/jschneier/django-storages/pull/504 is merged and released
