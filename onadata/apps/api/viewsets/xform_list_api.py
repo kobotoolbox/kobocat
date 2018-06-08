@@ -79,8 +79,13 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
         profile = get_object_or_404(
             UserProfile, user__username=username.lower())
-        # Include only the forms belonging to the specified user
-        queryset = queryset.filter(user=profile.user)
+        user = profile.user
+
+        # Retrieves forms users can view (own forms and shared forms)
+        xforms_id_strings = [xform.id_string for xform in queryset
+                             if user.has_perm("view_xform", xform)]
+        queryset = queryset.filter(id_string__in=xforms_id_strings)
+
         if profile.require_auth:
             # The specified has user ticked "Require authentication to see
             # forms and submit data"; reject anonymous requests
