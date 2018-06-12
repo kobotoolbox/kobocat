@@ -266,7 +266,7 @@ def _get_form_url(request, username, protocol='https'):
 
 def get_enketo_edit_url(request, instance, return_url):
     form_url = _get_form_url(request,
-                             request.user.username,
+                             instance.xform.user.username,
                              settings.ENKETO_PROTOCOL)
     instance_attachments = image_urls_dict(instance)
     url = enketo_url(
