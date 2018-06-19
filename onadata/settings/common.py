@@ -456,7 +456,7 @@ CELERYD_TASK_SOFT_TIME_LIMIT = int(os.environ.get(
     'CELERYD_TASK_SOFT_TIME_LIMIT', 1800))
 
 # duration to keep zip exports before deletion (in seconds)
-ZIP_EXPORT_COUNTDOWN = 3600  # 1 hour
+ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
 
 # default content length for submission requests
 DEFAULT_CONTENT_LENGTH = 10000000
