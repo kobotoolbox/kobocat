@@ -21,6 +21,7 @@ from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
     DELETEDAT, GEOLOCATION, ID, MONGO_STRFTIME, NOTES, SUBMISSION_TIME, TAGS,\
     UUID, XFORM_ID_STRING, SUBMITTED_BY
 from onadata.libs.utils.model_tools import set_uuid
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 
 
 class FormInactiveError(Exception):
@@ -136,6 +137,10 @@ class Instance(models.Model):
     tags = TaggableManager()
 
     validation_status = JSONField(null=True, default=None)
+
+    # TODO All old records will return False even they've been saved successfully in Mongo
+    # Update all records with correct value after the migration is done.
+    mongo_success = LazyDefaultBooleanField(default=False)
 
     class Meta:
         app_label = 'logger'

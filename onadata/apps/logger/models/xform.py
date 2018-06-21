@@ -25,6 +25,7 @@ from xml.sax import saxutils
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 
 try:
     from formpack.utils.xls_to_ss_structure import xls_to_dicts
@@ -94,6 +95,8 @@ class XForm(BaseModel):
     num_of_submissions = models.IntegerField(default=0)
 
     tags = TaggableManager()
+
+    has_kpi_hooks = LazyDefaultBooleanField(default=False)
 
     class Meta:
         app_label = 'logger'

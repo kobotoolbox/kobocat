@@ -27,6 +27,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
                                                lookup_field='pk')
     users = serializers.SerializerMethodField('get_xform_permissions')
     hash = serializers.SerializerMethodField()
+    has_kpi_hooks = serializers.BooleanField()
 
     @check_obj
     def get_hash(self, obj):
