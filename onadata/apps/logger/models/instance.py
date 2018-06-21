@@ -140,7 +140,7 @@ class Instance(models.Model):
 
     # TODO All old records will return False even they've been saved successfully in Mongo
     # Update all records with correct value after the migration is done.
-    mongo_success = LazyDefaultBooleanField(default=False)
+    is_synced_with_mongo = LazyDefaultBooleanField(default=False)
 
     class Meta:
         app_label = 'logger'

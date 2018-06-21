@@ -57,7 +57,6 @@ class LazyDefaultBooleanField(models.IntegerField):
         return True if value == 1 else False
 
     def pre_save(self, model_instance, add):
-        print("IN PRE_SAVE")
         value = getattr(model_instance, self.attname)
         if value is None:
             setattr(model_instance, self.attname, self._get_lazy_default())

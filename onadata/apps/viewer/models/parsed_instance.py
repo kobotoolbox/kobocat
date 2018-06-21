@@ -48,10 +48,12 @@ def update_mongo_instance(record):
     # http://api.mongodb.org/python/current/api/pymongo/collection.html#pymong\
     # o.collection.Collection.save
     try:
-        return xform_instances.save(record)
-    except Exception:
+        xform_instances.save(record)
+        return True
+    except Exception as e:
+        logging.getLogger().error("update_mongo_instance - {}".format(str(e)), exc_info=True)
         logging.getLogger().warning('Submission could not be saved to Mongo.', exc_info=True)
-        pass
+    return False
 
 
 class ParsedInstance(models.Model):
@@ -257,9 +259,16 @@ class ParsedInstance(models.Model):
             return False
         else:
             if async:
+                # TODO update self.instance after async save is made
                 update_mongo_instance.apply_async((), {"record": d})
             else:
-                update_mongo_instance(d)
+                success = update_mongo_instance(d)
+                # Only update self.instance is `success` is different from
+                # current_value (`self.instance.is_sync_with_mongo`)
+                if success != self.instance.is_synced_with_mongo:
+                    self.instance.is_synced_with_mongo = success
+                    self.instance.save()
+                    
         return True
 
     @staticmethod

@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='instance',
-            name='mongo_success',
+            name='is_synced_with_mongo',
             field=onadata.apps.logger.fields.LazyDefaultBooleanField(default=False),
         ),
         migrations.AddField(
