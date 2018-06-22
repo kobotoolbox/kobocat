@@ -183,7 +183,8 @@ class Command(BaseCommand):
             queryset = Instance.objects.filter(pk=instance_id).only('xml')
             fixed_xml = replace_first_and_last(
                 queryset[0].xml, instance_root_node_name, xform_root_node_name)
-            queryset.update(xml=fixed_xml)
+            new_xml_hash = Instance.get_hash(fixed_xml)
+            queryset.update(xml=fixed_xml, xml_hash=new_xml_hash)
             self.stdout.write('{}\t{}\t{}\t{}'.format(
                 instance_id, xform_id,
                 instance_root_node_name, xform_root_node_name

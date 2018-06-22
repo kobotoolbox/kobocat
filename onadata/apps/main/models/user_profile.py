@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
@@ -77,3 +78,14 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
                 assign_perm(perm.codename, instance.created_by, instance)
 post_save.connect(set_object_permissions, sender=UserProfile,
                   dispatch_uid='set_object_permissions')
+
+
+def default_user_profile_require_auth(
+        sender, instance, created, raw, **kwargs):
+    if raw or not created:
+        return
+    instance.require_auth = \
+        settings.REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT
+    instance.save()
+post_save.connect(default_user_profile_require_auth, sender=UserProfile,
+                      dispatch_uid='default_user_profile_require_auth')

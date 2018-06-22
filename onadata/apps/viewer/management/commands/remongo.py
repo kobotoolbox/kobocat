@@ -47,8 +47,11 @@ class Command(BaseCommand):
             print 'Querying record %s to %s' % (start, end-1)
             queryset = filter_queryset.order_by('pk')[start:end]
             for pi in queryset.iterator():
-                pi.update_mongo(async=False)
-                i += 1
+                if pi.update_mongo(async=False):
+                    i += 1
+                else:
+                    print("\033[91m[ERROR] Could not parse instance {}\033[0m".format(pi.instance.uuid))
+
                 if (i % 1000) == 0:
                     print 'Updated %d records, flushing MongoDB...' % i
                     settings.MONGO_CONNECTION.admin.command({'fsync': 1})

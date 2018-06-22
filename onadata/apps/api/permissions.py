@@ -30,11 +30,13 @@ class XFormPermissions(DjangoObjectPermissions):
     authenticated_users_only = False
 
     def __init__(self, *args, **kwargs):
-        # The default `perms_map` does not include GET, OPTIONS, or HEAD. See
+        # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
         # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['HEAD'] = ['%(app_label)s.view_%(model_name)s']
+        self.perms_map['PATCH'] = ['%(app_label)s.change_%(model_name)s']
+
         return super(XFormPermissions, self).__init__(*args, **kwargs)
 
     def has_permission(self, request, view):

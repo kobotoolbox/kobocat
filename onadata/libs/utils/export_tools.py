@@ -26,9 +26,7 @@ from json2xlsclient.client import Client
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.viewer.models.export import Export
-from onadata.apps.viewer.models.parsed_instance import\
-    _is_invalid_for_mongo, _encode_for_mongo, dict_for_mongo,\
-    _decode_from_mongo
+from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.libs.utils.viewer_tools import create_attachments_zipfile
 from onadata.libs.utils.common_tags import (
     ID, XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION, BAMBOO_DATASET_ID,
@@ -251,11 +249,11 @@ class ExportBuilder(object):
                             'type': child.bind.get(u"type")
                         })
 
-                        if _is_invalid_for_mongo(child_xpath):
+                        if MongoHelper.is_attribute_invalid(child_xpath):
                             if current_section_name not in encoded_fields:
                                 encoded_fields[current_section_name] = {}
                             encoded_fields[current_section_name].update(
-                                {child_xpath: _encode_for_mongo(child_xpath)})
+                                {child_xpath: MongoHelper.encode(child_xpath)})
 
                     # if its a select multiple, make columns out of its choices
                     if child.bind.get(u"type") == MULTIPLE_SELECT_BIND_TYPE\
@@ -364,7 +362,7 @@ class ExportBuilder(object):
 
     @classmethod
     def decode_mongo_encoded_section_names(cls, data):
-        return dict([(_decode_from_mongo(k), v) for k, v in data.iteritems()])
+        return dict([(MongoHelper.decode(k), v) for k, v in data.iteritems()])
 
     @classmethod
     def convert_type(cls, value, data_type):
@@ -781,7 +779,7 @@ def generate_export(export_type, extension, username, id_string,
 def query_mongo(username, id_string, query=None, hide_deleted=True):
     query = json.loads(query, object_hook=json_util.object_hook)\
         if query else {}
-    query = dict_for_mongo(query)
+    query = MongoHelper.to_safe_dict(query)
     query[USERFORM_ID] = u'{0}_{1}'.format(username, id_string)
     if hide_deleted:
         # display only active elements
