@@ -133,6 +133,14 @@ class XForm(BaseModel):
     def has_instances_with_geopoints(self):
         return self.instances_with_geopoints
 
+    @property
+    def kpi_hook_service(self):
+        """
+        Returns kpi hook service if it exists. XForm should have only one occurrence in any case.
+        :return: RestService
+        """
+        return self.restservices.filter(name="kpi_hook").first()
+
     def _set_id_string(self):
         matches = self.instance_id_regex.findall(self.xml)
         if len(matches) != 1:
