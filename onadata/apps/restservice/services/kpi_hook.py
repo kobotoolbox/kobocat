@@ -15,7 +15,7 @@ class ServiceDefinition(RestServiceInterface):
         headers = {"Content-Type": "application/json"}
         # Build the url in the service to avoid saving hardcoded domain name in the DB
         url = "{}{}".format(
-            settings.KPI_URL,
+            settings.KPI_INTERNAL_URL,
             endpoint
         )
         try:
