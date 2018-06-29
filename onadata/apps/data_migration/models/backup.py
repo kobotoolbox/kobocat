@@ -4,7 +4,7 @@ from django.db import models
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.models import User
 
-from .xform import XForm, upload_to
+from onadata.apps.logger.models.xform import XForm, upload_to
 
 
 class BackupManager(models.Manager):
@@ -39,7 +39,7 @@ class BackupXForm(models.Model):
     objects = BackupManager()
 
     class Meta:
-        app_label = 'logger'
+        app_label = 'data_migration'
         unique_together = ('xform_id', 'backup_version')
 
     @property
@@ -64,7 +64,7 @@ class BackupInstance(models.Model):
     uuid = models.CharField(max_length=249, default=u'')
 
     class Meta:
-        app_label = 'logger'
+        app_label = 'data_migration'
 
     def __str__(self):
         return "{version} backup of instance {uuid}".format(

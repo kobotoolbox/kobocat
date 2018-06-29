@@ -12,7 +12,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
-from onadata.apps.logger.models import XForm, create_xform_copy, copy_xform_data
+from onadata.apps.logger.models import XForm
+from onadata.apps.data_migration.models import (
+    create_xform_copy, copy_xform_data)
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.decorators import is_owner
 from onadata.libs.utils.logger_tools import publish_form

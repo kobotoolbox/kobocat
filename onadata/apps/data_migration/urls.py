@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from onadata.apps.logger.data_migration import views
+from onadata.apps.data_migration import views
 
 
 urlpatterns = patterns(

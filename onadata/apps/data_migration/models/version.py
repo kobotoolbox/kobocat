@@ -1,4 +1,9 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from onadata.apps.data_migration.xformtree import XFormTree
+from onadata.apps.logger.models import XForm
 
 
 class VersionTreeException(Exception):
@@ -50,7 +55,7 @@ class VersionTree(models.Model):
     objects = VersionManager()
 
     class Meta:
-        app_label = 'logger'
+        app_label = 'data_migration'
 
     def __str__(self):
         if self.version:
@@ -59,3 +64,56 @@ class VersionTree(models.Model):
                 self.version.backup_version,
             )
         return "VersionTree {}".format(self.id)
+
+
+class XFormVersion(models.Model):
+    xform = models.OneToOneField(XForm, on_delete=models.CASCADE)
+    version_tree = models.ForeignKey(VersionTree, blank=True, null=True)
+
+    class Meta:
+        app_label = 'data_migration'
+
+    @property
+    def latest_backup(self):
+        return self.version_tree.version
+
+
+@receiver(post_save, sender=XForm)
+def create_xform_version(instance, created, **kwargs):
+    if created:
+        XFormVersion.objects.create(xform=instance)
+
+
+def change_id_string(xform, new_id_string):
+    xform.id_string = new_id_string
+    xformtree = XFormTree(xform.xml)
+    xformtree.set_id_string(new_id_string)
+    xform.xml = xformtree.to_xml()
+    return xform
+
+
+def create_xform_copy(xform, id_string_suffix='temp'):
+    """Create copy of xform.
+    https://docs.djangoproject.com/en/dev/topics/db/queries/#copying-model-instances
+    """
+    temp_xform = xform
+    temp_xform.pk = None
+    new_id_string = '%s-%s' % (temp_xform.id_string, id_string_suffix)
+    change_id_string(temp_xform, new_id_string)
+    temp_xform.sms_id_string += '-' + id_string_suffix
+
+    temp_xform.save()
+    return temp_xform
+
+
+def copy_xform_data(from_xform, to_xform):
+    """
+    Copy only fields that can be changed by user during new xls file upload
+    """
+    to_xform.xls = from_xform.xls
+    to_xform.xml = from_xform.xml
+    to_xform.json = from_xform.json
+    change_id_string(to_xform, to_xform.id_string)
+    to_xform.description = from_xform.description
+    to_xform.date_created = from_xform.date_created
+    to_xform.save()

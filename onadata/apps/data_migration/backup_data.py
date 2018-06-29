@@ -1,4 +1,5 @@
-from onadata.apps.logger.models import BackupInstance, BackupXForm, VersionTree
+from onadata.apps.data_migration.models import (
+    BackupInstance, BackupXForm, VersionTree, XFormVersion)
 from .decisioner import MigrationDecisioner
 
 
@@ -41,11 +42,12 @@ def backup_xform(xform_data, xform=None, migration_changes=None, bind=False):
 
 def bind_backup_to_version_tree(xform, backup):
     vt = VersionTree.objects.create(version=backup)
-    if xform.version_tree is not None:
-        vt.parent = xform.version_tree
+    xform_version = XFormVersion.objects.get(xform=xform)
+    if xform_version.version_tree is not None:
+        vt.parent = xform_version.version_tree
         vt.save()
-    xform.version_tree = vt
-    xform.save()
+    xform_version.version_tree = vt
+    xform_version.save()
 
 
 def backup_survey(survey, xform_backup):

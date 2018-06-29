@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from onadata.apps.logger.data_migration.tree import Tree
+from onadata.apps.data_migration.tree import Tree
 
 
 class TestTree(TestCase):
