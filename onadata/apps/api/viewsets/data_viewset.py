@@ -561,6 +561,14 @@ Delete a specific submission in a form
 
         return Response(data=data)
 
+    def retrieve(self, request, *args, **kwargs):
+        # XML rendering does not a serializer
+        if request.accepted_renderer.format == "xml":
+            instance = self.get_object()
+            return Response(instance.xml)
+        else:
+            super(DataViewSet, self).retrieve(request, *args, **kwargs)
+
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
 
