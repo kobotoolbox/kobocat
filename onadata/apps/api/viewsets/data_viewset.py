@@ -395,9 +395,10 @@ Delete a specific submission in a form
         renderers.CSVRenderer,
         renderers.CSVZIPRenderer,
         renderers.SAVZIPRenderer,
-        renderers.SurveyRenderer
+        renderers.RawXMLRenderer
     ]
 
+    content_negotiation_class = renderers.InstanceContentNegotiation
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.XFormOwnerFilter)
     permission_classes = (XFormPermissions,)
@@ -567,7 +568,7 @@ Delete a specific submission in a form
             instance = self.get_object()
             return Response(instance.xml)
         else:
-            super(DataViewSet, self).retrieve(request, *args, **kwargs)
+            return super(DataViewSet, self).retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()

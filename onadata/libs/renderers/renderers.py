@@ -44,7 +44,7 @@ class SAVZIPRenderer(BaseRenderer):
 # TODO add KML, ZIP(attachments) support
 
 
-class SurveyRenderer(BaseRenderer):
+class RawXMLRenderer(BaseRenderer):
     media_type = 'application/xml'
     format = 'xml'
     charset = 'utf-8'
@@ -158,3 +158,21 @@ class TemplateXMLRenderer(TemplateHTMLRenderer):
 class StaticXMLRenderer(StaticHTMLRenderer):
     format = 'xml'
     media_type = 'text/xml'
+
+
+class InstanceContentNegotiation(negotiation.DefaultContentNegotiation):
+
+    def filter_renderers(self, renderers, format):
+        """
+        Removes `rest_framework_xml.renderers.XMLRenderer` from the renderers list to
+        prioritize `RawXMLRenderer`.
+        Useful to display xml of Instance without any parsing.
+
+        :param renderers: list
+        :param format: str
+        :return: list
+        """
+        renderers = [renderer for renderer in renderers
+                     if renderer.format == format and
+                     isinstance(renderer, XMLRenderer) is False]
+        return renderers
