@@ -16,7 +16,8 @@ class ServiceDefinition(RestServiceInterface):
         post_data = {
             "xml": parsed_instance.instance.xml,
             "json": parsed_instance.to_dict(),
-            "uuid": parsed_instance.instance.uuid
+            "uid": parsed_instance.instance.uuid,  # Will be used to expose data in API
+            "id": parsed_instance.instance.id  # Will be used internally by KPI to retry in case of failure
         }
         headers = {"Content-Type": "application/json"}
         # Build the url in the service to avoid saving hardcoded domain name in the DB
