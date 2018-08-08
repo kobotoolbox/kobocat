@@ -142,6 +142,10 @@ class Instance(models.Model):
     # Update all records with correct value after the migration is done.
     is_synced_with_mongo = LazyDefaultBooleanField(default=False)
 
+    # If XForm.has_kpi_hooks` is True, this field should be True either.
+    # It tells whether the instance has been successfully sent to KPI.
+    posted_to_kpi = LazyDefaultBooleanField(default=False)
+
     class Meta:
         app_label = 'logger'
 

@@ -3,17 +3,23 @@ from pybamboo.dataset import Dataset
 from pybamboo.connection import Connection
 
 from onadata.apps.restservice.RestServiceInterface import RestServiceInterface
+from onadata.apps.logger.models import XForm
 from onadata.libs.utils.bamboo import get_new_bamboo_dataset, get_bamboo_url
 
 
 class ServiceDefinition(RestServiceInterface):
+    """
+        @deprecated.
+        This service should not be used anymore
+    """
+
     id = u'bamboo'
     verbose_name = u'bamboo POST'
 
-    def send(self, url, parsed_instance):
+    def send(self, url, data):
 
-        xform = parsed_instance.instance.xform
-        rows = [parsed_instance.to_dict_for_mongo()]
+        xform = XForm.objects.get(id=data.get("xform_id"))
+        rows = [data.get("json")]
 
         # prefix meta columns names for bamboo
         prefix = (u'%(id_string)s_%(id)s'

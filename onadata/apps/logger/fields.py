@@ -2,7 +2,7 @@
 from django.db import models
 
 
-class LazyDefaultBooleanField(models.IntegerField):
+class LazyDefaultBooleanField(models.PositiveSmallIntegerField):
     """
     Allows specifying a default value for a new field without having to rewrite
     every row in the corresponding table when migrating the database.
@@ -32,10 +32,6 @@ class LazyDefaultBooleanField(models.IntegerField):
         kwargs['null'] = True
         kwargs['default'] = None
         super(LazyDefaultBooleanField, self).__init__(*args, **kwargs)
-
-    def db_type(self, connection):
-        # No need to play with integer or biginteger.
-        return "smallint"
 
     def _get_lazy_default(self):
         if callable(self.lazy_default):
