@@ -565,6 +565,7 @@ def inject_instanceid(xml_str, uuid):
 
 
 def update_mongo_for_xform(xform, only_update_missing=True):
+
     instance_ids = set(
         [i.id for i in Instance.objects.only('id').filter(xform=xform)])
     sys.stdout.write("Total no of instances: %d\n" % len(instance_ids))
@@ -596,6 +597,8 @@ def update_mongo_for_xform(xform, only_update_missing=True):
             print("\033[91m[ERROR] - Instance #{}/uuid:{} - Could not save the parsed instance\033[0m".format(
                 id, instance.uuid))
         else:
+            instance.is_synced_with_mongo = True
+            instance.save()
             done += 1
 
         # if 1000 records are done, flush mongo

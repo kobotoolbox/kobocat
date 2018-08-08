@@ -322,12 +322,19 @@ class ParsedInstance(models.Model):
     def save(self, async=False, *args, **kwargs):
         # start/end_time obsolete: originally used to approximate for
         # instanceID, before instanceIDs were implemented
+        created = self.pk is None
         self.start_time = None
         self.end_time = None
         self._set_geopoint()
         super(ParsedInstance, self).save(*args, **kwargs)
-        # insert into Mongo
-        return self.update_mongo(async)
+
+        # insert into Mongo.
+        # Signal has been removed because of a race condition.
+        # Rest Services were called before data was saved in DB.
+        success = self.update_mongo(async)
+        if success and created:
+            call_service(self)
+        return success
 
     def add_note(self, note):
         note = Note(instance=self.instance, note=note)
@@ -370,13 +377,3 @@ def _remove_from_mongo(sender, **kwargs):
     xform_instances.remove(instance_id)
 
 pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
-
-
-def rest_service_form_submission(sender, **kwargs):
-    parsed_instance = kwargs.get('instance')
-    created = kwargs.get('created')
-    if created:
-        call_service(parsed_instance)
-
-
-post_save.connect(rest_service_form_submission, sender=ParsedInstance)
