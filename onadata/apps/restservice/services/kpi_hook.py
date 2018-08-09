@@ -31,4 +31,4 @@ class ServiceDefinition(RestServiceInterface):
         # Save successful
         instance = Instance.objects.get(id=data.get("instance_id"))
         instance.posted_to_kpi = True
-        instance.save()
+        self.instance.save(update_fields=["posted_to_kpi"])

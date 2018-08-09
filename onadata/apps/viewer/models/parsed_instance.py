@@ -267,7 +267,7 @@ class ParsedInstance(models.Model):
                 # current_value (`self.instance.is_sync_with_mongo`)
                 if success != self.instance.is_synced_with_mongo:
                     self.instance.is_synced_with_mongo = success
-                    self.instance.save()
+                    self.instance.save(update_fields=["is_synced_with_mongo"])
                     
         return True
 

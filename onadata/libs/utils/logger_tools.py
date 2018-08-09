@@ -598,7 +598,7 @@ def update_mongo_for_xform(xform, only_update_missing=True):
                 id, instance.uuid))
         else:
             instance.is_synced_with_mongo = True
-            instance.save()
+            instance.save(update_fields=["is_synced_with_mongo"])
             done += 1
 
         # if 1000 records are done, flush mongo

@@ -138,8 +138,7 @@ class Instance(models.Model):
 
     validation_status = JSONField(null=True, default=None)
 
-    # TODO All old records will return False even they've been saved successfully in Mongo
-    # Update all records with correct value after the migration is done.
+    # TODO Don't forget to update all records with command `update_is_sync_with_mongo`.
     is_synced_with_mongo = LazyDefaultBooleanField(default=False)
 
     # If XForm.has_kpi_hooks` is True, this field should be True either.
