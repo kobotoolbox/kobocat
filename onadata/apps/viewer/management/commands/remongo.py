@@ -49,8 +49,6 @@ class Command(BaseCommand):
             for pi in queryset.iterator():
                 if pi.update_mongo(async=False):
                     i += 1
-                    pi.instance.is_synced_with_mongo = True
-                    pi.instance.save(update_fields=["is_synced_with_mongo"])
                 else:
                     print("\033[91m[ERROR] Could not parse instance {}\033[0m".format(pi.instance.uuid))
 

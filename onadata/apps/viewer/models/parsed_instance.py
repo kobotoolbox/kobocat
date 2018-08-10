@@ -266,9 +266,9 @@ class ParsedInstance(models.Model):
                 # Only update self.instance is `success` is different from
                 # current_value (`self.instance.is_sync_with_mongo`)
                 if success != self.instance.is_synced_with_mongo:
-                    self.instance.is_synced_with_mongo = success
-                    self.instance.save(update_fields=["is_synced_with_mongo"])
-                    
+                   self.instance.is_synced_with_mongo = success
+                   self.instance.save(update_fields=["is_synced_with_mongo"], force=True)
+
         return True
 
     @staticmethod

@@ -363,10 +363,7 @@ class Instance(models.Model):
             return gc[0]
 
     def save(self, *args, **kwargs):
-        force = kwargs.get('force')
-
-        if force:
-            del kwargs['force']
+        force = kwargs.pop("force", False)
 
         self._check_active(force)
 
