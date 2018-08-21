@@ -15,9 +15,7 @@ class ServiceDefinition(RestServiceInterface):
     def send(self, endpoint, data):
 
         post_data = {
-            "xml": data.get("xml"),
-            "json": data.get("json"),
-            "id": data.get("instance_id")  # Will be used internally by KPI to retry in case of failure
+            "uuid": data.get("instance_uuid")  # Will be used internally by KPI to retry in case of failure
         }
         headers = {"Content-Type": "application/json"}
         # Build the url in the service to avoid saving hardcoded domain name in the DB
@@ -29,6 +27,6 @@ class ServiceDefinition(RestServiceInterface):
         response.raise_for_status()
 
         # Save successful
-        instance = Instance.objects.get(id=data.get("instance_id"))
+        instance = Instance.objects.get(uuid=data.get("instance_uuid"))
         instance.posted_to_kpi = True
         self.instance.save(update_fields=["posted_to_kpi"])
