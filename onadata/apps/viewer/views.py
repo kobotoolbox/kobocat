@@ -572,50 +572,6 @@ def delete_export(request, username, id_string, export_type):
         }))
 
 
-def zip_export(request, username, id_string):
-    owner = get_object_or_404(User, username__iexact=username)
-    xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
-    helper_auth_helper(request)
-    if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_(u'Not shared.'))
-    if request.GET.get('raw'):
-        id_string = None
-
-    attachments = Attachment.objects.filter(instance__xform=xform)
-    zip_file = None
-
-    try:
-        zip_file = create_attachments_zipfile(attachments)
-        audit = {
-            "xform": xform.id_string,
-            "export_type": Export.ZIP_EXPORT
-        }
-        audit_log(
-            Actions.EXPORT_CREATED, request.user, owner,
-            _("Created ZIP export on '%(id_string)s'.") %
-            {
-                'id_string': xform.id_string,
-            }, audit, request)
-        # log download as well
-        audit_log(
-            Actions.EXPORT_DOWNLOADED, request.user, owner,
-            _("Downloaded ZIP export on '%(id_string)s'.") %
-            {
-                'id_string': xform.id_string,
-            }, audit, request)
-        if request.GET.get('raw'):
-            id_string = None
-
-        response = response_with_mimetype_and_name('zip', id_string)
-        response.write(FileWrapper(zip_file))
-        response['Content-Length'] = zip_file.tell()
-        zip_file.seek(0)
-    finally:
-        zip_file and zip_file.close()
-
-    return response
-
-
 def kml_export(request, username, id_string):
     # read the locations from the database
     owner = get_object_or_404(User, username__iexact=username)
