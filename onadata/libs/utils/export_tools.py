@@ -842,10 +842,10 @@ def generate_attachments_zip_export(
 
     export_filename = get_storage_class()().save(file_path, ContentFile(''))
 
-    with get_storage_class()().open(file_path, 'wb') as destination_file:
+    with get_storage_class()().open(export_filename, 'wb') as destination_file:
         create_attachments_zipfile(
             attachments,
-            temporary_file=destination_file, # not "temporary" anymore...
+            output_file=destination_file,
         )
 
     dir_name, basename = os.path.split(export_filename)
