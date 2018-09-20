@@ -3,6 +3,7 @@ from hashlib import sha256
 
 import reversion
 
+from django.db.models import F
 from django.db import transaction
 from django.contrib.gis.db import models
 from django.db.models.signals import post_save
@@ -64,25 +65,22 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
     if not created:
         return
     with transaction.atomic():
-        xform = XForm.objects.select_for_update().only(
-            'user_id', 'num_of_submissions'
-        ).get(pk=instance.xform_id)
-        xform.num_of_submissions += 1
-        xform.last_submission_time = instance.date_created
+        xform = XForm.objects.only('user_id').get(pk=instance.xform_id)
+        # Update with `F` expression instead of `select_for_update` to avoid
+        # locks, which were mysteriously piling up during periods of high
+        # traffic
+        XForm.objects.filter(pk=instance.xform_id).update(
+            num_of_submissions=F('num_of_submissions') + 1,
+            last_submission_time=instance.date_created,
+        )
         # Hack to avoid circular imports
         UserProfile = User.profile.related.related_model
-        profile, created = UserProfile.objects.select_for_update().only(
-            'num_of_submissions'
-        ).get_or_create(user_id=xform.user_id)
-        profile.num_of_submissions += 1
-        # Don't call `XForm.save()` since it reads a whole bunch of other
-        # attributes and makes our `only()` call less than worthless
-        XForm.objects.filter(pk=xform.pk).update(
-            num_of_submissions=xform.num_of_submissions,
-            last_submission_time=xform.last_submission_time
+        profile, created = UserProfile.objects.only('pk').get_or_create(
+            user_id=xform.user_id
         )
-        # `UserProfile.save()` is well-mannered
-        profile.save(update_fields=['num_of_submissions'])
+        UserProfile.objects.filter(pk=profile.pk).update(
+            num_of_submissions=F('num_of_submissions') + 1,
+        )
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
