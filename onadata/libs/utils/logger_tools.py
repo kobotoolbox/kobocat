@@ -38,7 +38,9 @@ from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models.instance import (
     FormInactiveError,
     InstanceHistory,
-    get_id_string_from_xml_str)
+    get_id_string_from_xml_str,
+    update_xform_submission_count,
+)
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.xform import XLSFormError
 from onadata.apps.logger.xform_instance_parser import (
@@ -86,8 +88,13 @@ def _get_instance(xml, new_uuid, submitted_by, status, xform):
         instance.save()
     else:
         # new submission
-        instance = Instance.objects.create(
-            xml=xml, user=submitted_by, status=status, xform=xform)
+        instance = Instance()
+        instance.xml = xml
+        instance.user = submitted_by
+        instance.status = status
+        instance.xform = xform
+        instance.defer_counting = True
+        instance.save()
 
     return instance
 
@@ -117,9 +124,11 @@ def get_xform_from_submission(xml, username, uuid=None):
 
         if uuid:
             # try find the form by its uuid which is the ideal condition
-            if XForm.objects.filter(uuid=uuid).count() > 0:
+            try:
                 xform = XForm.objects.get(uuid=uuid)
-
+            except XForm.DoesNotExist:
+                pass
+            else:
                 return xform
 
         id_string = get_id_string_from_xml_str(xml)
@@ -227,6 +236,10 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
 
     if not created:
         pi.save(async=False)
+
+    if getattr(instance, 'defer_counting', False):
+        instance.defer_counting = False
+        update_xform_submission_count(None, instance, True)
 
     return instance
 
