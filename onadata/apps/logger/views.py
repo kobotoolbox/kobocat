@@ -33,7 +33,6 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_digest import HttpDigestAuthenticator
 from pyxform import Survey
-from pyxform.spss import survey_to_spss_label_zip
 from wsgiref.util import FileWrapper
 
 from onadata.apps.main.models import UserProfile, MetaData
@@ -440,37 +439,6 @@ def download_jsonform(request, username, id_string):
     else:
         add_cors_headers(response)
         response.content = xform.json
-    return response
-
-
-def download_spss_labels(request, username, form_id_string):
-    xform = get_object_or_404(XForm,
-                              user__username__iexact=username,
-                              id_string__exact=form_id_string)
-    owner = User.objects.get(username__iexact=username)
-    helper_auth_helper(request)
-
-    if not has_permission(xform, owner, request, xform.shared):
-        return HttpResponseForbidden('Not shared.')
-
-    try:
-        xlsform_io= xform.to_xlsform()
-        if not xlsform_io:
-            messages.add_message(request, messages.WARNING,
-                                 _(u'No XLS file for your form '
-                                   u'<strong>%(id)s</strong>')
-                                 % {'id': form_id_string})
-            return HttpResponseRedirect("/%s" % username)
-    except:
-        return HttpResponseServerError('Error retrieving XLSForm.')
-
-    survey= Survey.from_xls(filelike_obj=xlsform_io)
-    zip_filename= '{}_spss_labels.zip'.format(xform.id_string)
-    zip_io= survey_to_spss_label_zip(survey, xform.id_string)
-
-    response = StreamingHttpResponse(FileWrapper(zip_io),
-                                     content_type='application/zip; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename={}'.format(zip_filename)
     return response
 
 
