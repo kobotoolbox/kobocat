@@ -303,7 +303,6 @@
           <div class="dashboard__form-drop hidden">
             <a href="{% url "download_xlsform" content_user.username xform.id_string %}" class="download__form-drop-button">XLS</a>
             <a href="{% url "download_xform" content_user.username xform.id_string %}" class="download__form-drop-button">XML</a>
-            <a href="{% url "download_spss_labels" content_user.username xform.id_string %}" class="download__form-drop-button">SPSS Labels</a>
           </div>
 
           {% if can_edit or xform.shared %}
