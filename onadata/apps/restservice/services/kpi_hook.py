@@ -27,6 +27,4 @@ class ServiceDefinition(RestServiceInterface):
         response.raise_for_status()
 
         # Save successful
-        instance = Instance.objects.get(uuid=data.get("instance_uuid"))
-        instance.posted_to_kpi = True
-        instance.save(update_fields=["posted_to_kpi"])
+        Instance.objects.filter(pk=data.get("instance_id")).update(posted_to_kpi=True)
