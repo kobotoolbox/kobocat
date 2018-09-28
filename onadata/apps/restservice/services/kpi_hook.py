@@ -15,7 +15,7 @@ class ServiceDefinition(RestServiceInterface):
     def send(self, endpoint, data):
 
         post_data = {
-            "uuid": data.get("instance_uuid")  # Will be used internally by KPI to retry in case of failure
+            "instance_id": data.get("instance_id")  # Will be used internally by KPI to fetch data with KoboCatBackend
         }
         headers = {"Content-Type": "application/json"}
         # Build the url in the service to avoid saving hardcoded domain name in the DB
