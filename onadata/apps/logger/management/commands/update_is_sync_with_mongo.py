@@ -28,7 +28,7 @@ class Command(BaseCommand):
         offset = 0
         while stop is not True:
             limit = offset + batchsize
-            instances_ids = Instance.objects.values_list("id", flat=True)[offset:limit]
+            instances_ids = Instance.objects.values_list("id", flat=True).order_by("id")[offset:limit]
             if instances_ids:
                 instances_ids = [int(instance_id) for instance_id in instances_ids]
                 query = {"_id": {"$in": instances_ids}}
