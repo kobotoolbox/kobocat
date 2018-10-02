@@ -12,7 +12,7 @@ class RestService(models.Model):
         unique_together = ('service_url', 'xform', 'name')
 
     service_url = models.URLField(ugettext_lazy("Service URL"))
-    xform = models.ForeignKey(XForm)
+    xform = models.ForeignKey(XForm, related_name="restservices", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, choices=SERVICE_CHOICES)
 
     def __unicode__(self):

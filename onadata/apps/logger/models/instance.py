@@ -23,6 +23,7 @@ from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
     DELETEDAT, GEOLOCATION, ID, MONGO_STRFTIME, NOTES, SUBMISSION_TIME, TAGS,\
     UUID, XFORM_ID_STRING, SUBMITTED_BY
 from onadata.libs.utils.model_tools import set_uuid
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 
 
 class FormInactiveError(Exception):
@@ -142,6 +143,13 @@ class Instance(models.Model):
     tags = TaggableManager()
 
     validation_status = JSONField(null=True, default=None)
+
+    # TODO Don't forget to update all records with command `update_is_sync_with_mongo`.
+    is_synced_with_mongo = LazyDefaultBooleanField(default=False)
+
+    # If XForm.has_kpi_hooks` is True, this field should be True either.
+    # It tells whether the instance has been successfully sent to KPI.
+    posted_to_kpi = LazyDefaultBooleanField(default=False)
 
     class Meta:
         app_label = 'logger'
@@ -361,10 +369,7 @@ class Instance(models.Model):
             return gc[0]
 
     def save(self, *args, **kwargs):
-        force = kwargs.get('force')
-
-        if force:
-            del kwargs['force']
+        force = kwargs.pop("force", False)
 
         self._check_active(force)
 

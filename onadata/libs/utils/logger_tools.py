@@ -565,6 +565,7 @@ def inject_instanceid(xml_str, uuid):
 
 
 def update_mongo_for_xform(xform, only_update_missing=True):
+
     instance_ids = set(
         [i.id for i in Instance.objects.only('id').filter(xform=xform)])
     sys.stdout.write("Total no of instances: %d\n" % len(instance_ids))

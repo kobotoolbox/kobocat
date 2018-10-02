@@ -259,3 +259,6 @@ if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
             }
     }
 ###### END ISSUE 242 FIX ######
+
+# Number of times Celery retries to send data to external rest service
+REST_SERVICE_MAX_RETRIES = 3
