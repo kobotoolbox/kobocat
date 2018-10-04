@@ -405,15 +405,6 @@ def export_list(request, username, id_string, export_type):
         'token': export_token,
     }
 
-    if should_create_new_export(xform, export_type):
-        try:
-            create_async_export(
-                xform, export_type, query=None, force_xlsx=True,
-                options=options)
-        except Export.ExportTypeError:
-            return HttpResponseBadRequest(
-                _("%s is not a valid export type" % export_type))
-
     metadata = MetaData.objects.filter(xform=xform,
                                        data_type="external_export")\
         .values('id', 'data_value')
