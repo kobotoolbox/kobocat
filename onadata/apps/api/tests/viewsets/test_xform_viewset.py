@@ -17,7 +17,7 @@ from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.logger.models import XForm
-from onadata.apps.logger.data_migration.backup_data import backup_xform
+from onadata.apps.data_migration.backup_data import backup_xform
 from onadata.libs.permissions import (
     OwnerRole, ReadOnlyRole, ManagerRole, DataEntryRole, EditorRole)
 from onadata.libs.serializers.xform_serializer import XFormSerializer

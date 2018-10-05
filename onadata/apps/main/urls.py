@@ -192,7 +192,7 @@ urlpatterns = patterns(
 
     url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),
 
-    url(r'^(?P<username>[^/]+)/forms/', include('onadata.apps.logger.urls')),
+    url(r'^(?P<username>[^/]+)/forms/', include('onadata.apps.data_migration.urls')),
 
     # odk data urls
     url(r"^submission$",

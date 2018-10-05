@@ -1,5 +1,3 @@
-from onadata.apps.logger.models.instance import save_survey
-
 from .surveytree import SurveyTree, MissingFieldException
 from . import backup_data
 
@@ -46,13 +44,17 @@ class DataMigrator(object):
         self.set_proper_root_node(self.xform, survey_tree)
         self.fields_handler.alter_fields(survey_tree)
         survey.xml = survey_tree.to_string()
-        save_survey(survey)
+        self.save_survey(survey)
 
     def migrate(self):
         for survey in self.get_surveys_iter(self.xform):
             if self.backup_data:
                 backup_data.backup_survey(survey, self.xform_backup)
             self.migrate_survey(survey)
+
+    def save_survey(self, survey):
+        survey.save()
+        survey.parsed_instance.save(async=True)
 
 
 class SurveyFieldsHandler(object):

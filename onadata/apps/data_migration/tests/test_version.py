@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from onadata.apps.logger.models.version import (
+from onadata.apps.data_migration.models.version import (
     VersionTree, VersionTreeException, last_common_item
 )
 

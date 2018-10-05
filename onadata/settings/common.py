@@ -248,6 +248,7 @@ INSTALLED_APPS = (
     'onadata.apps.main',
     'onadata.apps.restservice',
     'onadata.apps.api',
+    'onadata.apps.data_migration',
     'guardian',
     'djcelery',
     'onadata.apps.stats',

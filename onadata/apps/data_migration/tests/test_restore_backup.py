@@ -1,19 +1,21 @@
 from datetime import datetime
 
-from onadata.apps.logger.models import VersionTree
-from onadata.apps.logger.data_migration.decisioner import MigrationDecisioner
-from onadata.apps.logger.data_migration.backup_data import create_xform_backup, backup_xform
-from onadata.apps.logger.data_migration.restore_backup import (
+from onadata.apps.data_migration.models import VersionTree
+from onadata.apps.data_migration.decisioner import MigrationDecisioner
+from onadata.apps.data_migration.backup_data import create_xform_backup, backup_xform
+from onadata.apps.data_migration.restore_backup import (
     copy_attrs, BackupRestorer, BackupRestoreError
 )
 
 from .common import MigrationTestCase, SecondMigrationTestCase
-from . import fixtures
+from onadata.apps.data_migration.tests import fixtures
 
 
 class CommonBackupRestoreTestCase(MigrationTestCase):
     def _migrate_and_restore(self, version=None, restore_last=False):
         self.data_migrator.migrate()
+        self.xform_new.refresh_from_db()
+        self.xform_new.xformversion.refresh_from_db()
         restorer = BackupRestorer(self.xform_new, version, restore_last)
         restorer.restore_xform_backup()
         return restorer
@@ -59,6 +61,8 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
     def test_restoring_last_backup__submission_after_migration(self):
         """Submission created after migration should also be restored."""
         self.data_migrator.migrate()
+        self.xform_new.refresh_from_db()
+        self.xform_new.xformversion.refresh_from_db()
         mid_survey = self.create_survey(self.xform_new, fixtures.survey_after_migration_second)
         BackupRestorer(self.xform_new, restore_last=True).restore_xform_backup()
 
@@ -73,6 +77,8 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
 
     def test_migrate_surveys_to_prev_schema(self):
         self.data_migrator.migrate()
+        self.xform_new.refresh_from_db()
+        self.xform_new.xformversion.refresh_from_db()
         restorer = BackupRestorer(self.xform_new, restore_last=True)
         restorer.migrate_surveys_to_prev_schema()
         self.assertEqualIgnoringWhitespaces(
@@ -184,10 +190,10 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
         backup_to_restore = backup_xform(self.xform, migration_changes=changes_fst, bind=True)
 
         current_backup = backup_xform(self.xform, migration_changes=changes_snd, bind=False)
-        vt = VersionTree.objects.create(parent=self.xform.version_tree.parent,
+        vt = VersionTree.objects.create(parent=self.xform.xformversion.version_tree.parent,
                                         version=current_backup)
-        self.xform.version_tree = vt
-        self.xform.save()
+        self.xform.xformversion.version_tree = vt
+        self.xform.xformversion.save()
 
         result = BackupRestorer._get_migration_changes_in_between(self.xform, backup_to_restore)
         self.assertEqual([

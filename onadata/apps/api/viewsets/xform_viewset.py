@@ -32,7 +32,7 @@ from onadata.apps.main.models import UserProfile
 from onadata.apps.api import tools as utils
 from onadata.apps.api.permissions import XFormPermissions
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.models.backup import BackupXForm
+from onadata.apps.data_migration.models.backup import BackupXForm
 from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
 from onadata.apps.viewer.models.export import Export
 from onadata.libs.exceptions import NoRecordsFoundError, J2XException

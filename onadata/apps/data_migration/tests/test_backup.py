@@ -1,6 +1,7 @@
-from onadata.apps.logger.models import Instance, BackupInstance, BackupXForm
-from onadata.apps.logger.data_migration.backup_data import (
-    create_xform_backup, backup_xform, backup_survey
+from onadata.apps.logger.models import Instance
+from onadata.apps.data_migration.models import BackupInstance, BackupXForm
+from onadata.apps.data_migration.backup_data import (
+    backup_xform, backup_survey
 )
 from .common import MigrationTestCase
 
@@ -51,10 +52,12 @@ class BackupSurveysTests(MigrationTestCase):
         self.setup_data_migrator(self.xform_new, self.xform_new)
         self.data_migrator.migrate()
         backup_second = BackupXForm.objects.latest_backup(self.xform_new.id)
+        xform_version = self.xform_new.xformversion
+        xform_version.refresh_from_db()
 
         self.assertEqual({
-            'Latest backup': self.xform_new.latest_backup,
-            'Older backup': self.xform_new.version_tree.parent.version,
+            'Latest backup': xform_version.latest_backup,
+            'Older backup': xform_version.version_tree.parent.version,
         }, {
             'Latest backup': backup_second,
             'Older backup': backup_first,

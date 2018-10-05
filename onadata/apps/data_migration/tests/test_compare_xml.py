@@ -1,8 +1,8 @@
 from django.test import TestCase
 
-from onadata.apps.logger.data_migration.compare_xml import XFormsComparator
+from onadata.apps.data_migration.compare_xml import XFormsComparator
 
-from . import fixtures
+from onadata.apps.data_migration.tests import fixtures
 
 
 class CompareXMLTestCase(TestCase):

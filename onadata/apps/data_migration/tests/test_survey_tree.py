@@ -1,10 +1,10 @@
 from lxml import etree
 
-from onadata.apps.logger.data_migration.surveytree import (
+from onadata.apps.data_migration.surveytree import (
     SurveyTree, MissingFieldException
 )
 from .common import CommonTestCase
-from . import fixtures
+from onadata.apps.data_migration.tests import fixtures
 
 
 class SurveyTreeOperationsTest(CommonTestCase):

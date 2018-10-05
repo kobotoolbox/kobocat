@@ -1,9 +1,8 @@
 from onadata.apps.logger.models import Instance, XForm
-from onadata.apps.logger.data_migration.surveytree import SurveyTree
-from onadata.apps.logger.models.backup import BackupXForm, BackupInstance
+from onadata.apps.data_migration.surveytree import SurveyTree
+from onadata.apps.data_migration.models.backup import BackupXForm, BackupInstance
 
-from . import common as test_case
-from . import fixtures
+from onadata.apps.data_migration.tests import common as test_case, fixtures
 
 
 class DataMigrationUnitTests(test_case.MigrationTestCase):
