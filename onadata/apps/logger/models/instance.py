@@ -3,6 +3,7 @@ from hashlib import sha256
 
 import reversion
 
+from django.db import transaction
 from django.contrib.gis.db import models
 from django.db.models.signals import post_save
 from django.db.models.signals import post_delete
@@ -60,21 +61,28 @@ def submission_time():
 
 
 def update_xform_submission_count(sender, instance, created, **kwargs):
-    if created:
-        xform = XForm.objects.select_related().select_for_update()\
-            .get(pk=instance.xform.pk)
+    if not created:
+        return
+    with transaction.atomic():
+        xform = XForm.objects.select_for_update().only(
+            'user_id', 'num_of_submissions'
+        ).get(pk=instance.xform_id)
         xform.num_of_submissions += 1
         xform.last_submission_time = instance.date_created
-        xform.save()
-        profile_qs = User.profile.get_queryset()
-        try:
-            profile = profile_qs.select_for_update()\
-                .get(pk=xform.user.profile.pk)
-        except profile_qs.model.DoesNotExist:
-            pass
-        else:
-            profile.num_of_submissions += 1
-            profile.save()
+        # Hack to avoid circular imports
+        UserProfile = User.profile.related.related_model
+        profile, created = UserProfile.objects.select_for_update().only(
+            'num_of_submissions'
+        ).get_or_create(user_id=xform.user_id)
+        profile.num_of_submissions += 1
+        # Don't call `XForm.save()` since it reads a whole bunch of other
+        # attributes and makes our `only()` call less than worthless
+        XForm.objects.filter(pk=xform.pk).update(
+            num_of_submissions=xform.num_of_submissions,
+            last_submission_time=xform.last_submission_time
+        )
+        # `UserProfile.save()` is well-mannered
+        profile.save(update_fields=['num_of_submissions'])
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):

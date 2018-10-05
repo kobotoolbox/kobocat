@@ -155,8 +155,6 @@ urlpatterns = patterns(
         kwargs={'export_type': 'sav_zip'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
         'onadata.apps.viewer.views.kml_export'),
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.zip",
-        'onadata.apps.viewer.views.zip_export'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/gdocs$",
         'onadata.apps.viewer.views.google_xls_export'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/map_embed",
