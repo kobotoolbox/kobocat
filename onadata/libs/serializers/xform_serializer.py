@@ -49,7 +49,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             'json', 'xml', 'date_created', 'date_modified', 'encrypted',
             'bamboo_dataset', 'last_submission_time')
         exclude = ('json', 'xml', 'xls', 'user',
-                   'has_start_time', 'shared', 'shared_data', 'version_tree')
+                   'has_start_time', 'shared', 'shared_data')
 
     # Again, this is to match unit tests
     @property

@@ -3,11 +3,11 @@ from django.contrib.auth.models import User
 
 from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.viewer.models import ParsedInstance
-from onadata.apps.logger.data_migration.factories import (
+from onadata.apps.data_migration.factories import (
     data_migrator_factory, migration_decisioner_factory
 )
 
-from . import fixtures
+from onadata.apps.data_migration.tests import fixtures
 
 
 def remove_whitespaces(string):

@@ -97,8 +97,8 @@ class MigrationViewsTests(MigrationTestCase):
             'xforms': sorted([self.xform.id, self.xform_new.id]),
         })
 
-    @patch('onadata.apps.logger.data_migration.restore_backup.BackupRestorer._get_xform_backup')  # noqa
-    @patch('onadata.apps.logger.data_migration.restore_backup.BackupRestorer.restore_xform_backup')  # noqa
+    @patch('onadata.apps.data_migration.restore_backup.BackupRestorer._get_xform_backup')  # noqa
+    @patch('onadata.apps.data_migration.restore_backup.BackupRestorer.restore_xform_backup')  # noqa
     def test_restore_backup_view(self, restore_backup_mock, *args):
         url = reverse('restore-backup',
                       kwargs=self.get_data__one_id_string(self.xform_new))

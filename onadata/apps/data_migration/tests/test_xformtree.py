@@ -2,9 +2,9 @@ from lxml import etree
 
 from django.test import TestCase
 
-from onadata.apps.logger.data_migration.xformtree import XFormTree
+from onadata.apps.data_migration.xformtree import XFormTree
 from .common import CommonTestCase
-from . import fixtures
+from onadata.apps.data_migration.tests import fixtures
 
 
 class XFormTreeOperationsTestCase(TestCase):

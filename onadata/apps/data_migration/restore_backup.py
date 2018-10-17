@@ -12,8 +12,8 @@ schema changes that occurred in that path. Then we used this merged schema
 to transition in one step from current state to version X. The transition
 is achieved using the very same tool that we use to upgrade the form.
 """
-from onadata.apps.logger.models import BackupXForm, VersionTree
-from onadata.apps.logger.models.xform import change_id_string
+from onadata.apps.data_migration.models import BackupXForm, VersionTree
+from onadata.apps.data_migration.models.version import change_id_string
 from .decisioner import MigrationDecisioner
 from .factories import data_migrator_factory
 
@@ -80,7 +80,8 @@ class BackupRestorer(object):
 
     @staticmethod
     def _get_path_in_version_tree(xform, backup):
-        return VersionTree.objects.find_path(xform.version_tree, backup.version_tree)
+        return VersionTree.objects.find_path(
+            xform.xformversion.version_tree, backup.version_tree)
 
     @classmethod
     def _get_migration_changes_in_between(cls, xform, backup):
@@ -100,7 +101,7 @@ class BackupRestorer(object):
                                      'either backup version or restore last')
 
         if restore_last:
-            return self.xform.latest_backup
+            return self.xform.xformversion.latest_backup
         try:
             return BackupXForm.objects.get(backup_version=version,
                                            xform_id=self.xform.id)
