@@ -14,78 +14,65 @@
 
 {% block content %}
 {% load i18n %}
-
-  <!-- Project title -->
-  <!--   <header class="single-project__header">
-      <hgroup class="container">
-          <h1>{% trans "Settings" %}: {{ xform.title }}</h1>
-      </hgroup>
-  </header>
- -->
   <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
   {% if is_owner %}
   <div class="container__wide">
     <div class="single-project__settings--iframe">
+      <div class="settings__general">
+        <h2 class="settings__group-label">
+          {% trans "Form Settings" %}
+        </h2>
 
-        <div class="settings__general">
-          <h2 class="settings__group-label">
-            {% trans "Form Settings" %}
-          </h2>
+        <div class="settings__form-item">
+          <label class="settings__form-label">Existing Form Files</label>
+          <ul class="settings__files">
+            {% for media in media_upload %}
+              <li class="{% cycle 'odd' 'even' %}">
+                <div>{{ media.data_value }}</div>
+                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
+                {% if can_edit %}
+                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
 
-          <div class="settings__form-item">
-            <label class="settings__form-label">Existing Form Files</label>
-            <ul class="settings__files">
-              {% for media in media_upload %}
-                <li class="{% cycle 'odd' 'even' %}">
-                  <div>{{ media.data_value }}</div>
-                  <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
-                  {% if can_edit %}
-                  <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
-                  {% endif %}
-                </li>
-              {% endfor %}
-            </ul>
+          {% if can_edit %}
+          <button class="single-project__button single-project__add-media">+ Add Document</button>
 
-            {% if can_edit %}
-            <button class="single-project__button single-project__add-media">+ Add Document</button>
-
-            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
-                {% csrf_token %}
-                <ul class="nav nav-tabs">
-                    <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
-                    <li><a href="#media_url_add" data-toggle="tab">Media URL</a></li>
-                </ul>
-                <div class="tab-content">
-                    <div class="tab-pane active" id="media_upload">
-                        <input type="file" multiple="" name="media" id="id_media">
-                        <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
-                    </div>
-                    <div class="tab-pane" id="media_url_add">
-                        <label for="id_media">Media url:</label>
-                        <input type="text" name="media_url" id="id_media_url">
-                        <input type="submit" class="single-project__button" value="{% trans 'Save Media URL' %}" />
-                    </div>
-                </div>
-            </form>
-            {% endif %}
-          </div>
-
-        </div>  <!-- END .settings__general -->
-
-        {% if is_owner %}
-        <div class="settings__rest-services">
-            <h2 class="settings__group-label">{% trans "Rest Services" %}</h2>
-            <div id='restservice_tab'>
-            </div>
+          <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
+              {% csrf_token %}
+              <ul class="nav nav-tabs">
+                  <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
+                  <li><a href="#media_url_add" data-toggle="tab">Media URL</a></li>
+              </ul>
+              <div class="tab-content">
+                  <div class="tab-pane active" id="media_upload">
+                      <input type="file" multiple="" name="media" id="id_media">
+                      <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
+                  </div>
+                  <div class="tab-pane" id="media_url_add">
+                      <label for="id_media">Media url:</label>
+                      <input type="text" name="media_url" id="id_media_url">
+                      <input type="submit" class="single-project__button" value="{% trans 'Save Media URL' %}" />
+                  </div>
+              </div>
+          </form>
+          {% endif %}
         </div>
-        {% endif %}
+      </div>  <!-- END .settings__general -->
+
+      {% if is_owner %}
+      <div class="settings__rest-services">
+          <h2 class="settings__group-label">{% trans "Rest Services" %}</h2>
+          <div id='restservice_tab'>
+          </div>
+      </div>
+      {% endif %}
     </div>
   </div>
   {% endif %}
-
   <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
-
-
 {% endblock %}
 
 {% block styles %}
