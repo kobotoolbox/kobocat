@@ -79,16 +79,6 @@
 
         </div>  <!-- END .settings__general -->
 
-        <div class="settings__delete-project">
-          <h2 class="settings__group-label">
-            Delete project with all data and its form
-          </h2>
-          <button data-backdrop="true" data-keyboard="true" class="single-project__button single-project__button-delete">
-              {% trans "Delete" %}
-          </button>
-
-        </div>
-
         {% if is_owner %}
         <div class="settings__rest-services">
             <h2 class="settings__group-label">{% trans "Rest Services" %}</h2>
@@ -96,27 +86,6 @@
             </div>
         </div>
         {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Delete form (in vex window) -->
-  {% if is_owner %}
-  <div class="kc-hide">
-    <div id="delete-form">
-        <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
-        {% csrf_token %}
-            <div class="vex-header">
-                <h3>{% trans "Delete Confirmation" %}</h3>
-            </div>
-            <div class="vex-kobo-body">
-                <p>{% blocktrans with title=xform.title nb_sub=xform.submission_count|intcomma %}Are you sure you want to delete the form '{{ title }}'? This form has <strong>{{ nb_sub }}</strong> submissions associated with it that will also be deleted. If you are unsure about deleting this form press 'Cancel' and consider 'Archiving' the form instead.{% endblocktrans %}</p>
-            </div>
-            <div class="vex-footer">
-                <a href="#" onclick="vex.close(vexDelete.data().vex.id)" class="btn btn-transparent">{% trans "Cancel" %}</a>
-                <button class="btn btn-danger form-submit">Delete</button>
-            </div>
-        </form>
     </div>
   </div>
   {% endif %}
