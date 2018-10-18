@@ -33,13 +33,6 @@
           </h2>
 
           <div class="settings__form-item">
-            <label class="settings__form-label">
-              {% trans "Accept Submissions" %}
-            </label>
-            <label><input id="active-form" type="checkbox" class="ios-switch" {% if xform.downloadable %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
-          </div>
-
-          <div class="settings__form-item">
             <label class="settings__form-label">Existing Form Files</label>
             <ul class="settings__files">
               {% for media in media_upload %}
