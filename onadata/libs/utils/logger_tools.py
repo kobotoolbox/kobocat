@@ -117,9 +117,11 @@ def get_xform_from_submission(xml, username, uuid=None):
 
         if uuid:
             # try find the form by its uuid which is the ideal condition
-            if XForm.objects.filter(uuid=uuid).count() > 0:
+            try:
                 xform = XForm.objects.get(uuid=uuid)
-
+            except XForm.DoesNotExist:
+                pass
+            else:
                 return xform
 
         id_string = get_id_string_from_xml_str(xml)
