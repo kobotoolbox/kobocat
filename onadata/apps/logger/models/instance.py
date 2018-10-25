@@ -65,6 +65,9 @@ def submission_time():
 def update_xform_submission_count(sender, instance, created, **kwargs):
     if not created:
         return
+    # `defer_counting` is a Python-only attribute
+    if getattr(instance, 'defer_counting', False):
+        return
     with transaction.atomic():
         xform = XForm.objects.only('user_id').get(pk=instance.xform_id)
         # Update with `F` expression instead of `select_for_update` to avoid
