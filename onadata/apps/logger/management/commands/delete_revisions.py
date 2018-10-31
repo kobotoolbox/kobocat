@@ -110,36 +110,36 @@ class Command(RevisionCommand):
             revisions_to_delete_count = revisions_to_delete.count()
 
         chunked_delete_ids = []
-        chunks_cpt = 1
+        chunks_counter = 1
 
         for revision_id in revisions_to_delete.values_list("id", flat=True).iterator():
 
             chunked_delete_ids.append(revision_id)
 
-            if (chunks_cpt % chunks) == 0 or chunks_cpt == revisions_to_delete_count:
+            if (chunks_counter % chunks) == 0 or chunks_counter == revisions_to_delete_count:
                 # Wrap into a transaction because of CASCADE, post_delete signals. (e.g. `revision_revision`)
                 with transaction.atomic(using=using):
-                    chuncked_revisions_to_delete = Revision.objects.filter(id__in=chunked_delete_ids)
+                    chunked_revisions_to_delete = Revision.objects.filter(id__in=chunked_delete_ids)
                     if verbosity >= 1:
                         progress = "\rDeleting {chunk}/{total} revisions...".format(
-                            chunk=chunks_cpt,
+                            chunk=chunks_counter,
                             total=revisions_to_delete_count
                         )
                         sys.stdout.write(progress)
                         sys.stdout.flush()
-                    chuncked_revisions_to_delete.delete()
+                    chunked_revisions_to_delete.delete()
                 chunked_delete_ids = []
-            chunks_cpt += 1
+            chunks_counter += 1
 
         # Carriage return
         print("")
 
         if vacuum is True or vacuum_full is True:
-            self.do_vacuum(vacuum_full)
+            self._do_vacuum(vacuum_full)
 
         print("Done!")
 
-    def do_vacuum(self, full=False):
+    def _do_vacuum(self, full=False):
         cursor = connection.cursor()
         if full:
             print("Vacuuming (full) table {}...".format(Revision._meta.db_table))
