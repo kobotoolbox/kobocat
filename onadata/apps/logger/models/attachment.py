@@ -1,4 +1,5 @@
 import os
+import re
 import mimetypes
 
 from hashlib import md5
@@ -28,11 +29,29 @@ def hash_attachment_contents(contents):
 class Attachment(models.Model):
     instance = models.ForeignKey(Instance, related_name="attachments")
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
+    media_file_basename = models.CharField(
+        max_length=260, null=True, blank=True, db_index=True)
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
 
+    MEDIA_FILE_BASENAME_PATTERN = re.compile(r'/([^/]+)$')
+
     class Meta:
         app_label = 'logger'
+
+    def _populate_media_file_basename(self):
+        # TODO: write a management command to call this (and save) for all
+        # existing attachments?  For the moment, the `media_file_basename`
+        # column can be populated directly in Postgres using:
+        #   UPDATE logger_attachment
+        #     SET media_file_basename = substring(media_file from '/([^/]+)$');
+        if self.media_file:
+            match = re.search(
+                self.MEDIA_FILE_BASENAME_PATTERN, self.media_file.name)
+            if match:
+                self.media_file_basename = match.groups()[0]
+            else:
+                self.media_file_basename = ''
 
     def save(self, *args, **kwargs):
         if self.media_file and self.mimetype == '':
@@ -40,6 +59,9 @@ class Attachment(models.Model):
             mimetype, encoding = mimetypes.guess_type(self.media_file.name)
             if mimetype:
                 self.mimetype = mimetype
+
+        self._populate_media_file_basename()
+
         super(Attachment, self).save(*args, **kwargs)
 
     @property
