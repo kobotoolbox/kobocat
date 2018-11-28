@@ -699,7 +699,6 @@ def attachment_url(request, size='medium'):
             media_file_logger.info('attachment not found')
             return HttpResponseNotFound(_(u'Attachment not found'))
 
-
         if not attachment.mimetype.startswith('image'):
             return redirect(attachment.media_file.url)
 

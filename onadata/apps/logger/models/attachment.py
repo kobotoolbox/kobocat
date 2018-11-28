@@ -34,24 +34,12 @@ class Attachment(models.Model):
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
 
-    MEDIA_FILE_BASENAME_PATTERN = re.compile(r'/([^/]+)$')
-
     class Meta:
         app_label = 'logger'
 
     def _populate_media_file_basename(self):
-        # TODO: write a management command to call this (and save) for all
-        # existing attachments?  For the moment, the `media_file_basename`
-        # column can be populated directly in Postgres using:
-        #   UPDATE logger_attachment
-        #     SET media_file_basename = substring(media_file from '/([^/]+)$');
         if self.media_file:
-            match = re.search(
-                self.MEDIA_FILE_BASENAME_PATTERN, self.media_file.name)
-            if match:
-                self.media_file_basename = match.groups()[0]
-            else:
-                self.media_file_basename = ''
+            self.media_file_basename = self.media_file.name
 
     def save(self, *args, **kwargs):
         if self.media_file and self.mimetype == '':
