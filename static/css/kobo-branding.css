@@ -409,6 +409,12 @@ td.published_forms__cell--project a:hover {
   color: #1e8fde;
 }
 
+.projects__warning {
+  padding: 10px;
+  border: 1px solid red;
+  background: pink;
+}
+
 .projects__advanced {
   background: white;
   padding: 20px 0px;
