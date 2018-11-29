@@ -318,7 +318,6 @@ section {
   margin-bottom: 30px;
   background-color: white;
   padding: 20px 0px;
-  margin-top: -20px;
 }
 
 .sub-header-bar + .single-project__header,
@@ -327,11 +326,7 @@ section {
   margin-top: 0px;
 }
 
-.projects-list__header {
-  padding-top: 50px;
-  margin-top: -20px;
-}
-
+.legacy-warning .container,
 .single-project__header .container,
 .projects-list__header .container,
 .data-page__header .container {
