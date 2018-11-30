@@ -23,11 +23,11 @@ class Command(BaseCommand):
         make_option(
             '--batchsize',
             type='int',
-            default=100,
+            default=1000,
             help=ugettext_lazy("Number of records to process per query")),)
 
     def handle(self, *args, **kwargs):
-        batchsize = kwargs.get("batchsize", 100)
+        batchsize = kwargs.get("batchsize")
         stop = False
         offset = 0
         while stop is not True:
