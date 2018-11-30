@@ -38,34 +38,27 @@ def get_path(path, suffix):
 
 
 def image_urls(instance):
-    default_storage = get_storage_class()()
-    urls = []
-    suffix = settings.THUMB_CONF['medium']['suffix']
-    for a in instance.attachments.all():
-        if default_storage.exists(get_path(a.media_file.name, suffix)):
-            url = default_storage.url(
-                get_path(a.media_file.name, suffix))
-        else:
-            url = a.media_file.url
-        urls.append(url)
-    return urls
+    image_urls_dict_ = image_urls_dict(instance)
+    return image_urls_dict_.values()
+
 
 def image_urls_dict(instance):
-    default_storage = get_storage_class()()
+    """
+    Returns a dict of attachments with keys as base filename
+    and values link through `kobocat` redirector.
+    Only exposes `suffix` version of it. It will be created on the fly by the
+    redirector
+
+    :param instance: Instance
+    :return: dict
+    """
     urls = dict()
-    suffix = settings.THUMB_CONF['medium']['suffix']
+    # Remove leading dash from suffix
+    suffix = settings.THUMB_CONF['medium']['suffix'][1:]
     for a in instance.attachments.all():
-        filename = a.media_file.name
-        if default_storage.exists(get_path(a.media_file.name, suffix)):
-            url = default_storage.url(
-                get_path(a.media_file.name, suffix))
-        else:
-            url = a.media_file.url
-        file_basename = os.path.basename(filename)
-        if url.startswith('/'):
-            url = settings.KOBOCAT_URL + url
-        urls[file_basename] = url
+        urls[a.filename] = a.secure_url(suffix=suffix)
     return urls
+
 
 def parse_xform_instance(xml_str):
     """

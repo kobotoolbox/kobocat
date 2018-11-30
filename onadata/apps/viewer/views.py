@@ -676,11 +676,8 @@ def attachment_url(request, size='medium'):
     # this assumes duplicates are the same file.
     #
     # Django seems to already handle that. It appends datetime to the filename.
-    # It means duplicated would be only f
-    #
-    # or the same user who uploaded two files
+    # It means duplicated would be only for the same user who uploaded two files
     # with same name at the same second.
-
     if media_file:
         mtch = re.search(r'^([^/]+)/attachments/([^/]+)$', media_file)
         if mtch:
@@ -711,6 +708,8 @@ def attachment_url(request, size='medium'):
         xform = attachment.instance.xform
         if not has_permission(xform, xform.user, request):
             return HttpResponseForbidden(_(u'Not shared.'))
+
+        media_url = None
 
         if not attachment.mimetype.startswith('image'):
             media_url = attachment.media_file.url

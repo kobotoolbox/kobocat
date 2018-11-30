@@ -47,15 +47,16 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
     @check_obj
     def get_download_url(self, obj):
-        return obj.media_file.url if obj.media_file.url else None
+
+        return obj.media_file.url if obj.secure_url() else None
 
     def get_small_download_url(self, obj):
         if obj.mimetype.startswith('image'):
-            return image_url(obj, 'small')
+            return obj.secure_url("small")
 
     def get_medium_download_url(self, obj):
         if obj.mimetype.startswith('image'):
-            return image_url(obj, 'medium')
+            return obj.secure_url("medium")
 
     def get_field_xpath(self, obj):
         qa_dict = obj.instance.get_dict()
