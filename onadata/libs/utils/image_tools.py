@@ -39,7 +39,9 @@ def _save_thumbnails(image, path, size, suffix):
     default_storage = get_storage_class()()
     try:
         # Ensure conversion to float in operations
-        image.thumbnail(
+        # Converting to RGBA make the background white instead of black for
+        # transparent PNGs/GIFs
+        image.convert("RGBA").thumbnail(
             get_dimensions(image.size, float(size)), Image.ANTIALIAS)
     except ZeroDivisionError:
         pass
