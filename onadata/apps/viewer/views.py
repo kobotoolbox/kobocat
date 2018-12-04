@@ -23,6 +23,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from rest_framework.authentication import TokenAuthentication
 
 from onadata.apps.main.models import UserProfile, MetaData, TokenStorageModel
 from onadata.apps.logger.models import XForm, Attachment
@@ -706,8 +707,14 @@ def attachment_url(request, size='medium'):
         # Checks whether users are allowed to see the media file before giving them
         # the url
         xform = attachment.instance.xform
+
         if not has_permission(xform, xform.user, request):
-            return HttpResponseForbidden(_(u'Not shared.'))
+            auth = TokenAuthentication()  # Allow fetching media with users are authenticated with Token
+            auth_user, token = auth.authenticate(request)
+            if not (xform.user == auth_user or
+                    auth_user.has_perm('logger.view_xform', xform) or
+                    auth_user.has_perm('logger.change_xform', xform)):
+                return HttpResponseForbidden(_(u'Not shared.'))
 
         media_url = None
 
