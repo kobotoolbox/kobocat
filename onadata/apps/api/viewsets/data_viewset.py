@@ -546,7 +546,7 @@ Delete a specific submission in a form
         data = {}
         if isinstance(self.object, XForm):
             raise ParseError(_(u"Data id not provided."))
-        elif(isinstance(self.object, Instance)):
+        elif isinstance(self.object, Instance):
             if request.user.has_perm("change_xform", self.object.xform):
                 return_url = request.query_params.get('return_url')
                 if not return_url:
