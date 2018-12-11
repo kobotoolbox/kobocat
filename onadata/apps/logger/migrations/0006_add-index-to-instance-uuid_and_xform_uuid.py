@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
         ('logger', '0005_instance_xml_hash'),
     ]
 
-    # This custom migration must be run on Postgres 9.5+.
     # Because some servers already have these modifications applied by Django South migration,
     # we need to delete old indexes to let django recreate them according to Django migration requirements.
     #
