@@ -2,7 +2,7 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.views.generic import RedirectView
 
-from onadata.apps.api.urls import router
+from onadata.apps.api.urls import router, router_with_patch_list
 from onadata.apps.api.urls import XFormListApi
 from onadata.apps.api.urls import XFormSubmissionApi
 from onadata.apps.api.urls import BriefcaseApi
@@ -17,6 +17,7 @@ urlpatterns = patterns(
     # change Language
     (r'^i18n/', include('django.conf.urls.i18n')),
     url('^api/v1/', include(router.urls)),
+    url('^api/v1/', include(router_with_patch_list.urls)),
     url(r'^service_health/$',
         'onadata.apps.main.service_health.service_health'),
     url(r'^api-docs/', RedirectView.as_view(url='/api/v1/')),
@@ -154,8 +155,6 @@ urlpatterns = patterns(
         kwargs={'export_type': 'sav_zip'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
         'onadata.apps.viewer.views.kml_export'),
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.zip",
-        'onadata.apps.viewer.views.zip_export'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/gdocs$",
         'onadata.apps.viewer.views.google_xls_export'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/map_embed",
@@ -187,8 +186,6 @@ urlpatterns = patterns(
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
         "/(?P<filename>[^/]+)$",
         'onadata.apps.viewer.views.export_download'),
-    url(r'^(?P<username>\w+)/forms/(?P<form_id_string>[^/]+)/spss_labels\.zip$',
-        'onadata.apps.logger.views.download_spss_labels', name='download_spss_labels'),
     url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
 
     url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),

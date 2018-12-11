@@ -12,6 +12,13 @@ DATABASES = {
         env='TEST_DATABASE_URL', default="sqlite:///%s/db.sqlite3" % BASE_DIR)
 }
 
+# Need to add these lines to make the tests run
+# Moreover, `apt-get update && apt-get install libsqlite3-mod-spatialite`
+#  should be executed inside the container
+DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
+SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
+
+
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
     'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),

@@ -718,7 +718,7 @@ data (instance/submission per row)
         renderers.CSVRenderer,
         renderers.CSVZIPRenderer,
         renderers.SAVZIPRenderer,
-        renderers.SurveyRenderer
+        renderers.RawXMLRenderer
     ]
     queryset = XForm.objects.all()
     serializer_class = XFormSerializer

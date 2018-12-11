@@ -20,10 +20,12 @@ from guardian.shortcuts import \
     get_perms_for_model
 from cStringIO import StringIO
 from taggit.managers import TaggableManager
+from xml.sax import saxutils
 
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 
 try:
     from formpack.utils.xls_to_ss_structure import xls_to_dicts
@@ -94,6 +96,8 @@ class XForm(BaseModel):
 
     tags = TaggableManager()
 
+    has_kpi_hooks = LazyDefaultBooleanField(default=False)
+
     class Meta:
         app_label = 'logger'
         unique_together = (("user", "id_string"), ("user", "sms_id_string"))
@@ -105,6 +109,7 @@ class XForm(BaseModel):
             ("report_xform", _("Can make submissions to the form")),
             ("move_xform", _(u"Can move form between projects")),
             ("transfer_xform", _(u"Can transfer form ownership.")),
+            ("validate_xform", _(u"Can validate submissions.")),
         )
 
     def file_name(self):
@@ -128,6 +133,14 @@ class XForm(BaseModel):
     def has_instances_with_geopoints(self):
         return self.instances_with_geopoints
 
+    @property
+    def kpi_hook_service(self):
+        """
+        Returns kpi hook service if it exists. XForm should have only one occurrence in any case.
+        :return: RestService
+        """
+        return self.restservices.filter(name="kpi_hook").first()
+
     def _set_id_string(self):
         matches = self.instance_id_regex.findall(self.xml)
         if len(matches) != 1:
@@ -144,6 +157,7 @@ class XForm(BaseModel):
 
         if self.title and title_xml != self.title:
             title_xml = self.title[:XFORM_TITLE_LENGTH]
+            title_xml = saxutils.escape(title_xml)
             if isinstance(self.xml, str):
                 self.xml = self.xml.decode('utf-8')
             self.xml = title_pattern.sub(
@@ -306,6 +320,24 @@ class XForm(BaseModel):
         else:
             return None
 
+    @property
+    def settings(self):
+        """
+        Mimic Asset settings.
+        :return: Object
+        """
+        # As soon as we need to add custom validation statuses in Asset settings,
+        # validation in add_validation_status_to_instance
+        # (kobocat/onadata/apps/api/tools.py) should still work
+        default_validation_statuses = getattr(settings, "DEFAULT_VALIDATION_STATUSES", [])
+
+        # Later purpose, default_validation_statuses could be merged with a custom validation statuses dict
+        # for example:
+        #   self._validation_statuses.update(default_validation_statuses)
+
+        return {
+            "validation_statuses": default_validation_statuses
+        }
 
 def update_profile_num_submissions(sender, instance, **kwargs):
     profile_qs = User.profile.get_queryset()

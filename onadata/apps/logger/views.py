@@ -33,7 +33,6 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_digest import HttpDigestAuthenticator
 from pyxform import Survey
-from pyxform.spss import survey_to_spss_label_zip
 from wsgiref.util import FileWrapper
 
 from onadata.apps.main.models import UserProfile, MetaData
@@ -44,6 +43,7 @@ from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.ziggy_instance import ZiggyInstance
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.viewer_tools import enketo_url
+from onadata.libs.utils.viewer_tools import image_urls_dict
 from onadata.libs.utils.logger_tools import (
     safe_create_instance,
     OpenRosaResponseBadRequest,
@@ -442,37 +442,6 @@ def download_jsonform(request, username, id_string):
     return response
 
 
-def download_spss_labels(request, username, form_id_string):
-    xform = get_object_or_404(XForm,
-                              user__username__iexact=username,
-                              id_string__exact=form_id_string)
-    owner = User.objects.get(username__iexact=username)
-    helper_auth_helper(request)
-
-    if not has_permission(xform, owner, request, xform.shared):
-        return HttpResponseForbidden('Not shared.')
-
-    try:
-        xlsform_io= xform.to_xlsform()
-        if not xlsform_io:
-            messages.add_message(request, messages.WARNING,
-                                 _(u'No XLS file for your form '
-                                   u'<strong>%(id)s</strong>')
-                                 % {'id': form_id_string})
-            return HttpResponseRedirect("/%s" % username)
-    except:
-        return HttpResponseServerError('Error retrieving XLSForm.')
-
-    survey= Survey.from_xls(filelike_obj=xlsform_io)
-    zip_filename= '{}_spss_labels.zip'.format(xform.id_string)
-    zip_io= survey_to_spss_label_zip(survey, xform.id_string)
-
-    response = StreamingHttpResponse(FileWrapper(zip_io),
-                                     content_type='application/zip; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename={}'.format(zip_filename)
-    return response
-
-
 @is_owner
 @require_POST
 def delete_xform(request, username, id_string):
@@ -554,6 +523,7 @@ def edit_data(request, username, id_string, data_id):
         XForm, user__username__iexact=username, id_string__exact=id_string)
     instance = get_object_or_404(
         Instance, pk=data_id, xform=xform)
+    instance_attachments = image_urls_dict(instance)
     if not has_edit_permission(xform, owner, request, xform.shared):
         return HttpResponseForbidden(_(u'Not shared.'))
     if not hasattr(settings, 'ENKETO_URL'):
@@ -576,7 +546,8 @@ def edit_data(request, username, id_string, data_id):
     try:
         url = enketo_url(
             form_url, xform.id_string, instance_xml=injected_xml,
-            instance_id=instance.uuid, return_url=return_url
+            instance_id=instance.uuid, return_url=return_url,
+            instance_attachments=instance_attachments
         )
     except Exception as e:
         context.message = {

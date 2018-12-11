@@ -6,10 +6,14 @@ from onadata.apps.restservice.RestServiceInterface import RestServiceInterface
 
 
 class ServiceDefinition(RestServiceInterface):
+    """
+        @deprecated.
+        This service should not be used anymore.
+    """
     id = u'json'
     verbose_name = u'JSON POST'
 
-    def send(self, url, parsed_instance):
-        post_data = json.dumps(parsed_instance.to_dict_for_mongo())
+    def send(self, url, data):
+        post_data = json.dumps(data.get("json"))
         headers = {"Content-Type": "application/json"}
         requests.post(url, headers=headers, data=post_data)

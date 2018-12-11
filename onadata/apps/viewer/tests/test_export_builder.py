@@ -12,7 +12,7 @@ from pyxform.builder import create_survey_from_xls
 from savReaderWriter import SavReader
 
 from onadata.apps.main.tests.test_base import TestBase
-from onadata.apps.viewer.models.parsed_instance import _encode_for_mongo
+from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.viewer.tests.export_helpers import viewer_fixture_path
 from onadata.libs.utils.export_tools import (
     dict_to_joined_export,
@@ -595,9 +595,9 @@ class TestExportBuilder(TestBase):
                 'childrens_survey':
                 {
                     'tel/tel.office': 'tel/{0}'.format(
-                        _encode_for_mongo('tel.office')),
+                        MongoHelper.encode('tel.office')),
                     'tel/tel.mobile': 'tel/{0}'.format(
-                        _encode_for_mongo('tel.mobile')),
+                        MongoHelper.encode('tel.mobile')),
                 }
             }
         encoded_fields = export_builder.encoded_fields
@@ -610,14 +610,14 @@ class TestExportBuilder(TestBase):
         encoded_fields = \
             {
                 'tel/tel.office': 'tel/{0}'.format(
-                    _encode_for_mongo('tel.office'))
+                    MongoHelper.encode('tel.office'))
             }
         row = \
             {
                 'name': 'Abe',
                 'age': 35,
                 'tel/{0}'.format(
-                    _encode_for_mongo('tel.office')): '123-456-789'
+                    MongoHelper.encode('tel.office')): '123-456-789'
             }
         new_row = ExportBuilder.decode_mongo_encoded_fields(
             row, encoded_fields)

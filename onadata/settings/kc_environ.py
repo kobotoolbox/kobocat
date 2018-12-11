@@ -126,6 +126,7 @@ AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
 AWS_DEFAULT_ACL = 'private'
+AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
 
 GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
@@ -144,6 +145,11 @@ if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
         'EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
     if not os.path.isdir(EMAIL_FILE_PATH):
         os.mkdir(EMAIL_FILE_PATH)
+
+# Default value for the `UserProfile.require_auth` attribute
+REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
+        'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
+        'False') == 'True'
 
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
@@ -212,6 +218,11 @@ if 'RAVEN_DSN' in os.environ:
                     'handlers': ['console'],
                     'propagate': False,
                 },
+                'console_logger': {
+                    'handlers': ['console'],
+                    'level': 'DEBUG',
+                    'propagate': True
+                },
                 'sentry.errors': {
                     'level': 'DEBUG',
                     'handlers': ['console'],
@@ -248,3 +259,6 @@ if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
             }
     }
 ###### END ISSUE 242 FIX ######
+
+# Number of times Celery retries to send data to external rest service
+REST_SERVICE_MAX_RETRIES = 3

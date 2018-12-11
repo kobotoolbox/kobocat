@@ -3,6 +3,8 @@ from hashlib import sha256
 
 import reversion
 
+from django.db.models import F
+from django.db import transaction
 from django.contrib.gis.db import models
 from django.db.models.signals import post_save
 from django.db.models.signals import post_delete
@@ -21,6 +23,7 @@ from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
     DELETEDAT, GEOLOCATION, ID, MONGO_STRFTIME, NOTES, SUBMISSION_TIME, TAGS,\
     UUID, XFORM_ID_STRING, SUBMITTED_BY
 from onadata.libs.utils.model_tools import set_uuid
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 
 
 class FormInactiveError(Exception):
@@ -60,21 +63,28 @@ def submission_time():
 
 
 def update_xform_submission_count(sender, instance, created, **kwargs):
-    if created:
-        xform = XForm.objects.select_related().select_for_update()\
-            .get(pk=instance.xform.pk)
-        xform.num_of_submissions += 1
-        xform.last_submission_time = instance.date_created
-        xform.save()
-        profile_qs = User.profile.get_queryset()
-        try:
-            profile = profile_qs.select_for_update()\
-                .get(pk=xform.user.profile.pk)
-        except profile_qs.model.DoesNotExist:
-            pass
-        else:
-            profile.num_of_submissions += 1
-            profile.save()
+    if not created:
+        return
+    # `defer_counting` is a Python-only attribute
+    if getattr(instance, 'defer_counting', False):
+        return
+    with transaction.atomic():
+        xform = XForm.objects.only('user_id').get(pk=instance.xform_id)
+        # Update with `F` expression instead of `select_for_update` to avoid
+        # locks, which were mysteriously piling up during periods of high
+        # traffic
+        XForm.objects.filter(pk=instance.xform_id).update(
+            num_of_submissions=F('num_of_submissions') + 1,
+            last_submission_time=instance.date_created,
+        )
+        # Hack to avoid circular imports
+        UserProfile = User.profile.related.related_model
+        profile, created = UserProfile.objects.only('pk').get_or_create(
+            user_id=xform.user_id
+        )
+        UserProfile.objects.filter(pk=profile.pk).update(
+            num_of_submissions=F('num_of_submissions') + 1,
+        )
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
@@ -135,8 +145,28 @@ class Instance(models.Model):
 
     tags = TaggableManager()
 
+    validation_status = JSONField(null=True, default=None)
+
+    # TODO Don't forget to update all records with command `update_is_sync_with_mongo`.
+    is_synced_with_mongo = LazyDefaultBooleanField(default=False)
+
+    # If XForm.has_kpi_hooks` is True, this field should be True either.
+    # It tells whether the instance has been successfully sent to KPI.
+    posted_to_kpi = LazyDefaultBooleanField(default=False)
+
     class Meta:
         app_label = 'logger'
+
+    @property
+    def asset(self):
+        """
+        The goal of this property is to make the code future proof.
+        We can run the tests on kpi backend or kobocat backend.
+        Instance.asset will exist for both
+        It's used for validation_statuses.
+        :return: XForm
+        """
+        return self.xform
 
     @classmethod
     def set_deleted_at(cls, instance_id, deleted_at=timezone.now()):
@@ -330,7 +360,9 @@ class Instance(models.Model):
         :return: The resulting hash.
         :rtype: str
         '''
-        return sha256(input_string.encode('UTF-8')).hexdigest()
+        if isinstance(input_string, unicode):
+            input_string = input_string.encode('utf-8')
+        return sha256(input_string).hexdigest()
 
     @property
     def point(self):
@@ -340,10 +372,7 @@ class Instance(models.Model):
             return gc[0]
 
     def save(self, *args, **kwargs):
-        force = kwargs.get('force')
-
-        if force:
-            del kwargs['force']
+        force = kwargs.pop("force", False)
 
         self._check_active(force)
 
@@ -352,6 +381,11 @@ class Instance(models.Model):
         self._set_survey_type()
         self._set_uuid()
         self._populate_xml_hash()
+
+        # Force validation_status to be dict
+        if self.validation_status is None:
+            self.validation_status = {}
+
         super(Instance, self).save(*args, **kwargs)
 
     def set_deleted(self, deleted_at=timezone.now()):
@@ -360,6 +394,18 @@ class Instance(models.Model):
         # force submission count re-calculation
         self.xform.submission_count(force_update=True)
         self.parsed_instance.save()
+
+    def get_validation_status(self):
+        """
+        Returns instance validation status.
+
+        :return: object
+        """
+        # This method can be tweaked to implement default validation status
+        # For example:
+        # if not self.validation_status:
+        #    self.validation_status = self.asset.settings.get("validation_statuses")[0]
+        return self.validation_status
 
 
 post_save.connect(update_xform_submission_count, sender=Instance,

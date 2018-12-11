@@ -18,6 +18,7 @@ import datetime
 import pytz
 import zipfile
 from io import BytesIO
+from collections import defaultdict
 from django.contrib.auth.models import User
 from django.core.files.storage import get_storage_class
 from .models import Instance, XForm
@@ -39,64 +40,33 @@ def generate_stats_zip(output_filename):
         }
     }
 
-    def first_day_of_next_month(any_date):
-        return datetime.date(
-            year=any_date.year if any_date.month < 12 else any_date.year + 1,
-            month=any_date.month + 1 if any_date.month < 12 else 1,
-            day=1
-        )
-
-    def first_day_of_previous_month(any_date):
-        return datetime.date(
-            year=any_date.year if any_date.month > 1 else any_date.year - 1,
-            month=any_date.month - 1 if any_date.month > 1 else 12,
-            day=1
-        )
-
-    def utc_midnight(any_date):
-        return datetime.datetime(
-            year=any_date.year,
-            month=any_date.month,
-            day=any_date.day,
-            tzinfo=pytz.UTC
-        )
-
     def list_created_by_month(model, date_field):
-        today = datetime.date.today()
-        # Just start at January 1 of the previous year. Going back to the
-        # oldest object would be great, but it's too slow right now. Django
-        # 1.10 will provide a more efficient way:
-        # https://docs.djangoproject.com/en/1.10/ref/models/database-functions/#trunc
-        first_date = datetime.date(
-            year=today.year - 1,
-            month=1,
-            day=1
-        )
-        # We *ASSUME* that primary keys increase cronologically!
-        last_object = model.objects.order_by('pk').last()
-        last_date = first_day_of_next_month(getattr(last_object, date_field))
-        year_month_count = []
-        while last_date > first_date:
-            this_start_date = first_day_of_previous_month(last_date)
-            this_end_date = last_date
-            criteria = {
-                '{}__gte'.format(date_field): utc_midnight(this_start_date),
-                '{}__lt'.format(date_field): utc_midnight(this_end_date)
-            }
-            objects_this_month = model.objects.filter(**criteria).count()
-            year_month_count.append((
-                this_start_date.year,
-                this_start_date.month,
-                objects_this_month
-            ))
-            last_date = this_start_date
-        return year_month_count
+        # Make a single, huge query to the database
+        data_dump = list(model.objects.values_list('pk', date_field))
+        # Sort by date
+        data_dump = sorted(data_dump, key=lambda x: x[1])
+
+        year_month_counts = defaultdict(lambda: defaultdict(lambda: 0))
+        last_pks = defaultdict(lambda: defaultdict(lambda: 0))
+        for pk, date in data_dump:
+            year_month_counts[date.year][date.month] += 1
+            last_pks[date.year][date.month] = pk
+
+        results = []
+        cumulative = 0
+        for year in sorted(year_month_counts.keys()):
+            for month in sorted(year_month_counts[year].keys()):
+                cumulative += year_month_counts[year][month]
+                results.append((
+                    year, month, year_month_counts[year][month],
+                    cumulative, last_pks[year][month]
+                ))
+
+        return results
 
     default_storage = get_storage_class()()
-
     with default_storage.open(output_filename, 'wb') as output_file:
         zip_file = zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED)
-
         for filename, report_settings in REPORTS.iteritems():
             model_name_plural = report_settings[
                 'model']._meta.verbose_name_plural
@@ -104,8 +74,8 @@ def generate_stats_zip(output_filename):
                 'Year',
                 'Month',
                 'New {}'.format(model_name_plural.capitalize()),
-                'NOTE: Records created prior to January 1 of last '
-                'year are NOT included in this report!'
+                'Cumulative {}'.format(model_name_plural.capitalize()),
+                'Last Primary Key (possible clue about deleted objects)',
             ]
             data = list_created_by_month(
                 report_settings['model'], report_settings['date_field'])

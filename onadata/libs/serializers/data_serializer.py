@@ -6,6 +6,7 @@ from rest_framework.exceptions import ParseError
 
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.api.mongo_helper import MongoHelper
 
 
 class DataSerializer(serializers.HyperlinkedModelSerializer):
@@ -32,6 +33,7 @@ class DataListSerializer(serializers.Serializer):
         }
         limit = query_params.get('limit', False)
         start = query_params.get('start', False)
+        count = query_params.get('count', False)
 
         try:
             query.update(json.loads(query_params.get('query', '{}')))
@@ -44,14 +46,25 @@ class DataListSerializer(serializers.Serializer):
             'fields': query_params.get('fields'),
             'sort': query_params.get('sort')
         }
-        if limit:
-            query_kwargs['limit'] = int(limit)
 
-        if start:
-            query_kwargs['start'] = int(start)
+        # if we want the count, we don't kwow to paginate the records.
+        # start and limit are useless then.
+        if count:
+            query_kwargs['count'] = True
+        else:
+            if limit:
+                query_kwargs['limit'] = int(limit)
+
+            if start:
+                query_kwargs['start'] = int(start)
 
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
-        return list(cursor)
+
+        # if we want the count, we only need the first index of the list.
+        if count:
+            return cursor[0]
+        else:
+            return [MongoHelper.to_readable_dict(record) for record in cursor]
 
 
 class DataInstanceSerializer(serializers.Serializer):
@@ -74,7 +87,8 @@ class DataInstanceSerializer(serializers.Serializer):
         cursor = ParsedInstance.query_mongo_minimal(**query_kwargs)
         records = list(record for record in cursor)
 
-        return (len(records) and records[0]) or records
+        returned_dict = (len(records) and records[0]) or records
+        return MongoHelper.to_readable_dict(returned_dict)
 
 
 class SubmissionSerializer(serializers.Serializer):

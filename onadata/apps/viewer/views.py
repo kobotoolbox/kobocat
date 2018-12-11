@@ -14,6 +14,7 @@ from django.core.files.storage import FileSystemStorage
 from django.core.files.storage import get_storage_class
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import (
     HttpResponseForbidden, HttpResponseRedirect, HttpResponseNotFound,
     HttpResponseBadRequest, HttpResponse)
@@ -405,15 +406,6 @@ def export_list(request, username, id_string, export_type):
         'token': export_token,
     }
 
-    if should_create_new_export(xform, export_type):
-        try:
-            create_async_export(
-                xform, export_type, query=None, force_xlsx=True,
-                options=options)
-        except Export.ExportTypeError:
-            return HttpResponseBadRequest(
-                _("%s is not a valid export type" % export_type))
-
     metadata = MetaData.objects.filter(xform=xform,
                                        data_type="external_export")\
         .values('id', 'data_value')
@@ -572,50 +564,6 @@ def delete_export(request, username, id_string, export_type):
         }))
 
 
-def zip_export(request, username, id_string):
-    owner = get_object_or_404(User, username__iexact=username)
-    xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
-    helper_auth_helper(request)
-    if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_(u'Not shared.'))
-    if request.GET.get('raw'):
-        id_string = None
-
-    attachments = Attachment.objects.filter(instance__xform=xform)
-    zip_file = None
-
-    try:
-        zip_file = create_attachments_zipfile(attachments)
-        audit = {
-            "xform": xform.id_string,
-            "export_type": Export.ZIP_EXPORT
-        }
-        audit_log(
-            Actions.EXPORT_CREATED, request.user, owner,
-            _("Created ZIP export on '%(id_string)s'.") %
-            {
-                'id_string': xform.id_string,
-            }, audit, request)
-        # log download as well
-        audit_log(
-            Actions.EXPORT_DOWNLOADED, request.user, owner,
-            _("Downloaded ZIP export on '%(id_string)s'.") %
-            {
-                'id_string': xform.id_string,
-            }, audit, request)
-        if request.GET.get('raw'):
-            id_string = None
-
-        response = response_with_mimetype_and_name('zip', id_string)
-        response.write(FileWrapper(zip_file))
-        response['Content-Length'] = zip_file.tell()
-        zip_file.seek(0)
-    finally:
-        zip_file and zip_file.close()
-
-    return response
-
-
 def kml_export(request, username, id_string):
     # read the locations from the database
     owner = get_object_or_404(User, username__iexact=username)
@@ -727,26 +675,29 @@ def attachment_url(request, size='medium'):
     # TODO: how to make sure we have the right media file,
     # this assumes duplicates are the same file
     if media_file:
-        mtch = re.search('^([^\/]+)/attachments(/[^\/]+)$', media_file)
+        mtch = re.search(r'^([^/]+)/attachments/([^/]+)$', media_file)
         if mtch:
             # in cases where the media_file url created by instance.html's
             # _attachment_url function is in the wrong format, this will
             # match attachments with the correct owner and the same file name
             (username, filename) = mtch.groups()
-            result = Attachment.objects.filter(**{
-                  'instance__xform__user__username': username,
-                }).filter(**{
-                  'media_file__endswith': filename,
-                })[0:1]
+            result = Attachment.objects.filter(
+                    instance__xform__user__username=username,
+                ).filter(
+                    Q(media_file_basename=filename) | Q(
+                        media_file_basename=None,
+                        media_file__endswith='/' + filename
+                    )
+                )[0:1]
         else:
             # search for media_file with exact matching name
             result = Attachment.objects.filter(media_file=media_file)[0:1]
 
-        if len(result) == 0:
+        try:
+            attachment = result[0]
+        except IndexError:
             media_file_logger.info('attachment not found')
             return HttpResponseNotFound(_(u'Attachment not found'))
-
-        attachment = result[0]
 
         if not attachment.mimetype.startswith('image'):
             return redirect(attachment.media_file.url)

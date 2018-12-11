@@ -18,9 +18,7 @@ poster==0.8.1
 psycopg2==2.5.4
 pymongo==2.7.2
 lxml==3.4.0
-#-e git+https://github.com/onaio/pyxform.git@onaio#egg=pyxform
-# kobo fork supports csvs with utf, character escaping, etc.
--e git+https://github.com/kobotoolbox/pyxform.git@2.017.36#egg=pyxform
+pyxform==0.11.5
 django-reversion==2.0.8
 xlrd==0.9.3
 xlwt==0.7.5
@@ -38,8 +36,9 @@ raven==6.1.0
 
 # new export code relies on
 pandas>=0.12.0
-requests==2.4.1
 elaphe==0.5.6
+requests==2.19.1
+
 
 # formpack exports
 git+https://github.com/kobotoolbox/formpack@kobocat-requirement

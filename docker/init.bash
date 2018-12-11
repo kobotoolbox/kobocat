@@ -14,6 +14,11 @@ python manage.py syncdb --noinput
 echo 'Running migrations.'
 python manage.py migrate --noinput
 
+
+rm -f /etc/cron.d/clean_up_tmp
+cp docker/cron/clean_up_tmp /etc/cron.d/
+echo 'KoBoCat tmp clean-up cron installed'
+
 rm -f /etc/cron.d/backup_media_crontab
 if [[ -z "${KOBOCAT_MEDIA_BACKUP_SCHEDULE}" ]]; then
     echo 'KoBoCAT media automatic backups disabled.'
