@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0005_instance_xml_hash'),
+        ('logger', '0010_attachment_media_file_basename'),
     ]
 
     # Because some servers already have these modifications applied by Django South migration,
