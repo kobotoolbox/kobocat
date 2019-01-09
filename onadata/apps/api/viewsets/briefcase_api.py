@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.core.files import File
 from django.core.validators import ValidationError
 from django.contrib.auth.models import User
@@ -28,8 +29,8 @@ from onadata.libs.mixins.openrosa_headers_mixin import OpenRosaHeadersMixin
 from onadata.libs.renderers.renderers import TemplateXMLRenderer
 from onadata.libs.serializers.xform_serializer import XFormListSerializer
 from onadata.libs.serializers.xform_serializer import XFormManifestSerializer
-from onadata.libs.utils.logger_tools import publish_form
-from onadata.libs.utils.logger_tools import publish_xml_form
+from onadata.libs.utils.logger_tools import publish_form, publish_xml_form, \
+    get_instance_or_404
 
 
 def _extract_uuid(text):
@@ -105,10 +106,9 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         uuid = _extract_uuid(formId)
         username = self.kwargs.get('username')
 
-        obj = get_object_or_404(Instance,
-                                xform__user__username__iexact=username,
-                                xform__id_string__exact=id_string,
-                                uuid=uuid)
+        obj = get_instance_or_404(xform__user__username__iexact=username,
+                                  xform__id_string__exact=id_string,
+                                  uuid=uuid)
         self.check_object_permissions(self.request, obj.xform)
 
         return obj
