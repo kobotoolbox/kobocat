@@ -271,3 +271,52 @@ def get_enketo_edit_url(request, instance, return_url):
         instance_id=instance.uuid, return_url=return_url,
         instance_attachments=instance_attachments)
     return url
+
+
+def enketo_view_url(form_url, id_string, instance_xml=None,
+               instance_id=None, return_url=None, instance_attachments=None):
+    if not hasattr(settings, 'ENKETO_URL')\
+            and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
+        return False
+
+    if instance_attachments is None:
+        instance_attachments = {}
+
+    url = settings.ENKETO_URL + settings.ENKETO_API_INSTANCE_PATH + "/view"
+
+    values = {
+        'form_id': id_string,
+        'server_url': form_url
+    }
+    if instance_id is not None and instance_xml is not None:
+        url = settings.ENKETO_URL + settings.ENKETO_API_INSTANCE_PATH + "/view"
+        values.update({
+            'instance': instance_xml,
+            'instance_id': instance_id,
+            'return_url': return_url
+        })
+        for key, value in instance_attachments.iteritems():
+            values.update({
+                'instance_attachments[' + key + ']': value
+            })
+    print(values)
+    req = requests.post(url, data=values,
+                        auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
+    if req.status_code in [200, 201]:
+        try:
+            response = req.json()
+            print(response)
+        except ValueError:
+            pass
+        else:
+            if 'view_url' in response:
+                return response['view_url']
+    else:
+        try:
+            response = req.json()
+        except ValueError:
+            pass
+        else:
+            if 'message' in response:
+                raise EnketoError(response['message'])
+    return False

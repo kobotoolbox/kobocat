@@ -42,7 +42,7 @@ from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.ziggy_instance import ZiggyInstance
 from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.viewer_tools import enketo_url
+from onadata.libs.utils.viewer_tools import enketo_url, enketo_view_url
 from onadata.libs.utils.viewer_tools import image_urls_dict
 from onadata.libs.utils.logger_tools import (
     safe_create_instance,
@@ -769,3 +769,53 @@ def retrieve_superuser_stats(request, username, base_filename):
         response['Content-Disposition'] = 'attachment;filename="{}"'.format(
             base_filename)
         return response
+
+
+def view_data(request, username, id_string, data_id):
+    context = RequestContext(request)
+    owner = User.objects.get(username__iexact=username)
+    xform = get_object_or_404(
+        XForm, user__username__iexact=username, id_string__exact=id_string)
+    instance = get_object_or_404(
+        Instance, pk=data_id, xform=xform)
+    instance_attachments = image_urls_dict(instance)
+    if not has_edit_permission(xform, owner, request, xform.shared):
+        return HttpResponseForbidden(_(u'Not shared.'))
+    if not hasattr(settings, 'ENKETO_URL'):
+        return HttpResponseRedirect(reverse(
+            'onadata.apps.main.views.show',
+            kwargs={'username': username, 'id_string': id_string}))
+
+    url = '%sdata/edit_url' % settings.ENKETO_URL
+    # see commit 220f2dad0e for tmp file creation
+    injected_xml = inject_instanceid(instance.xml, instance.uuid)
+    return_url = request.build_absolute_uri(
+        reverse(
+            'onadata.apps.viewer.views.instance',
+            kwargs={
+                'username': username,
+                'id_string': id_string}
+        ) + "#/" + str(instance.id))
+    form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
+
+    try:
+        url = enketo_view_url(
+            form_url, xform.id_string, instance_xml=injected_xml,
+            instance_id=instance.uuid, return_url="",
+            instance_attachments=instance_attachments
+        )
+    except Exception as e:
+        context.message = {
+            'type': 'alert-error',
+            'text': u"Enketo error, reason: %s" % e}
+        messages.add_message(
+            request, messages.WARNING,
+            _("Enketo error: enketo replied %s") % e, fail_silently=True)
+    else:
+        if url:
+            context.enketo = url
+            return HttpResponseRedirect(url)
+    return HttpResponseRedirect(
+        reverse('onadata.apps.main.views.show',
+                kwargs={'username': username,
+                        'id_string': id_string}))

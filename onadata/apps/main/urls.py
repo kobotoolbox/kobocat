@@ -173,6 +173,9 @@ urlpatterns = patterns(
         name='thank_you_submission'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/edit-data/(?P<data_id>"
         "\d+)$", 'onadata.apps.logger.views.edit_data', name='edit_data'),
+    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/view-data/(?P<data_id>"
+        "\d+)$", 'onadata.apps.logger.views.view_data', name='view_data'),
+
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/view-data",
         'onadata.apps.viewer.views.data_view'),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
