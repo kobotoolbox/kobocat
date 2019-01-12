@@ -1,6 +1,7 @@
+# vim: syntax=dockerfile:
 # Base image to take care of installing `apt` and `pip` requirements. Also clones the `kobocat-template` repo.
 
-FROM kobotoolbox/base-kobos:latest
+FROM qeddockerhub/base-kobos:latest
 
 
 ENV KOBOCAT_TMP_DIR=/srv/kobocat_tmp \
