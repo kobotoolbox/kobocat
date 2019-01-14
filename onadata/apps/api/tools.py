@@ -440,8 +440,7 @@ def add_validation_status_to_instance(request, instance):
         if validation_status:
             instance.validation_status = validation_status
             instance.save()
-            instance.parsed_instance.update_mongo()
-            success = True
+            success = instance.parsed_instance.update_mongo(async=False)
 
     return success
 
