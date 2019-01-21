@@ -1,4 +1,5 @@
 import json
+from xml.etree import ElementTree as et
 
 from django.db.models import Q
 from django.http import Http404
@@ -29,6 +30,7 @@ from onadata.libs import filters
 from onadata.libs.utils.viewer_tools import (
     EnketoError,
     get_enketo_edit_url)
+from onadata.libs.utils.chart_tools import get_choice_label
 
 
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
@@ -166,6 +168,54 @@ Get a single specific submission json data providing `pk`
 >                "imei": "351746052013466",
 >                "formhub/uuid": "46ea15e2b8134624a47e2c4b77eef0d4",
 >                "kind": "monthly",
+>                "_submission_time": "2013-01-03T02:27:19",
+>                "required": "yes",
+>                "_attachments": [],
+>                "item": "Rent",
+>                "amount": "35000.0",
+>                "deviceid": "351746052013466",
+>                "subscriberid": "639027...60317"
+>            },
+>            {
+>                ....
+>                "subscriberid": "639027...60317"
+>            }
+>        ]
+
+Get a single specific submission json data providing `pk`
+ and `dataid` as url path parameters with label fields, where:
+
+* `pk` - is the identifying number for a specific form
+* `dataid` - is the unique id of the data, the value of `_id` or `_uuid`
+* ?label=true - parameter url allowing to replace "name" by "label" fields from the xform
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/data/<code>{pk}</code>/<code>{dataid}</code>?label=true</pre>
+> Example
+>
+>       curl -X GET https://example.com/api/v1/data/22845/4503?label=true
+
+> Response (ex: "name" = monthly, "label" = Monthly)
+>
+>            {
+>                "_id": 4503,
+>                "_bamboo_dataset_id": "",
+>                "_deleted_at": null,
+>                "expense_type": "service",
+>                "_xform_id_string": "exp",
+>                "_geolocation": [
+>                    null,
+>                    null
+>                ],
+>                "end": "2013-01-03T10:26:25.674+03",
+>                "start": "2013-01-03T10:25:17.409+03",
+>                "expense_date": "2011-12-23",
+>                "_status": "submitted_via_web",
+>                "today": "2013-01-03",
+>                "_uuid": "2e599f6fe0de42d3a1417fb7d821c859",
+>                "imei": "351746052013466",
+>                "formhub/uuid": "46ea15e2b8134624a47e2c4b77eef0d4",
+>                "kind": "Monthly",
 >                "_submission_time": "2013-01-03T02:27:19",
 >                "required": "yes",
 >                "_attachments": [],
@@ -441,8 +491,35 @@ Delete a specific submission in a form
                                    % {'dataid': dataid}))
 
             obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
+            
+            # Modify data object (label parameters)
+            if self.request._request.GET.get('label') and self.request._request.GET.get('label').lower() == 'true':
+                # Access to the right xform to get label
+                xform = self._filtered_or_shared_qs(self.queryset, self.kwargs['pk'])[0]
+                dd = xform.data_dictionary()
+                tree = et.ElementTree(et.fromstring(obj.xml))
+                # Parse the JSON object to replace "name" by "label" on JSON and XML part
+                self.parseLabelJSON(obj.json, dd, tree)
+                obj.xml = et.tostring(tree.getroot())
 
         return obj
+
+    # Parsing JSON field and subfield to replace "name" by xform "label"
+    def parseLabelJSON(self, JSONObj, xform_dict, tree):
+        for item in JSONObj:
+            # Key parsing
+            real_item = item.split('/')[-1]
+            # value is string/unicode ?
+            if type(JSONObj[item]) is unicode:
+                for ee in xform_dict.survey_elements:
+                    if ee.label and ee.name == real_item and ee.children:
+                        label = get_choice_label(ee.children, JSONObj[item])[0]
+                        tree.find('.//' + item).text = label
+                        JSONObj[item] = label
+            elif type(JSONObj[item]) is list:
+                tmp_dict = JSONObj[item]
+                for index in tmp_dict:
+                    self.parseLabelJSON(index, xform_dict, tree)
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
@@ -568,7 +645,15 @@ Delete a specific submission in a form
             instance = self.get_object()
             return Response(instance.xml)
         else:
-            return super(DataViewSet, self).retrieve(request, *args, **kwargs)
+            # 14/01/2019 - GEOHYD/ANTEA : retrieve modify object (label parameters)
+            #return super(DataViewSet, self).retrieve(request, *args, **kwargs)
+            data = super(DataViewSet, self).retrieve(request, *args, **kwargs)
+            instance = self.get_object()
+            merged_obj = dict()
+            merged_obj.update(data.data)
+            merged_obj.update(instance.json)
+            data.data = merged_obj
+            return data
 
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
