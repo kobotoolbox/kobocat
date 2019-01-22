@@ -45,7 +45,7 @@ PASSWORD_HASHERS = (
 
 ### JNM TEMPORARY ###
 ALLOWED_HOSTS = ('*',)
-DEBUG=True
+DEBUG = True
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 #############
 
@@ -61,9 +61,9 @@ else:
 if TESTING_MODE:
     MEDIA_ROOT = os.path.join(ONADATA_DIR, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
-    # need to have CELERY_ALWAYS_EAGER True and BROKER_BACKEND as memory
+    # need to have CELERY_TASK_ALWAYS_EAGER True and BROKER_BACKEND as memory
     # to run tasks immediately while testing
-    CELERY_ALWAYS_EAGER = True
+    CELERY_TASK_ALWAYS_EAGER = True
     BROKER_BACKEND = 'memory'
     ENKETO_API_TOKEN = 'abc'
 else:

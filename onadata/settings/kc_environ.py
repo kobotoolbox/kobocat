@@ -1,15 +1,16 @@
 import os
 from datetime import timedelta
+
 from onadata.settings.common import *
 
+import dj_database_url
 
-LOCALE_PATHS= [os.path.join(PROJECT_ROOT,'locale'),]
+LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
 TEMPLATE_STRING_IF_INVALID = ''
 
-import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
@@ -25,7 +26,7 @@ MONGO_DATABASE = {
     'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
 }
 
-BROKER_URL = os.environ.get(
+CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
 
 try:
@@ -47,23 +48,23 @@ if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
 else:
     TESTING_MODE = False
 
-MEDIA_URL= '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
+MEDIA_URL = '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
 STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
 if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
     KOBOCAT_ROOT_URI_PREFIX= '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
-    MEDIA_URL= KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
-    STATIC_URL= KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
-    LOGIN_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
-    LOGIN_REDIRECT_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
+    MEDIA_URL = KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
+    STATIC_URL = KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
+    LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
+    LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
 if TESTING_MODE:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
     MONGO_DATABASE['NAME'] = "formhub_test"
-    CELERY_ALWAYS_EAGER = True
+    CELERY_TASK_ALWAYS_EAGER = True
     BROKER_BACKEND = 'memory'
     ENKETO_API_TOKEN = 'abc'
     #TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
@@ -85,10 +86,10 @@ TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
 TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
 STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 
-KOBOFORM_SERVER=os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT=os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL=os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
-KOBOFORM_LOGIN_AUTOREDIRECT=True
+KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
+KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
+KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+KOBOFORM_LOGIN_AUTOREDIRECT = True
 KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -103,7 +104,7 @@ if CSRF_COOKIE_DOMAIN:
     SESSION_COOKIE_DOMAIN = CSRF_COOKIE_DOMAIN
     SESSION_COOKIE_NAME = 'kobonaut'
 
-SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 # for debugging
 # print "KOBOFORM_URL=%s" % KOBOFORM_URL
@@ -230,11 +231,11 @@ if 'RAVEN_DSN' in os.environ:
                 },
             },
         }
-        CELERYD_HIJACK_ROOT_LOGGER = False
+        CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
-POSTGIS_VERSION = (2, 1, 2)
+POSTGIS_VERSION = (2, 5, 0)
 
-CELERYBEAT_SCHEDULE = {
+CELERY_BEAT_SCHEDULE = {
     # Periodically mark exports stuck in the "pending" state as "failed"
     # See https://github.com/kobotoolbox/kobocat/issues/315
     'log-stuck-exports-and-mark-failed': {
@@ -243,22 +244,19 @@ CELERYBEAT_SCHEDULE = {
     },
 }
 
-### ISSUE 242 TEMPORARY FIX ###
+# ## ISSUE 242 TEMPORARY FIX ###
 # See https://github.com/kobotoolbox/kobocat/issues/242
 ISSUE_242_MINIMUM_INSTANCE_ID = os.environ.get(
     'ISSUE_242_MINIMUM_INSTANCE_ID', None)
 ISSUE_242_INSTANCE_XML_SEARCH_STRING = os.environ.get(
     'ISSUE_242_INSTANCE_XML_SEARCH_STRING', 'uploaded_form_')
 if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
-    CELERYBEAT_SCHEDULE['fix-root-node-names'] = {
+    CELERY_BEAT_SCHEDULE['fix-root-node-names'] = {
         'task': 'onadata.apps.logger.tasks.fix_root_node_names',
         'schedule': timedelta(hours=1),
-            'kwargs': {
-                'pk__gte': int(ISSUE_242_MINIMUM_INSTANCE_ID),
-                'xml__contains': ISSUE_242_INSTANCE_XML_SEARCH_STRING
-            }
+        'kwargs': {
+            'pk__gte': int(ISSUE_242_MINIMUM_INSTANCE_ID),
+            'xml__contains': ISSUE_242_INSTANCE_XML_SEARCH_STRING
+        }
     }
-###### END ISSUE 242 FIX ######
-
-# Number of times Celery retries to send data to external rest service
-REST_SERVICE_MAX_RETRIES = 3
+# #### END ISSUE 242 FIX ######

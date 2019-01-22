@@ -27,7 +27,7 @@ MONGO_DATABASE = {
     'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
 }
 
-BROKER_URL = os.environ.get(
+CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
 
 try:
@@ -55,7 +55,7 @@ if TESTING_MODE:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
     MONGO_DATABASE['NAME'] = "formhub_test"
-    CELERY_ALWAYS_EAGER = True
+    CELERY_TASK_ALWAYS_EAGER = True
     BROKER_BACKEND = 'memory'
     ENKETO_API_TOKEN = 'abc'
     #TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
