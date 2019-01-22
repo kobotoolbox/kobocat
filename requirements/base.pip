@@ -77,3 +77,6 @@ jsonfield<1.0
 django-db-readonly==0.3.2
 
 transifex-client
+
+# Shell Plus
+django-extensions==1.6.7
