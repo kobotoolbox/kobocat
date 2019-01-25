@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+import functools
 import sys
+
 from .kc_environ import *
 
 
@@ -10,8 +12,9 @@ LOGGING['handlers']['console'] = {
     'formatter': 'verbose'
 }
 
-LOGGING['loggers']['werkzeug'] = {
+LOGGING['loggers'][''] = {
     'handlers': ['console'],
-    'level': 'DEBUG',
-    'propagate': True,
+    'level': 'ERROR',
 }
+
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
