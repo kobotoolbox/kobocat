@@ -344,6 +344,7 @@ def skip_suspicious_operations(record):
             return False
     return True
 
+
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error.
@@ -415,6 +416,7 @@ def configure_logging(logger, **kwargs):
     admin_email_handler.setLevel(logging.ERROR)
     logger.addHandler(admin_email_handler)
 
+
 after_setup_logger.connect(configure_logging)
 
 GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
@@ -430,9 +432,12 @@ THUMB_CONF = {
 THUMB_ORDER = ['large', 'medium', 'small']
 IMG_FILE_TYPE = 'jpg'
 
+# Number of times Celery retries to send data to external rest service
+REST_SERVICE_MAX_RETRIES = 3
+
 # celery
-CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672/'
-CELERY_RESULT_BACKEND = "amqp"  # telling Celery to report results to RabbitMQ
+CELERY_BROKER_URL = 'redis://localhost:6389/2'
+CELERY_RESULT_BACKEND = 'redis://localhost:6389/2'  # telling Celery to report results to Redis
 CELERY_TASK_ALWAYS_EAGER = False
 
 # Celery defaults to having as many workers as there are cores. To avoid
@@ -451,6 +456,15 @@ CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.environ.get(
 CELERY_TASK_TIME_LIMIT = int(os.environ.get('CELERY_TASK_TIME_LIMIT', 2100))
 CELERY_TASK_SOFT_TIME_LIMIT = int(os.environ.get(
     'CELERYD_TASK_SOFT_TIME_LIMIT', 1800))
+
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "fanout_patterns": True,
+    "fanout_prefix": True,
+    # http://docs.celeryproject.org/en/latest/getting-started/brokers/redis.html#redis-visibility-timeout
+    "visibility_timeout": 120 * (10 ** REST_SERVICE_MAX_RETRIES)  # Longest ETA for RestService
+}
+
+CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
 
 # duration to keep zip exports before deletion (in seconds)
 ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
@@ -549,9 +563,6 @@ DEFAULT_VALIDATION_STATUSES = [
         'label': 'On Hold'
     },
 ]
-
-# Number of times Celery retries to send data to external rest service
-REST_SERVICE_MAX_RETRIES = 3
 
 # Make Django use NginX $host. Useful when running with ./manage.py runserver_plus
 # It avoids adding the debugger webserver port (i.e. `:8000`) at the end of urls.

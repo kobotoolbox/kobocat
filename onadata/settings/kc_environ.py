@@ -29,6 +29,8 @@ MONGO_DATABASE = {
 CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
 
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
 try:
     SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 except KeyError:
@@ -118,8 +120,11 @@ if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
 else:
     MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s" % MONGO_DATABASE
 
+# PyMongo 3 does acknowledged writes by default
+# https://emptysqua.re/blog/pymongos-new-default-safe-writes/
 MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
+    MONGO_CONNECTION_URL, j=True, tz_aware=True)
+
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
 # BEGIN external service integration codes
@@ -154,7 +159,7 @@ REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
 
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
-if 'RAVEN_DSN' in os.environ:
+if os.getenv("RAVEN_DSN") or "" != "":
     try:
         import raven
     except ImportError:
@@ -186,7 +191,7 @@ if 'RAVEN_DSN' in os.environ:
         # https://docs.getsentry.com/hosted/clients/python/integrations/django/#integration-with-logging
         LOGGING = {
             'version': 1,
-            'disable_existing_loggers': True, # Follows Sentry docs; `False` contributes to a deadlock (issue #377)
+            'disable_existing_loggers': True,  # Follows Sentry docs; `False` contributes to a deadlock (issue #377)
             'root': {
                 'level': 'WARNING',
                 'handlers': ['sentry'],
@@ -240,7 +245,8 @@ CELERY_BEAT_SCHEDULE = {
     # See https://github.com/kobotoolbox/kobocat/issues/315
     'log-stuck-exports-and-mark-failed': {
         'task': 'onadata.apps.viewer.tasks.log_stuck_exports_and_mark_failed',
-        'schedule': timedelta(hours=6),
+        'schedule': timedelta(minutes=1),
+        'options': {'queue': 'kobocat_queue'}
     },
 }
 
@@ -257,6 +263,7 @@ if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
         'kwargs': {
             'pk__gte': int(ISSUE_242_MINIMUM_INSTANCE_ID),
             'xml__contains': ISSUE_242_INSTANCE_XML_SEARCH_STRING
-        }
+        },
+        'options': {'queue': 'kobocat_queue'}
     }
 # #### END ISSUE 242 FIX ######
