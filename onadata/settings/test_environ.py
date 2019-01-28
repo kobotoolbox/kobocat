@@ -68,7 +68,7 @@ if PRINT_EXCEPTION and DEBUG:
 # include the kobocat-template directory
 TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
-    os.path.abspath(os.path.join(PROJECT_ROOT, '..', 'kobocat-template'))
+    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
 )
 TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
 STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
