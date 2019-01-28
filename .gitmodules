@@ -1,0 +1,3 @@
+[submodule "kobocat-template"]
+	path = kobocat-template
+	url = ../kobocat-template
