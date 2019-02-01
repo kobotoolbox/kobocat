@@ -1,9 +1,27 @@
-import os
+# -*- coding: utf-8 -*-
 from datetime import timedelta
+import logging
+import os
+
+from celery.signals import after_setup_logger
+import dj_database_url
+
 
 from onadata.settings.common import *
 
-import dj_database_url
+
+def celery_logger_setup_handler(logger, **kwargs):
+    """
+    Allows logs to be written in celery.log when call
+    :param logger:
+    :param kwargs:
+    """
+    my_handler = logging.FileHandler('/srv/logs/celery.log')  # TODO use a env variable
+    my_handler.setLevel(logging.INFO)
+    my_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # custom formatter
+    my_handler.setFormatter(my_formatter)
+    logger.addHandler(my_handler)
+
 
 LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
 
@@ -237,6 +255,7 @@ if os.getenv("RAVEN_DSN") or "" != "":
             },
         }
         CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+        after_setup_logger.connect(celery_logger_setup_handler)
 
 POSTGIS_VERSION = (2, 5, 0)
 

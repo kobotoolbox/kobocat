@@ -12,9 +12,4 @@ LOGGING['handlers']['console'] = {
     'formatter': 'verbose'
 }
 
-LOGGING['loggers'][''] = {
-    'handlers': ['console'],
-    'level': 'ERROR',
-}
-
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)

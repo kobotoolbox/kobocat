@@ -15,9 +15,7 @@ import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
 
-from celery.signals import after_setup_logger
 from django.core.exceptions import SuspiciousOperation
-from django.utils.log import AdminEmailHandler
 from pymongo import MongoClient
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -409,15 +407,6 @@ LOGGING = {
         }
     }
 }
-
-
-def configure_logging(logger, **kwargs):
-    admin_email_handler = AdminEmailHandler()
-    admin_email_handler.setLevel(logging.ERROR)
-    logger.addHandler(admin_email_handler)
-
-
-after_setup_logger.connect(configure_logging)
 
 GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
 GOOGLE_CLIENT_ID = '617113120802.onadata.apps.googleusercontent.com'
