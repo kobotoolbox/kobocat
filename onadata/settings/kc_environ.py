@@ -16,7 +16,7 @@ def celery_logger_setup_handler(logger, **kwargs):
     :param logger:
     :param kwargs:
     """
-    my_handler = logging.FileHandler('/srv/logs/celery.log')  # TODO use a env variable
+    my_handler = logging.FileHandler(os.getenv("KOBOCAT_CELERY_LOG_FILE", "/srv/logs/celery.log"))
     my_handler.setLevel(logging.INFO)
     my_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # custom formatter
     my_handler.setFormatter(my_formatter)
