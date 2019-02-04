@@ -7,184 +7,72 @@
   <!-- a temporary way to hide the kobocat deprecated features -->
   <style type="text/css">
   .kc-hide { display: none !important; }
+  #addserviceform { display: none !important; }
   </style>
-
 {% endblock %}
 
 {% block content %}
 {% load i18n %}
-
-  <!-- Project title -->
-  <!--   <header class="single-project__header">
-      <hgroup class="container">
-          <h1>{% trans "Settings" %}: {{ xform.title }}</h1>
-      </hgroup>
-  </header>
- -->
   <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
   {% if is_owner %}
   <div class="container__wide">
     <div class="single-project__settings--iframe">
-      <div class="settings__left">
-        <div class="settings__general">
-          <h2 class="settings__group-label">
-            {% trans "Form Settings" %}
-          </h2>
-
-          <div class="settings__form-item">
-            <label class="settings__form-label">
-              {% trans "Accept Submissions" %}
-            </label>
-            <label><input id="active-form" type="checkbox" class="ios-switch" {% if xform.downloadable %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
-          </div>
-
-          <div class="settings__form-item">
-            <label class="settings__form-label">Existing Form Files</label>
-            <ul class="settings__files">
-              {% for media in media_upload %}
-                <li class="{% cycle 'odd' 'even' %}">
-                  <div>{{ media.data_value }}</div>
-                  <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
-                  {% if can_edit %}
-                  <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
-                  {% endif %}
-                </li>
-              {% endfor %}
-            </ul>
-
-            {% if can_edit %}
-            <button class="single-project__button single-project__add-media">+ Add Document</button>
-
-            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
-                {% csrf_token %}
-                <ul class="nav nav-tabs">
-                    <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
-                    <li><a href="#media_url_add" data-toggle="tab">Media URL</a></li>
-                </ul>
-                <div class="tab-content">
-                    <div class="tab-pane active" id="media_upload">
-                        <input type="file" multiple="" name="media" id="id_media">
-                        <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
-                    </div>
-                    <div class="tab-pane" id="media_url_add">
-                        <label for="id_media">Media url:</label>
-                        <input type="text" name="media_url" id="id_media_url">
-                        <input type="submit" class="single-project__button" value="{% trans 'Save Media URL' %}" />
-                    </div>
-                </div>
-            </form>
-            {% endif %}
-          </div>
-
-        </div>  <!-- END .settings__general -->
-
-        <div class="settings__delete-project">
-          <h2 class="settings__group-label">
-            Delete project with all data and its form
-          </h2>
-          <button data-backdrop="true" data-keyboard="true" class="single-project__button single-project__button-delete">
-              {% trans "Delete" %}
-          </button>
-
-        </div>
-
-        {% if is_owner %}
-        <div class="settings__rest-services">
-            <h2 class="settings__group-label">{% trans "Rest Services" %}</h2>
-            <div id='restservice_tab'>
-            </div>
-        </div>
-        {% endif %}
-
-      </div>
-
-      <div class="settings__right">
+      <div class="settings__general">
         <h2 class="settings__group-label">
-          How would you like to share your project
+          {% trans "Form Settings" %}
         </h2>
 
         <div class="settings__form-item">
-          <label class="settings__form-label">
-            Share Project Publicly
-          </label>
-          <label>
-            <input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" >
-            <div title="{% trans "Allow anyone from the web to view this page." %}" class="poshytip switch"></div>
-          </label>
-        </div>
-
-        <div class="settings__form-item">
-          <label class="settings__form-label">
-            Share Data Publicly
-          </label>
-          <label>
-            <input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">
-            <div title="{% trans "Allow anyone from the web to inspect this project&rsquo;s data." %}" class="poshytip switch"></div>
-          </label>
-        </div>
-
-        <div class="settings__form-item">
-          <label class="settings__form-label">
-            Share project with other users
-          </label>
-          {% if public_link %}
-          {% url "onadata.apps.main.views.show" xform.uuid as form_url %}
-          {% blocktrans %}Sharing by link is <strong>on with URL <a href="{{ form_url }}">{{ base_url }}{{ form_url }}</a></strong>{% endblocktrans %}
-          {% else %}
-          {% blocktrans %}Sharing by link is <strong>off</strong>{% endblocktrans %}
-          {% endif %}
-          </strong>
-          <form action="{% url "onadata.apps.main.views.set_perm" content_user.username xform.id_string %}" method="post">
-              {% csrf_token %}
-              <input type="hidden" name="perm_type" value="link"/>
-              <input type="hidden" name="for_user" value="toggle"/>
-              <input type="submit" class="single-project__button" value="{% if public_link %}{% trans "Turn off" %}{% else %}{% trans "Turn on" %}{% endif %}" />
-          </form>
-          {% if users_with_perms|length %}
-          <ul>
-              {% for user, perms in users_with_perms %}
-              <li>{{ user }}: {{ perms }}</li>
-              {% endfor %}
+          <label class="settings__form-label">Existing Form Files</label>
+          <ul class="settings__files">
+            {% for media in media_upload %}
+              <li class="{% cycle 'odd' 'even' %}">
+                <div>{{ media.data_value }}</div>
+                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
+                {% if can_edit %}
+                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
+                {% endif %}
+              </li>
+            {% endfor %}
           </ul>
-          {% endif %}
-          <form action="{% url "onadata.apps.main.views.set_perm" content_user.username xform.id_string %}" method="post">
+
+          {% if can_edit %}
+          <button class="single-project__button single-project__add-media">+ Add Document</button>
+
+          <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
               {% csrf_token %}
-              <table class="narrow-labels">
-              {{ permission_form.as_table }}
-              </table>
-              <input type="submit" class="single-project__button" value="{% trans 'Save Permissions' %}" />
+              <ul class="nav nav-tabs">
+                  <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
+                  <li><a href="#media_url_add" data-toggle="tab">Media URL</a></li>
+              </ul>
+              <div class="tab-content">
+                  <div class="tab-pane active" id="media_upload">
+                      <input type="file" multiple="" name="media" id="id_media">
+                      <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
+                  </div>
+                  <div class="tab-pane" id="media_url_add">
+                      <label for="id_media">Media url:</label>
+                      <input type="text" name="media_url" id="id_media_url">
+                      <input type="submit" class="single-project__button" value="{% trans 'Save Media URL' %}" />
+                  </div>
+              </div>
           </form>
+          {% endif %}
         </div>
+      </div>  <!-- END .settings__general -->
 
+      {% if is_owner %}
+      <div class="settings__rest-services">
+          <h2 class="settings__group-label">{% trans "Legacy Rest Services" %}</h2>
+          <div id='restservice_tab'>
+            {% trans "Loading..." %}
+          </div>
       </div>
+      {% endif %}
     </div>
   </div>
   {% endif %}
-
-  <!-- Delete form (in vex window) -->
-  {% if is_owner %}
-  <div class="kc-hide">
-    <div id="delete-form">
-        <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
-        {% csrf_token %}
-            <div class="vex-header">
-                <h3>{% trans "Delete Confirmation" %}</h3>
-            </div>
-            <div class="vex-kobo-body">
-                <p>{% blocktrans with title=xform.title nb_sub=xform.submission_count|intcomma %}Are you sure you want to delete the form '{{ title }}'? This form has <strong>{{ nb_sub }}</strong> submissions associated with it that will also be deleted. If you are unsure about deleting this form press 'Cancel' and consider 'Archiving' the form instead.{% endblocktrans %}</p>
-            </div>
-            <div class="vex-footer">
-                <a href="#" onclick="vex.close(vexDelete.data().vex.id)" class="btn btn-transparent">{% trans "Cancel" %}</a>
-                <button class="btn btn-danger form-submit">Delete</button>
-            </div>
-        </form>
-    </div>
-  </div>
-  {% endif %}
-
   <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
-
-
 {% endblock %}
 
 {% block styles %}
@@ -306,6 +194,11 @@ $(document).ready(function() {
   $(document).ready(function() {
       $.get('{% url "onadata.apps.restservice.views.add_service" content_user.username xform.id_string %}', function(data){
           $('#restservice_tab').html(data);
+          // hide whole section if there are no rest services
+          // as the legacy code here only allows for deleting
+          if ($('#restservice_tab').find('#restservice_list li').length === 0) {
+              $('.settings__rest-services').hide();
+          }
       });
   });
 </script>
