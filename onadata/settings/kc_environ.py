@@ -177,11 +177,11 @@ REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
 
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
-if os.getenv("RAVEN_DSN") or "" != "":
+if (os.getenv("RAVEN_DSN") or "") != "":
     try:
         import raven
     except ImportError:
-        print 'Please install Raven to enable Sentry logging.'
+        print("Please install Raven to enable Sentry logging.")
     else:
         INSTALLED_APPS = INSTALLED_APPS + (
             'raven.contrib.django.raven_compat',

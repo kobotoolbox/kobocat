@@ -11,7 +11,7 @@ fi
 
 KOBOCAT_WEB_SERVER="${KOBOCAT_WEB_SERVER:-uWSGI}"
 uwsgi_command="/sbin/setuser ${UWSGI_USER} /usr/local/bin/uwsgi --ini ${KOBOCAT_SRC_DIR}/docker/kobocat.ini"
-if [[ "${KPI_WEB_SERVER,,}" == "uwsgi" ]]; then
+if [[ "${KOBOCAT_WEB_SERVER,,}" == "uwsgi" ]]; then
     echo 'Running `kobocat` container with uWSGI application server.'
     exec ${uwsgi_command}
 else
