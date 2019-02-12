@@ -275,7 +275,7 @@ class ParsedInstance(models.Model):
     @staticmethod
     def bulk_update_validation_statuses(query, validation_status):
         return xform_instances.update(query, {"$set":
-            {VALIDATION_STATUS: validation_status}}, multi=True)
+                                                  {VALIDATION_STATUS: validation_status}}, multi=True)
 
     def to_dict(self):
         if not hasattr(self, "_dict_cache"):
