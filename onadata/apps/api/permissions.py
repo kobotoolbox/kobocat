@@ -80,6 +80,18 @@ class XFormPermissions(DjangoObjectPermissions):
             request, view, obj)
 
 
+class XFormDataPermissions(XFormPermissions):
+
+    # TODO: move other data-specific logic out of `XFormPermissions` and into
+    # this class
+
+    def __init__(self, *args, **kwargs):
+        super(XFormDataPermissions, self).__init__(*args, **kwargs)
+        # Those who can edit submissions can also delete them, following the
+        # behavior of `onadata.apps.main.views.delete_data`
+        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
+
+
 class UserProfilePermissions(DjangoObjectPermissions):
 
     authenticated_users_only = False
