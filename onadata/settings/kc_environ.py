@@ -3,7 +3,7 @@ from datetime import timedelta
 from onadata.settings.common import *
 
 
-LOCALE_PATHS= [os.path.join(PROJECT_ROOT,'locale'),]
+LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
@@ -16,6 +16,8 @@ DATABASES = {
 }
 # Replacement for TransactionMiddleware
 DATABASES['default']['ATOMIC_REQUESTS'] = True
+# Tmp hack to point DB to kc_kobo @to-Do remove when kobo-docker supports it
+DATABASES['default']['NAME'] = "kc_kobo"
 
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
@@ -47,13 +49,13 @@ if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
 else:
     TESTING_MODE = False
 
-MEDIA_URL= '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
+MEDIA_URL = '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
 STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
 if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
-    KOBOCAT_ROOT_URI_PREFIX= '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
+    KOBOCAT_ROOT_URI_PREFIX = '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
     MEDIA_URL= KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
     STATIC_URL= KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
     LOGIN_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')

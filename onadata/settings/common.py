@@ -21,12 +21,14 @@ from django.utils.log import AdminEmailHandler
 import djcelery
 from pymongo import MongoClient
 
+from onadata.libs.utils.redis_helper import RedisHelper
+
 
 djcelery.setup_loader()
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
-PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
+PROJECT_ROOT = os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 
 PRINT_EXCEPTION = False
 
@@ -553,3 +555,6 @@ DEFAULT_VALIDATION_STATUSES = [
         'label': 'On Hold'
     },
 ]
+
+SESSION_ENGINE = "redis_sessions.session"
+SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")

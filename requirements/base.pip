@@ -78,3 +78,7 @@ jsonfield<1.0
 django-db-readonly==0.3.2
 
 transifex-client
+
+# sessions
+django-redis-sessions==0.6.1
+redis==3.1.0              # via django-redis-sessions
