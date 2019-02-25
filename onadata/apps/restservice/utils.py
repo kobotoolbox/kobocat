@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
+
 from onadata.apps.restservice.models import RestService
 from onadata.apps.restservice.tasks import service_definition_task
 
@@ -20,7 +23,7 @@ def call_service(parsed_instance):
             "xml": parsed_instance.instance.xml,
             "json": parsed_instance.to_dict_for_mongo()
         }
-        service_definition_task.delay(rest_service, data)
+        service_definition_task.delay(rest_service.pk, data)
 
 
 def call_ziggy_services(ziggy_instance, uuid):
