@@ -20,7 +20,7 @@ def save_kpi_hook_service(sender, instance, **kwargs):
         # Only register the service if it hasn't been created yet.
         if kpi_hook_service is None:
             kpi_hook_service = RestService(
-                service_url="/assets/{}/submissions/".format(instance.id_string),
+                service_url="/assets/{}/hook-signal/".format(instance.id_string),
                 xform=instance,
                 name=SERVICE_KPI_HOOK[0]
             )
