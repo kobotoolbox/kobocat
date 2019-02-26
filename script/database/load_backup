@@ -1,5 +1,0 @@
-scp ona:~/onadata.sql.gz .
-gunzip onadata.sql.gz
-dropdb $1
-./script/database/install_postgis $1 $2 $3
-psql -U $2 -h 127.0.0.1 $1 -f onadata.sql

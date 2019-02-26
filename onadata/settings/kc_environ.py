@@ -1,6 +1,25 @@
-import os
+# -*- coding: utf-8 -*-
 from datetime import timedelta
+import logging
+import os
+
+from celery.signals import after_setup_logger
+import dj_database_url
+
 from onadata.settings.common import *
+
+
+def celery_logger_setup_handler(logger, **kwargs):
+    """
+    Allows logs to be written in celery.log when call
+    :param logger:
+    :param kwargs:
+    """
+    my_handler = logging.FileHandler(os.getenv("KOBOCAT_CELERY_LOG_FILE", "/srv/logs/celery.log"))
+    my_handler.setLevel(logging.INFO)
+    my_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # custom formatter
+    my_handler.setFormatter(my_formatter)
+    logger.addHandler(my_handler)
 
 
 LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
@@ -9,7 +28,6 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
 TEMPLATE_STRING_IF_INVALID = ''
 
-import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
@@ -27,8 +45,10 @@ MONGO_DATABASE = {
     'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
 }
 
-BROKER_URL = os.environ.get(
+CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
+
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 try:
     SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
@@ -55,17 +75,17 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
 if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
-    KOBOCAT_ROOT_URI_PREFIX = '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
-    MEDIA_URL= KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
-    STATIC_URL= KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
-    LOGIN_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
-    LOGIN_REDIRECT_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
+    KOBOCAT_ROOT_URI_PREFIX= '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
+    MEDIA_URL = KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
+    STATIC_URL = KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
+    LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
+    LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
 if TESTING_MODE:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
     MONGO_DATABASE['NAME'] = "formhub_test"
-    CELERY_ALWAYS_EAGER = True
+    CELERY_TASK_ALWAYS_EAGER = True
     BROKER_BACKEND = 'memory'
     ENKETO_API_TOKEN = 'abc'
     #TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
@@ -87,10 +107,10 @@ TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
 TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
 STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 
-KOBOFORM_SERVER=os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT=os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL=os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
-KOBOFORM_LOGIN_AUTOREDIRECT=True
+KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
+KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
+KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+KOBOFORM_LOGIN_AUTOREDIRECT = True
 KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -105,7 +125,7 @@ if CSRF_COOKIE_DOMAIN:
     SESSION_COOKIE_DOMAIN = CSRF_COOKIE_DOMAIN
     SESSION_COOKIE_NAME = 'kobonaut'
 
-SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 # for debugging
 # print "KOBOFORM_URL=%s" % KOBOFORM_URL
@@ -119,8 +139,11 @@ if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
 else:
     MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s" % MONGO_DATABASE
 
+# PyMongo 3 does acknowledged writes by default
+# https://emptysqua.re/blog/pymongos-new-default-safe-writes/
 MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
+    MONGO_CONNECTION_URL, j=True, tz_aware=True)
+
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
 # BEGIN external service integration codes
@@ -155,11 +178,11 @@ REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
 
 # Optional Sentry configuration: if desired, be sure to install Raven and set
 # RAVEN_DSN in the environment
-if 'RAVEN_DSN' in os.environ:
+if (os.getenv("RAVEN_DSN") or "") != "":
     try:
         import raven
     except ImportError:
-        print 'Please install Raven to enable Sentry logging.'
+        print("Please install Raven to enable Sentry logging.")
     else:
         INSTALLED_APPS = INSTALLED_APPS + (
             'raven.contrib.django.raven_compat',
@@ -187,7 +210,7 @@ if 'RAVEN_DSN' in os.environ:
         # https://docs.getsentry.com/hosted/clients/python/integrations/django/#integration-with-logging
         LOGGING = {
             'version': 1,
-            'disable_existing_loggers': True, # Follows Sentry docs; `False` contributes to a deadlock (issue #377)
+            'disable_existing_loggers': True,  # Follows Sentry docs; `False` contributes to a deadlock (issue #377)
             'root': {
                 'level': 'WARNING',
                 'handlers': ['sentry'],
@@ -232,33 +255,36 @@ if 'RAVEN_DSN' in os.environ:
                 },
             },
         }
-        CELERYD_HIJACK_ROOT_LOGGER = False
+        CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+        after_setup_logger.connect(celery_logger_setup_handler)
 
-POSTGIS_VERSION = (2, 1, 2)
+POSTGIS_VERSION = (2, 5, 0)
 
-CELERYBEAT_SCHEDULE = {
+CELERY_BEAT_SCHEDULE = {
     # Periodically mark exports stuck in the "pending" state as "failed"
     # See https://github.com/kobotoolbox/kobocat/issues/315
     'log-stuck-exports-and-mark-failed': {
         'task': 'onadata.apps.viewer.tasks.log_stuck_exports_and_mark_failed',
-        'schedule': timedelta(hours=6),
+        'schedule': timedelta(minutes=1),
+        'options': {'queue': 'kobocat_queue'}
     },
 }
 
-### ISSUE 242 TEMPORARY FIX ###
+# ## ISSUE 242 TEMPORARY FIX ###
 # See https://github.com/kobotoolbox/kobocat/issues/242
 ISSUE_242_MINIMUM_INSTANCE_ID = os.environ.get(
     'ISSUE_242_MINIMUM_INSTANCE_ID', None)
 ISSUE_242_INSTANCE_XML_SEARCH_STRING = os.environ.get(
     'ISSUE_242_INSTANCE_XML_SEARCH_STRING', 'uploaded_form_')
 if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
-    CELERYBEAT_SCHEDULE['fix-root-node-names'] = {
+    CELERY_BEAT_SCHEDULE['fix-root-node-names'] = {
         'task': 'onadata.apps.logger.tasks.fix_root_node_names',
         'schedule': timedelta(hours=1),
-            'kwargs': {
-                'pk__gte': int(ISSUE_242_MINIMUM_INSTANCE_ID),
-                'xml__contains': ISSUE_242_INSTANCE_XML_SEARCH_STRING
-            }
+        'kwargs': {
+            'pk__gte': int(ISSUE_242_MINIMUM_INSTANCE_ID),
+            'xml__contains': ISSUE_242_INSTANCE_XML_SEARCH_STRING
+        },
+        'options': {'queue': 'kobocat_queue'}
     }
 ###### END ISSUE 242 FIX ######
 
