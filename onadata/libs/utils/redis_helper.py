@@ -34,7 +34,6 @@ class RedisHelper(object):
                 "prefix": os.getenv("REDIS_SESSION_PREFIX", "session"),
                 "socket_timeout": os.getenv("REDIS_SESSION_SOCKET_TIMEOUT", 1),
             }
-            print(redis_connection_url)
             return redis_connection_dict
         except Exception as e:
             raise Exception("Could not parse Redis session URL. Please verify 'REDIS_SESSION_URL' value")

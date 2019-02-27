@@ -34,8 +34,6 @@ DATABASES = {
 }
 # Replacement for TransactionMiddleware
 DATABASES['default']['ATOMIC_REQUESTS'] = True
-# Tmp hack to point DB to kc_kobo @to-Do remove when kobo-docker supports it
-DATABASES['default']['NAME'] = "kc_kobo"
 
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
