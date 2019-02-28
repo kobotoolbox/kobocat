@@ -164,7 +164,6 @@ Here is some example JSON, it would replace `[the JSON]` above:
 
     def create(self, request, *args, **kwargs):
         username = self.kwargs.get('username')
-
         if self.request.user.is_anonymous():
             if username is None:
                 # raises a permission denied exception, forces authentication
