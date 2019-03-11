@@ -709,7 +709,10 @@ def attachment_url(request, size='medium'):
         xform = attachment.instance.xform
 
         if not has_permission(xform, xform.user, request):
-            auth = TokenAuthentication()  # Allow fetching media with users are authenticated with Token
+            # This is not a DRF view, so `TokenAuthentication` does not work
+            # automatically. Here we manually allow fetching media with users
+            # who are authenticated with Token
+            auth = TokenAuthentication()
             auth_user, token = auth.authenticate(request)
             if not (xform.user == auth_user or
                     auth_user.has_perm('logger.view_xform', xform) or

@@ -1,5 +1,4 @@
 clint
-django-extensions
 django-kombu
 django-snippetscream
 django-statsd-mozilla
@@ -10,3 +9,4 @@ ipython
 shell_command
 statsd
 twill
+Werkzeug
