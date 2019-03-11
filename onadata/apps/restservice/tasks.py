@@ -4,9 +4,11 @@ import logging
 from celery import shared_task
 from django.conf import settings
 
+from onadata.apps.restservice.models import RestService
+
 
 @shared_task(bind=True)
-def service_definition_task(self, rest_service, data):
+def service_definition_task(self, rest_service_id, data):
     """
     Tries to send data to the endpoint of the hook
     It retries 3 times maximum.
@@ -15,10 +17,11 @@ def service_definition_task(self, rest_service, data):
     - after 200 minutes
 
     :param self: Celery.Task.
-    :param rest_service: RestService model.
+    :param rest_service_id: RestService primary key.
     :param data: dict.
     """
     try:
+        rest_service = RestService.objects.get(pk=rest_service_id)
         service = rest_service.get_service_definition()()
         service.send(rest_service.service_url, data)
     except Exception as e:

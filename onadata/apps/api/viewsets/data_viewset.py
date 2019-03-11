@@ -5,13 +5,12 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import six
 from django.utils.translation import ugettext as _
-from django.core.exceptions import PermissionDenied
 
 from rest_framework import status
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, PermissionDenied
 from rest_framework.settings import api_settings
 
 from onadata.apps.api.viewsets.xform_viewset import custom_response_handler
@@ -22,7 +21,8 @@ from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
-from onadata.apps.api.permissions import XFormPermissions
+from onadata.apps.api.permissions import XFormDataPermissions
+from onadata.libs.permissions import CAN_CHANGE_XFORM
 from onadata.libs.serializers.data_serializer import (
     DataSerializer, DataListSerializer, DataInstanceSerializer)
 from onadata.libs import filters
@@ -401,7 +401,7 @@ Delete a specific submission in a form
     content_negotiation_class = renderers.InstanceContentNegotiation
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.XFormOwnerFilter)
-    permission_classes = (XFormPermissions,)
+    permission_classes = (XFormDataPermissions,)
     lookup_field = 'pk'
     lookup_fields = ('pk', 'dataid')
     extra_lookup_fields = None
@@ -576,8 +576,12 @@ Delete a specific submission in a form
         if isinstance(self.object, XForm):
             raise ParseError(_(u"Data id not provided."))
         elif isinstance(self.object, Instance):
-
-            if request.user.has_perm("delete_xform", self.object.xform):
+            # Redundant permissions check that duplicates
+            # `XFormDataPermissions`, left here to minimize changes. We're
+            # deleting an `Instance`, not an `XForm`, so the correct permission
+            # to verify is `change_xform` (`CAN_CHANGE_XFORM`). This matches
+            # the behavior of `onadata.apps.main.views.delete_data`
+            if request.user.has_perm(CAN_CHANGE_XFORM, self.object.xform):
                 self.object.delete()
             else:
                 raise PermissionDenied(_(u"You do not have delete "
