@@ -754,6 +754,7 @@ def superuser_stats(request, username):
     ).format(base_filename)
     return HttpResponse(template_ish)
 
+
 @user_passes_test(lambda u: u.is_superuser)
 def retrieve_superuser_stats(request, username, base_filename):
     filename = os.path.join(

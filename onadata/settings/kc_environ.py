@@ -74,7 +74,7 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
 if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
-    KOBOCAT_ROOT_URI_PREFIX= '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
+    KOBOCAT_ROOT_URI_PREFIX = '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
     MEDIA_URL = KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
     STATIC_URL = KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
     LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
@@ -89,7 +89,7 @@ if TESTING_MODE:
     ENKETO_API_TOKEN = 'abc'
     #TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 else:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media/')
+    MEDIA_ROOT = os.path.join(PROJECT_ROOT, MEDIA_URL.lstrip('/'))
 
 if PRINT_EXCEPTION and DEBUG:
     MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
@@ -103,14 +103,16 @@ TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
     os.path.abspath(os.path.join(PROJECT_ROOT, '..', 'kobocat-template'))
 )
-TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
-STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
+TEMPLATE_DIRS = (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
+STATICFILES_DIRS += (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 
 KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
 KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
 KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
 KOBOFORM_LOGIN_AUTOREDIRECT = True
-KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
+KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
+KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
+
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     'onadata.koboform.context_processors.koboform_integration',
@@ -151,6 +153,11 @@ AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
 AWS_DEFAULT_ACL = 'private'
 AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
+# TODO pass these variables from `kobo-docker` envfiles
+AWS_QUERYSTRING_EXPIRE = os.environ.get("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
+AWS_S3_USE_SSL = os.environ.get("KOBOCAT_AWS_S3_USE_SSL", True)
+AWS_S3_HOST = os.environ.get("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
+
 
 GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
@@ -181,7 +188,7 @@ if (os.getenv("RAVEN_DSN") or "") != "":
     try:
         import raven
     except ImportError:
-        print("Please install Raven to enable Sentry logging.")
+        print('Please install Raven to enable Sentry logging.')
     else:
         INSTALLED_APPS = INSTALLED_APPS + (
             'raven.contrib.django.raven_compat',
@@ -286,3 +293,4 @@ if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
         'options': {'queue': 'kobocat_queue'}
     }
 # #### END ISSUE 242 FIX ######
+
