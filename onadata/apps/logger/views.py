@@ -735,7 +735,7 @@ def ziggy_submissions(request, username):
 @user_passes_test(lambda u: u.is_superuser)
 def superuser_stats(request, username):
     base_filename = '{}_{}_{}.zip'.format(
-        re.sub('[^a-zA-Z0-9]', '-', request.META['HTTP_HOST']),
+        re.sub('[^a-zA-Z0-9]', '-', request.get_host()),
         datetime_module.date.today(),
         datetime_module.datetime.now().microsecond
     )
