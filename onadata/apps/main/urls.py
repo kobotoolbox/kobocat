@@ -62,6 +62,11 @@ urlpatterns = patterns(
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/stats$',
         'onadata.apps.viewer.views.charts', name='form-stats'),
     url(r'^login_redirect/$', 'onadata.apps.main.views.login_redirect'),
+    # Bring back old url because it's still used by `kpi`
+    # ToDo Remove when `kpi#gallery-2` is merged into master
+    url(r"^attachment/$", 'onadata.apps.viewer.views.attachment_url'),
+    url(r"^attachment/(?P<size>[^/]+)$",
+        'onadata.apps.viewer.views.attachment_url'),
     url(r"^{}$".format(settings.MEDIA_URL.lstrip('/')), 'onadata.apps.viewer.views.attachment_url'),
     url(r"^{}(?P<size>[^/]+)$".format(settings.MEDIA_URL.lstrip('/')),
         'onadata.apps.viewer.views.attachment_url'),
