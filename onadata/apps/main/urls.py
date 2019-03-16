@@ -70,6 +70,7 @@ urlpatterns = patterns(
     url(r"^{}$".format(settings.MEDIA_URL.lstrip('/')), 'onadata.apps.viewer.views.attachment_url'),
     url(r"^{}(?P<size>[^/]+)$".format(settings.MEDIA_URL.lstrip('/')),
         'onadata.apps.viewer.views.attachment_url'),
+    url(r"^media-endpoint/$", 'onadata.apps.main.views.media_endpoint'),
     url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog',
         {'packages': ('main', 'viewer',)}),
     url(r'^typeahead_usernames', 'onadata.apps.main.views.username_list',
