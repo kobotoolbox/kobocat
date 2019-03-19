@@ -35,7 +35,6 @@ def get_dimensions((width, height), longest_side):
     return flat(width, height)
 
 
-
 def _save_thumbnails(image, original_path, size, suffix):
     # Thumbnail format will be set by original file extension.
     # Use same format to keep transparency of GIF/PNG

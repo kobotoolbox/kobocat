@@ -363,6 +363,8 @@ def _get_attachments_from_instance(instance):
     for a in instance.attachments.all():
         attachment = dict()
         attachment['download_url'] = a.secure_url()
+        for suffix in settings.THUMB_CONF.keys():
+            attachment['download_{}_url'.format(suffix)] = a.secure_url(suffix)
         attachment['mimetype'] = a.mimetype
         attachment['filename'] = a.media_file.name
         attachment['instance'] = a.instance.pk
