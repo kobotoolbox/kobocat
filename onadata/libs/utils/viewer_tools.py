@@ -169,6 +169,7 @@ def get_client_ip(request):
 
 def enketo_url(form_url, id_string, instance_xml=None,
                instance_id=None, return_url=None, instance_attachments=None):
+
     if not hasattr(settings, 'ENKETO_URL')\
             and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
         return False
@@ -182,6 +183,7 @@ def enketo_url(form_url, id_string, instance_xml=None,
         'form_id': id_string,
         'server_url': form_url
     }
+
     if instance_id is not None and instance_xml is not None:
         url = settings.ENKETO_URL + settings.ENKETO_API_INSTANCE_PATH
         values.update({
@@ -240,7 +242,7 @@ def _get_form_url(request, username, protocol='https'):
         http_host = settings.TEST_HTTP_HOST
         username = settings.TEST_USERNAME
     else:
-        http_host = request.META.get('HTTP_HOST', 'ona.io')
+        http_host = request.get_host()
 
     # In case INTERNAL_DOMAIN_NAME is equal to PUBLIC_DOMAIN_NAME,
     # configuration doesn't use docker internal network.

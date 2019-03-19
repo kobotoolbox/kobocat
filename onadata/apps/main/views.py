@@ -1415,7 +1415,7 @@ def activity_api(request, username):
 
 def qrcode(request, username, id_string):
     try:
-        formhub_url = "http://%s/" % request.META['HTTP_HOST']
+        formhub_url = "http://%s/" % request.get_host()
     except:
         formhub_url = "http://formhub.org/"
     formhub_url = formhub_url + username
