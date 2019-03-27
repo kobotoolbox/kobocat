@@ -62,9 +62,15 @@ urlpatterns = patterns(
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/stats$',
         'onadata.apps.viewer.views.charts', name='form-stats'),
     url(r'^login_redirect/$', 'onadata.apps.main.views.login_redirect'),
+    # Bring back old url because it's still used by `kpi`
+    # ToDo Remove when `kpi#gallery-2` is merged into master
     url(r"^attachment/$", 'onadata.apps.viewer.views.attachment_url'),
     url(r"^attachment/(?P<size>[^/]+)$",
         'onadata.apps.viewer.views.attachment_url'),
+    url(r"^{}$".format(settings.MEDIA_URL.lstrip('/')), 'onadata.apps.viewer.views.attachment_url'),
+    url(r"^{}(?P<size>[^/]+)$".format(settings.MEDIA_URL.lstrip('/')),
+        'onadata.apps.viewer.views.attachment_url'),
+    url(r"^media-endpoint/$", 'onadata.apps.main.views.media_endpoint'),
     url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog',
         {'packages': ('main', 'viewer',)}),
     url(r'^typeahead_usernames', 'onadata.apps.main.views.username_list',
@@ -269,8 +275,10 @@ urlpatterns = patterns(
         'onadata.apps.logger.views.ziggy_submissions'),
 
     # static media
-    url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
-        {'document_root': settings.MEDIA_ROOT}),
+    # Media are now served by NginX.
+    # url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
+    #    {'document_root': settings.MEDIA_ROOT}),
+
     url(r'^favicon\.ico',
         RedirectView.as_view(url='/static/images/favicon.ico')),
 

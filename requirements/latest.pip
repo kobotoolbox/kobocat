@@ -22,8 +22,10 @@ South
 xlrd>=0.8.0
 xlwt>=0.7.2
 openpyxl>=1.5.8
-celery>=3.0.11
-django-celery>=3.0.10
+celery==4.2.1
+django-celery-beat==1.1.1
+amqp==2.4.0
+vine==1.2.0
 -e git+https://github.com/jbalogh/django-nose.git#egg=django-nose
 python_digest
 django_digest

@@ -166,10 +166,10 @@ def _get_owner(request):
     return owner
 
 
-def response_for_format(form, fmt=None):
-    if fmt == 'xml':
+def response_for_format(form, format=None):
+    if format == 'xml':
         formatted_data = form.xml
-    elif fmt == 'xls':
+    elif format == 'xls':
         file_path = form.xls.name
         default_storage = get_storage_class()()
         if file_path != '' and default_storage.exists(file_path):
@@ -787,11 +787,16 @@ data (instance/submission per row)
     @detail_route(methods=['GET'])
     def form(self, request, format='json', **kwargs):
         form = self.get_object()
-        if format not in ['json', 'xml', 'xls']:
+        if format not in ['json', 'xml', 'xls', 'csv']:
             return HttpResponseBadRequest('400 BAD REQUEST',
                                           content_type='application/json',
                                           status=400)
-        return response_for_format(form, format)
+
+        filename = form.id_string + "." + format
+        response = response_for_format(form, format=format)
+        response['Content-Disposition'] = 'attachment; filename=' + filename
+
+        return response
 
     @detail_route(methods=['GET'])
     def enketo(self, request, **kwargs):

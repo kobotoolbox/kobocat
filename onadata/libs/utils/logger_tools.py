@@ -310,8 +310,7 @@ def create_instance(username, xml_file, media_files,
         # content, which is slow! Use the management command
         # `populate_xml_hashes_for_instances` to hash existing submissions
         existing_instance = Instance.objects.filter(
-            Q(xml_hash=xml_hash) |
-                Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
+            Q(xml_hash=xml_hash) | Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
             xform__user=xform.user,
         ).first()
     else:

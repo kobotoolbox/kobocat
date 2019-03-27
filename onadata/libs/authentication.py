@@ -27,6 +27,7 @@ class DigestAuthentication(BaseAuthentication):
 
         return response['WWW-Authenticate']
 
+
 class HttpsOnlyBasicAuthentication(BasicAuthentication):
     def authenticate(self, request):
         # The parent class can discern whether basic authentication is even
