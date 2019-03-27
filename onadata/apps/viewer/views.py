@@ -23,7 +23,9 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
-from rest_framework.authentication import TokenAuthentication
+
+import rest_framework.request
+from rest_framework.settings import api_settings
 
 from onadata.apps.main.models import UserProfile, MetaData, TokenStorageModel
 from onadata.apps.logger.models import XForm, Attachment
@@ -708,16 +710,24 @@ def attachment_url(request, size='medium'):
         # the url
         xform = attachment.instance.xform
 
+        if not request.user.is_authenticated():
+            # This is not a DRF view, but we need to honor things like
+            # `DigestAuthentication` (ODK Briefcase uses it!) and
+            # `TokenAuthentication`. Let's try all the DRF authentication
+            # classes before giving up
+            drf_request = rest_framework.request.Request(request)
+            for auth_class in api_settings.DEFAULT_AUTHENTICATION_CLASSES:
+                auth_tuple = auth_class().authenticate(drf_request)
+                if auth_tuple is not None:
+                    # Is it kosher to modify `request`? Let's do it anyway
+                    # since that's what `has_permission()` requires...
+                    request.user = auth_tuple[0]
+                    # `DEFAULT_AUTHENTICATION_CLASSES` are ordered and the
+                    # first match wins; don't look any further
+                    break
+
         if not has_permission(xform, xform.user, request):
-            # This is not a DRF view, so `TokenAuthentication` does not work
-            # automatically. Here we manually allow fetching media with users
-            # who are authenticated with Token
-            auth = TokenAuthentication()
-            auth_user, token = auth.authenticate(request)
-            if not (xform.user == auth_user or
-                    auth_user.has_perm('logger.view_xform', xform) or
-                    auth_user.has_perm('logger.change_xform', xform)):
-                return HttpResponseForbidden(_(u'Not shared.'))
+            return HttpResponseForbidden(_(u'Not shared.'))
 
         media_url = None
 
