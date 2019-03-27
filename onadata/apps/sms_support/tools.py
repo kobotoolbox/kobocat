@@ -14,7 +14,7 @@ from django.http import HttpRequest
 
 from onadata.apps.logger.xform_instance_parser import InstanceEmptyError,\
     InstanceInvalidUserError, DuplicateInstance
-from onadata.apps.logger.models.instance import FormInactiveError
+from onadata.apps.logger.exceptions import FormInactiveError
 from onadata.apps.logger.models import XForm
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import create_instance
