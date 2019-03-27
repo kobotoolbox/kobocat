@@ -768,9 +768,9 @@ def get_instance_or_404(**criteria):
             if instance_.xml_hash == xml_hash:
                 continue
             raise DuplicateUUIDError(
-                "An instance with uuid: {} already exists with different hash".format(
-                    instance.uuid
-                ))
+                "Multiple instances with different content exist for UUID "
+                "{}".format(instance.uuid)
+            )
 
         return instance
     else:
