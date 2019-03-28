@@ -1,0 +1,632 @@
+/* settings for single project */
+
+.single-project__settings {
+  position: absolute;
+  width: 800px;
+  background-color: white;
+  border: 2px solid #E9EDF0;
+  border-top-color: white;
+  top: 48px;
+  overflow-y: auto;
+  max-height: 640px;
+}
+
+@media (max-width: 979px) {
+  .single-project__settings {
+    width: 90%;
+    overflow: hidden;
+  }
+}
+
+.settings__left {
+  width: 49%;
+  border-right: 1px solid #D9DDE1;
+  float: left;
+  min-height: 550px;
+}
+
+.settings__right {
+  width: 44%;
+  float: left;
+  margin-left: 3%;
+}
+
+.settings__general {
+  padding: 20px;
+  padding-top: 0px;
+}
+
+h2.settings__group-label {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 0px;
+  line-height: 1.2em;
+}
+
+label.settings__form-label {
+  font-weight: 600;
+}
+
+.settings__form-item {
+  margin-bottom: 25px;
+}
+
+.settings__form-item input[type="checkbox"] + label {
+  display: inline;
+  margin-left: 10px;
+}
+
+ul.settings__files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+ul.settings__files li {
+  padding: 4px 10px;
+  background: #F1F3F5;
+  position: relative;
+  line-height: 15px;
+  color: #787878;
+}
+
+ul.settings__files li.even {
+  background: white;
+}
+
+ul.settings__files li div {
+  font-size: 11px;
+  width: 88%;
+  word-wrap: break-word;
+}
+
+a.settings__files-download {
+  position: absolute;
+  bottom: 5px;
+  right: 30px;
+  color: #4A5C6E;
+}
+
+a.settings__files-delete {
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  color: #D08B8C;
+}
+
+.settings__delete-project {
+  border-top: 1px solid #D9DDE1;
+  padding: 20px;
+}
+
+.settings__rest-services {
+  border-top: 1px solid #D9DDE1;
+  padding: 20px;
+}
+
+/* Documents area of single project */
+.single-project__toggle-description {
+  display: inline;
+}
+
+.single-project__toggle-description input {
+  width: 90%;
+  border-radius: 0;
+  vertical-align: baseline;
+  border: none;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.single-project__toggle-documents {
+  margin-top: 1em;
+}
+
+.single-project__toggle-documents.active i.fa-paperclip {
+  color: #5DB0EC;
+}
+
+.single-project__toggle-documents .doctoggle__caret {
+  cursor: pointer;
+}
+
+.single-project__documents {
+  padding: 10px 5px;
+}
+
+.single-project__documents-label {
+  font-weight: 600;
+  padding-bottom: 5px;
+}
+
+.single-project__document i.fa-trash-o {
+  color: #D08B8C;
+  margin-right: 20px;
+}
+
+button.single-project__button,
+input.single-project__button,
+a.single-project__button {
+  background: none repeat scroll 0 0 #39bf6e;
+  border-color: #227040;
+  border-style: none none solid;
+  border-width: medium medium 2px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px;
+  text-align: center;
+  width: 150px;
+  margin-top: 10px;
+  opacity: 1;
+}
+
+button.single-project__button:hover,
+a.single-project__button:hover {
+  opacity: 0.8;
+}
+
+.single-project__button.active {
+  opacity: 0.6;
+}
+
+button.single-project__button-delete {
+  background: #DC6561;
+  border-bottom-color: #C65657;
+  margin-bottom: 20px;
+  margin-top: -10px;
+  width: 100px;
+}
+
+.single-project__media-upload ul.nav-tabs {
+  padding-left: 0px;
+}
+
+/* Dashboard area of single project */
+
+.single-project__dashboard {
+  max-width: 868px;
+}
+
+.dashboard__left {
+  width: 72%;
+  float: left;
+  margin-left: 1%;
+}
+
+.dashboard__right {
+  width: 25%;
+  float: left;
+}
+
+h2.dashboard__group-label {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.dashboard__submissions {
+  width: 55%;
+  float: left;
+  margin-right: 5%;
+  position: relative;
+}
+
+.dashboard__photos {
+  width: 35%;
+  float: left;
+}
+
+.dashboard__form,
+.dashboard__gps + .dashboard__add-data {
+  clear: both;
+  padding-top: 10px;
+}
+
+a.dashboard__button {
+  background: #E9EDF0;
+  border: 2px solid #E9EDF0;
+  display: block;
+  float: left;
+  margin: 0px;
+  height: 44px;
+  color: #4A5C6E;
+  width: 45%;
+  text-align: center;
+  margin-right: 1px;
+  padding-top: 6px;
+  cursor: pointer;
+}
+
+a.dashboard__button:hover, a.dashboard__button.active {
+  border-color: #5DB0EC;
+  color: #5DB0EC;
+  background-color: white;
+  text-decoration: none;
+}
+
+a.dashboard__button i {
+  font-size: 16px;
+}
+
+a.dashboard__button span {
+  font-weight: 600;
+  font-size: 11px;
+  display: block;
+  line-height: 14px;
+  margin-top: 2px;
+}
+
+a.dashboard__button-download-data span {
+  border-bottom: 1px dotted #4A5C6E;
+  margin-left: 15px;
+  margin-right: 15px;
+  padding-bottom: 2px;
+}
+
+a.dashboard__button-download-data:hover span {
+  border-bottom: 1px dotted #5DB0EC;
+}
+
+.dashboard__submissions a.dashboard__button {
+  width: 30%;
+}
+
+a.dashboard__button-twoline span {
+  line-height: 10px;
+  margin-top: 0px;
+  letter-spacing: -0.01em;
+}
+
+.dashboard__button-download-all-photos span {
+  padding: 0px 5px;
+}
+
+.dashboard__form-contents {
+  border: 2px solid #E9EDF0;
+  padding: 10px;
+  width: 89%;
+}
+
+.dashboard__form-formid {
+  width: 82%;
+  color: #666;
+  display: inline-block;
+  overflow: hidden;
+  font-weight: 600;
+  color: #8E8E8E;
+  font-size: 12px;
+  vertical-align: sub;
+}
+
+a.dashboard__formbutton {
+  display: inline-block;
+  width: 4%;
+  text-align: center;
+  color: #D8DBDE;
+  cursor: pointer;
+}
+
+.dashboard__form-contents a.dashboard__formbutton,
+.dashboard__form-contents .dashboard__form-formid {
+  height: 30px;
+  vertical-align: middle;
+  line-height: 30px;
+}
+
+.dashboard__formbutton-download i {
+  vertical-align: middle;
+  border-bottom: 1px dotted;
+  padding-bottom: 2px;
+}
+
+a.dashboard__formbutton:hover, a.dashboard__formbutton.active {
+  color: #3FA2EE;
+  text-decoration: none;
+}
+
+a.dashboard__formbutton i {
+  font-size: 18px;
+}
+
+a.dashboard__formbutton-preview {
+  width: 10%;
+  vertical-align: middle;
+  line-height: 1.2em !important;
+}
+
+a.dashboard__formbutton-preview span {
+  display: block;
+  text-align: center;
+  margin-top: -6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+a.dashboard__formbutton-refresh {
+  color: #B74B4B;
+  margin-left: 10px;
+}
+
+/* Submissions Download dropdown */
+
+.dashboard__download__drop {
+  position: absolute;
+  right: 22px;
+  bottom: -150px;
+  width: 124px;
+  border: 1px solid #E7E8E9;
+  background: white;
+  z-index: 5;
+}
+
+.dashboard__download__drop:before {
+  content: '';
+  position: absolute;
+  left: 53px;
+  top: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #E7E8E9;
+}
+
+.download__drop-button {
+  border: none;
+  background: white;
+  color: #3f3f3f;
+  display: block;
+  width: 110px;
+  text-align: left;
+  padding: 4px;
+  padding-left: 10px;
+  font-weight: 600;
+  margin-top: 1px;
+  font-size: 11px;
+}
+
+.download__drop-button:hover {
+  background: #5DB0EC;
+  color: white;
+  text-decoration: none;
+}
+
+/* Form Download Dropdown */
+
+.dashboard__form-contents {
+  position: relative;
+}
+
+.dashboard__form-drop {
+  position: absolute;
+  right: 46px;
+  top: 45px;
+  border: 1px solid #E7E8E9;
+  background: white;
+  z-index: 5;
+}
+
+.dashboard__form-drop:before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #E7E8E9;
+}
+
+.download__form-drop-button {
+  border: none;
+  background: white;
+  color: #3f3f3f;
+  display: block;
+  text-align: left;
+  padding: 4px 10px;
+  font-weight: 600;
+  margin-top: 1px;
+  font-size: 11px;
+}
+
+.download__form-drop-button:hover {
+  background: #5DB0EC;
+  color: white;
+  text-decoration: none;
+}
+
+/* poshytip ? icon span */
+
+span.poshytip {
+  color: #8595a5;
+  cursor: pointer;
+  float: right;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 2px 4px;
+}
+
+/* ==========================================================================
+   Poshytip styling
+   ========================================================================== */
+
+.tip__rightarrow, .tip__bottomarrow {
+  background: #5DB0EC;
+  color: white;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  position: relative;
+  z-index: 10;
+}
+
+.tip__rightarrow:before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  bottom: 10px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid #5DB0EC;
+}
+
+.tip__bottomarrow {
+  margin-top: -10px;
+  margin-left: -4px;
+}
+
+.tip__bottomarrow.multiline {
+  width: 300px;
+}
+
+.tip__bottomarrow:before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  bottom: -6px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #5DB0EC;
+}
+
+/* ==========================================================================
+   QR Code popup
+   ========================================================================== */
+
+.qrcode__android {
+  position: relative;
+  width: 300px;
+  float: right;
+  height: 218px;
+  background: url("../images/android_screen.png") center top no-repeat;
+  margin-top: 15px;
+  margin-left: 50px;
+}
+
+.qrcode__android span {
+  position: absolute;
+  top: 187px;
+  left: 58px;
+  font-size: 9px;
+  width: 200px;
+  line-height: 16px;
+  overflow: hidden;
+  background: pink;
+  padding: 0px 3px;
+}
+
+.qr__divider {
+  border-top: 1px solid #d9dde1;
+  clear: both;
+  position: relative;
+  margin: 45px 0px;
+  margin-bottom: 25px;
+}
+
+.qr__divider span {
+  background: none repeat scroll 0 0 #d9dde1;
+  border-radius: 20px;
+  font-size: 19px;
+  left: 48%;
+  margin-top: -22px;
+  padding: 12px 10px 10px;
+  position: absolute;
+  text-transform: uppercase;
+}
+
+#popupmodal .qrcode__text {
+  width: 50%;
+  float: left;
+}
+
+#popupmodal .qrcode__code {
+  width: 48%;
+  float: right;
+  text-align: center;
+  min-height: 230px;
+}
+
+#popupmodal .qrcode__code img {
+  height: auto;
+  width: 230px;
+  max-width: 90%;
+  max-height: auto;
+}
+
+@media (max-width: 480px) {
+  .qrcode__android {
+    margin: 0px auto;
+    float: none;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  #popupmodal .qrcode__text,
+  #popupmodal .qrcode__code {
+    float: none;
+    width: 100%;
+  }
+  .settings__left,
+  .settings__right {
+    clear: both;
+    width: auto;
+    border: none;
+    min-height: 0px;
+    margin-left: 0px;
+  }
+  .settings__right {
+    border-top: 1px solid #D9DDE1;
+    padding: 15px;
+  }
+  .single-project__settings {
+    overflow: scroll;
+    height: auto;
+    min-height: 200px;
+    max-height: 400px;
+  }
+  .settings__general,
+  .settings__delete {
+    padding: 15px;
+  }
+  button.single-project__button-delete {
+    margin-bottom: 0px;
+  }
+}
+
+@media (max-width: 979px) {
+  a.dashboard__button {
+    height: 66px;
+  }
+  a.dashboard__button-download-data span {
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard__left,
+  .dashboard__right,
+  .dashboard__photos,
+  .dashboard__submissions {
+    float: none;
+    clear: both;
+    width: 100%;
+  }
+  a.dashboard__button {
+    height: 54px;
+  }
+  .dashboard__form-formid {
+    width: 75%;
+  }
+  a.dashboard__formbutton-download {
+    width: 10%;
+  }
+  .dashboard__download__drop {
+    bottom: -190px;
+  }
+}

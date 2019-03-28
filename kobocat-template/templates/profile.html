@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block additional-headers %}
+{% load i18n %}
+  {% if show_dashboard %} 
+  <header class="projects-list__header">
+    <hgroup class="container">
+          <h1>{%  trans "Projects" %}</h1>
+    </hgroup>
+  </header>
+  {% endif %}
+{% endblock %}
+
+<div class="projects__list">
+{% block content %}
+  {% if show_dashboard %} 
+    {% include "published_surveys.html" %}
+  {% else %}
+    <!-- user is not logged in -->
+    <script type="text/javascript">
+      console && console.log && console.log("profile.html: redirect to login?")
+    </script>
+  {% endif %}
+{% endblock %}
+</div>
+
+{% block below-content %}
+  {% if show_dashboard %} 
+
+  <div class="container-fluid container__wide projects__advanced">
+    {% if all_forms or forms_shared_with %}
+    {% else %}
+      <div class="projects__empty">
+      <p>{% trans "You currently have no projects yet." %}</p>
+      <p>{% trans "You can create a project by deploying one of your forms." %}</p>
+      {% if koboform_url %}
+      <p><a href="{{koboform_url}}/">{% trans "Click here to go to your forms list." %}</a></p>
+      {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="legacy-warning">
+      <div class="container">
+        We no longer recommend deploying projects directly from the legacy interface. You will NOT have access to all our new shiny tools and features, and deploying a project with the legacy interface is highly discouraged at this point. Please use the <a href="{{ koboform_url }}">new interface</a> to deploy your projects. The legacy interface and this deployment feature will be removed shortly.
+      </div>
+    </div>
+
+    <h3>Advanced Users: <a class="projects__toggle-advanced">Upload your XLS form here directly</a></h3>
+    
+    <div class="projects__advanced-xls hidden-form">
+      <form action="." method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="uploadform" id="url">
+          <table class="uploadform__table">
+            {{ form.as_p }}
+          </table>
+          <input type="submit" class="uploadform__publish" value="{% trans 'Publish' %}" />
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
+<!--
+  <script type="text/javascript">$('#gravatar').tooltip();</script>
+  <script type="text/javascript" src="{% static "js/jquery.dataTables.js" %}"></script>
+  <script type="text/javascript" src="{% static "js/jquery.dataTables.pagination.js" %}"></script>
+  <script type="text/javascript">
+/*
+        $.extend( $.fn.dataTableExt.oStdClasses, {
+          "sSortAsc": "header headerSortDown",
+          "sSortDesc": "header headerSortUp",
+          "sSortable": "header"
+        } );
+
+
+	$(document).ready(function() {
+
+        $(document).on("click", ".showqr", function () {
+          div_target = $(this).attr('data-target')
+          url = $(this).attr('href')
+          $(div_target+" .img_holder").load(url)
+
+        });
+
+	  var tbl = $('#published-table').dataTable({
+        "bPaginate": false,
+        "sPaginationType": "bootstrap",
+        "bSort": true,
+        "oLanguage": {"sSearch": "{% trans 'Search:' %}"},
+        "oSearch": {"sSearch": ""},
+        "aoColumnDefs": [
+            { "bVisible": false, "aTargets": [ 6 ] }
+        ]
+      });
+      tbl.fnFilter( 'true', 6, true);
+      var tblFilter = $('#published-table_filter');
+      tblFilter.addClass('row');
+      tblFilter.prepend('{% trans "Show inactive:" %} <input id="active-select" type="checkbox" />&nbsp;&nbsp;');
+      $('#active-select').change(function() {
+          tbl.fnFilter('(true' + ($(this).is(':checked') ? '|false)' : ')'), 6, true);
+      });
+
+        // remove shared forms
+        $('.remove-shared-form').each(function (index, link) {
+            link.onclick = function (evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+                var url = $(this).data('url');
+                var username = $(this).data('username');
+                var data = {'perm_type': 'remove', 'for_user': username};
+                var remove_permission_xhr = $.post(url, data);
+                remove_permission_xhr.success(function (data) {
+                    $(link).parents('tr').remove();
+                });
+            };
+        });
+	});
+*/
+  </script>
+-->
+
+{% block javascript %}
+{{ block.super }}
+<!-- NEW SANDBOX JQUERY CALLS -->
+<script type="text/javascript">
+$(document).ready(function() {
+
+  $(document).on("click", ".projects__toggle-advanced", function () {
+    $('.projects__advanced-xls input#id_xls_file').trigger('click');
+  });
+
+  $(document).on("change", "input#id_xls_file", function () {
+    $(this).parents("form").submit();
+  });
+
+      $("#file_select").change(function(){
+        
+        $("#upload_form_div").hide();
+        $("#loading").show();
+    });
+
+
+}); 
+</script>
+<!-- END NEW SANDBOX JQUERY CALLS -->
+
+{% endblock %}
