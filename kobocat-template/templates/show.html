@@ -1,0 +1,1024 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block additional-headers %}
+{% load i18n %}
+  <!-- a temporary way to hide the kobocat deprecated features -->
+  <style type="text/css">
+  .kc-hide { display: none !important; }
+  </style>
+
+  <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
+  {% if is_owner %}
+  <div class="sub-header-bar">
+    <div class="container__wide">
+      <a class="single-project__toggle-settings"><i class="fa fa-cog"></i> Project Settings</a>
+      <div class="single-project__settings hidden">
+        <div class="settings__left">
+          <div class="settings__general">
+            <!-- <span title="Set here your general form settings" class="poshytip">?</span> -->
+            <h2 class="settings__group-label">
+              {% trans "Form Settings" %}
+            </h2>
+
+            <div class="settings__form-item">
+              <label class="settings__form-label">
+                {% trans "Accept Submissions" %}
+              </label>
+              <label><input id="active-form" type="checkbox" class="ios-switch" {% if xform.downloadable %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
+            </div>
+
+            <div class="settings__form-item">
+              <label class="settings__form-label">Existing Form Files</label>
+              <ul class="settings__files">
+                {% for media in media_upload %}
+                  <li class="{% cycle 'odd' 'even' %}">
+                    <div>{{ media.data_value }}</div>
+                    <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
+                    {% if can_edit %}
+                    <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+
+              {% if can_edit %}
+              <button class="single-project__button single-project__add-media">+ Add Document</button>
+
+              <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
+                  {% csrf_token %}
+                  <ul class="nav nav-tabs">
+                      <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
+                      <li><a href="#media_url_add" data-toggle="tab">Media URL</a></li>
+                  </ul>
+                  <div class="tab-content">
+                      <div class="tab-pane active" id="media_upload">
+                          <input type="file" multiple="" name="media" id="id_media">
+                          <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
+                      </div>
+                      <div class="tab-pane" id="media_url_add">
+                          <label for="id_media">Media url:</label>
+                          <input type="text" name="media_url" id="id_media_url">
+                          <input type="submit" class="single-project__button" value="{% trans 'Save Media URL' %}" />
+                      </div>
+                  </div>
+              </form>
+              {% endif %}
+            </div>
+
+          </div>  <!-- END .settings__general -->
+
+          <div class="settings__delete-project">
+            <h2 class="settings__group-label">
+              Delete project with all data and its form
+            </h2>
+            <button data-backdrop="true" data-keyboard="true" class="single-project__button single-project__button-delete">
+                {% trans "Delete" %}
+            </button>
+
+          </div>
+
+          {% if is_owner %}
+          <div class="settings__rest-services">
+              <h2 class="settings__group-label">{% trans "Legacy Rest Services" %}</h2>
+              <div id='restservice_tab'>
+              </div>
+          </div>
+          {% endif %}
+
+        </div>
+
+        <div class="settings__right">
+          <h2 class="settings__group-label">
+            How would you like to share your project
+          </h2>
+
+          <div class="settings__form-item">
+            <label class="settings__form-label">
+              Share Project Publicly
+            </label>
+            <label>
+              <input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" >
+              <div title="{% trans "Allow anyone from the web to view this page." %}" class="poshytip switch"></div>
+            </label>
+          </div>
+
+          <div class="settings__form-item">
+            <label class="settings__form-label">
+              Share Data Publicly
+            </label>
+            <label>
+              <input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">
+              <div title="{% trans "Allow anyone from the web to inspect this project&rsquo;s data." %}" class="poshytip switch"></div>
+            </label>
+          </div>
+
+          <div class="settings__form-item">
+            <label class="settings__form-label">
+              Share project with other users
+            </label>
+            {% if public_link %}
+            {% url "onadata.apps.main.views.show" xform.uuid as form_url %}
+            {% blocktrans %}Sharing by link is <strong>on with URL <a href="{{ form_url }}">{{ base_url }}{{ form_url }}</a></strong>{% endblocktrans %}
+            {% else %}
+            {% blocktrans %}Sharing by link is <strong>off</strong>{% endblocktrans %}
+            {% endif %}
+            </strong>
+            <form action="{% url "onadata.apps.main.views.set_perm" content_user.username xform.id_string %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="perm_type" value="link"/>
+                <input type="hidden" name="for_user" value="toggle"/>
+                <input type="submit" class="single-project__button" value="{% if public_link %}{% trans "Turn off" %}{% else %}{% trans "Turn on" %}{% endif %}" />
+            </form>
+            {% if users_with_perms|length %}
+            <ul>
+                {% for user, perms in users_with_perms %}
+                <li>{{ user }}: {{ perms }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <form action="{% url "onadata.apps.main.views.set_perm" content_user.username xform.id_string %}" method="post">
+                {% csrf_token %}
+                <table class="narrow-labels">
+                {{ permission_form.as_table }}
+                </table>
+                <input type="submit" class="single-project__button" value="{% trans 'Save Permissions' %}" />
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Project title and background docs -->
+  <header class="single-project__header">
+      <hgroup class="container">
+        {% if can_edit %}
+          <form>
+          {% csrf_token %}
+            <input type="text" id="title" class="input-xxlarge present" value="{{ xform.title }}" />
+            <a id="title_save" data-id="title" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+          </form>
+        {% else %}
+          <h1>{{ xform.title }}</h1>
+        {% endif %}
+
+        <div class="single-project__toggle-documents">
+          <i class="fa fa-paperclip"></i> <i class="doctoggle__caret fa fa-caret-right"></i>
+          {% if can_edit %}
+            <form class="single-project__toggle-description">
+              {% csrf_token %}
+              <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% endif %}" placeholder="Add a description to your project"/>
+                <a id="description_save" data-id="description" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+            </form>
+          {% else %}
+            <span>{{ xform.description }}</span>
+          {% endif %}
+        </div>
+        <div class="single-project__documents hidden">
+          <div class="single-project__documents-label">{% trans "Background Documents" %}</div>
+
+          {% for doc in supporting_docs %}
+              <div class="single-project__document">
+                {% if can_edit %}
+                  <a href="{% url "onadata.apps.main.views.delete_metadata" content_user.username xform.id_string doc.id %}?del=true" title="{% trans "remove" %}"> <i class="fa fa-trash-o"></i> </a>
+                {% endif %}
+                <a href="{% url "onadata.apps.main.views.download_metadata" content_user.username xform.id_string doc.id %}">{{ doc.data_value }}</a>
+              </p>
+          {% endfor %}
+
+          {% if can_edit %}
+            <button class="single-project__button single-project__add-bg-doc">+ Add Document</button>
+
+            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__bg-doc-upload hidden-form">
+                {% csrf_token %}
+                <table>
+                    {{ doc_form.as_table }}
+                </table>
+                <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
+            </form>
+          {% endif %}
+
+
+        </div>
+      </hgroup>
+  </header>
+
+  <!-- Delete form (in vex window) -->
+  {% if is_owner %}
+  <div class="kc-hide">
+    <div id="delete-form">
+        <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
+        {% csrf_token %}
+            <div class="vex-header">
+                <h3>{% trans "Delete Confirmation" %}</h3>
+            </div>
+            <div class="vex-kobo-body">
+                <p>{% blocktrans with title=xform.title nb_sub=xform.submission_count|intcomma %}Are you sure you want to delete the form '{{ title }}'? This form has <strong>{{ nb_sub }}</strong> submissions associated with it that will also be deleted. If you are unsure about deleting this form press 'Cancel' and consider 'Archiving' the form instead.{% endblocktrans %}</p>
+            </div>
+            <div class="vex-footer">
+                <a href="#" onclick="vex.close(vexDelete.data().vex.id)" class="btn btn-transparent">{% trans "Cancel" %}</a>
+                <button class="btn btn-danger form-submit">Delete</button>
+            </div>
+        </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
+
+{% endblock %}
+
+{% block content %}
+{% load i18n %}
+
+<!-- NEW SINGLE PROJECT VIEW -->
+    <div class="dashboard__left">
+      <div class="dashboard__submissions">
+        <h2 class="dashboard__group-label">
+          Submissions ({{ xform.submission_count|intcomma }})
+        </h2>
+        <a title="{% trans "View Submitted Data" %}" href="{% url "formpack_html_export" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view">
+          <i class="fa fa-table"></i>
+          <span>View data in table</span>
+        </a>
+        <a href="{% url "formpack_auto_report" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-analyze">
+          <i class="fa fa-bar-chart-o"></i>
+          <span>Analyze data</span>
+        </a>
+        <a class="dashboard__button dashboard__button-download-data">
+          <i class="fa fa-download"></i>
+          <span>Download data</span>
+        </a>
+
+        <div class="dashboard__download__drop hidden">
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}" class="download__drop-button">XLS</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}" class="download__drop-button">CSV</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
+          <!-- <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" class="download__drop-button">GDOCS</a> -->
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
+          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'analyser' %}"  class="download__drop-button">Excel Analyser</a>
+          <a href="{% url "formpack_export_menu" content_user.username xform.id_string %}"  class="download__drop-button">Advanced Downloads (beta)</a>
+          <!-- or: /<username>/exports/<id_string>/    onadata.apps.export.views._wrapper     formpack_export_menu -->
+
+          <!-- a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" class="download__drop-button">SAV ZIP</a> -->
+        </div>
+      </div>
+
+      {# if images|length #}
+      <div class="dashboard__photos">
+        <h2 class="dashboard__group-label">
+          Photos
+        </h2>
+
+        <a title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-gallery">
+          <i class="fa fa-eye"></i>
+          <span>View gallery</span>
+        </a>
+        <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
+          <i class="fa fa-download"></i>
+          <span>Download all photos</span>
+        </a>
+      </div>
+      {# endif #}
+
+      <div class="dashboard__form">
+        <h2 class="dashboard__group-label">
+          Form
+        </h2>
+        <div class="dashboard__form-contents">
+          <div class="dashboard__form-formid">
+            {{ xform.id_string }}
+            {% if xform.can_be_replaced and xform.user ==  user  %}
+              <a class="dashboard__formbutton dashboard__formbutton-refresh poshytip-small" title="{% trans "Replace the form with a new XLSForm file. This can only be done if no data has yet been collected." %}"><i class="fa fa-refresh"></i></a>
+            {% endif %}
+
+          </div>
+          <a class="dashboard__formbutton dashboard__formbutton-download">
+            <i class="fa fa-download"></i>
+          </a>
+          <div class="dashboard__form-drop hidden">
+            <a href="{% url "download_xlsform" content_user.username xform.id_string %}" class="download__form-drop-button">XLS</a>
+            <a href="{% url "download_xform" content_user.username xform.id_string %}" class="download__form-drop-button">XML</a>
+          </div>
+
+          {% if can_edit or xform.shared %}
+          <!-- trigger preview vex window and the previewModalActivate function which loads the enketo iframe -->
+          <a title="{% trans 'Preview Form' %}" class="dashboard__formbutton dashboard__formbutton-preview">
+            <i class="fa fa-eye"></i><span>Preview</span>
+          </a>
+          {% endif %}
+
+          {% if can_edit or xform.shared %}
+          <div class="kc-hide">
+            <div id="preview-vex">
+                <div class="vex-header"><h3>{{ xform.title }} - {% trans "Preview" %}</h3></div>
+                <div class="vex-kobo-body" data-iframe-src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if xform.can_be_replaced and xform.user ==  user  %}
+          <div class="kc-hide">
+            <div id="xls-update">
+              <div class="vex-header"><h3>{% trans "Update XLS" %}</h3></div>
+              <div id="replace-{{ xform.id_string }}">
+                  <form action="{% url "onadata.apps.main.views.update_xform" xform.user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="vex-kobo-body">
+                      <input type="file" name="xls_file" id="id_xls_file" />
+                      <input type="submit" class="btn large btn-primary" value="{% trans "Update" %}" data-original-title="" />
+                    </div>
+                  </form>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+    <div class="dashboard__right">
+      {% if xform.has_instances_with_geopoints %}
+      <div class="dashboard__gps">
+        <h2 class="dashboard__group-label">GPS Points</h2>
+
+        <a title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-on-map">
+          <i class="fa fa-map-marker"></i>
+          <span>View on map</span>
+        </a>
+
+        <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}" class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
+          <i class="fa fa-download"></i>
+          <span>Download GPS points</span>
+        </a>
+     </div>
+     {% endif %}
+
+      {% if can_edit %}
+      <div class="dashboard__add-data">
+        <h2 class="dashboard__group-label">Add Data</h2>
+
+        <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-enter-data" target="_blank">
+          <i class="fa fa-plus"></i>
+          <span>Enter data in browser</span>
+        </a>
+        <a data-href="{% url "get_qrcode" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect js-showqr">
+          <i class="fa fa-mobile"></i>
+          <span>How to collect data on mobile device?</span>
+        </a>
+
+        <div class="kc-hide">
+          <div id="popupmodal">
+              <div class="vex-header">
+                  <h3>{%  trans "How to Collect Data on a Mobile Device" %}</h3>
+              </div>
+              <div class="vex-kobo-body">
+                  <div class="qrcode__android">
+                    <span>{{ BASE_URL }}{% url "user_profile" content_user.username %}</span>
+                  </div>
+                  <h4>{%  trans "Collect data on your Android device with KoBoCollect" %}</h4>
+                  <p>{%  trans "To start collecting data with our " %}
+                    <a href="https://play.google.com/store/apps/details?id=org.koboc.collect.android">
+                      {%  trans "KoBoCollect Android app" %}</a>
+                      {%  trans "you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
+
+                  <p><a href="{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}">{{ BASE_URL }}{% url "user_profile" content_user.username as profile_url %}{{ profile_url|slice:':-1' }}</a></p>
+
+                  <p><strong><a target="_blank" href="http://support.kobotoolbox.org/customer/portal/articles/1653782-collecting-data-with-kobocollect-on-android">Click here</a>  to read more about getting started with KoBoCollect</strong></p>
+                  <p class="qr__divider"><span>or</span></p>
+                  <div class="qrcode__code js-img_holder"> </div>
+                  <div class="qrcode__text">
+                    <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
+                    <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline:
+                    <p>
+                      <span class="qrcode__enter-data-url">
+                        <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a>
+                      </span>
+                    <br/>
+                    (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
+                    </p>
+                  </div>
+              </div>
+          </div>
+        </div>
+
+      </div>
+      {% endif %}
+
+    </div>
+
+<!-- END NEW SINGLE PROJECT VIEW -->
+
+  <section id="profile" class="kc-hide">
+    <div class="page-header kc-hide">
+      <!-- <img src='{{ content_user.profile.gravatar }}' alt='gravatar' width='40' height='40' style='float:left; padding-right:10px;' /> -->
+      <div id="mfeedback">&nbsp;</div>
+    	<h3 class="kc-hide">
+    	  <div style='vertical-align: middle'>
+    	  <img src='{{ content_user.profile.gravatar }}' alt='gravatar' width='20' height='20' />
+    	  <a href="{% url "user_profile" content_user.username %}">{{ content_user.username }}</a> ({% trans "Owner" %}) /
+    	  </div>
+    	</h3>
+    </div>
+    <div class="row">
+      <div class="span8">
+        <!-- <h3>{% trans "Description" %}</h3> -->
+        <div class="bordered kc-hide">
+          <h3>
+              {% trans "XLSForm" %}
+              <span id="form-shared-public" class="label label-info">{% trans "PUBLIC" %}</span>
+              <span id="form-shared-private" class="label label-warning">{% trans "PRIVATE" %}</span>
+              <span id="form-encrypted" class="label label-important icon-lock label-encrypted">&nbsp;&nbsp;{% trans "ENCRYPTED" %}</span>
+          </h3>
+          <br/>
+          <div class="btn-toolbar" style="margin-bottom: 9px">
+            <div class="btn-group">
+              <a class="btn btn-success" href="{% url "download_xlsform" content_user.username xform.id_string %}"><i class="icon-th icon-white"></i><font color=#FFF> {% trans "XLSForm" %}</font></a>
+              <button class="btn dropdown-toggle btn-success" data-toggle="dropdown">
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li>
+                  <input class="input-xxlarge" type="text" size="16" value="{{ base_url }}{% url "download_xlsform" content_user.username xform.id_string %}"/>
+                </li>
+              </ul>
+            </div>
+            <div class="btn-group">
+              <a class="btn" href="{% url "download_xform" content_user.username xform.id_string %}"><i class="icon-file"></i><font color=#000> {% trans "XForm" %}</font></a>
+              <button class="btn dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li>
+                  <input class="input-xxlarge" type="text" size="16" value="{{ base_url }}{% url "download_xform" content_user.username xform.id_string %}"/>
+                </li>
+              </ul>
+            </div>
+            <div class="btn-group kc-hide">
+              <a class="btn" href="{% url "download_jsonform" content_user.username xform.id_string %}"><i class="icon-file"></i><font color=#000> {% trans "JSONForm" %}</font></a>
+              <button class="btn dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li>
+                  <input class="input-xxlarge" type="text" size="16" value="{{ base_url }}{% url "download_jsonform" content_user.username xform.id_string %}"/>
+                </li>
+              </ul>
+          </div>
+        </div>
+        <br>
+        </ul>
+        <p class="kc-hide">
+            {% trans "License" %}:
+            {% if can_edit %}
+                {% for field in form_license_form %}
+                    {{ field }}
+                {% endfor %}
+                <a id="form-license_edit" data-id="form-license" href="" class="btn btn-small bind-edit">{% trans "edit" %}</a>
+                <a id="form-license_save" data-id="form-license" style="display:none" href="" class="btn btn-small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+            {% else %}
+                {{ form_license|default:'No license' }}
+            {% endif %}
+        </p>
+        <p><a id="form-license_info" style="display:none" href="">{% trans "License information" %}</a></p>
+        <br/>
+        <ul class="inline">
+        {% if user.is_authenticated and content_user.username != user.username and xform.xls|length > 0 and not cloned %}
+            <br/><br/>
+            <li>
+                <a href="" data-url="{% url "onadata.apps.main.views.clone_xlsform" xform.user.username %}" data-username="{{ xform.user.username }}" data-id="{{ xform.id_string }}" class="clonexls btn small">{% trans "Clone" %}</a>
+            </li>
+        {% endif %}
+        </ul>
+      </div>
+      <br/>
+      <div class="clearfix bordered">
+        <h3>
+            {% trans "Form Data" %}
+            <span id="data-shared-public" class="label label-info">{% trans "PUBLIC" %}</span>
+            <span id="data-shared-private" class="label label-warning">{% trans "PRIVATE" %}</span>
+            <span id="data-encrypted" class="label label-important icon-lock label-encrypted">&nbsp;&nbsp;{% trans "ENCRYPTED" %}</span>
+        </h3>
+        {% if xform.shared_data or can_view %}
+        {% if not xform.encrypted and xform.submission_count > 0 %}
+        <br>
+        <div class="btn-toolbar" style="margin-bottom: 9px">
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}" rel="tooltip" data-original-title="{% trans 'csv exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "csv" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}"/>
+              </li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv_zip' %}" rel="tooltip" data-original-title="{% trans 'csv zip exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "csv zip" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv_zip' %}"/>
+              </li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" rel="tooltip" data-original-title="{% trans 'SPSS data files zip exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "sav zip" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}"/>
+              </li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}" rel="tooltip" data-original-title="{% trans 'xls exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "xls" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}"/>
+              </li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}" rel="tooltip" data-original-title="{% trans 'Export to kml File (Google Earth)' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "kml" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml' %}"/>
+              </li>
+            </ul>
+          </div>
+
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" rel="tooltip" data-original-title="{% trans 'Export a zip folder of attachments' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "zip" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}"/>
+              </li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" rel="tooltip" data-original-title="{% trans 'Export to google docs' %}" target="_blank"><i class="icon-download-alt"></i> <font color=#000>{% trans "gdocs" %}</font></a>
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}"/>
+                </li>
+            </ul>
+          </div>
+        </div>
+        <h4>{% trans "Submissions:" %} {{ xform.submission_count|intcomma }}</h4>
+        <br>
+        <p>
+            {% trans "License:" %}
+            {% if can_edit %}
+                {% for field in data_license_form %}
+                    {{ field }}
+                {% endfor %}
+                <a id="data-license_edit" data-id="data-license" href="" class="btn btn-small bind-edit">{% trans "edit" %}</a>
+                <a id="data-license_save" data-id="data-license" style="display:none" href="" class="btn btn-small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+            {% else %}
+                {{ data_license|default:'No license' }}
+            {% endif %}
+        </p>
+        <p><a id="data-license_info" style="display:none" href="">{% trans "License information" %}</a></p>
+        <div class="btn-group" style="margin-bottom: 9px">
+	   			{% if xform.has_instances_with_geopoints %}
+    		  	<a class="btn btn-info" rel="tooltip" title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}">
+    				<i class="icon-map-marker icon-white"></i> {% trans "Map" %}
+    			 </a>
+          {% endif %}
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}">
+              <i class="icon-camera icon-white"></i> {% trans "Photos" %}
+            </a>
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Submitted Data" %}" href="{% url "onadata.apps.viewer.views.data_view" content_user.username xform.id_string %}">
+                <i class="icon-th-list icon-white"></i> {% trans "View Data" %}
+            </a>
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "Browse Data (One by One)" %}" href="{% url "onadata.apps.viewer.views.instance" content_user.username xform.id_string %}">
+                <i class="icon-list-alt icon-white"></i> {% trans "Browse Data" %}
+            </a>
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Statistics" %}" href="{% url "form-stats" content_user.username xform.id_string %}">
+                <i class="icon-bar-chart icon-white"></i> {% trans "Statistics" %}
+            </a>
+        </div>
+        {% else %}
+            {% if can_edit %}
+
+            {% else %}
+                <span class="label label-warning">{% trans "NO DATA" %}</span>
+            {% endif %}
+		{% endif %}
+		{% endif %}
+
+    </div>
+      <br/>
+        <div class="clearfix bordered kc-hide">
+                <h3 data-toggle="collapse" class="toggler" data-target="#source_tab">{% trans "Source" %}</h3>
+                <div id='source_tab' class="collapse">
+                <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+
+                {% if source.data_file %}
+                    <p><a href="{% url "onadata.apps.main.views.download_metadata" content_user.username xform.id_string source.id %}">{{ source.data_file.name }}</p></a>
+                {% endif %}
+                {% csrf_token %}
+                <input type="text" id="source" class="input-xxlarge present" disabled="" rows="3" value="{{ source.data_value|default:"None provided" }}" />
+                {% if can_edit %}
+                    <a id="source_edit" data-id="source" href="" class="btn small bind-edit">{% trans "edit" %}</a>
+                    <a id="source_save" data-id="source" style="display:none" href="" class="btn small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+                {% endif %}
+
+
+                {% if can_edit %}
+                    {% csrf_token %}
+                    <table>
+                    {{ source_form.as_table }}
+                    </table>
+                    <input type="submit" class="btn" value="{% trans 'Upload' %}" />
+                {% endif %}
+            </form>
+            </div>
+        </div>
+        {% if is_owner %}
+        <br/>
+        <div class="clearfix bordered kc-hide">
+            <h3 data-toggle="collapse" class="toggler" data-target="#restservice_tab">{% trans "Legacy Rest Services" %}</h3>
+            <div id='restservice_tab' class="collapse">
+            </div>
+        </div>
+        {% endif %}
+        <br/>
+
+        <div class="clearfix bordered kc-hide">
+            <h3 data-toggle="collapse" class="toggler" data-target="#map_tab">{% trans "Mapbox Layer" %}</h3>
+            <div id='map_tab' class="collapse">
+            {% if mapbox_layer %}
+            <p><a href="{{ mapbox_layer.link }}" target="_blank">{{ mapbox_layer.map_name }}</a> &ndash;
+            {% trans "Attribution:" %} {{ mapbox_layer.attribution }}
+            {% if can_edit %}
+            &ndash;<a href="{% url "onadata.apps.main.views.delete_metadata" content_user.username xform.id_string mapbox_layer.id %}?map_name_del=true"> {% trans "remove" %} </a></p>
+            {% endif %}
+            {% endif %}
+            {% if can_edit %}
+            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post">
+                {% csrf_token %}
+                <table>
+                {{ mapbox_layer_form.as_table }}
+                </table>
+                <input type="submit" class="btn" value="{% trans 'Upload' %}" />
+            </form>
+            {% endif %}
+            </div>
+        </div>
+        <br/>
+        <div class="kc-hide">
+            <h3>{% trans "bamboo" %}</h3>
+            {% if xform.bamboo_dataset %}
+                {% blocktrans with dataset=xform.bamboo_dataset %}bamboo dataset: <strong><a href="http://bamboo.io/datasets/{{ dataset }}/info">{{ dataset }}</a></strong>{% endblocktrans %}
+            {% else %}
+                {% blocktrans %}bamboo link is <strong>not active</strong>{% endblocktrans %}
+            {% endif %}
+            {% if xform.submission_count = 0 %}
+                <br />{% trans "bamboo requires at least one submission." %}
+            {% else %}<form action="{% url "onadata.apps.main.views.link_to_bamboo" content_user.username xform.id_string %}" method="post">
+                {% csrf_token %}
+                {% if xform.bamboo_dataset %}
+                    <input type="submit" class="btn" value="{% trans "Regenerate" %}" />
+                {% else %}
+                    <input type="submit" class="btn" value="{% trans "Activate" %}" />
+                {% endif %}
+                </form>
+            {% endif %}
+        </div>
+        <br/>
+        <div class="clearfix bordered kc-hide">
+                <h3 data-toggle="collapse" class="toggler" data-target="#sms_tab">{% trans "SMS Support" %} (<acronym title="SMS Support is in beta stage now. Please use carefully as API and IDs might change.">beta</acronym>)</h3>
+                <div id='sms_tab' class="collapse">
+                <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+
+                {% if xform.allows_sms %}
+                    <p>{% blocktrans %}This form has enabled SMS submissions.{% endblocktrans %} {% blocktrans with id_string=xform.sms_id_string %}Submit to this form using the “<em>{{ id_string }}</em>” identifier.{% endblocktrans %}</p>
+                {% endif %}
+                {% if can_edit %}
+                    {% csrf_token %}
+                    <input type="hidden" name="enable_sms_support_trigger" value="yes" />
+                    <table>
+                    {{ sms_support_form.as_table }}
+                    </table>
+                    <input type="submit" class="btn btn-primary" value="{% trans "Save Changes" %}" />
+                {% endif %}
+            	</form>
+            	{% autoescape off %}
+            	<div class="sms_autodoc">
+            	{% if xform.allows_sms %}
+            	<h4>{% trans "Expected Format:" %}</h4>
+            	<p class="sms_autodoc_line_names alert alert-info">{{ sms_support_doc.line_names }}</p>
+            	<ul class="sms_autodoc_helpers">
+            	{% for helper in sms_support_doc.helpers %}
+            		<li class="sms_autodoc_helper"><sup class="sms_autodoc_helper_indice">{{ forloop.counter0 }}</sup> <span class="sms_autodoc_helper_name">{{ helper.0 }}:</span> <span class="sms_autodoc_helper_text">{{helper.1}}</span></li>
+            	{% endfor %}
+            	</ul>
+            	<h4>{% trans "Example" %}</h4>
+        		<p class="sms_autodoc_line_example alert alert-success">{{ sms_support_doc.line_values }}</p>
+            	{% else %}
+            		<p class="alert {{ sms_compatible.type }}">{{ sms_compatible.text }}</p>
+            	{% endif %}
+            	<h4>{% trans "Usage" %}</h4>
+            	<p>Note that for each case, you can select either the simplest form of the URL (containing only your username) or the one including the <em>id_string</em> of the form.</p>
+            	<p>The latter works without specifyin the <em>SMS Keyword</em> in front of every message.</p>
+            	<p>You would use it when your SMS Setup/Provider is used for only one form.</p>
+            	<select id="sms_support_api"><option>{% trans "Select an SMS API" %}</option>{% for provider in sms_providers_doc %}<option value="{{ provider.id }}">{{ provider.name }}</option>{% endfor %}<option value="generic">{% trans "Generic SMS API" %}</option></select>
+            	<div style="display:none;" class="sms_support_api_doc" id="sms_support_api_doc_generic">
+            		<p>{% trans "Use the Generic SMS API to write your own wrapper around Formhub." %}</p>
+            		<ul>
+            			<p>{% trans "Single SMS Submission" %}<br />[<strong>GET</strong>] <span class="sms_autodoc_example">{{ url_root }}{% url "sms_submission" username=content_user.username %}</span><br />
+							[<strong>GET</strong>] <span class="sms_autodoc_example">{{ url_root }}{% url "sms_submission_form" username=content_user.username id_string=xform.id_string %}</span><br />
+            				{% trans "Params:" %} <span class="sms_autodoc_params">{"identity": "SENDER PHONE NUMBER", "text": "TEXT MESSAGE"}<br />
+            				{% trans "Returns:" %} <span class="sms_autodoc_params">{"status": "STATUS", "message": "MESSAGE", "id": "ID"}</p>
+            			<p>{% trans "Multiple SMS Submissions at once" %}<br />[<strong>POST</strong>] <span class="sms_autodoc_example">{{ url_root }}{% url "sms_submissions" username=content_user.username %}</span><br/>
+            				[<strong>POST</strong>] <span class="sms_autodoc_example">{{ url_root }}{% url "sms_submissions_form" username=content_user.username id_string=xform.id_string %}</span><br />
+            				{% trans "Params:" %} <span class="sms_autodoc_params">{"messages": [{"identity": "SENDER PHONE NUMBER", "text": "TEXT MESSAGE"}, ]<br />
+            				{% trans "Returns:" %} <span class="sms_autodoc_params">[{"status": "STATUS", "message": "MESSAGE", "id": "ID"}, ]</p>
+            		</ul>
+            		<p><span class="sms_autodoc_params">STATUS</span>: {% trans "One of" %} <span class="sms_autodoc_params">ACCEPTED, REJECTED, PARSING_FAILED</span><br />
+            		   <span class="sms_autodoc_params">MESSAGE</span>: {% trans "Either an error or success message. Suitable for end user." %}<br />
+            		   <span class="sms_autodoc_params">ID</span>: {% trans "Only if successful. A unique ID of the submission." %}</p>
+            	</div>
+            	{% for provider in sms_providers_doc %}<div style="display:none;" class="sms_support_api_doc" id="sms_support_api_doc_{{ provider.id }}">{{ provider.doc }}</div>{% endfor %}
+            	{% endautoescape %}
+            	</div>
+            </div>
+        </div>
+      </div>
+    </div>
+    <br/>
+  </section>
+
+{% endblock %}
+
+{% block styles %}
+{{ block.super }}
+  <!-- NEW SANDBOX STYLES -->
+  <link href="{% static "css/ios-switches.css" %}" rel="stylesheet">
+  <link href="{% static "css/kobo-single-project.css" %}" rel="stylesheet">
+  <!-- END NEW SANDBOX STYLES -->
+ <!-- <link href="{% static "css/iphone-btn-style.css" %}" rel="stylesheet"/> -->
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="{% static "js/jquery.poshytip.js" %}"></script>
+  {% if user.is_authenticated %}
+    <script type="text/javascript" src="{% static "js/form_actions.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.cookie.js" %}"></script>
+  {% endif %}
+
+
+<script type="text/javascript">
+
+$('.dashboard__formbutton-preview').click(function previewModalActivate(){
+  var prevWrap = $('#preview-vex .vex-kobo-body');
+  if (prevWrap.data('iframeSrc') && prevWrap.children('iframe').length === 0) {
+    $('<iframe>', {src: prevWrap.data('iframeSrc')}).appendTo(prevWrap);
+  } else {
+    console.error('iframeSrc not set for prevWrap');
+  }
+
+  vex.open({
+    content: $('#preview-vex').clone(),
+    contentClassName: 'vex-content vex-content-large',
+  });
+
+});
+
+
+$(document).ready(function() {
+
+    $('.btn').tooltip();
+
+    // SMS documentation switcher
+    $('#sms_support_api').change(function() {
+      $('.sms_support_api_doc').each(function (){
+        $(this).toggle(false);
+      });
+      var selected = $(this).val();
+      $('#sms_support_api_doc_' + selected).toggle(true);
+    });
+
+    // Typeahead, fetch usernames for permission assign
+    $('#autocomplete').typeahead(
+        {
+            source: function (query, process){
+                return $.get('/typeahead_usernames/', {query: query}, function(data){
+                    return process(data);
+                });
+            }
+        }
+    );
+    //-- end
+
+    var collect_mobile = $('#popupmodal');
+    $(document).on("click", ".js-showqr", function () {
+      vex.open({
+        content: collect_mobile.clone(),
+        contentClassName: 'vex-content vex-content-large',
+      });
+      div_target = $(this).attr('data-target');
+      url = $(this).data('href');
+      $.ajax({
+        url: url,
+        method: 'get',
+        success: function(html){
+          var contents = $('<div>'+html+'</div>');
+          $('.js-img_holder', div_target).html(contents.find('img'));
+          $('.qrcode__enter-data-url').html(contents.find('a'));
+
+        }
+      })
+    });
+
+    {% if xform.shared_data %}
+      $('#data-shared-private').hide();
+    {% else %}
+      $('#data-shared-public').hide();
+    {% endif %}
+    {% if xform.shared %}
+      $('#form-shared-private').hide();
+    {% else %}
+      $('#form-shared-public').hide();
+    {% endif %}
+    {% if not xform.encrypted %}
+      $('#form-encrypted').hide();
+      $('#data-encrypted').hide();
+    {% endif %}
+
+    // toggle fields
+    {% if user.is_authenticated %}
+        $.each(['form-shared', 'data-shared', 'active-form'], function(inx, el) {
+            var cb = $('#' + el + ':checkbox');
+            cb.change(function() {
+              privacyEdit(cb.data('url'), el.split('-')[0]);
+              // legacy
+              $('#' + el + '-public').toggle();
+              $('#' + el + '-private').toggle();
+            });
+        });
+      // add click event to all public (x)forms
+      $('a.clonexls').click(function(){
+        el = $(this);
+        clone_xlsform(el.data('url'), el.data('username'), el.data('id'));
+        return false;
+      });
+    {% endif %}
+    });
+
+  // REST Service
+  $(document).ready(function() {
+      $.get('{% url "onadata.apps.restservice.views.add_service" content_user.username xform.id_string %}', function(data){
+          $('#restservice_tab').html(data);
+      });
+  });
+</script>
+
+    <!-- NEW SANDBOX JQUERY CALLS -->
+    <script type="text/javascript">
+    $(document).ready(function() {
+
+      $(document).on("click", ".single-project__toggle-documents .doctoggle__caret", function () {
+        $('.single-project__documents').toggleClass('hidden');
+        $(this).toggleClass('active');
+        $('.doctoggle__caret').toggleClass('fa-caret-right');
+        $('.doctoggle__caret').toggleClass('fa-caret-down');
+      });
+
+      $(document).on("click", ".single-project__toggle-settings", function () {
+        $('.single-project__settings').toggleClass('hidden');
+        $(this).toggleClass('active');
+        if($('.single-project__settings').is(":visible")) {
+          $.cookie('settingsBoxOpen', true);
+        } else {
+          $.cookie('settingsBoxOpen', false);
+        }
+      });
+
+      $(document).on("click", ".dashboard__button-download-data", function () {
+        $('.dashboard__download__drop').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("click", ".dashboard__formbutton-download", function () {
+        $('.dashboard__form-drop').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("click", ".single-project__add-media", function () {
+        $('.single-project__media-upload').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("focus", "input#title", function () {
+        $('a#title_save').removeClass('hidden');
+      });
+      $(document).on("focus", "input#description", function () {
+        $('a#description_save').removeClass('hidden');
+      });
+
+      $(document).on("click", ".single-project__add-bg-doc", function () {
+        $('.single-project__documents input#id_doc').trigger('click');
+      });
+
+      $(document).on("change", "input#id_doc", function () {
+        $(this).parents("form").submit();
+      });
+
+      var delete_form = $('#delete-form');
+      $(document).on("click", ".single-project__button-delete", function () {
+      vexDelete = vex.open({
+        content: delete_form.clone(),
+        contentClassName: 'vex-content vex-content-large',
+      });
+      });
+
+      $(document).on("click", ".dashboard__formbutton-refresh", function () {
+        vexRefresh = vex.open({
+          content: $('#xls-update').clone(),
+          contentClassName: 'vex-content'
+        });
+      });
+
+      $(document).click(function(event) {
+          if(!$(event.target).closest('.dashboard__submissions').length) {
+            if($('.dashboard__download__drop').is(":visible")) {
+              $('.dashboard__download__drop').addClass('hidden');
+              $('.dashboard__button-download-data').removeClass('active');
+            }
+          }
+
+          if(!$(event.target).closest('.dashboard__form-contents').length) {
+            if($('.dashboard__form-drop').is(":visible")) {
+              $('.dashboard__form-drop').addClass('hidden');
+              $('.dashboard__formbutton-download').removeClass('active');
+            }
+          }
+
+          if(!$(event.target).closest('.sub-header-bar').length) {
+            if($('.single-project__settings').is(":visible")) {
+              $('.single-project__settings').addClass('hidden');
+              $('.single-project__toggle-settings').removeClass('active');
+              $.cookie('settingsBoxOpen', false);
+            }
+          }
+      });
+
+      if ($.cookie('settingsBoxOpen') == 'true') {
+        $('.single-project__settings').removeClass('hidden');
+        $('.single-project__toggle-settings').addClass('active');
+      }
+
+      // question mark poshytip effect
+      $('.poshytip').poshytip({
+          className: 'tip__bottomarrow',
+          showTimeout: 1,
+          alignTo: 'target',
+          alignX: 'right',
+          alignY: 'top',
+          offsetX: -60,
+          offsetY: -5,
+          liveEvents: true
+      });
+
+      // smaller parent poshytip
+      $('.poshytip-small').poshytip({
+          className: 'tip__bottomarrow multiline',
+          showTimeout: 1,
+          alignTo: 'target',
+          alignX: 'right',
+          alignY: 'top',
+          offsetX: -25,
+          offsetY: -5,
+          liveEvents: true
+      });
+
+    });
+    </script>
+    <!-- END NEW SANDBOX JQUERY CALLS -->
+
+{% endblock %}
