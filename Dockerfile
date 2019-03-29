@@ -38,10 +38,6 @@ RUN if [ -e "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" ]; then \
 RUN rm -rf "${KOBOCAT_SRC_DIR}"
 COPY . "${KOBOCAT_SRC_DIR}"
 
-# Retrieve the `kobocat-template` submodule
-WORKDIR "${KOBOCAT_SRC_DIR}"
-RUN git submodule update --init --recursive kobocat-template
-
 # Prepare for execution.
 RUN mkdir -p /etc/service/uwsgi && \
     cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
@@ -63,5 +59,7 @@ RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo 'source /etc/profile' >> /root/.bashrc
 
+
+WORKDIR "${KOBOCAT_SRC_DIR}"
 
 EXPOSE 8000
