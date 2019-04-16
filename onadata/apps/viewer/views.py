@@ -21,6 +21,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
@@ -750,12 +751,9 @@ def attachment_url(request, size='medium'):
             response = HttpResponse()
             default_storage = get_storage_class()()
             if not isinstance(default_storage, FileSystemStorage):
-                protocol = "https" if settings.AWS_S3_USE_SSL else "http"
-                protected_url = media_url.replace("{}://{}.{}/".format(
-                    protocol,
-                    settings.AWS_STORAGE_BUCKET_NAME,
-                    settings.AWS_S3_HOST,
-                ), "/protected-s3/{}/".format(settings.AWS_STORAGE_BUCKET_NAME))
+                # Double-encode the S3 URL to take advantage of NGINX's
+                # otherwise troublesome automatic decoding
+                protected_url = '/protected-s3/{}'.format(urlquote(media_url))
             else:
                 protected_url = media_url.replace(settings.MEDIA_URL, "/protected/")
 
