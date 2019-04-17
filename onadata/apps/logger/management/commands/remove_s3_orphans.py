@@ -79,7 +79,7 @@ class Command(BaseCommand):
         orphans = 0
 
         now = time.time()
-        csv_filepath = "/srv/logs/ocha_s3_orphans.csv"
+        csv_filepath = "/srv/logs/orphans_files.csv"
 
         with open(csv_filepath, "w") as csv:
             csv.write("type,filename,filesize\n")
@@ -102,7 +102,7 @@ class Command(BaseCommand):
                             csv = codecs.open(csv_filepath, "a", "utf-8")
                             csv.write("{},{},{}\n".format("attachment", filename, filesize))
                             csv.close()
-                            print("File {} does not exist".format(filename))
+                            self.delete(f)
 
                     elif re.match(r"[^\/]*\/exports\/[^\/]*\/[^\/]*\/.+", filename):
                         #KC Export
@@ -115,7 +115,7 @@ class Command(BaseCommand):
                             csv = codecs.open(csv_filepath, "a", "utf-8")
                             csv.write("{},{},{}\n".format("attachment", filename, filesize))
                             csv.close()
-                            print("File {} does not exist".format(filename))
+                            self.delete(f)
 
                     elif re.match(r"[^\/]*\/exports\/.+", filename):
                         #KPI Export
@@ -135,7 +135,7 @@ class Command(BaseCommand):
                             csv = codecs.open(csv_filepath, "a", "utf-8")
                             csv.write("{},{},{}\n".format("attachment", filename, filesize))
                             csv.close()
-                            print("File {} does not exist".format(filename))
+                            self.delete(f)
 
                 if time.time() - now >= 5 * 60:
                     print("[{}] Still alive...".format(str(int(time.time()))))
@@ -145,9 +145,17 @@ class Command(BaseCommand):
                 print("ERROR - {}".format(str(e)))
                 sys.exit()
 
-
         print("Orphans: {}".format(orphans))
         print("Size: {}".format(self.sizeof_fmt(size_to_reclaim)))
+
+    def delete(self, file_object):
+        try:
+            print("File {} does not exist in DB".format(file_object.name).encode('utf-8'))
+            file_object.delete()
+        except Exception as e:
+            print("ERROR - Could not delete file {} - Reason {}".format(
+                file_object.name,
+                str(e)))
 
     def sizeof_fmt(self, num, suffix='B'):
         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
