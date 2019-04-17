@@ -12,13 +12,12 @@ from django.core.files.storage import get_storage_class
 from django.db import connection
 from django.db.models import Value as V
 from django.db.models.functions import Concat
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 
 from onadata.apps.logger.models import Attachment
 from onadata.apps.viewer.models import Export
 
 # S3 Monkey Patch
-import boto
 from boto import handler
 from boto.resultset import ResultSet
 from boto.s3.bucket import Bucket
@@ -73,8 +72,8 @@ class Command(BaseCommand):
 
         Bucket._get_all = _get_all
 
-        s3 = get_storage_class('storages.backends.s3boto.S3BotoStorage')()
-        all_files = s3.bucket.list()
+        self._s3 = get_storage_class('onadata.libs.utils.extended_s3boto_storage.ExtendedS3BotoStorage')()
+        all_files = self._s3.bucket.list()
         size_to_reclaim = 0
         orphans = 0
 
@@ -105,7 +104,7 @@ class Command(BaseCommand):
                             self.delete(f)
 
                     elif re.match(r"[^\/]*\/exports\/[^\/]*\/[^\/]*\/.+", filename):
-                        #KC Export
+                        # KC Export
                         if not Export.objects.annotate(fullpath=Concat("filedir",
                                                                        V("/"), "filename"))\
                                 .filter(fullpath=filename).exists():
@@ -118,7 +117,8 @@ class Command(BaseCommand):
                             self.delete(f)
 
                     elif re.match(r"[^\/]*\/exports\/.+", filename):
-                        #KPI Export
+                        # KPI Export.
+                        # TODO Create the same command in KPI after merging `two-databases`.
                         does_exist = False
                         with connection.cursor() as cursor:
                             cursor.execute("SELECT EXISTS(SELECT id FROM kpi_exporttask WHERE result = %s)", [filename])
@@ -151,13 +151,14 @@ class Command(BaseCommand):
     def delete(self, file_object):
         try:
             print("File {} does not exist in DB".format(file_object.name).encode('utf-8'))
-            file_object.delete()
+            self._s3.delete_all(file_object.name)
         except Exception as e:
             print("ERROR - Could not delete file {} - Reason {}".format(
                 file_object.name,
                 str(e)))
 
-    def sizeof_fmt(self, num, suffix='B'):
+    @staticmethod
+    def sizeof_fmt(num, suffix='B'):
         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
             if abs(num) < 1024.0:
                 return "%3.1f%s%s" % (num, unit, suffix)
