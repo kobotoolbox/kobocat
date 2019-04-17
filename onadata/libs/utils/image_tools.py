@@ -1,14 +1,15 @@
-import requests
+# -*- coding: utf-8 -*-
+from __future__ import division
 
 from cStringIO import StringIO
+from tempfile import NamedTemporaryFile
+
 from PIL import Image
+import requests
 
 from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.files.base import ContentFile
-
-from tempfile import NamedTemporaryFile
-
 from onadata.libs.utils.viewer_tools import get_path
 
 
@@ -23,11 +24,11 @@ def flat(*nums):
 
 def get_dimensions((width, height), longest_side):
     if width > height:
-        width = longest_side
         height = (height / width) * longest_side
+        width = longest_side
     elif height > width:
-        height = longest_side
         width = (width / height) * longest_side
+        height = longest_side
     else:
         height = longest_side
         width = longest_side
@@ -35,12 +36,14 @@ def get_dimensions((width, height), longest_side):
 
 
 def _save_thumbnails(image, path, size, suffix):
-    nm = NamedTemporaryFile(suffix='.%s' % settings.IMG_FILE_TYPE)
+    nm = NamedTemporaryFile(suffix='.%s' % image.format)
     default_storage = get_storage_class()()
     try:
         # Ensure conversion to float in operations
-        image.thumbnail(
-            get_dimensions(image.size, float(size)), Image.ANTIALIAS)
+        # Converting to RGBA make the background white instead of black for
+        # transparent PNGs/GIFs
+        image = image.convert("RGBA")
+        image.thumbnail(get_dimensions(image.size, float(size)), Image.ANTIALIAS)
     except ZeroDivisionError:
         pass
     try:
@@ -49,8 +52,18 @@ def _save_thumbnails(image, path, size, suffix):
         # e.g. `IOError: cannot write mode P as JPEG`, which gets raised when
         # someone uploads an image in an indexed-color format like GIF
         image.convert('RGB').save(nm.name)
+
+    # Try to delete file with the same name if it already exists to avoid useless file.
+    # i.e if `file_<suffix>.jpg` exists, Storage will save `a_<suffix>_<random_string>.jpg`
+    # but nothing in the code is aware about this `<random_string>
+    try:
+        default_storage.delete(get_path(path, suffix))
+    except IOError:
+        pass
+
     default_storage.save(
         get_path(path, suffix), ContentFile(nm.read()))
+
     nm.close()
 
 

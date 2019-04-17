@@ -18,6 +18,7 @@ class ServiceDefinition(RestServiceInterface):
             "instance_id": data.get("instance_id")  # Will be used internally by KPI to fetch data with KoboCatBackend
         }
         headers = {"Content-Type": "application/json"}
+
         # Build the url in the service to avoid saving hardcoded domain name in the DB
         url = "{}{}".format(
             settings.KPI_INTERNAL_URL,

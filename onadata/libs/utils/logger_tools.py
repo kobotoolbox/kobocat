@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import date, datetime
 import os
 import pytz
@@ -18,7 +19,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.http import HttpResponse, HttpResponseNotFound, \
-    StreamingHttpResponse
+    StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import DjangoUnicodeDecodeError
 from django.utils.translation import ugettext as _
@@ -29,6 +30,7 @@ from pyxform.xform2json import create_survey_element_from_xml
 import sys
 
 from onadata.apps.main.models import UserProfile
+from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
 from onadata.apps.logger.models import Attachment
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
@@ -36,9 +38,10 @@ from onadata.apps.logger.models.attachment import (
 )
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models.instance import (
-    FormInactiveError,
     InstanceHistory,
-    get_id_string_from_xml_str)
+    get_id_string_from_xml_str,
+    update_xform_submission_count,
+)
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.xform import XLSFormError
 from onadata.apps.logger.xform_instance_parser import (
@@ -69,7 +72,14 @@ uuid_regex = re.compile(r'<formhub>\s*<uuid>\s*([^<]+)\s*</uuid>\s*</formhub>',
 mongo_instances = settings.MONGO_DB.instances
 
 
-def _get_instance(xml, new_uuid, submitted_by, status, xform):
+def _get_instance(xml, new_uuid, submitted_by, status, xform,
+                  defer_counting=False):
+    '''
+    `defer_counting=False` will set a Python-only attribute of the same name on
+    the *new* `Instance` if one is created. This will prevent
+    `update_xform_submission_count()` from doing anything, which avoids locking
+    any rows in `logger_xform` or `main_userprofile`.
+    '''
     # check if its an edit submission
     old_uuid = get_deprecated_uuid_from_xml(xml)
     instances = Instance.objects.filter(uuid=old_uuid)
@@ -86,8 +96,19 @@ def _get_instance(xml, new_uuid, submitted_by, status, xform):
         instance.save()
     else:
         # new submission
-        instance = Instance.objects.create(
-            xml=xml, user=submitted_by, status=status, xform=xform)
+
+        # Avoid `Instance.objects.create()` so that we can set a Python-only
+        # attribute, `defer_counting`, before saving
+        instance = Instance()
+        instance.xml = xml
+        instance.user = submitted_by
+        instance.status = status
+        instance.xform = xform
+        if defer_counting:
+            # Only set the attribute if requested, i.e. don't bother ever
+            # setting it to `False`
+            instance.defer_counting = True
+        instance.save()
 
     return instance
 
@@ -117,9 +138,11 @@ def get_xform_from_submission(xml, username, uuid=None):
 
         if uuid:
             # try find the form by its uuid which is the ideal condition
-            if XForm.objects.filter(uuid=uuid).count() > 0:
+            try:
                 xform = XForm.objects.get(uuid=uuid)
-
+            except XForm.DoesNotExist:
+                pass
+            else:
                 return xform
 
         id_string = get_id_string_from_xml_str(xml)
@@ -208,7 +231,22 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     if not date_created_override:
         date_created_override = get_submission_date_from_xml(xml)
 
-    instance = _get_instance(xml, new_uuid, submitted_by, status, xform)
+    # We have to save the `Instance` to the database before we can associate
+    # any `Attachment`s with it, but we are inside a transaction and saving
+    # attachments is slow! Usually creating an `Instance` updates the
+    # submission count of the parent `XForm` automatically via a `post_save`
+    # signal, but that takes a lock on `logger_xform` that persists until the
+    # end of the transaction.  We must avoid doing that until all attachments
+    # are saved, and we are as close as possible to the end of the transaction.
+    # See https://github.com/kobotoolbox/kobocat/issues/490.
+    #
+    # `_get_instance(..., defer_counting=True)` skips incrementing the
+    # submission counters and returns an `Instance` with a `defer_counting`
+    # attribute set to `True` *if* a new instance was created. We are
+    # responsible for calling `update_xform_submission_count()` if the returned
+    # `Instance` has `defer_counting = True`.
+    instance = _get_instance(xml, new_uuid, submitted_by, status, xform,
+                             defer_counting=True)
 
     save_attachments(instance, media_files)
 
@@ -227,6 +265,15 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
 
     if not created:
         pi.save(async=False)
+
+    # Now that the slow tasks are complete and we are (hopefully!) close to the
+    # end of the transaction, update the submission count if the `Instance` was
+    # newly created
+    if getattr(instance, 'defer_counting', False):
+        # Remove the Python-only attribute
+        del instance.defer_counting
+        update_xform_submission_count(sender=None, instance=instance,
+                                      created=True)
 
     return instance
 
@@ -263,8 +310,7 @@ def create_instance(username, xml_file, media_files,
         # content, which is slow! Use the management command
         # `populate_xml_hashes_for_instances` to hash existing submissions
         existing_instance = Instance.objects.filter(
-            Q(xml_hash=xml_hash) |
-                Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
+            Q(xml_hash=xml_hash) | Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
             xform__user=xform.user,
         ).first()
     else:
@@ -702,3 +748,29 @@ def remove_xform(xform):
 
     # reconnect parsed instance pre delete signal?
     pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+
+
+def get_instance_or_404(**criteria):
+    """
+    Mimic `get_object_or_404` but handles duplicate records.
+
+    `logger_instance` can contain records with the same `uuid`
+
+    :param criteria: dict
+    :return: Instance
+    """
+    instances = Instance.objects.filter(**criteria).order_by("id")
+    if instances:
+        instance = instances[0]
+        xml_hash = instance.xml_hash
+        for instance_ in instances[1:]:
+            if instance_.xml_hash == xml_hash:
+                continue
+            raise DuplicateUUIDError(
+                "Multiple instances with different content exist for UUID "
+                "{}".format(instance.uuid)
+            )
+
+        return instance
+    else:
+        raise Http404

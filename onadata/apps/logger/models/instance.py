@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 from hashlib import sha256
 
@@ -24,14 +25,7 @@ from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
     UUID, XFORM_ID_STRING, SUBMITTED_BY
 from onadata.libs.utils.model_tools import set_uuid
 from onadata.apps.logger.fields import LazyDefaultBooleanField
-
-
-class FormInactiveError(Exception):
-    def __unicode__(self):
-        return _("Form is inactive")
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
+from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
 
 
 # need to establish id_string of the xform before we run get_dict since
@@ -64,6 +58,9 @@ def submission_time():
 
 def update_xform_submission_count(sender, instance, created, **kwargs):
     if not created:
+        return
+    # `defer_counting` is a Python-only attribute
+    if getattr(instance, 'defer_counting', False):
         return
     with transaction.atomic():
         xform = XForm.objects.only('user_id').get(pk=instance.xform_id)
@@ -134,7 +131,7 @@ class Instance(models.Model):
     # we add a fourth status: submitted_via_web
     status = models.CharField(max_length=20,
                               default=u'submitted_via_web')
-    uuid = models.CharField(max_length=249, default=u'')
+    uuid = models.CharField(max_length=249, default=u'', db_index=True)
 
     # store an geographic objects associated with this instance
     geom = models.GeometryCollectionField(null=True)

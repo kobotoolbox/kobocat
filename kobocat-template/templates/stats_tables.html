@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load lookup_filter %}
+{% load static %}
+
+{% block additional-headers %}
+{% load i18n %}
+<link rel="stylesheet" href="{% static "css/stats_tables.css" %}" />
+<link rel="stylesheet" href="{% static "bower_components/backgrid/lib/backgrid.min.css" %}" />
+
+<div class="sub-header-bar">
+  <div class="container__wide">
+    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+  </div>
+</div>
+
+<header class="data-page__header">
+    <hgroup class="container">
+      <h1>{% trans "Create Tables" %}</h1>
+    </hgroup>
+</header>
+
+{% endblock %}
+
+{% block content %}
+{% load i18n %}
+<section>
+  <div>
+      <form id="table-create-form" class="form-horizontal">
+          <div id="step-1" class="control-group">
+              <label class="control-label" for="question">{% trans "Select a question" %}</label>
+              <div class="controls">
+                  <select id="question"></select>
+              </div>
+          </div>
+          <div id="step-2" class="control-group">
+              <label class="control-label">{% trans "Select summary method" %}</label>
+              <div class="controls">
+                  <label class="checkbox">
+                      <input id="frequencies" type="checkbox" value="2">
+                      {% trans "Frequencies" %}
+                  </label>
+                  <label class="checkbox">
+                      <input id="percentages" type="checkbox" value="4">
+                      {% trans "Percentage of total respondents" %}
+                  </label>
+                  <label class="checkbox">
+                      <input id="mean" type="checkbox" value="8">
+                      {% trans "Mean (Average)" %}
+                  </label>
+                  <label class="checkbox">
+                      <input id="median" type="checkbox" value="16">
+                      {% trans "Median" %}
+                  </label>
+                  <label class="checkbox">
+                      <input id="mode" type="checkbox" value="32">
+                      {% trans "Mode" %}
+                  </label>
+              </div>
+          </div>
+          <div id="step-3" class="control-group">
+              <label class="control-label">{% trans "Which labels should be displayed?" %}</label>
+
+              <div class="controls">
+              </div>
+          </div>
+          <div id="step-4" class="control-group">
+              <div class="controls">
+                  <button id="create" type="button" class="btn btn-primary" disabled="disabled">{% trans "Create" %}</button>
+              </div>
+          </div>
+      </form>
+  </div>
+  <div id="stats-tables-container"></div>
+
+</section>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="{% static "bower_components/underscore/underscore-min.js" %}"></script>
+<script src="{% static "bower_components/backbone/backbone-min.js" %}"></script>
+<script src="{% static "bower_components/backgrid/lib/backgrid.js" %}"></script>
+<script src="{% static "js/xform.js" %}"></script>
+<script src="{% static "js/stats_tables.js" %}"></script>
+<script type="text/javascript">
+    var formUrl = "{% url "download_jsonform" xform.user.username xform.id_string %}";
+    var statsUrl = "{% url "stats-detail" xform.pk %}";
+    var submissionStatsUrl = "{% url "submissionstats-detail" xform.pk %}";
+
+    var tableBuilder = new Ona.TableBuilderView({
+        el: '#table-create-form',
+        statsEl: '#stats-tables-container',
+        createButtonSelector: 'button#create',
+        formUrl: formUrl,
+        statsUrl: statsUrl,
+        submissionStatsUrl: submissionStatsUrl
+    });
+
+    tableBuilder.render();
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "rest_framework/base.html" %}
+{% load static %}
+
+
+{% block title %}
+KoBoCAT REST API
+{% endblock %}
+
+{% block style %}
+    {% block bootstrap_theme %}
+        <link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+        <link href="//netdna.bootstrapcdn.com/font-awesome/3.0/css/font-awesome.css" rel="stylesheet">
+        <!--[if lte IE 8]>
+          <link href="//netdna.bootstrapcdn.com/font-awesome/3.0/css/font-awesome-ie7.css" rel="stylesheet">
+        <![endif]-->
+        <style type="text/css">
+        .header-bar__top-logo {
+            display: inline-block;
+            background: url("{% static "images/kobologo.svg" %}");
+            background-size: 120px 27px;
+            background-repeat: none;
+            width: 120px;
+            height: 27px;
+            margin-top: 5px;
+            margin-right: 6px;
+        }
+        </style>
+        <link href="{% static "bootstrap/css/bootstrap-responsive.min.css" %}" rel="stylesheet">
+    {% endblock %}
+
+    {{ block.super }}
+    <link href="{% static "css/screen.css" %}" rel="stylesheet">
+{% endblock %}
+
+{% block script %}
+{{ block.super }}
+    <style type='text/css'>
+        pre code .pln{color:#d14;}
+        pre code .pun{color:#32af8d;}
+    </style>
+{% endblock %}
+{% block branding %}
+    <span class="header-bar__top-logo"></span>
+{% endblock %}
+{% block footer %}
+    {% include "footer.html" %}
+{% endblock %}

@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import gc
 import uuid
 
-from onadata.apps.logger.models.xform import XForm, DuplicateUUIDError
+from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.exceptions import DuplicateUUIDError
 
 
 def generate_uuid_for_form():

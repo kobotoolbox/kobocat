@@ -274,8 +274,11 @@ class ParsedInstance(models.Model):
 
     @staticmethod
     def bulk_update_validation_statuses(query, validation_status):
-        return xform_instances.update(query, {"$set":
-            {VALIDATION_STATUS: validation_status}}, multi=True)
+        return xform_instances.update(
+            query,
+            {"$set": {VALIDATION_STATUS: validation_status}},
+            multi=True,
+        )
 
     def to_dict(self):
         if not hasattr(self, "_dict_cache"):
@@ -362,7 +365,7 @@ def _get_attachments_from_instance(instance):
     attachments = []
     for a in instance.attachments.all():
         attachment = dict()
-        attachment['download_url'] = a.media_file.url
+        attachment['download_url'] = a.secure_url()
         attachment['mimetype'] = a.mimetype
         attachment['filename'] = a.media_file.name
         attachment['instance'] = a.instance.pk
@@ -376,5 +379,6 @@ def _get_attachments_from_instance(instance):
 def _remove_from_mongo(sender, **kwargs):
     instance_id = kwargs.get('instance').instance.id
     xform_instances.remove(instance_id)
+
 
 pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)

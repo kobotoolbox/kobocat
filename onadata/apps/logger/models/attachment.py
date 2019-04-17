@@ -1,7 +1,10 @@
 import os
+import re
 import mimetypes
 
 from hashlib import md5
+
+from django.conf import settings
 from django.db import models
 
 from instance import Instance
@@ -28,6 +31,8 @@ def hash_attachment_contents(contents):
 class Attachment(models.Model):
     instance = models.ForeignKey(Instance, related_name="attachments")
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
+    media_file_basename = models.CharField(
+        max_length=260, null=True, blank=True, db_index=True)
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
 
@@ -35,11 +40,14 @@ class Attachment(models.Model):
         app_label = 'logger'
 
     def save(self, *args, **kwargs):
-        if self.media_file and self.mimetype == '':
-            # guess mimetype
-            mimetype, encoding = mimetypes.guess_type(self.media_file.name)
-            if mimetype:
-                self.mimetype = mimetype
+        if self.media_file:
+            self.media_file_basename = self.filename
+            if self.mimetype == '':
+                # guess mimetype
+                mimetype, encoding = mimetypes.guess_type(self.media_file.name)
+                if mimetype:
+                    self.mimetype = mimetype
+
         super(Attachment, self).save(*args, **kwargs)
 
     @property
@@ -55,3 +63,19 @@ class Attachment(models.Model):
     @property
     def filename(self):
         return os.path.basename(self.media_file.name)
+
+    def secure_url(self, suffix="original"):
+        """
+        Returns image URL through kobocat redirector.
+        :param suffix: str. original|large|medium|small
+        :return: str
+        """
+        if suffix != "original" and suffix not in settings.THUMB_CONF.keys():
+            raise Exception("Invalid image thumbnail")
+
+        return u"{kobocat_url}{media_url}{suffix}?media_file={filename}".format(
+            kobocat_url=settings.KOBOCAT_URL,
+            media_url=settings.MEDIA_URL,
+            suffix=suffix,
+            filename=self.media_file.name
+        )

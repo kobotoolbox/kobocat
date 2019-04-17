@@ -1,0 +1,55 @@
+/**
+ * iOS 6 style switch checkboxes
+ * inspired by Lea Verou http://lea.verou.me
+ */
+
+:root input[type="checkbox"] { /* :root here acting as a filter for older browsers */
+  position: absolute;
+  opacity: 0;
+}
+
+:root input[type="checkbox"].ios-switch + div {
+  display: inline-block;
+  vertical-align: middle;
+  width: 3.5em; height: 1em;
+  border: 1px solid #D9DDE1;
+  background: #4A5C6E;
+  overflow: hidden;
+  transition-duration: .15s;
+  transition-property: padding, width, background-position, text-indent;
+  font-size: 200%; /* change this and see how they adjust! */
+}
+
+:root input[type="checkbox"].ios-switch:checked + div {
+  padding-left: 2em;  
+  width: 1.5em;
+  background: #5DB0EC;
+}
+
+:root input[type="checkbox"].ios-switch + div:before {
+  content: 'Yes';
+  float: left;
+  width: 3.75em; height: 2.65em;
+  margin: -.1em;
+  border: 1px solid #D9DDE1;
+  background: white;
+  color: white;
+  text-indent: -3.5em;
+}
+
+:root input[type="checkbox"].ios-switch:active + div:before {
+  background-color: #eee;
+}
+
+:root input[type="checkbox"].ios-switch + div:before,
+:root input[type="checkbox"].ios-switch + div:after {
+  font: 600 40%/2.5 'Open Sans';
+  text-transform: uppercase;
+}
+
+:root input[type="checkbox"].ios-switch + div:after {
+  content: 'No';
+  float: left;
+  text-indent: 1.75em;
+  color: white;
+}

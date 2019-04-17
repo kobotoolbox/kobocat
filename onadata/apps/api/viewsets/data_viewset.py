@@ -5,24 +5,26 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import six
 from django.utils.translation import ugettext as _
-from django.core.exceptions import PermissionDenied
 
 from rest_framework import status
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, PermissionDenied
 from rest_framework.settings import api_settings
 
 from onadata.apps.api.viewsets.xform_viewset import custom_response_handler
-from onadata.apps.api.tools import add_tags_to_instance, add_validation_status_to_instance, get_validation_status
+from onadata.apps.api.tools import add_tags_to_instance, \
+    add_validation_status_to_instance, get_validation_status, \
+    remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
-from onadata.apps.api.permissions import XFormPermissions
+from onadata.apps.api.permissions import XFormDataPermissions
+from onadata.libs.permissions import CAN_CHANGE_XFORM
 from onadata.libs.serializers.data_serializer import (
     DataSerializer, DataListSerializer, DataInstanceSerializer)
 from onadata.libs import filters
@@ -401,7 +403,7 @@ Delete a specific submission in a form
     content_negotiation_class = renderers.InstanceContentNegotiation
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.XFormOwnerFilter)
-    permission_classes = (XFormPermissions,)
+    permission_classes = (XFormDataPermissions,)
     lookup_field = 'pk'
     lookup_fields = ('pk', 'dataid')
     extra_lookup_fields = None
@@ -482,7 +484,7 @@ Delete a specific submission in a form
 
         return qs
 
-    @detail_route(methods=["GET", "PATCH"])
+    @detail_route(methods=["GET", "PATCH", "DELETE"])
     def validation_status(self, request, *args, **kwargs):
         """
         View or modify validation status of specific instance.
@@ -495,10 +497,16 @@ Delete a specific submission in a form
         instance = self.get_object()
         data = {}
 
-        if request.method == "PATCH":
+        if request.method != "GET":
             if request.user.has_perm("validate_xform", instance.asset):
-                if not add_validation_status_to_instance(request, instance):
+                if request.method == "PATCH" and not add_validation_status_to_instance(request, instance):
                     http_status = status.HTTP_400_BAD_REQUEST
+                elif request.method == "DELETE":
+                    if remove_validation_status_from_instance(instance):
+                        http_status = status.HTTP_204_NO_CONTENT
+                        data = None
+                    else:
+                        http_status = status.HTTP_400_BAD_REQUEST
             else:
                 raise PermissionDenied(_(u"You do not have validate permissions."))
 
@@ -546,7 +554,7 @@ Delete a specific submission in a form
         data = {}
         if isinstance(self.object, XForm):
             raise ParseError(_(u"Data id not provided."))
-        elif(isinstance(self.object, Instance)):
+        elif isinstance(self.object, Instance):
             if request.user.has_perm("change_xform", self.object.xform):
                 return_url = request.query_params.get('return_url')
                 if not return_url:
@@ -576,8 +584,12 @@ Delete a specific submission in a form
         if isinstance(self.object, XForm):
             raise ParseError(_(u"Data id not provided."))
         elif isinstance(self.object, Instance):
-
-            if request.user.has_perm("delete_xform", self.object.xform):
+            # Redundant permissions check that duplicates
+            # `XFormDataPermissions`, left here to minimize changes. We're
+            # deleting an `Instance`, not an `XForm`, so the correct permission
+            # to verify is `change_xform` (`CAN_CHANGE_XFORM`). This matches
+            # the behavior of `onadata.apps.main.views.delete_data`
+            if request.user.has_perm(CAN_CHANGE_XFORM, self.object.xform):
                 self.object.delete()
             else:
                 raise PermissionDenied(_(u"You do not have delete "
@@ -643,7 +655,10 @@ Delete a specific submission in a form
 
             if http_status == status.HTTP_200_OK:
 
-                new_validation_status_uid = payload.get("validation_status.uid")
+                if request.data.get("reset"):
+                    new_validation_status_uid = {}
+                else:
+                    new_validation_status_uid = payload.get("validation_status.uid")
 
                 if new_validation_status_uid is None:
                     http_status = status.HTTP_400_BAD_REQUEST

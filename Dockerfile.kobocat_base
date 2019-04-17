@@ -1,4 +1,4 @@
-# Base image to take care of installing `apt` and `pip` requirements. Also clones the `kobocat-template` repo.
+# Base image to take care of installing `apt` and `pip` requirements.
 
 FROM kobotoolbox/base-kobos:latest
 
@@ -31,13 +31,3 @@ RUN mkdir -p ${PIP_EDITABLE_PACKAGES_DIR} && \
     pip install --src ${PIP_EDITABLE_PACKAGES_DIR}/ -r ${KOBOCAT_TMP_DIR}/base_requirements/base.pip && \
     pip install --src ${PIP_EDITABLE_PACKAGES_DIR}/ -r ${KOBOCAT_TMP_DIR}/base_requirements/s3.pip && \
     rm -rf ~/.cache/pip
-
-
-################################
-# Install `kobocat-templates`. #
-################################
-
-RUN mkdir -p /srv/src && \
-    cd /srv/src && \
-    git clone --depth 1 https://github.com/kobotoolbox/kobocat-template.git -b master && \
-    chown -R ${UWSGI_USER} /srv/src/kobocat-template

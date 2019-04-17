@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import pytz
@@ -26,6 +27,8 @@ from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
 from onadata.apps.logger.fields import LazyDefaultBooleanField
+from onadata.apps.logger.exceptions import DuplicateUUIDError
+
 
 try:
     from formpack.utils.xls_to_ss_structure import xls_to_dicts
@@ -42,10 +45,6 @@ def upload_to(instance, filename):
         instance.user.username,
         'xls',
         os.path.split(filename)[1])
-
-
-class DuplicateUUIDError(Exception):
-    pass
 
 
 class XForm(BaseModel):
@@ -82,7 +81,7 @@ class XForm(BaseModel):
     date_modified = models.DateTimeField(auto_now=True)
     last_submission_time = models.DateTimeField(blank=True, null=True)
     has_start_time = models.BooleanField(default=False)
-    uuid = models.CharField(max_length=32, default=u'')
+    uuid = models.CharField(max_length=32, default=u'', db_index=True)
 
     uuid_regex = re.compile(r'(<instance>.*?id="[^"]+">)(.*</instance>)(.*)',
                             re.DOTALL)
