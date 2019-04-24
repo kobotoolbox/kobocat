@@ -382,7 +382,10 @@ class Instance(models.Model):
 
         super(Instance, self).save(*args, **kwargs)
 
-    def set_deleted(self, deleted_at=timezone.now()):
+    def set_deleted(self, deleted_at=Ellipsis):
+        # using Ellipsis to indicate that deleted_at was not explicitly set
+        if deleted_at is Ellipsis:
+            deleted_at = timezone.now()
         self.deleted_at = deleted_at
         self.save()
         # force submission count re-calculation
