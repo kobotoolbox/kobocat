@@ -7,7 +7,8 @@ from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext_lazy
 
-from onadata.apps.logger.models.xform import XForm, DuplicateUUIDError
+from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.exceptions import DuplicateUUIDError
 from onadata.libs.utils.model_tools import update_xform_uuid
 
 

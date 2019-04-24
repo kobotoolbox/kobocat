@@ -1,0 +1,61 @@
+{% load humanize %}
+{% load i18n %}
+
+<table class="published_forms__table footable" data-page-size="5">
+  <thead>
+    <tr>
+      <th data-toggle="true"></th>
+      <th class="published_forms__header published_forms__header--projects">{%  trans "Projects" %}</th>
+      <th class="published_forms__header published_forms__header--state">{%  trans "Active" %}</th>
+      <th data-hide="phone" class="published_forms__header published_forms__header--shared">{%  trans "Shared By" %}</th>
+      <th data-hide="phone" class="published_forms__header published_forms__header--date">{%  trans "Date Created" %}</th>
+      <th data-hide="phone" class="published_forms__header published_forms__header--modified">{%  trans "Last Modified" %}</th>
+      <th data-hide="phone" class="published_forms__header published_forms__header--submissions">{%  trans "Submissions" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+
+
+{% for xform in xform_list.xforms %}
+  {% with submission_count=xform.submission_count time_of_last_submission=xform.time_of_last_submission has_instances_with_geopoints=xform.has_instances_with_geopoints %}
+      <tr class="published_forms__form">
+        <td></td>
+        <td class="published_forms__cell published_forms__cell--project">
+            <a href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}">{{ xform.title }}</a> 
+            {% if xform.description %}
+            <div class="project__description">
+              {{ xform.description }}
+            </div>
+            {% endif %}
+            <!--   {% if xform.shared %}
+                <span class="label label-info label-public">{%  trans "PUBLIC" %}</span>
+            {% endif %} -->
+            {% if xform.encrypted %}
+              <span class="label label-important label-encrypted">&nbsp;{% trans "ENCRYPTED" %}&nbsp;</span>
+            {% endif %}
+        </td>
+        <td class="published_forms__cell published_forms__cell--state">
+          {% if not xform.downloadable %}<i class="fa fa-minus-circle color--red"></i>{% endif %}
+          {% if xform.downloadable %}<i class="fa fa-check color--green"></i>{% endif %}
+        </td>
+        <td class="published_forms__cell published_forms__cell--shared"> 
+          {% if xform.user != request.user  %}
+            {{ xform.user.username }}
+          {% endif %}
+        </td>
+        <td class="published_forms__cell published_forms__cell--date">
+          {{ xform.date_created|date:"N d, Y" }}
+        </td>
+        <td class="published_forms__cell published_forms__cell--modified">
+          {% if time_of_last_submission %}
+              {{ time_of_last_submission|date:"N d, Y" }}
+          {% endif %}
+        </td>
+        <td class="published_forms__cell published_forms__cell--submissions">{{ submission_count|intcomma }}</td>
+      </tr>
+  {% endwith %}
+{% endfor %}
+
+
+  </tbody>
+</table>

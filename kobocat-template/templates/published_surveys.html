@@ -1,0 +1,50 @@
+{% load humanize %}
+{% load i18n %}
+
+{% if all_forms or forms_shared_with %}
+
+  {% if message and message.preview_url %}
+    <div id="preview-modal" class="modal hide fade">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>{{ message.published_survey.title }} - {% trans "Preview" %}</h3>
+      </div>
+      <div class="modal-body">
+        <iframe src="{{message.preview_url}}"></iframe>
+      </div>
+      <div class="modal-footer"></div>
+    </div>
+  {% endif %}
+
+  {% for xform_list in xforms_list %}
+    {% if xform_list.id == "published_or_shared" %}
+      <section id="{{ xform_list.id }}-forms" class="published_forms">
+        {% if xform_list.xforms %}
+          {% include 'published_forms__list.html' %}
+        {% endif %}
+      </section>
+    {% else %}
+      <!-- not displaying '{{ xform_list.id }}' form list -->
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<!-- <div class="modal hide fade" id="popupmodal" style="width: auto; left:36%; margin-left: auto; margin-right: auto;" tabindex="-1" role="dialog">
+     <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>{%  trans "Mobile Form" %}</h3>
+    </div>
+    <div class="modal-body" style="text-align: center;">
+         <div class="img_holder"/> </div>
+    </div>
+    <div class="modal-footer" style="text-align: center;">
+
+        {%  trans "DOWNLOAD " %}
+        <a class="btn" href="http://scan.me/apps/" target="_blank">
+            <i class="icon-qrcode"></i>
+        {%  trans " Scan - QR Reader" %}
+        </a>
+
+    </div>
+</div>
+ -->

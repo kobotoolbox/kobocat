@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 from hashlib import sha256
 
@@ -24,14 +25,7 @@ from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
     UUID, XFORM_ID_STRING, SUBMITTED_BY
 from onadata.libs.utils.model_tools import set_uuid
 from onadata.apps.logger.fields import LazyDefaultBooleanField
-
-
-class FormInactiveError(Exception):
-    def __unicode__(self):
-        return _("Form is inactive")
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
+from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
 
 
 # need to establish id_string of the xform before we run get_dict since

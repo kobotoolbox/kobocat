@@ -1415,7 +1415,7 @@ def activity_api(request, username):
 
 def qrcode(request, username, id_string):
     try:
-        formhub_url = "http://%s/" % request.META['HTTP_HOST']
+        formhub_url = "http://%s/" % request.get_host()
     except:
         formhub_url = "http://formhub.org/"
     formhub_url = formhub_url + username
@@ -1470,4 +1470,14 @@ def username_list(request):
             .filter(username__startswith=query, is_active=True, pk__gte=0)
         data = [user['username'] for user in users]
 
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+@require_GET
+def media_endpoint(request):
+    """
+    Returns medias endpoint prefix.
+    :param request:
+    :return: dict
+    """
+    data = {"result": settings.MEDIA_URL}
     return HttpResponse(json.dumps(data), content_type='application/json')
