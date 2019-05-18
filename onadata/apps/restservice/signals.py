@@ -19,6 +19,8 @@ def save_kpi_hook_service(sender, instance, **kwargs):
     if instance.has_kpi_hooks:
         # Only register the service if it hasn't been created yet.
         if kpi_hook_service is None:
+
+            # TODO handle kpi v2
             kpi_hook_service = RestService(
                 service_url="/assets/{}/hook-signal/".format(instance.id_string),
                 xform=instance,
