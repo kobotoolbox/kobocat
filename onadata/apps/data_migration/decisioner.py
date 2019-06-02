@@ -155,6 +155,5 @@ class MigrationDecisioner(object):
         return {
             field_name: groups
             for field_name, groups in fields_groups_new.iteritems()
-            if field_name not in fields_changes[self.NEW_FIELDS_KEY] and
-               groups != migrated_fields_groups_prev[field_name]
+            if groups != migrated_fields_groups_prev.get(field_name)
         }
