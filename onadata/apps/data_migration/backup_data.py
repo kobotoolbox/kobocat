@@ -42,7 +42,7 @@ def backup_xform(xform_data, xform=None, migration_changes=None, bind=False):
 
 def bind_backup_to_version_tree(xform, backup):
     vt = VersionTree.objects.create(version=backup)
-    xform_version = XFormVersion.objects.get(xform=xform)
+    xform_version, _ = XFormVersion.objects.get_or_create(xform=xform)
     if xform_version.version_tree is not None:
         vt.parent = xform_version.version_tree
         vt.save()

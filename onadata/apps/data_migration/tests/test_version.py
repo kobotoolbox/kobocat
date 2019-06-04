@@ -1,8 +1,19 @@
 from django.test import TestCase
 
+from . import fixtures
+from .common import CommonTestCase
 from onadata.apps.data_migration.models.version import (
     VersionTree, VersionTreeException, last_common_item
 )
+
+
+class XFormVersionTestCase(CommonTestCase):
+    def setUp(self):
+        self.user = self.create_user('Philip Wadler')
+        self.xform = self.create_xform(fixtures.form_xml_case_1)
+
+    def test_version_created_for_new_xform(self):
+        self.assertIsNotNone(self.xform.xformversion)
 
 
 class VersionTreeTestCase(TestCase):
