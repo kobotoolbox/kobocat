@@ -3,9 +3,9 @@ from onadata.apps.data_migration.models import (
 from .decisioner import MigrationDecisioner
 
 
-def create_xform_backup(xform_data, xform=None, changes=None):
+def create_xform_backup(xform_data, xform=None, changes=None, bind=True):
     xform = xform or xform_data
-    xform_backup = backup_xform(xform_data, xform, changes)
+    xform_backup = backup_xform(xform_data, xform, changes, bind)
 
     for survey in xform.instances.iterator():
         backup_survey(survey, xform_backup)

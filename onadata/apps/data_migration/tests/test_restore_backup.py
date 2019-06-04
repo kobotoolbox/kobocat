@@ -100,6 +100,7 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
         restorer = BackupRestorer(self.xform_new, restore_last=True)
         backup = create_xform_backup(self.xform_new,
                                      changes=self.get_field_changes())
+        self.xform.xformversion.refresh_from_db()
         restorer_backup = restorer._get_xform_backup(restore_last=True).id
         self.assertEqual(restorer_backup, backup.id)
 
@@ -190,6 +191,7 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
         backup_to_restore = backup_xform(self.xform, migration_changes=changes_fst, bind=True)
 
         current_backup = backup_xform(self.xform, migration_changes=changes_snd, bind=False)
+        self.xform.xformversion.refresh_from_db()
         vt = VersionTree.objects.create(parent=self.xform.xformversion.version_tree.parent,
                                         version=current_backup)
         self.xform.xformversion.version_tree = vt
