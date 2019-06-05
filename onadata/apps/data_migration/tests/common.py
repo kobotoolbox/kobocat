@@ -132,3 +132,19 @@ class GroupedMigrationTestCase(MigrationTestCase):
         return {
             'determine_homeomorphism': ['__new_field__'],
         }
+
+
+class ThirdMigrationTestCase(MigrationTestCase):
+    def get_fixtures(self):
+        return {
+            'xform': fixtures.form_xml_case_3,
+            'xform_new': fixtures.form_xml_case_3_after,
+            'survey': fixtures.survey_xml_3,
+        }
+
+    def get_migration_decisions(self):
+        return {
+            'determine_first_name': ['name'],
+            'determine_last_name': ['__new_field__'],
+            'determine_date': ['__new_field__'],
+        }

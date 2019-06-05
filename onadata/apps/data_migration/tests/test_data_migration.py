@@ -90,3 +90,17 @@ class DataMigratorIntegrationGroupsTestCase(test_case.GroupedMigrationTestCase):
             self.xform_new.instances.first().xml,
             fixtures.survey_xml_groups_after__second,
         )
+
+
+class DataMigratorIntegrationSecondTestsCase(test_case.ThirdMigrationTestCase):
+    def test_migration__third_case(self):
+        self.data_migrator.migrate()
+        self.xform_new.refresh_from_db()
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.xml,
+            fixtures.form_xml_case_3_after,
+        )
+        self.assertEqualIgnoringWhitespaces(
+            self.xform_new.instances.first().xml,
+            fixtures.survey_3_after_migration,
+        )
