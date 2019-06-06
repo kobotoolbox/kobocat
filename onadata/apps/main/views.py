@@ -1053,6 +1053,10 @@ def download_media_data(request, username, id_string, data_id):
 
 
 def form_photos(request, username, id_string):
+    GALLERY_IMAGE_COUNT_LIMIT = 2500
+    GALLERY_THUMBNAIL_CHUNK_SIZE = 25
+    GALLERY_THUMBNAIL_CHUNK_DELAY = 5000 # ms
+
     xform, owner = check_and_set_user_and_form(username, id_string, request)
 
     if not xform:
@@ -1063,9 +1067,16 @@ def form_photos(request, username, id_string):
     data['content_user'] = owner
     data['xform'] = xform
     image_urls = []
+    too_many_images = False
 
-    for instance in xform.instances.all():
-        for attachment in instance.attachments.all():
+    # Show the most recent images first
+    for instance in xform.instances.all().order_by('-pk'):
+        attachments = instance.attachments.all()
+        # If we have to truncate, don't include a partial instance
+        if len(image_urls) + attachments.count() > GALLERY_IMAGE_COUNT_LIMIT:
+            too_many_images = True
+            break
+        for attachment in attachments:
             # skip if not image e.g video or file
             if not attachment.mimetype.startswith('image'):
                 continue
@@ -1080,6 +1091,9 @@ def form_photos(request, username, id_string):
             image_urls.append(data)
 
     data['images'] = image_urls
+    data['too_many_images'] = too_many_images
+    data['thumbnail_chunk_size'] = GALLERY_THUMBNAIL_CHUNK_SIZE
+    data['thumbnail_chunk_delay'] = GALLERY_THUMBNAIL_CHUNK_DELAY
     data['profilei'], created = UserProfile.objects.get_or_create(user=owner)
 
     return render(request, 'form_photos.html', data)

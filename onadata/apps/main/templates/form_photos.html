@@ -8,16 +8,11 @@
 
 {% block body %}
 {% load i18n %}
+{% load l10n %}
 <body>
     {% include "topbar.html" %}
     {% if images|length %}
-        <div id="gallery">
-        {% for image_url in images %}
-            <a href="{{ image_url.large }}">
-                <img longdesc={{ image_url.original }} src="{{ image_url.small }}" alt="{{ image_url.original }}">
-            </a>
-        {% endfor %}
-        </div>
+        <div id="gallery"></div>
     {% else %}
         <div style="text-align:center;">
             {% trans "There are no photos in this project." %}
@@ -30,16 +25,39 @@
     <script type="text/javascript" src="{{STATIC_URL}}galleria/galleria-1.2.8.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}galleria/themes/classic/galleria.classic.min.js"></script>
     <script type="text/javascript">
+        var galleryData = [
+        {% for image_url in images %}
+            {
+                thumb: '{{ image_url.small }}',
+                image: '{{ image_url.large }}',
+                link: '{{ image_url.original }}'
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+        ];
         // Load the classic theme
         // Galleria.loadTheme('{{STATIC_URL}}galleria/themes/classic/galleria.classic.min.js');
         Galleria.configure({
+            thumbnails: 'lazy',
             transition: 'fade',
             lightbox: false,
             popupLinks: true,
             showInfo: true
         });
         // Initialize Galleria
-        Galleria.run('#gallery');
+        Galleria.run('#gallery', {dataSource: galleryData})
+        Galleria.ready(function(options) {
+            this.lazyLoadChunks(
+                {# `unlocalize` gets rid of that pesky thousand separator #}
+                {{ thumbnail_chunk_size|unlocalize }},
+                {{ thumbnail_chunk_delay|unlocalize }}
+            );
+            {% if too_many_images %}
+            Galleria.raise(
+                "{%trans "This project has too many photos to display in this gallery. Only the latest ___ are shown." %}".replace(
+                    "___", "{{ images|length }}")
+            );
+            {% endif %}
+        });
     </script>
 {% endif %}
 {% endblock %}
