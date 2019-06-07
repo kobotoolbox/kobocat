@@ -97,10 +97,10 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
             BackupRestorer(self.xform_new)
 
     def test_get_xform_backup(self):
-        restorer = BackupRestorer(self.xform_new, restore_last=True)
         backup = create_xform_backup(self.xform_new,
                                      changes=self.get_field_changes())
-        self.xform.xformversion.refresh_from_db()
+        self.xform_new.xformversion.refresh_from_db()
+        restorer = BackupRestorer(self.xform_new, restore_last=True)
         restorer_backup = restorer._get_xform_backup(restore_last=True).id
         self.assertEqual(restorer_backup, backup.id)
 
