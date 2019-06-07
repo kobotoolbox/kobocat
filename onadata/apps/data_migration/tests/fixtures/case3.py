@@ -151,14 +151,13 @@ survey_template_3 = '''<SurveyGroups xmlns:jr="http://openrosa.org/javarosa" xml
   </formhub>
   <name>{}</name>
   <gender>male</gender>
-  <photo_should_not_be_in_a_group>
-    <photo/>
-  </photo_should_not_be_in_a_group>
+  <new_record_already_in_template__wrong_group>
+    <date/>
+  </new_record_already_in_template__wrong_group>
+  <photo/>
   <location>-1 1.1 1 2</location>
   <redundant_group>
-    <group_age>
-      <age>{}</age>
-    </group_age>
+    <age>{}</age>
   </redundant_group>
   <thanks/>
   <start_time>2016-01-01T18:32:20.000+03:00</start_time>
@@ -176,8 +175,12 @@ survey_after_migration_template_3 = '''<SurveyGroups2 xmlns:jr="http://openrosa.
     <uuid>{}</uuid>
   </formhub>
   <gender>male</gender>
+  <new_record_already_in_template__wrong_group>
+  </new_record_already_in_template__wrong_group>
   <photo/>
   <location>-1 1.1 1 2</location>
+  <redundant_group>
+  </redundant_group>
   <thanks/>
   <start_time>2016-01-01T18:32:20.000+03:00</start_time>
   <end_time>2016-01-01T18:33:03.000+03:00</end_time>
@@ -187,8 +190,8 @@ survey_after_migration_template_3 = '''<SurveyGroups2 xmlns:jr="http://openrosa.
     <instanceID>uuid:{}</instanceID>
   </meta>
   <private>
-    <last_name/>
     <first_name>{}</first_name>
+    <last_name/>
   </private>
   <group_1>
     <group_2>
@@ -199,7 +202,7 @@ survey_after_migration_template_3 = '''<SurveyGroups2 xmlns:jr="http://openrosa.
   </group_1>
   <group_age>
     <age>{}</age>
-  <group_age>
+  </group_age>
 </SurveyGroups2>
 '''
 

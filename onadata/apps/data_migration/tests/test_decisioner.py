@@ -1,4 +1,6 @@
-from .common import MigrationTestCase, GroupedMigrationTestCase
+from .common import (
+    MigrationTestCase, GroupedMigrationTestCase, ThirdMigrationTestCase,
+)
 
 
 class MigrationDecisionerUnitTests(MigrationTestCase):
@@ -123,7 +125,10 @@ class MigrationDecisionerUnitTests(MigrationTestCase):
     def test_changed_fields_groups(self):
         changed_fields_groups = self.migration_decisioner\
             .changed_fields_groups()
-        self.assertEqual({}, changed_fields_groups)
+        self.assertEqual({
+            'birthday': [],
+            'last_name': [],
+        }, changed_fields_groups)
 
 
 
@@ -140,5 +145,23 @@ class GroupedMigrationDecisionerUnitTests(GroupedMigrationTestCase):
                 'endomorphism': ['group_transformations'],
                 'isomorphism': bijective_group,
                 'automorphism': bijective_group,
+                'homeomorphism': bijective_group + ['continuous'],
+            }
+        )
+
+
+class ThirdMigrationDecisionerUnitTests(ThirdMigrationTestCase):
+    def setUp(self):
+        super(ThirdMigrationDecisionerUnitTests, self).setUp()
+        self.migration_decisioner = self.create_migration_decisioner()
+
+    def test_changed_fields_groups(self):
+        changed_fields_groups = self.migration_decisioner.changed_fields_groups()
+        self.assertEqual(
+            changed_fields_groups, {
+                'age': ['group_age'],
+                'first_name': ['private'],
+                'last_name': ['private'],
+                'date': ['group_1', 'group_2', 'group_3'],
             }
         )
