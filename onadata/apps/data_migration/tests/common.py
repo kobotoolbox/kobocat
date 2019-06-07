@@ -1,3 +1,7 @@
+import re
+from functools import partial
+
+from lxml import etree
 from django.test import TestCase
 from django.contrib.auth.models import User
 
@@ -11,22 +15,68 @@ from onadata.apps.data_migration.tests import fixtures
 
 
 def remove_whitespaces(string):
-    return string.replace('\n', '').replace(' ', '')
+    return re.sub(r"\s+", "", string)
+
+
+def reduce_whitespaces(string):
+    return re.sub(r"\s+", " ", string)
+
+
+def xmls_not_equal_msg(actual, expected, extra=''):
+    return "\n{}!=\n{}. {}".format(actual, expected, extra)
 
 
 class CommonTestCase(TestCase):
-    def assertEqualIgnoringWhitespaces(self, result, expected):
+    def assertEqualIgnoringWhitespaces(self, actual, expected):
         self.assertEqual(
-            remove_whitespaces(result),
+            remove_whitespaces(actual),
             remove_whitespaces(expected),
+            msg=xmls_not_equal_msg(actual, expected),
         )
 
-    def assertXMLsEqual(self, result_xml, expected_xml):
+    def assertXMLsEqual(self, actual_xml, expected_xml):
+        """Assert that given XMLs are equal using string comparison"""
         single_to_double_quotes = lambda s: s.replace("'", '"')
         self.assertEqualIgnoringWhitespaces(
-            single_to_double_quotes(result_xml),
+            single_to_double_quotes(actual_xml),
             single_to_double_quotes(expected_xml),
         )
+
+    @classmethod
+    def _are_trees_isomorphic(cls, e1, e2):
+        """Recursively check whether two XML trees are isomorphic.
+
+        :rtype: tuple (are_equal: bool, info: str)
+        """
+        sort_elems = lambda x: sorted(x, key=lambda e: e.tag)
+        get_msg = lambda e1, e2, attr: (
+            "{e1} vs {e2}, {attr}: {e1_attr} != {e2_attr}".format(
+                e1=str(e1), e2=str(e2), attr=attr,
+                e1_attr=getattr(e1, attr), e2_attr=getattr(e2, attr)),
+        )
+        cmp_tails = lambda e1, e2: (
+            remove_whitespaces(e1.tail or '') != remove_whitespaces(e2.tail or '')
+        )
+        if e1.tag != e2.tag: return False, get_msg(e1, e2, 'tag')
+        if e1.text != e2.text: return False, get_msg(e1, e2, 'text')
+        if cmp_tails(e1, e2): return False, get_msg(e1, e2, 'tail')
+        if e1.attrib != e2.attrib: return False, get_msg(e1, e2, 'attrib')
+        if len(e1) != len(e2): return False, "len({}) != len({})".format(str(e1), str(e2))
+
+        for c1, c2 in zip(sort_elems(e1), sort_elems(e2)):
+            are_equal, info = cls._are_trees_isomorphic(c1, c2)
+            if not are_equal:
+                return False, info
+        return True, ''
+
+    def assertXMLsIsomorphic(self, actual, expected):
+        """Assert that given XMLs are equal up to isomorphism"""
+        get_msg = partial(xmls_not_equal_msg, actual, expected)
+        actual, expected = reduce_whitespaces(actual), reduce_whitespaces(expected)
+        e1, e2 = etree.XML(actual), etree.XML(expected)
+
+        are_equal, info = self._are_trees_isomorphic(e1, e2)
+        self.assertTrue(are_equal, msg=get_msg(info))
 
     def assertCountEqual(self, expected, actual):
         self.assertEqual(sorted(expected), sorted(actual))
@@ -131,4 +181,20 @@ class GroupedMigrationTestCase(MigrationTestCase):
     def get_migration_decisions(self):
         return {
             'determine_homeomorphism': ['__new_field__'],
+        }
+
+
+class ThirdMigrationTestCase(MigrationTestCase):
+    def get_fixtures(self):
+        return {
+            'xform': fixtures.form_xml_case_3,
+            'xform_new': fixtures.form_xml_case_3_after,
+            'survey': fixtures.survey_xml_3,
+        }
+
+    def get_migration_decisions(self):
+        return {
+            'determine_first_name': ['name'],
+            'determine_last_name': ['__new_field__'],
+            'determine_date': ['__new_field__'],
         }

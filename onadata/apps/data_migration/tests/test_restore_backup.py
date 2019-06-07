@@ -53,7 +53,7 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
             self.xform_new.xml,
             fixtures.form_xml_case_1.replace('Survey', 'Survey2'),
         )
-        self.assertEqualIgnoringWhitespaces(
+        self.assertXMLsIsomorphic(
             self.xform_new.instances.first().xml,
             self._append_survey_data(fixtures.survey_xml).replace('Survey', 'Survey2')
         )
@@ -66,11 +66,11 @@ class BackupRestoreTestCase(CommonBackupRestoreTestCase):
         mid_survey = self.create_survey(self.xform_new, fixtures.survey_after_migration_second)
         BackupRestorer(self.xform_new, restore_last=True).restore_xform_backup()
 
-        self.assertEqualIgnoringWhitespaces(
+        self.assertXMLsIsomorphic(
             self.xform_new.instances.get(id=self.survey.id).xml,
             self._append_survey_data(fixtures.survey_xml).replace('Survey', 'Survey2'),
         )
-        self.assertEqualIgnoringWhitespaces(
+        self.assertXMLsIsomorphic(
             self.xform_new.instances.get(id=mid_survey.id).xml,
             self._append_survey_data(fixtures.survey_xml_second).replace('Survey', 'Survey2'),
         )

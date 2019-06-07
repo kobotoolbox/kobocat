@@ -7,7 +7,7 @@ Differences between form_xml_case_1 and form_xml_case_1_after:
 - Location not required
 - Added new option to select in gender
 - Removed date field
-- Rename 'name' to 'last_name'
+- Rename 'name' to 'first_name'
 - Add 'last_name' field
 - Add 'birthday' field
 

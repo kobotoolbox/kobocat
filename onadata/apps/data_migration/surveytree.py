@@ -55,9 +55,17 @@ class SurveyTree(XMLTree):
         return get_next_from_iterator
 
     def get_field(self, name):
-        """Get field Element by name."""
+        """Get field in tree by name."""
         matching_elems = self._get_matching_elems(lambda f: f.tag == name)
         return self._get_first_element(name)(matching_elems)
+
+    @classmethod
+    def get_child_field(cls, element, name):
+        """Get child of element by name"""
+        return compose(
+            cls._get_first_element(name),
+            partial(ifilter, lambda f: f.tag == name),
+        )(element)
 
     def permanently_remove_field(self, field):
         """WARNING: It is not possible to revert this operation"""
@@ -94,7 +102,7 @@ class SurveyTree(XMLTree):
 
         for group_tag in group_chain:
             try:
-                group_field = self.get_field(group_tag)
+                group_field = self.get_child_field(parent, group_tag)
             except MissingFieldException:
                 group_field = self.create_element(group_tag)
                 parent.append(group_field)

@@ -11,6 +11,7 @@ class SurveyTreeOperationsTest(CommonTestCase):
     def setUp(self):
         super(SurveyTreeOperationsTest, self).setUp()
         self.survey = SurveyTree(fixtures.survey_xml)
+        self.survey_3 = SurveyTree(fixtures.survey_3_after_migration)
 
     def test_get_fields(self):
         self.assertTrue(all(map(etree.iselement, self.survey.get_fields())))
@@ -62,16 +63,63 @@ class SurveyTreeOperationsTest(CommonTestCase):
                             '</AlgebraicTypes>')
         survey.get_or_create_field('functor')
         survey.get_or_create_field('applicative', groups=['functor'])
-        survey.get_or_create_field('monad', groups=['applicative'], text='Either')
+        survey.get_or_create_field('monad', groups=['functor', 'applicative'],
+                                   text='Either')
         self.assertXMLsEqual(survey.to_string(), '''
             <AlgebraicTypes>
-                <functor> 
+                <functor>
                     <applicative>
                         <monad>Either</monad>
                     </applicative>
                 </functor>
             </AlgebraicTypes>
         ''')
+
+    def test_get_or_create_field_with_groups__duplicates(self):
+        survey = SurveyTree('<AlgebraicTypes>'
+                            '<functor><applicative></applicative></functor>'
+                            '</AlgebraicTypes>')
+        survey.get_or_create_field('functor')
+        survey.get_or_create_field('applicative', groups=[])
+        survey.get_or_create_field('monad', groups=['applicative'],
+                                   text='Either')
+        self.assertXMLsEqual(survey.to_string(), '''
+            <AlgebraicTypes>
+                <functor>
+                    <applicative/>
+                </functor>
+                <applicative>
+                    <monad>Either</monad>
+                </applicative>
+            </AlgebraicTypes>
+        ''')
+
+    def test_get_child_field__no_such_field_exist(self):
+        fields = ['does_not_exist', 'last_name', 'group_2', 'group_3']
+        for f in fields:
+            with self.assertRaises(MissingFieldException):
+                SurveyTree.get_child_field(self.survey_3.root, f)
+
+    def test_get_child_field(self):
+        field_1 = SurveyTree.get_child_field(self.survey_3.root, 'group_1')
+        field_2 = SurveyTree.get_child_field(self.survey_3.root, 'photo')
+        field_3 = SurveyTree.get_child_field(field_1, 'group_2')
+
+        self.assertEqual({
+            'field_1': 'group_1',
+            'field_2': 'photo',
+            'field_3': 'group_2',
+            'field_1_is_element': True,
+            'field_2_is_element': True,
+            'field_3_is_element': True,
+        }, {
+            'field_1': field_1.tag,
+            'field_2': field_2.tag,
+            'field_3': field_3.tag,
+            'field_1_is_element': etree.iselement(field_1),
+            'field_2_is_element': etree.iselement(field_2),
+            'field_3_is_element': etree.iselement(field_3),
+        })
 
 
 class SurveyTreeWithGroupsOperationsTest(CommonTestCase):
@@ -112,7 +160,7 @@ class SurveyTreeWithGroupsOperationsTest(CommonTestCase):
         survey.insert_field_into_group_chain(monoid, ['semigroup'])
         self.assertXMLsEqual(survey.to_string(), '''
             <AlgebraicTypes>
-                <functor> 
+                <functor>
                     <applicative>
                         <monad>Either</monad>
                     </applicative>
@@ -120,7 +168,42 @@ class SurveyTreeWithGroupsOperationsTest(CommonTestCase):
                 </functor>
                 <semigroup>
                     <monoid>assoc and id</monoid>
-                </semigroup> 
+                </semigroup>
+            </AlgebraicTypes>
+        ''')
+
+    def test_insert_field_into_group_chain__groups_in_wrong_places(self):
+        survey = SurveyTree('''
+            <AlgebraicTypes>
+                <totally_wrong>
+                    <semigroup>
+                        <functor>Endofunctor</functor>
+                    </semigroup>
+                </totally_wrong>
+            </AlgebraicTypes>
+        ''')
+        monad = survey.create_element('monad', 'Either')
+        foldable = survey.create_element('foldable')
+        monoid = survey.create_element('monoid', 'assoc and id')
+        survey.insert_field_into_group_chain(monad, ['functor', 'applicative'])
+        survey.insert_field_into_group_chain(foldable, ['functor'])
+        survey.insert_field_into_group_chain(monoid, ['semigroup'])
+        self.assertXMLsEqual(survey.to_string(), '''
+            <AlgebraicTypes>
+                <totally_wrong>
+                    <semigroup>
+                        <functor>Endofunctor</functor>
+                    </semigroup>
+                </totally_wrong>
+                <functor>
+                    <applicative>
+                        <monad>Either</monad>
+                    </applicative>
+                    <foldable/>
+                </functor>
+                <semigroup>
+                    <monoid>assoc and id</monoid>
+                </semigroup>
             </AlgebraicTypes>
         ''')
 

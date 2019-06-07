@@ -57,7 +57,6 @@ class MigrationViewsTests(MigrationTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(XForm.objects.count(), 2)
 
-    @skip("intended to be fixed in the next PR")
     def test_migrate_xform_data(self):
         url = reverse('migrate-xform-data',
                       kwargs=self.get_data__both_id_strings())
