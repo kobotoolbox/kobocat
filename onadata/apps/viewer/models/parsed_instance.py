@@ -48,10 +48,12 @@ def update_mongo_instance(record):
     # http://api.mongodb.org/python/current/api/pymongo/collection.html#pymong\
     # o.collection.Collection.save
     try:
-        return xform_instances.save(record)
-    except Exception:
+        xform_instances.save(record)
+        return True
+    except Exception as e:
+        logging.getLogger().error("update_mongo_instance - {}".format(str(e)), exc_info=True)
         logging.getLogger().warning('Submission could not be saved to Mongo.', exc_info=True)
-        pass
+    return False
 
 
 class ParsedInstance(models.Model):
@@ -257,9 +259,17 @@ class ParsedInstance(models.Model):
             return False
         else:
             if async:
+                # TODO update self.instance after async save is made
                 update_mongo_instance.apply_async((), {"record": d})
             else:
-                update_mongo_instance(d)
+                success = update_mongo_instance(d)
+                # Only update self.instance is `success` is different from
+                # current_value (`self.instance.is_sync_with_mongo`)
+                if success != self.instance.is_synced_with_mongo:
+                    # Skip the labor-intensive stuff in Instance.save() to gain performance
+                    # Use .update() instead of .save()
+                    Instance.objects.filter(pk=self.instance.id).update(is_synced_with_mongo=success)
+
         return True
 
     @staticmethod
@@ -313,12 +323,19 @@ class ParsedInstance(models.Model):
     def save(self, async=False, *args, **kwargs):
         # start/end_time obsolete: originally used to approximate for
         # instanceID, before instanceIDs were implemented
+        created = self.pk is None
         self.start_time = None
         self.end_time = None
         self._set_geopoint()
         super(ParsedInstance, self).save(*args, **kwargs)
-        # insert into Mongo
-        return self.update_mongo(async)
+
+        # insert into Mongo.
+        # Signal has been removed because of a race condition.
+        # Rest Services were called before data was saved in DB.
+        success = self.update_mongo(async)
+        if success and created:
+            call_service(self)
+        return success
 
     def add_note(self, note):
         note = Note(instance=self.instance, note=note)
@@ -361,13 +378,3 @@ def _remove_from_mongo(sender, **kwargs):
     xform_instances.remove(instance_id)
 
 pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
-
-
-def rest_service_form_submission(sender, **kwargs):
-    parsed_instance = kwargs.get('instance')
-    created = kwargs.get('created')
-    if created:
-        call_service(parsed_instance)
-
-
-post_save.connect(rest_service_form_submission, sender=ParsedInstance)

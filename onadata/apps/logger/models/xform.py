@@ -25,6 +25,7 @@ from xml.sax import saxutils
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 
 
 try:
@@ -97,6 +98,8 @@ class XForm(BaseModel):
 
     tags = TaggableManager()
 
+    has_kpi_hooks = LazyDefaultBooleanField(default=False)
+
     class Meta:
         app_label = 'logger'
         unique_together = (("user", "id_string"), ("user", "sms_id_string"))
@@ -131,6 +134,14 @@ class XForm(BaseModel):
     @property
     def has_instances_with_geopoints(self):
         return self.instances_with_geopoints
+
+    @property
+    def kpi_hook_service(self):
+        """
+        Returns kpi hook service if it exists. XForm should have only one occurrence in any case.
+        :return: RestService
+        """
+        return self.restservices.filter(name="kpi_hook").first()
 
     def _set_id_string(self):
         matches = self.instance_id_regex.findall(self.xml)

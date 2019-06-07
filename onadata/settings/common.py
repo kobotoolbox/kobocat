@@ -115,6 +115,7 @@ ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
 ENKETO_API_INSTANCE_IFRAME_URL = ENKETO_URL + ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE_IFRAME
 
 KPI_URL = os.environ.get('KPI_URL', False)
+KPI_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KPI_URL)
 
 # specifically for site urls sent to enketo for form retrieval
 # `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.

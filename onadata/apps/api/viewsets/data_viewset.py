@@ -395,9 +395,10 @@ Delete a specific submission in a form
         renderers.CSVRenderer,
         renderers.CSVZIPRenderer,
         renderers.SAVZIPRenderer,
-        renderers.SurveyRenderer
+        renderers.RawXMLRenderer
     ]
 
+    content_negotiation_class = renderers.InstanceContentNegotiation
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.XFormOwnerFilter)
     permission_classes = (XFormPermissions,)
@@ -560,6 +561,14 @@ Delete a specific submission in a form
                 raise PermissionDenied(_(u"You do not have edit permissions."))
 
         return Response(data=data)
+
+    def retrieve(self, request, *args, **kwargs):
+        # XML rendering does not a serializer
+        if request.accepted_renderer.format == "xml":
+            instance = self.get_object()
+            return Response(instance.xml)
+        else:
+            return super(DataViewSet, self).retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
