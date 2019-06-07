@@ -1,3 +1,4 @@
+import os.path
 import requests
 
 from cStringIO import StringIO
@@ -35,7 +36,8 @@ def get_dimensions((width, height), longest_side):
 
 
 def _save_thumbnails(image, path, size, suffix):
-    nm = NamedTemporaryFile(suffix='.%s' % settings.IMG_FILE_TYPE)
+    image_ext = os.path.splitext(path)[1]
+    nm = NamedTemporaryFile(suffix='.%s' % image_ext)
     default_storage = get_storage_class()()
     try:
         # Ensure conversion to float in operations
