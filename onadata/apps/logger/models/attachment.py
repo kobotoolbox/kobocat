@@ -3,6 +3,8 @@ import re
 import mimetypes
 
 from hashlib import md5
+
+from django.conf import settings
 from django.db import models
 
 from instance import Instance
@@ -61,3 +63,19 @@ class Attachment(models.Model):
     @property
     def filename(self):
         return os.path.basename(self.media_file.name)
+
+    def secure_url(self, suffix="original"):
+        """
+        Returns image URL through kobocat redirector.
+        :param suffix: str. original|large|medium|small
+        :return: str
+        """
+        if suffix != "original" and suffix not in settings.THUMB_CONF.keys():
+            raise Exception("Invalid image thumbnail")
+
+        return u"{kobocat_url}{media_url}{suffix}?media_file={filename}".format(
+            kobocat_url=settings.KOBOCAT_URL,
+            media_url=settings.MEDIA_URL,
+            suffix=suffix,
+            filename=self.media_file.name
+        )

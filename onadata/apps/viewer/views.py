@@ -21,8 +21,12 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+
+import rest_framework.request
+from rest_framework.settings import api_settings
 
 from onadata.apps.main.models import UserProfile, MetaData, TokenStorageModel
 from onadata.apps.logger.models import XForm, Attachment
@@ -673,7 +677,11 @@ def data_view(request, username, id_string):
 def attachment_url(request, size='medium'):
     media_file = request.GET.get('media_file')
     # TODO: how to make sure we have the right media file,
-    # this assumes duplicates are the same file
+    # this assumes duplicates are the same file.
+    #
+    # Django seems to already handle that. It appends datetime to the filename.
+    # It means duplicated would be only for the same user who uploaded two files
+    # with same name at the same second.
     if media_file:
         mtch = re.search(r'^([^/]+)/attachments/([^/]+)$', media_file)
         if mtch:
@@ -699,16 +707,60 @@ def attachment_url(request, size='medium'):
             media_file_logger.info('attachment not found')
             return HttpResponseNotFound(_(u'Attachment not found'))
 
-        if not attachment.mimetype.startswith('image'):
-            return redirect(attachment.media_file.url)
+        # Checks whether users are allowed to see the media file before giving them
+        # the url
+        xform = attachment.instance.xform
 
-        try:
-            media_url = image_url(attachment, size)
-        except:
-            media_file_logger.error('could not get thumbnail for image', exc_info=True)
+        if not request.user.is_authenticated():
+            # This is not a DRF view, but we need to honor things like
+            # `DigestAuthentication` (ODK Briefcase uses it!) and
+            # `TokenAuthentication`. Let's try all the DRF authentication
+            # classes before giving up
+            drf_request = rest_framework.request.Request(request)
+            for auth_class in api_settings.DEFAULT_AUTHENTICATION_CLASSES:
+                auth_tuple = auth_class().authenticate(drf_request)
+                if auth_tuple is not None:
+                    # Is it kosher to modify `request`? Let's do it anyway
+                    # since that's what `has_permission()` requires...
+                    request.user = auth_tuple[0]
+                    # `DEFAULT_AUTHENTICATION_CLASSES` are ordered and the
+                    # first match wins; don't look any further
+                    break
+
+        if not has_permission(xform, xform.user, request):
+            return HttpResponseForbidden(_(u'Not shared.'))
+
+        media_url = None
+
+        if not attachment.mimetype.startswith('image'):
+            media_url = attachment.media_file.url
         else:
-            if media_url:
-                return redirect(media_url)
+            try:
+                media_url = image_url(attachment, size)
+            except:
+                media_file_logger.error('could not get thumbnail for image', exc_info=True)
+
+        if media_url:
+            # We want nginx to serve the media (instead of redirecting the media itself)
+            # PROS:
+            # - It avoids revealing the real location of the media.
+            # - Full control on permission
+            # CONS:
+            # - When using S3 Storage, traffic is multiplied by 2.
+            #    S3 -> Nginx -> User
+            response = HttpResponse()
+            default_storage = get_storage_class()()
+            if not isinstance(default_storage, FileSystemStorage):
+                # Double-encode the S3 URL to take advantage of NGINX's
+                # otherwise troublesome automatic decoding
+                protected_url = '/protected-s3/{}'.format(urlquote(media_url))
+            else:
+                protected_url = media_url.replace(settings.MEDIA_URL, "/protected/")
+
+            # Let nginx determine the correct content type
+            response["Content-Type"] = ""
+            response["X-Accel-Redirect"] = protected_url
+            return response
 
     return HttpResponseNotFound(_(u'Error: Attachment not found'))
 

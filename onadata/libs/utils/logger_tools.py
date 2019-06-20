@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import date, datetime
 import os
 import pytz
@@ -18,7 +19,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.http import HttpResponse, HttpResponseNotFound, \
-    StreamingHttpResponse
+    StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import DjangoUnicodeDecodeError
 from django.utils.translation import ugettext as _
@@ -29,6 +30,7 @@ from pyxform.xform2json import create_survey_element_from_xml
 import sys
 
 from onadata.apps.main.models import UserProfile
+from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
 from onadata.apps.logger.models import Attachment
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
@@ -36,7 +38,6 @@ from onadata.apps.logger.models.attachment import (
 )
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models.instance import (
-    FormInactiveError,
     InstanceHistory,
     get_id_string_from_xml_str,
     update_xform_submission_count,
@@ -309,8 +310,7 @@ def create_instance(username, xml_file, media_files,
         # content, which is slow! Use the management command
         # `populate_xml_hashes_for_instances` to hash existing submissions
         existing_instance = Instance.objects.filter(
-            Q(xml_hash=xml_hash) |
-                Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
+            Q(xml_hash=xml_hash) | Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
             xform__user=xform.user,
         ).first()
     else:
@@ -748,3 +748,29 @@ def remove_xform(xform):
 
     # reconnect parsed instance pre delete signal?
     pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+
+
+def get_instance_or_404(**criteria):
+    """
+    Mimic `get_object_or_404` but handles duplicate records.
+
+    `logger_instance` can contain records with the same `uuid`
+
+    :param criteria: dict
+    :return: Instance
+    """
+    instances = Instance.objects.filter(**criteria).order_by("id")
+    if instances:
+        instance = instances[0]
+        xml_hash = instance.xml_hash
+        for instance_ in instances[1:]:
+            if instance_.xml_hash == xml_hash:
+                continue
+            raise DuplicateUUIDError(
+                "Multiple instances with different content exist for UUID "
+                "{}".format(instance.uuid)
+            )
+
+        return instance
+    else:
+        raise Http404

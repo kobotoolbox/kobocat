@@ -42,7 +42,9 @@ COPY . "${KOBOCAT_SRC_DIR}"
 RUN mkdir -p /etc/service/uwsgi && \
     cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
     mkdir -p /etc/service/celery && \
-    cp "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" /etc/service/celery/run && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" /etc/service/celery/run && \
+    mkdir -p /etc/service/celery_beat && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash" /etc/service/celery_beat/run && \
     cp "${KOBOCAT_SRC_DIR}/docker/init.bash" /etc/my_init.d/10_init_kobocat.bash && \
     cp "${KOBOCAT_SRC_DIR}/docker/sync_static.sh" /etc/my_init.d/11_sync_static.bash && \
     mkdir -p "${KOBOCAT_SRC_DIR}/emails/" && \

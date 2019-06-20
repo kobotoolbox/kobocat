@@ -27,7 +27,7 @@ MONGO_DATABASE = {
     'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
 }
 
-BROKER_URL = os.environ.get(
+CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
 
 try:
@@ -39,7 +39,7 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
 
 TESTING_MODE = True
 
-MEDIA_URL= '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
+MEDIA_URL = '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
 STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
@@ -55,7 +55,7 @@ if TESTING_MODE:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
     subprocess.call(["rm", "-r", MEDIA_ROOT])
     MONGO_DATABASE['NAME'] = "formhub_test"
-    CELERY_ALWAYS_EAGER = True
+    CELERY_TASK_ALWAYS_EAGER = True
     BROKER_BACKEND = 'memory'
     ENKETO_API_TOKEN = 'abc'
     #TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
@@ -68,7 +68,7 @@ if PRINT_EXCEPTION and DEBUG:
 # include the kobocat-template directory
 TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
-    os.path.abspath(os.path.join(PROJECT_ROOT, '..', 'kobocat-template'))
+    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
 )
 TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
 STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )

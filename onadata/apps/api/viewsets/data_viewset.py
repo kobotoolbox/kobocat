@@ -14,7 +14,9 @@ from rest_framework.exceptions import ParseError, PermissionDenied
 from rest_framework.settings import api_settings
 
 from onadata.apps.api.viewsets.xform_viewset import custom_response_handler
-from onadata.apps.api.tools import add_tags_to_instance, add_validation_status_to_instance, get_validation_status
+from onadata.apps.api.tools import add_tags_to_instance, \
+    add_validation_status_to_instance, get_validation_status, \
+    remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
@@ -482,7 +484,7 @@ Delete a specific submission in a form
 
         return qs
 
-    @detail_route(methods=["GET", "PATCH"])
+    @detail_route(methods=["GET", "PATCH", "DELETE"])
     def validation_status(self, request, *args, **kwargs):
         """
         View or modify validation status of specific instance.
@@ -495,10 +497,16 @@ Delete a specific submission in a form
         instance = self.get_object()
         data = {}
 
-        if request.method == "PATCH":
+        if request.method != "GET":
             if request.user.has_perm("validate_xform", instance.asset):
-                if not add_validation_status_to_instance(request, instance):
+                if request.method == "PATCH" and not add_validation_status_to_instance(request, instance):
                     http_status = status.HTTP_400_BAD_REQUEST
+                elif request.method == "DELETE":
+                    if remove_validation_status_from_instance(instance):
+                        http_status = status.HTTP_204_NO_CONTENT
+                        data = None
+                    else:
+                        http_status = status.HTTP_400_BAD_REQUEST
             else:
                 raise PermissionDenied(_(u"You do not have validate permissions."))
 
@@ -546,7 +554,7 @@ Delete a specific submission in a form
         data = {}
         if isinstance(self.object, XForm):
             raise ParseError(_(u"Data id not provided."))
-        elif(isinstance(self.object, Instance)):
+        elif isinstance(self.object, Instance):
             if request.user.has_perm("change_xform", self.object.xform):
                 return_url = request.query_params.get('return_url')
                 if not return_url:
@@ -647,7 +655,10 @@ Delete a specific submission in a form
 
             if http_status == status.HTTP_200_OK:
 
-                new_validation_status_uid = payload.get("validation_status.uid")
+                if request.data.get("reset"):
+                    new_validation_status_uid = {}
+                else:
+                    new_validation_status_uid = payload.get("validation_status.uid")
 
                 if new_validation_status_uid is None:
                     http_status = status.HTTP_400_BAD_REQUEST

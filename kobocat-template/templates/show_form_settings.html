@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block additional-headers %}
+{% load i18n %}
+  <!-- a temporary way to hide the kobocat deprecated features -->
+  <style type="text/css">
+  .kc-hide { display: none !important; }
+  #addserviceform { display: none !important; }
+  </style>
+{% endblock %}
+
+{% block content %}
+{% load i18n %}
+  <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
+  {% if is_owner %}
+  <div class="container__wide">
+    <div class="single-project__settings--iframe">
+      <div class="settings__general">
+        <h2 class="settings__group-label">
+          {% trans "Form Settings" %}
+        </h2>
+
+        <div class="settings__form-item">
+          <label class="settings__form-label">Existing Form Files</label>
+          <ul class="settings__files">
+            {% for media in media_upload %}
+              <li class="{% cycle 'odd' 'even' %}">
+                <div>{{ media.data_value }}</div>
+                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
+                {% if can_edit %}
+                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+
+          {% if can_edit %}
+          <button class="single-project__button single-project__add-media">+ Add Document</button>
+
+          <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
+              {% csrf_token %}
+              <ul class="nav nav-tabs">
+                  <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
+                  <li><a href="#media_url_add" data-toggle="tab">Media URL</a></li>
+              </ul>
+              <div class="tab-content">
+                  <div class="tab-pane active" id="media_upload">
+                      <input type="file" multiple="" name="media" id="id_media">
+                      <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
+                  </div>
+                  <div class="tab-pane" id="media_url_add">
+                      <label for="id_media">Media url:</label>
+                      <input type="text" name="media_url" id="id_media_url">
+                      <input type="submit" class="single-project__button" value="{% trans 'Save Media URL' %}" />
+                  </div>
+              </div>
+          </form>
+          {% endif %}
+        </div>
+      </div>  <!-- END .settings__general -->
+
+      {% if is_owner %}
+      <div class="settings__rest-services">
+          <h2 class="settings__group-label">{% trans "Legacy Rest Services" %}</h2>
+          <div id='restservice_tab'>
+            {% trans "Loading..." %}
+          </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
+{% endblock %}
+
+{% block styles %}
+{{ block.super }}
+  <!-- NEW SANDBOX STYLES -->
+  <link href="{% static "css/ios-switches.css" %}" rel="stylesheet">
+  <link href="{% static "css/kobo-single-project.css" %}" rel="stylesheet">
+  <!-- END NEW SANDBOX STYLES -->
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="{% static "js/jquery.poshytip.js" %}"></script>
+  {% if user.is_authenticated %}
+    <script type="text/javascript" src="{% static "js/form_actions.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.cookie.js" %}"></script>
+  {% endif %}
+
+
+<script type="text/javascript">
+
+$('.dashboard__formbutton-preview').click(function previewModalActivate(){
+  var prevWrap = $('#preview-vex .vex-kobo-body');
+  if (prevWrap.data('iframeSrc') && prevWrap.children('iframe').length === 0) {
+    $('<iframe>', {src: prevWrap.data('iframeSrc')}).appendTo(prevWrap);
+  } else {
+    console.error('iframeSrc not set for prevWrap');
+  }
+
+  vex.open({
+    content: $('#preview-vex').clone(),
+    contentClassName: 'vex-content vex-content-large',
+  });
+
+});
+
+
+$(document).ready(function() {
+
+    $('.btn').tooltip();
+
+    // SMS documentation switcher
+    $('#sms_support_api').change(function() {
+      $('.sms_support_api_doc').each(function (){
+        $(this).toggle(false);
+      });
+      var selected = $(this).val();
+      $('#sms_support_api_doc_' + selected).toggle(true);
+    });
+
+    // Typeahead, fetch usernames for permission assign
+    $('#autocomplete').typeahead(
+        {
+            source: function (query, process){
+                return $.get('/typeahead_usernames/', {query: query}, function(data){
+                    return process(data);
+                });
+            }
+        }
+    );
+    //-- end
+
+    var collect_mobile = $('#popupmodal');
+    $(document).on("click", ".js-showqr", function () {
+      vex.open({
+        content: collect_mobile.clone(),
+        contentClassName: 'vex-content vex-content-large',
+      });
+      div_target = $(this).attr('data-target');
+      url = $(this).data('href');
+      $.ajax({
+        url: url,
+        method: 'get',
+        success: function(html){
+          var contents = $('<div>'+html+'</div>');
+          $('.js-img_holder', div_target).html(contents.find('img'));
+          $('.qrcode__enter-data-url').html(contents.find('a'));
+
+        }
+      })
+    });
+
+    {% if xform.shared_data %}
+      $('#data-shared-private').hide();
+    {% else %}
+      $('#data-shared-public').hide();
+    {% endif %}
+    {% if xform.shared %}
+      $('#form-shared-private').hide();
+    {% else %}
+      $('#form-shared-public').hide();
+    {% endif %}
+    {% if not xform.encrypted %}
+      $('#form-encrypted').hide();
+      $('#data-encrypted').hide();
+    {% endif %}
+
+    // toggle fields
+    {% if user.is_authenticated %}
+        $.each(['form-shared', 'data-shared', 'active-form'], function(inx, el) {
+            var cb = $('#' + el + ':checkbox');
+            cb.change(function() {
+              privacyEdit(cb.data('url'), el.split('-')[0]);
+              // legacy
+              $('#' + el + '-public').toggle();
+              $('#' + el + '-private').toggle();
+            });
+        });
+      // add click event to all public (x)forms
+      $('a.clonexls').click(function(){
+        el = $(this);
+        clone_xlsform(el.data('url'), el.data('username'), el.data('id'));
+        return false;
+      });
+    {% endif %}
+    });
+
+  // REST Service
+  $(document).ready(function() {
+      $.get('{% url "onadata.apps.restservice.views.add_service" content_user.username xform.id_string %}', function(data){
+          $('#restservice_tab').html(data);
+          // hide whole section if there are no rest services
+          // as the legacy code here only allows for deleting
+          if ($('#restservice_tab').find('#restservice_list li').length === 0) {
+              $('.settings__rest-services').hide();
+          }
+      });
+  });
+</script>
+
+    <!-- NEW SANDBOX JQUERY CALLS -->
+    <script type="text/javascript">
+    $(document).ready(function() {
+
+      $(document).on("click", ".single-project__toggle-documents .doctoggle__caret", function () {
+        $('.single-project__documents').toggleClass('hidden');
+        $(this).toggleClass('active');
+        $('.doctoggle__caret').toggleClass('fa-caret-right');
+        $('.doctoggle__caret').toggleClass('fa-caret-down');
+      });
+
+      $(document).on("click", ".single-project__toggle-settings", function () {
+        $('.single-project__settings').toggleClass('hidden');
+        $(this).toggleClass('active');
+        if($('.single-project__settings').is(":visible")) {
+          $.cookie('settingsBoxOpen', true);
+        } else {
+          $.cookie('settingsBoxOpen', false);
+        }
+      });
+
+      $(document).on("click", ".dashboard__button-download-data", function () {
+        $('.dashboard__download__drop').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("click", ".dashboard__formbutton-download", function () {
+        $('.dashboard__form-drop').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("click", ".single-project__add-media", function () {
+        $('.single-project__media-upload').toggleClass('hidden');
+        $(this).toggleClass('active');
+      });
+
+      $(document).on("focus", "input#title", function () {
+        $('a#title_save').removeClass('hidden');
+      });
+      $(document).on("focus", "input#description", function () {
+        $('a#description_save').removeClass('hidden');
+      });
+
+      $(document).on("click", ".single-project__add-bg-doc", function () {
+        $('.single-project__documents input#id_doc').trigger('click');
+      });
+
+      $(document).on("change", "input#id_doc", function () {
+        $(this).parents("form").submit();
+      });
+
+      var delete_form = $('#delete-form');
+      $(document).on("click", ".single-project__button-delete", function () {
+      vexDelete = vex.open({
+        content: delete_form.clone(),
+        contentClassName: 'vex-content vex-content-large',
+      });
+      });
+
+      $(document).on("click", ".dashboard__formbutton-refresh", function () {
+        vexRefresh = vex.open({
+          content: $('#xls-update').clone(),
+          contentClassName: 'vex-content'
+        });
+      });
+
+      $(document).click(function(event) {
+          if(!$(event.target).closest('.dashboard__submissions').length) {
+            if($('.dashboard__download__drop').is(":visible")) {
+              $('.dashboard__download__drop').addClass('hidden');
+              $('.dashboard__button-download-data').removeClass('active');
+            }
+          }
+
+          if(!$(event.target).closest('.dashboard__form-contents').length) {
+            if($('.dashboard__form-drop').is(":visible")) {
+              $('.dashboard__form-drop').addClass('hidden');
+              $('.dashboard__formbutton-download').removeClass('active');
+            }
+          }
+
+          if(!$(event.target).closest('.sub-header-bar').length) {
+            if($('.single-project__settings').is(":visible")) {
+              $('.single-project__settings').addClass('hidden');
+              $('.single-project__toggle-settings').removeClass('active');
+              $.cookie('settingsBoxOpen', false);
+            }
+          }
+      });
+
+      if ($.cookie('settingsBoxOpen') == 'true') {
+        $('.single-project__settings').removeClass('hidden');
+        $('.single-project__toggle-settings').addClass('active');
+      }
+
+      // question mark poshytip effect
+      $('.poshytip').poshytip({
+          className: 'tip__bottomarrow',
+          showTimeout: 1,
+          alignTo: 'target',
+          alignX: 'right',
+          alignY: 'top',
+          offsetX: -60,
+          offsetY: -5,
+          liveEvents: true
+      });
+
+      // smaller parent poshytip
+      $('.poshytip-small').poshytip({
+          className: 'tip__bottomarrow multiline',
+          showTimeout: 1,
+          alignTo: 'target',
+          alignX: 'right',
+          alignY: 'top',
+          offsetX: -25,
+          offsetY: -5,
+          liveEvents: true
+      });
+
+    });
+    </script>
+    <!-- END NEW SANDBOX JQUERY CALLS -->
+
+{% endblock %}

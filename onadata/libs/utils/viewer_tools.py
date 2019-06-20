@@ -38,34 +38,27 @@ def get_path(path, suffix):
 
 
 def image_urls(instance):
-    default_storage = get_storage_class()()
-    urls = []
-    suffix = settings.THUMB_CONF['medium']['suffix']
-    for a in instance.attachments.all():
-        if default_storage.exists(get_path(a.media_file.name, suffix)):
-            url = default_storage.url(
-                get_path(a.media_file.name, suffix))
-        else:
-            url = a.media_file.url
-        urls.append(url)
-    return urls
+    image_urls_dict_ = image_urls_dict(instance)
+    return image_urls_dict_.values()
+
 
 def image_urls_dict(instance):
-    default_storage = get_storage_class()()
+    """
+    Returns a dict of attachments with keys as base filename
+    and values link through `kobocat` redirector.
+    Only exposes `suffix` version of it. It will be created on the fly by the
+    redirector
+
+    :param instance: Instance
+    :return: dict
+    """
     urls = dict()
-    suffix = settings.THUMB_CONF['medium']['suffix']
+    # Remove leading dash from suffix
+    suffix = settings.THUMB_CONF['medium']['suffix'][1:]
     for a in instance.attachments.all():
-        filename = a.media_file.name
-        if default_storage.exists(get_path(a.media_file.name, suffix)):
-            url = default_storage.url(
-                get_path(a.media_file.name, suffix))
-        else:
-            url = a.media_file.url
-        file_basename = os.path.basename(filename)
-        if url.startswith('/'):
-            url = settings.KOBOCAT_URL + url
-        urls[file_basename] = url
+        urls[a.filename] = a.secure_url(suffix=suffix)
     return urls
+
 
 def parse_xform_instance(xml_str):
     """
@@ -176,6 +169,7 @@ def get_client_ip(request):
 
 def enketo_url(form_url, id_string, instance_xml=None,
                instance_id=None, return_url=None, instance_attachments=None):
+
     if not hasattr(settings, 'ENKETO_URL')\
             and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
         return False
@@ -189,6 +183,7 @@ def enketo_url(form_url, id_string, instance_xml=None,
         'form_id': id_string,
         'server_url': form_url
     }
+
     if instance_id is not None and instance_xml is not None:
         url = settings.ENKETO_URL + settings.ENKETO_API_INSTANCE_PATH
         values.update({
@@ -247,7 +242,7 @@ def _get_form_url(request, username, protocol='https'):
         http_host = settings.TEST_HTTP_HOST
         username = settings.TEST_USERNAME
     else:
-        http_host = request.META.get('HTTP_HOST', 'ona.io')
+        http_host = request.get_host()
 
     # In case INTERNAL_DOMAIN_NAME is equal to PUBLIC_DOMAIN_NAME,
     # configuration doesn't use docker internal network.

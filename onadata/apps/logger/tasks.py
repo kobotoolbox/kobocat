@@ -14,35 +14,46 @@ def fix_root_node_names(**kwargs):
 ###### END ISSUE 242 FIX ######
 
 import csv
-import datetime
-import pytz
 import zipfile
+import datetime
 from io import BytesIO
+from dateutil import relativedelta
 from collections import defaultdict
+
 from django.contrib.auth.models import User
 from django.core.files.storage import get_storage_class
+
 from .models import Instance, XForm
 
 @shared_task
 def generate_stats_zip(output_filename):
+    # Limit to last month and this month
+    now = datetime.datetime.now()
+    start_of_last_month = datetime.datetime(
+        year=now.year, month=now.month, day=1
+    ) - relativedelta.relativedelta(months=1)
+
     REPORTS = {
-        'instances.csv': {
+        'instances (since {:%Y-%m-%d}).csv'.format(start_of_last_month): {
             'model': Instance,
             'date_field': 'date_created'
         },
-        'xforms.csv': {
+        'xforms (since {:%Y-%m-%d}).csv'.format(start_of_last_month): {
             'model': XForm,
             'date_field': 'date_created'
         },
-        'users.csv': {
+        'users (since {:%Y-%m-%d}).csv'.format(start_of_last_month): {
             'model': User,
             'date_field': 'date_joined'
         }
     }
 
     def list_created_by_month(model, date_field):
+        queryset = model.objects.filter(
+            **{date_field + '__gte': start_of_last_month}
+        )
         # Make a single, huge query to the database
-        data_dump = list(model.objects.values_list('pk', date_field))
+        data_dump = list(queryset.values_list('pk', date_field))
         # Sort by date
         data_dump = sorted(data_dump, key=lambda x: x[1])
 

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block additional-headers %}
+{% load i18n %}
+<link href="{% static "bower_components/backgrid/lib/backgrid.min.css" %}" rel="stylesheet">
+<link rel="stylesheet" href="{% static "bower_components/backgrid-filter/backgrid-filter.min.css" %}" />
+<link rel="stylesheet" href="{% static "bower_components/backgrid-paginator/backgrid-paginator.min.css" %}" />
+<link href="{% static "css/data_view.css" %}" rel="stylesheet">
+
+<div class="sub-header-bar">
+  <div class="container__wide">
+    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+  </div>
+</div>
+
+<header class="data-page__header">
+    <hgroup class="container">
+      <h1>{% trans "Data View" %}</h1>
+    </hgroup>
+</header>
+
+{% endblock %}
+
+{% block content %}
+    <section id="data-view">
+        <div class="row">
+        <span class="span12">
+                <div class="data-table-container">
+                </div>
+            <div style="clear: both;"></div>
+        </span>
+        </div>
+    </section>
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "bower_components/underscore/underscore-min.js" %}"></script>
+    <script type="text/javascript" src="{% static "bower_components/backbone/backbone-min.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/json2.js" %}"></script>
+    <script type="text/javascript" src="{% static "bower_components/backgrid/lib/backgrid.js" %}"></script>
+    <script type="text/javascript" src="{% static "bower_components/lunr.js/lunr.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "bower_components/backbone-pageable/lib/backbone-pageable.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "bower_components/backgrid-filter/backgrid-filter.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "bower_components/backgrid-paginator/backgrid-paginator.min.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/xform.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/data_view.js" %}"></script>
+    <script type="text/javascript">
+        var formJSONUrl = "{% url "onadata.apps.logger.views.download_jsonform" owner.username xform.id_string %}";
+        var mongoAPIUrl = "{% url "onadata.apps.main.views.api" owner.username xform.id_string %}";
+        var views, sideBarViews, multiView, slickView;
+        var numDefaultColumns = 30;//number of columns to show by default
+        var instance_view_url = "{% url "onadata.apps.viewer.views.instance" owner.username xform.id_string %}";
+        var dataView;
+
+        $(document).ready(function () {
+            dataView = new FH.DataTableView({
+                el: '.data-table-container',
+                formUrl: formJSONUrl,
+                dataUrl: mongoAPIUrl
+            });
+
+            dataView.form.on('load', function () {
+                var newCol = [{
+                    name: "view",
+                    xpath: "view",
+                    label: " ",
+                    editable: false,
+                    index: 0,
+                    cell: Backgrid.Cell.extend({
+                        className: 'view',
+                        template: _.template('<i class="fa fa-eye" title="View submission"></i></i>'),
+
+                        render: function () {
+                            this.$el.html(this.template());
+                            return this;
+                        }
+                    })
+                }];
+
+                dataView.dataGrid.columns.unshift(newCol);
+                dataView.form.fields.unshift(newCol);
+            });
+
+            $( ".data-table-container" ).on( "click", "td.view", function() {
+                $(this).dblclick(); 
+            });
+
+
+        });
+
+    </script>
+{% endblock %}

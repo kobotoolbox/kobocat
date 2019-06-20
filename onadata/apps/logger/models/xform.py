@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import pytz
@@ -26,6 +27,8 @@ from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
 from onadata.apps.logger.fields import LazyDefaultBooleanField
+from onadata.apps.logger.exceptions import DuplicateUUIDError
+
 
 
 try:
@@ -44,10 +47,6 @@ def upload_to(instance, filename):
         instance.user.username,
         'xls',
         os.path.split(filename)[1])
-
-
-class DuplicateUUIDError(Exception):
-    pass
 
 
 class XForm(BaseModel):

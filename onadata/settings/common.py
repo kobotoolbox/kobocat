@@ -15,18 +15,12 @@ import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
 
-from celery.signals import after_setup_logger
 from django.core.exceptions import SuspiciousOperation
-from django.utils.log import AdminEmailHandler
-import djcelery
 from pymongo import MongoClient
-
-
-djcelery.setup_loader()
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
-PROJECT_ROOT= os.path.abspath(os.path.join(ONADATA_DIR, '..'))
+PROJECT_ROOT = os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 
 PRINT_EXCEPTION = False
 
@@ -88,15 +82,15 @@ ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
 KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kc.kobotoolbox.org')
 
 
-ENKETO_URL= ENKETO_URL.rstrip('/')
+ENKETO_URL = ENKETO_URL.rstrip('/')
 ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
-ENKETO_VERSION= os.environ.get('ENKETO_VERSION', 'Legacy').lower()
+ENKETO_VERSION = os.environ.get('ENKETO_VERSION', 'Legacy').lower()
 assert ENKETO_VERSION in ['legacy', 'express']
 # Constants.
 ENKETO_API_ENDPOINT_ONLINE_SURVEYS = '/survey'
 ENKETO_API_ENDPOINT_OFFLINE_SURVEYS = '/survey/offline'
-ENKETO_API_ENDPOINT_INSTANCE= '/instance'
-ENKETO_API_ENDPOINT_INSTANCE_IFRAME= '/instance/iframe'
+ENKETO_API_ENDPOINT_INSTANCE = '/instance'
+ENKETO_API_ENDPOINT_INSTANCE_IFRAME = '/instance/iframe'
 # Computed settings.
 if ENKETO_VERSION == 'express':
     ENKETO_API_ROOT= '/api/v2'
@@ -106,8 +100,8 @@ if ENKETO_VERSION == 'express':
             else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 else:
     ENKETO_API_ROOT= '/api_v1'
-    ENKETO_API_ENDPOINT_PREVIEW= '/webform/preview'
-    ENKETO_OFFLINE_SURVEYS= False
+    ENKETO_API_ENDPOINT_PREVIEW = '/webform/preview'
+    ENKETO_OFFLINE_SURVEYS = False
     ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
 ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
@@ -251,13 +245,14 @@ INSTALLED_APPS = (
     'onadata.apps.api',
     'onadata.apps.data_migration',
     'guardian',
-    'djcelery',
     'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
     'onadata.apps.survey_report',
     'onadata.apps.export',
     'pure_pagination',
+    'django_celery_beat',
+    'django_extensions',
 )
 
 OAUTH2_PROVIDER = {
@@ -356,6 +351,7 @@ def skip_suspicious_operations(record):
             return False
     return True
 
+
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error.
@@ -439,14 +435,6 @@ LOGGING = {
     }
 }
 
-
-def configure_logging(logger, **kwargs):
-    admin_email_handler = AdminEmailHandler()
-    admin_email_handler.setLevel(logging.ERROR)
-    logger.addHandler(admin_email_handler)
-
-after_setup_logger.connect(configure_logging)
-
 GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
 GOOGLE_CLIENT_ID = '617113120802.onadata.apps.googleusercontent.com'
 GOOGLE_CLIENT_SECRET = '9reM29qpGFPyI8TBuB54Z4fk'
@@ -460,28 +448,39 @@ THUMB_CONF = {
 THUMB_ORDER = ['large', 'medium', 'small']
 IMG_FILE_TYPE = 'jpg'
 
+# Number of times Celery retries to send data to external rest service
+REST_SERVICE_MAX_RETRIES = 3
+
 # celery
-BROKER_BACKEND = "librabbitmq"
-BROKER_URL = 'amqp://guest:guest@localhost:5672/'
-CELERY_RESULT_BACKEND = "amqp"  # telling Celery to report results to RabbitMQ
-CELERY_ALWAYS_EAGER = False
+CELERY_BROKER_URL = 'redis://localhost:6389/2'
+CELERY_RESULT_BACKEND = 'redis://localhost:6389/2'  # telling Celery to report results to Redis
+CELERY_TASK_ALWAYS_EAGER = False
 
 # Celery defaults to having as many workers as there are cores. To avoid
 # excessive resource consumption, don't spawn more than 6 workers by default
 # even if there more than 6 cores.
-CELERYD_MAX_CONCURRENCY = int(os.environ.get('CELERYD_MAX_CONCURRENCY', 6))
-if multiprocessing.cpu_count() > CELERYD_MAX_CONCURRENCY:
-    CELERYD_CONCURRENCY = CELERYD_MAX_CONCURRENCY
+CELERY_WORKER_MAX_CONCURRENCY = int(os.environ.get('CELERYD_MAX_CONCURRENCY', 6))
+if multiprocessing.cpu_count() > CELERY_WORKER_MAX_CONCURRENCY:
+    CELERY_WORKER_CONCURRENCY = CELERY_WORKER_MAX_CONCURRENCY
 
 # Replace a worker after it completes 7 tasks by default. This allows the OS to
 # reclaim memory allocated during large tasks
-CELERYD_MAX_TASKS_PER_CHILD = int(os.environ.get(
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.environ.get(
     'CELERYD_MAX_TASKS_PER_CHILD', 7))
 
 # Default to a 30-minute soft time limit and a 35-minute hard time limit
-CELERYD_TASK_TIME_LIMIT = int(os.environ.get('CELERYD_TASK_TIME_LIMIT', 2100))
-CELERYD_TASK_SOFT_TIME_LIMIT = int(os.environ.get(
+CELERY_TASK_TIME_LIMIT = int(os.environ.get('CELERY_TASK_TIME_LIMIT', 2100))
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.environ.get(
     'CELERYD_TASK_SOFT_TIME_LIMIT', 1800))
+
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "fanout_patterns": True,
+    "fanout_prefix": True,
+    # http://docs.celeryproject.org/en/latest/getting-started/brokers/redis.html#redis-visibility-timeout
+    "visibility_timeout": 120 * (10 ** REST_SERVICE_MAX_RETRIES)  # Longest ETA for RestService
+}
+
+CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
 
 # duration to keep zip exports before deletion (in seconds)
 ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
@@ -580,3 +579,8 @@ DEFAULT_VALIDATION_STATUSES = [
         'label': 'On Hold'
     },
 ]
+
+# Make Django use NginX $host. Useful when running with ./manage.py runserver_plus
+# It avoids adding the debugger webserver port (i.e. `:8000`) at the end of urls.
+if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
+    USE_X_FORWARDED_HOST = True
