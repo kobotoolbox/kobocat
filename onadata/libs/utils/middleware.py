@@ -69,3 +69,17 @@ class BrokenClientMiddleware(object):
                 request.META['HTTP_DATE'].decode()
             except UnicodeDecodeError:
                 del request.META['HTTP_DATE']
+
+
+class UsernameInResponseHeaderMiddleware(object):
+    """
+    Record the authenticated user (if any) in the `X-KoBoNaUt` HTTP header
+    """
+    def process_response(self, request, response):
+        try:
+            user = request.user
+        except AttributeError:
+            return response
+        if user.is_authenticated():
+            response['X-KoBoNaUt'] = request.user.username
+        return response
