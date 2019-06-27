@@ -117,11 +117,6 @@ urlpatterns = patterns(
         'id>\d+)', 'onadata.apps.main.views.delete_metadata'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/(?P<dat'
         'a_id>\d+)', 'onadata.apps.main.views.download_media_data'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/addservice$',
-        'onadata.apps.restservice.views.add_service', name="add_restservice"),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delservice$',
-        'onadata.apps.restservice.views.delete_service',
-        name="delete_restservice"),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/update$',
         'onadata.apps.main.views.update_xform'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/preview$',
