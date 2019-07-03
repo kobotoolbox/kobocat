@@ -1,6 +1,5 @@
 import traceback
 
-from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.db import connection
 from django.http import HttpResponseNotAllowed
 from django.template import RequestContext
