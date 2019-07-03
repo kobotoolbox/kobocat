@@ -7,6 +7,16 @@ from onadata.apps.restservice.models import RestService
 
 
 class Command(BaseCommand):
+    """
+    A faster method is available with PostgreSQL:
+        UPDATE restservice_restservice
+            SET service_url = REGEXP_REPLACE(
+                service_url,
+                '/assets/([^/]*)/submissions/',
+                '/assets/\1/hook-signal/'
+            )
+            WHERE service_url LIKE '/assets/%';
+    """
 
     help = ugettext_lazy("Updates KPI rest service endpoint")
 
