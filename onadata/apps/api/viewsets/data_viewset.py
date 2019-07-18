@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 
 from django.db.models import Q
@@ -13,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ParseError, PermissionDenied
 from rest_framework.settings import api_settings
 
+from onadata.apps.api.exceptions import NoConfirmationProvidedException
 from onadata.apps.api.viewsets.xform_viewset import custom_response_handler
 from onadata.apps.api.tools import add_tags_to_instance, \
     add_validation_status_to_instance, get_validation_status, \
@@ -484,6 +486,13 @@ Delete a specific submission in a form
 
         return qs
 
+    @detail_route(methods=['DELETE'])
+    def bulk(self, request, *args, **kwargs):
+        """
+        Bulk delete instances
+        """
+        pass
+
     @detail_route(methods=["GET", "PATCH", "DELETE"])
     def validation_status(self, request, *args, **kwargs):
         """
@@ -635,85 +644,117 @@ Delete a specific submission in a form
 
     def modify(self, request, *args, **kwargs):
 
-        xform = self.get_object()
-        http_status = status.HTTP_200_OK
-        response = {}
+        xform = self.__validate_permission_on_bulk_action(request,
+                                                          'validate_xform')
+        payload = self.__get_payload(request)
 
-        if request.user.has_perm("validate_xform", xform):
-
-            owner = xform.user
-            userform_id = "{}_{}".format(owner.username, xform.id_string)
-            query = {ParsedInstance.USERFORM_ID: userform_id}  # Query used for MongoDB
-            filter_ = {"xform_id": xform.id}  # Filter for Django ORM
-            payload = {}
-
-            try:
-                payload = json.loads(request.data.get("payload", "{}"))
-            except ValueError:
-                http_status = status.HTTP_400_BAD_REQUEST
-                response = {"detail": _("Invalid payload")}
-
-            if http_status == status.HTTP_200_OK:
-
-                if request.data.get("reset"):
-                    new_validation_status_uid = {}
-                else:
-                    new_validation_status_uid = payload.get("validation_status.uid")
-
-                if new_validation_status_uid is None:
-                    http_status = status.HTTP_400_BAD_REQUEST
-                    response = {"detail": _("No validation_status.uid provided")}
-                else:
-                    # Create new validation_status object
-                    new_validation_status = get_validation_status(
-                        new_validation_status_uid, xform, request.user.username)
-
-                    # 3 scenarios to update submissions
-
-                    # First scenario / Modify submissions based on user's query
-                    if payload.get("query"):
-                        # Validate if query is valid.
-                        try:
-                            query.update(payload.get("query"))
-                        except ValueError:
-                            raise ParseError(_("Invalid query: %(query)s"
-                                               % {'query': json.dumps(payload.get("query"))}))
-
-                        query_kwargs = {
-                            "query": json.dumps(query),
-                            "fields": '["_id"]'
-                        }
-
-                        cursor = ParsedInstance.query_mongo_no_paging(**query_kwargs)
-                        submissions_ids = [record.get("_id") for record in list(cursor)]
-                        filter_.update({"id__in": submissions_ids})
-
-                    # Second scenario / Modify submissions based on list of ids
-                    elif payload.get("submissions_ids"):
-                        try:
-                            # Use int() to test if list of integers is valid.
-                            submissions_ids = payload.get("submissions_ids", [])
-                            or_ = {u"$or": [{u"_id": int(submission_id)} for submission_id in submissions_ids]}
-                            query.update(or_)
-                        except ValueError:
-                            raise ParseError(_("Invalid submissions ids: %(submissions_ids)s"
-                                               % {'submissions_ids': json.dumps(payload.get("submissions_ids"))}))
-
-                        filter_.update({"id__in": submissions_ids})
-                    # Third scenario / Modify all submissions in form, but confirmation param must be among payload
-                    elif payload.get("confirm", False) is not True:
-                        http_status = status.HTTP_400_BAD_REQUEST
-                        response = {"detail": _("No confirmations provided")}
-
-                    # If everything is OK, submit data to DBs
-                    if http_status == status.HTTP_200_OK:
-                        # Update Postgres & Mongo
-                        updated_records_count = Instance.objects.\
-                            filter(**filter_).update(validation_status=new_validation_status)
-                        ParsedInstance.bulk_update_validation_statuses(query, new_validation_status)
-                        response = {"detail": _("{} submissions have been updated").format(updated_records_count)}
-
-            return Response(response, http_status)
-
+        if request.data.get('reset'):
+            new_validation_status_uid = {}
         else:
-            raise PermissionDenied(_(u"You do not have validate permissions."))
+            new_validation_status_uid = payload.get('validation_status.uid')
+
+        if new_validation_status_uid is None:
+            raise ParseError(_('No `validation_status.uid` provided'))
+
+        # Create new validation_status object
+        new_validation_status = get_validation_status(
+            new_validation_status_uid, xform, request.user.username)
+
+        mongo_query = ParsedInstance.get_base_query(xform.user.username,
+                                                    xform.id_string)
+        postgres_query = {'xform_id': xform.id}
+
+        instances_ids = self.__get_instances_ids(payload, mongo_query)
+
+        if instances_ids is not None:
+            # Narrow down queries with list of ids.
+            postgres_query.update({'id__in': instances_ids})
+            mongo_query.update({'_id': {'$in': instances_ids}})
+
+        # Update Postgres & Mongo
+        updated_records_count = Instance.objects.\
+            filter(**postgres_query).update(validation_status=new_validation_status)
+        ParsedInstance.bulk_update_validation_statuses(mongo_query,
+                                                       new_validation_status)
+        return Response({
+            'detail': _('{} submissions have been updated').format(
+                      updated_records_count)
+        }, status.HTTP_200_OK)
+
+    @staticmethod
+    def __get_payload(request):
+        try:
+            payload = json.loads(request.data.get('payload', '{}'))
+        except ValueError:
+            raise ParseError(_('Invalid payload'))
+
+        return payload
+
+    @staticmethod
+    def __get_instances_ids(payload, mongo_base_query):
+
+        """
+        Gets instances ids based on the request payload.
+        Useful to narrow down set of instances for bulk actions
+
+        Args:
+            payload (dict)
+            mongo_base_query (dict): Base query which must contains '_userform_id'
+
+        Returns:
+            list|None: `None` means all instances are returned. Empty list means
+                        no results found
+
+        """
+
+        instances_ids = None
+
+        ###################################################
+        # Submissions can be retrieve in 3 different ways #
+        ###################################################
+
+        # First scenario / Get submissions based on user's query
+        if payload.get('query'):
+            # Validate if query is valid.
+            try:
+                query = payload.get('query')
+                query.update(mongo_base_query)  # Overrides `_userform_id` if exists
+            except ValueError:
+                raise ParseError(_('Invalid query: %(query)s'
+                                   % {'query': json.dumps(payload.get('query'))}))
+
+            query_kwargs = {
+                'query': json.dumps(query),
+                'fields': '["_id"]'
+            }
+
+            cursor = ParsedInstance.query_mongo_no_paging(**query_kwargs)
+            instances_ids = [record.get('_id') for record in list(cursor)]
+
+        # Second scenario / Get submissions based on list of ids
+        elif payload.get('submissions_ids'):
+            try:
+                # Use int() to test if list of integers is valid.
+                instances_ids = [int(submission_id)
+                                 for submission_id in payload.get(
+                                    'submissions_ids', [])]
+            except ValueError:
+                raise ParseError(
+                    _('Invalid submissions ids: %(submissions_ids)s'
+                      % {'submissions_ids': json.dumps(
+                        payload.get('submissions_ids'))}))
+
+        # Third scenario / get all submissions in form,
+        # but confirmation param must be among payload
+        elif payload.get('confirm', False) is not True:
+            raise NoConfirmationProvidedException()
+
+        return instances_ids
+
+    def __validate_permission_on_bulk_action(self, request, permission):
+
+        xform = self.get_object()
+        if not request.user.has_perm(permission, xform):
+            raise PermissionDenied(_(u'You do not have validate permissions.'))
+        return xform
+
