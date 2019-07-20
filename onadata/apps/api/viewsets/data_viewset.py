@@ -8,7 +8,7 @@ from django.utils import six
 from django.utils.translation import ugettext as _
 
 from rest_framework import status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ParseError, PermissionDenied
@@ -413,6 +413,77 @@ Delete a specific submission in a form
 
     queryset = XForm.objects.all()
 
+    def bulk_delete(self, request, *args, **kwargs):
+        """
+        Bulk delete instances
+        """
+        xform = self.__validate_permission_on_bulk_action(request,
+                                                          'change_xform')
+        payload = self.__get_payload(request)
+
+        mongo_query = ParsedInstance.get_base_query(xform.user.username,
+                                                    xform.id_string)
+        postgres_query = {'xform_id': xform.id}
+
+        instances_ids = self.__get_instances_ids(payload, mongo_query)
+
+        if instances_ids is not None:
+            # Narrow down queries with list of ids.
+            postgres_query.update({'id__in': instances_ids})
+            mongo_query.update({'_id': {'$in': instances_ids}})
+
+        # Delete Postgres & Mongo
+        updated_records_count = Instance.objects.filter(**postgres_query).count()
+
+        # Since Django 1.9, `.delete()` returns an dict with number of rows
+        # deleted per object.
+        # FixMe remove `.count()` query and use that dict instance
+        Instance.objects.filter(**postgres_query).delete()
+        ParsedInstance.bulk_delete(mongo_query)
+        return Response({
+            'detail': _('{} submissions have been deleted').format(
+                updated_records_count)
+        }, status.HTTP_200_OK)
+
+    def bulk_validation_status(self, request, *args, **kwargs):
+
+        xform = self.__validate_permission_on_bulk_action(request,
+                                                          'validate_xform')
+        payload = self.__get_payload(request)
+
+        if request.data.get('reset'):
+            new_validation_status_uid = {}
+        else:
+            new_validation_status_uid = payload.get('validation_status.uid')
+
+        if new_validation_status_uid is None:
+            raise ParseError(_('No `validation_status.uid` provided'))
+
+        # Create new validation_status object
+        new_validation_status = get_validation_status(
+            new_validation_status_uid, xform, request.user.username)
+
+        mongo_query = ParsedInstance.get_base_query(xform.user.username,
+                                                    xform.id_string)
+        postgres_query = {'xform_id': xform.id}
+
+        instances_ids = self.__get_instances_ids(payload, mongo_query)
+
+        if instances_ids is not None:
+            # Narrow down queries with list of ids.
+            postgres_query.update({'id__in': instances_ids})
+            mongo_query.update({'_id': {'$in': instances_ids}})
+
+        # Update Postgres & Mongo
+        updated_records_count = Instance.objects.\
+            filter(**postgres_query).update(validation_status=new_validation_status)
+        ParsedInstance.bulk_update_validation_statuses(mongo_query,
+                                                       new_validation_status)
+        return Response({
+            'detail': _('{} submissions have been updated').format(
+                      updated_records_count)
+        }, status.HTTP_200_OK)
+
     def get_serializer_class(self):
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
@@ -486,13 +557,6 @@ Delete a specific submission in a form
 
         return qs
 
-    @detail_route(methods=['DELETE'])
-    def bulk(self, request, *args, **kwargs):
-        """
-        Bulk delete instances
-        """
-        pass
-
     @detail_route(methods=["GET", "PATCH", "DELETE"])
     def validation_status(self, request, *args, **kwargs):
         """
@@ -508,7 +572,8 @@ Delete a specific submission in a form
 
         if request.method != "GET":
             if request.user.has_perm("validate_xform", instance.asset):
-                if request.method == "PATCH" and not add_validation_status_to_instance(request, instance):
+                if request.method == "PATCH" and \
+                        not add_validation_status_to_instance(request, instance):
                     http_status = status.HTTP_400_BAD_REQUEST
                 elif request.method == "DELETE":
                     if remove_validation_status_from_instance(instance):
@@ -524,7 +589,8 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @detail_route(methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
+    @detail_route(methods=['GET', 'POST', 'DELETE'],
+                  extra_lookup_fields=['label', ])
     def labels(self, request, *args, **kwargs):
         http_status = status.HTTP_400_BAD_REQUEST
         instance = self.get_object()
@@ -589,7 +655,6 @@ Delete a specific submission in a form
 
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
-
         if isinstance(self.object, XForm):
             raise ParseError(_(u"Data id not provided."))
         elif isinstance(self.object, Instance):
@@ -641,45 +706,6 @@ Delete a specific submission in a form
             return res
 
         return custom_response_handler(request, xform, query, export_type)
-
-    def modify(self, request, *args, **kwargs):
-
-        xform = self.__validate_permission_on_bulk_action(request,
-                                                          'validate_xform')
-        payload = self.__get_payload(request)
-
-        if request.data.get('reset'):
-            new_validation_status_uid = {}
-        else:
-            new_validation_status_uid = payload.get('validation_status.uid')
-
-        if new_validation_status_uid is None:
-            raise ParseError(_('No `validation_status.uid` provided'))
-
-        # Create new validation_status object
-        new_validation_status = get_validation_status(
-            new_validation_status_uid, xform, request.user.username)
-
-        mongo_query = ParsedInstance.get_base_query(xform.user.username,
-                                                    xform.id_string)
-        postgres_query = {'xform_id': xform.id}
-
-        instances_ids = self.__get_instances_ids(payload, mongo_query)
-
-        if instances_ids is not None:
-            # Narrow down queries with list of ids.
-            postgres_query.update({'id__in': instances_ids})
-            mongo_query.update({'_id': {'$in': instances_ids}})
-
-        # Update Postgres & Mongo
-        updated_records_count = Instance.objects.\
-            filter(**postgres_query).update(validation_status=new_validation_status)
-        ParsedInstance.bulk_update_validation_statuses(mongo_query,
-                                                       new_validation_status)
-        return Response({
-            'detail': _('{} submissions have been updated').format(
-                      updated_records_count)
-        }, status.HTTP_200_OK)
 
     @staticmethod
     def __get_payload(request):

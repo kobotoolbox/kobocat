@@ -287,6 +287,10 @@ class ParsedInstance(models.Model):
             multi=True,
         )
 
+    @staticmethod
+    def bulk_delete(query):
+        return xform_instances.delete_many(query)
+
     def to_dict(self):
         if not hasattr(self, "_dict_cache"):
             self._dict_cache = self.instance.get_dict()
