@@ -13,15 +13,10 @@ from django.contrib.auth import authenticate
 
 from rest_framework.test import APIRequestFactory
 
-from onadata.apps.api.models import OrganizationProfile, Project
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
-from onadata.apps.api.viewsets.organization_profile_viewset import\
-    OrganizationProfileViewSet
-from onadata.apps.api.viewsets.project_viewset import ProjectViewSet
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.apps.main import tests as main_tests
 from onadata.apps.logger.models import Instance, XForm, Attachment
-from onadata.libs.serializers.project_serializer import ProjectSerializer
 from onadata.apps.logger.views import submission
 
 
@@ -105,125 +100,6 @@ class TestAbstractViewSet(TransactionTestCase):
                               password=self.profile_data['password1']))
         self.extra = {
             'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
-
-    def _org_create(self):
-        view = OrganizationProfileViewSet.as_view({
-            'get': 'list',
-            'post': 'create'
-        })
-        request = self.factory.get('/', **self.extra)
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
-        data = {
-            'org': u'denoinc',
-            'name': u'Dennis',
-            'city': u'Denoville',
-            'country': u'US',
-            'home_page': u'deno.com',
-            'twitter': u'denoinc',
-            'description': u'',
-            'address': u'',
-            'phonenumber': u'',
-            'require_auth': False,
-        }
-        request = self.factory.post(
-            '/', data=json.dumps(data),
-            content_type="application/json", **self.extra)
-        response = view(request)
-        self.assertEqual(response.status_code, 201)
-        data['url'] = 'http://testserver/api/v1/orgs/denoinc'
-        data['user'] = 'http://testserver/api/v1/users/denoinc'
-        data['creator'] = 'http://testserver/api/v1/users/bob'
-        self.assertDictContainsSubset(data, response.data)
-        self.company_data = response.data
-        self.organization = OrganizationProfile.objects.get(
-            user__username=data['org'])
-
-    def _project_create(self, project_data={}, merge=True):
-        view = ProjectViewSet.as_view({
-            'post': 'create'
-        })
-
-        if merge:
-            data = {
-                'name': u'demo',
-                'owner':
-                'http://testserver/api/v1/users/%s' % self.user.username,
-                'metadata': {'description': 'Some description',
-                             'location': 'Naivasha, Kenya',
-                             'category': 'governance'},
-                'public': False
-            }
-            data.update(project_data)
-        else:
-            data = project_data
-
-        request = self.factory.post(
-            '/', data=json.dumps(data),
-            content_type="application/json", **self.extra)
-        response = view(request, owner=self.user.username)
-        self.assertEqual(response.status_code, 201)
-        self.project = Project.objects.filter(
-            name=data['name'], created_by=self.user)[0]
-        data['url'] = 'http://testserver/api/v1/projects/%s'\
-            % self.project.pk
-        self.assertDictContainsSubset(data, response.data)
-
-        request.user = self.user
-        self.project_data = ProjectSerializer(
-            self.project, context={'request': request}).data
-
-    def _publish_xls_form_to_project(self, publish_data={}, merge=True,
-                                     public=False):
-        if not hasattr(self, 'project'):
-            self._project_create()
-        elif self.project.created_by != self.user:
-            self._project_create()
-
-        view = ProjectViewSet.as_view({
-            'post': 'forms'
-        })
-
-        project_id = self.project.pk
-        if merge:
-            data = {
-                'owner': 'http://testserver/api/v1/users/%s'
-                % self.project.organization.username,
-                'public': False,
-                'public_data': False,
-                'description': u'transportation_2011_07_25',
-                'downloadable': True,
-                'allows_sms': False,
-                'encrypted': False,
-                'sms_id_string': u'transportation_2011_07_25',
-                'id_string': u'transportation_2011_07_25',
-                'title': u'transportation_2011_07_25',
-                'bamboo_dataset': u''
-            }
-            data.update(publish_data)
-        else:
-            data = publish_data
-
-        path = os.path.join(
-            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
-            "transportation", "transportation.xls")
-        with open(path) as xls_file:
-            post_data = {'xls_file': xls_file}
-            request = self.factory.post('/', data=post_data, **self.extra)
-            response = view(request, pk=project_id)
-            self.assertEqual(response.status_code, 201)
-            self.xform = XForm.objects.all().order_by('pk').reverse()[0]
-            data.update({
-                'url':
-                'http://testserver/api/v1/forms/%s' % (self.xform.pk)
-            })
-
-            # Input was a private so change to public if project public
-            if public:
-                data['public_data'] = data['public'] = True
-
-            self.assertDictContainsSubset(data, response.data)
-            self.form_data = response.data
 
     def _add_uuid_to_submission_xml(self, path, xform):
         tmp_file = NamedTemporaryFile(delete=False)

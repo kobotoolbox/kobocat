@@ -9,7 +9,6 @@ from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs.mixins.object_lookup_mixin import ObjectLookupMixin
 from onadata.libs.serializers.password_reset_serializer import \
     PasswordResetSerializer, PasswordResetChangeSerializer
-from onadata.libs.serializers.project_serializer import ProjectSerializer
 from onadata.libs.serializers.user_profile_serializer import (
     UserProfileWithTokenSerializer)
 
@@ -41,10 +40,6 @@ class ConnectViewSet(ObjectLookupMixin, viewsets.GenericViewSet):
             "username": "demo",
             "website": ""
 }
-
-## Get projects that the authenticating user has starred
-<pre class="prettyprint">
-<b>GET</b> /api/v1/user/<code>{username}</code>/starred</pre>
 
 ## Request password reset
 <pre class="prettyprint">
@@ -118,18 +113,6 @@ using the `window.atob();` function.
             context={"request": request})
 
         return Response(serializer.data)
-
-    @detail_route(methods=['GET'])
-    def starred(self, request, *args, **kwargs):
-        """Return projects starred for this user."""
-        user_profile = self.get_object()
-        user = user_profile.user
-        projects = user.project_set.all()
-        serializer = ProjectSerializer(projects,
-                                       context={'request': request},
-                                       many=True)
-
-        return Response(data=serializer.data)
 
     @list_route(methods=['POST'])
     def reset(self, request, *args, **kwargs):

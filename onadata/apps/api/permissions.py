@@ -4,8 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from onadata.libs.permissions import CAN_ADD_XFORM_TO_PROFILE
 from onadata.libs.permissions import CAN_CHANGE_XFORM
-from onadata.apps.api.tools import get_user_profile_or_none, \
-    check_inherit_permission_from_project
+from onadata.apps.api.tools import get_user_profile_or_none
 from onadata.apps.logger.models import XForm
 
 
@@ -51,9 +50,6 @@ class XFormPermissions(DjangoObjectPermissions):
                 xform = get_object_or_404(XForm, pk=pk)
                 if xform.shared_data:
                     return True
-
-            check_inherit_permission_from_project(view.kwargs.get('pk'),
-                                                  request.user)
 
         if is_authenticated and view.action == 'create':
             owner = owner or request.user.username
@@ -103,22 +99,6 @@ class UserProfilePermissions(DjangoObjectPermissions):
 
         return \
             super(UserProfilePermissions, self).has_permission(request, view)
-
-
-class ProjectPermissions(DjangoObjectPermissions):
-
-    authenticated_users_only = False
-
-    def has_permission(self, request, view):
-        # allow anonymous to view public projects
-        if request.user.is_anonymous() and view.action == 'list':
-            return True
-
-        if not request.user.is_anonymous() and view.action == 'star':
-            return True
-
-        return \
-            super(ProjectPermissions, self).has_permission(request, view)
 
 
 class HasXFormObjectPermissionMixin(object):

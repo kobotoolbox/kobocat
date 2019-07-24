@@ -51,7 +51,6 @@ from onadata.libs.utils.viewer_tools import create_attachments_zipfile,\
 from onadata.libs.utils.user_auth import has_permission, get_xform_and_perms,\
     helper_auth_helper, has_edit_permission
 from xls_writer import XlsWriter
-from onadata.libs.utils.chart_tools import build_chart_data
 
 media_file_logger = logging.getLogger('media_files')
 
@@ -789,49 +788,3 @@ def instance(request, username, id_string):
         'xform': xform,
         'can_edit': can_edit
     })
-
-
-def charts(request, username, id_string):
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
-        username, id_string, request)
-
-    # no access
-    if not (xform.shared_data or can_view or
-            request.session.get('public_link') == xform.uuid):
-        return HttpResponseForbidden(_(u'Not shared.'))
-
-    try:
-        lang_index = int(request.GET.get('lang', 0))
-    except ValueError:
-        lang_index = 0
-
-    try:
-        page = int(request.GET.get('page', 0))
-    except ValueError:
-        page = 0
-    else:
-        page = max(page - 1, 0)
-
-    summaries = build_chart_data(xform, lang_index, page)
-
-    if request.is_ajax():
-        template = 'charts_snippet.html'
-    else:
-        template = 'charts.html'
-
-    return render(request, template, {
-        'xform': xform,
-        'summaries': summaries,
-        'page': page + 1
-    })
-
-
-def stats_tables(request, username, id_string):
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
-        username, id_string, request)
-    # no access
-    if not (xform.shared_data or can_view or
-            request.session.get('public_link') == xform.uuid):
-        return HttpResponseForbidden(_(u'Not shared.'))
-
-    return render(request, 'stats_tables.html', {'xform': xform})

@@ -16,7 +16,6 @@ DISABLED_VIEWS = [
         'about_us',
         'getting_started',
         'xls2xform',
-        'stats',
         'public_profile',
     ]
 

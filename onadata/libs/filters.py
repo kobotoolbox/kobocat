@@ -26,17 +26,6 @@ class XFormListObjectPermissionFilter(AnonDjangoObjectPermissionFilter):
     perm_format = '%(app_label)s.report_%(model_name)s'
 
 
-class OrganizationPermissionFilter(filters.DjangoObjectPermissionsFilter):
-    def filter_queryset(self, request, queryset, view):
-        filtered_queryset = super(self.__class__, self).filter_queryset(
-            request, queryset, view)
-        org_users = set([group.team.organization
-                         for group in request.user.groups.all()] + [
-            o.user for o in filtered_queryset])
-
-        return queryset.model.objects.filter(user__in=org_users)
-
-
 class XFormOwnerFilter(filters.BaseFilterBackend):
 
     owner_prefix = 'user'
@@ -60,42 +49,6 @@ class XFormIdStringFilter(filters.BaseFilterBackend):
         if id_string:
             return queryset.filter(id_string=id_string)
         return queryset
-
-
-class ProjectOwnerFilter(XFormOwnerFilter):
-    owner_prefix = 'organization'
-
-
-class AnonUserProjectFilter(filters.DjangoObjectPermissionsFilter):
-    def filter_queryset(self, request, queryset, view):
-        """
-        Anonymous user has no object permissions, return queryset as it is.
-        """
-        user = request.user
-        project_id = view.kwargs.get(view.lookup_field)
-
-        if user.is_anonymous():
-            return queryset.filter(Q(shared=True))
-
-        if project_id:
-            try:
-                int(project_id)
-            except ValueError:
-                raise ParseError(
-                    u"Invalid value for project_id '%s' must be a positive "
-                    "integer." % project_id)
-
-            # check if project is public and return it
-            try:
-                project = queryset.get(id=project_id)
-            except ObjectDoesNotExist:
-                raise Http404
-
-            if project.shared:
-                return queryset.filter(Q(id=project_id))
-
-        return super(AnonUserProjectFilter, self)\
-            .filter_queryset(request, queryset, view)
 
 
 class TagFilter(filters.BaseFilterBackend):

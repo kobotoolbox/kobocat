@@ -58,9 +58,6 @@ urlpatterns = patterns(
     url(r'^people/$', 'onadata.apps.main.views.members_list'),
     url(r'^xls2xform/$', 'onadata.apps.main.views.xls2xform'),
     url(r'^support/$', 'onadata.apps.main.views.support'),
-    url(r'^stats/$', 'onadata.apps.stats.views.stats', name='form-stats'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/stats$',
-        'onadata.apps.viewer.views.charts', name='form-stats'),
     url(r'^login_redirect/$', 'onadata.apps.main.views.login_redirect'),
     # Bring back old url because it's still used by `kpi`
     # ToDo Remove when `kpi#gallery-2` is merged into master
@@ -142,9 +139,6 @@ urlpatterns = patterns(
     url(r"^(?P<username>\w+)/upload$",
         BriefcaseApi.as_view({'post': 'create', 'head': 'create'}),
         name='upload'),
-
-    # stats
-    url(r"^stats/submissions/$", 'onadata.apps.stats.views.submissions'),
 
     # exporting stuff
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.csv$",
@@ -265,10 +259,6 @@ urlpatterns = patterns(
     url(r"^(?P<username>[^/]+)/sms_submission$",
         'onadata.apps.sms_support.views.import_submission',
         name='sms_submission'),
-
-    # Stats tables
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/tables",
-        'onadata.apps.viewer.views.stats_tables'),
 
     # Ziggy
     url(r"^(?P<username>[^/]+)/form-submissions$",

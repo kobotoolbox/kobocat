@@ -13,7 +13,7 @@ from onadata.apps.main.forms import UserProfileForm
 from onadata.apps.main.forms import RegistrationFormUserProfile
 from onadata.apps.main.models import UserProfile
 from onadata.libs.serializers.fields.json_field import JsonField
-from onadata.libs.permissions import CAN_VIEW_PROFILE, is_organization
+from onadata.libs.permissions import CAN_VIEW_PROFILE
 
 
 def _get_first_last_names(name, limit=30):
@@ -38,7 +38,6 @@ def _get_first_last_names(name, limit=30):
 
 
 class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
-    is_org = serializers.SerializerMethodField('is_organization')
     username = serializers.CharField(source='user.username')
 
     # Added this field so it's required in the API in a clean way
@@ -58,15 +57,12 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = UserProfile
 
-        fields = ('id', 'is_org', 'url', 'username', 'name', 'password',
+        fields = ('id', 'url', 'username', 'name', 'password',
                   'email', 'city', 'country', 'organization', 'website',
                   'twitter', 'gravatar', 'require_auth', 'user', 'metadata')
         extra_kwargs = {
             'url': {'lookup_field': 'user'}
         }
-
-    def is_organization(self, obj):
-        return is_organization(obj)
 
     def to_representation(self, obj):
         """

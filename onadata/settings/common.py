@@ -35,7 +35,6 @@ MANAGERS = ADMINS
 
 
 DEFAULT_FROM_EMAIL = 'noreply@ona.io'
-SHARE_PROJECT_SUBJECT = '{} Ona Project has been shared with you.'
 DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 
 # Local time zone for this installation. Choices can be found here:
@@ -239,7 +238,6 @@ INSTALLED_APPS = (
     'onadata.apps.restservice',
     'onadata.apps.api',
     'guardian',
-    'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
     'onadata.apps.survey_report',
@@ -533,7 +531,6 @@ SOUTH_MIGRATION_MODULES = {
     'onadata.apps.restservice': 'onadata.apps.restservice.south_migrations',
     'onadata.apps.api': 'onadata.apps.api.south_migrations',
     'onadata.apps.main': 'onadata.apps.main.south_migrations',
-    'onadata.apps.stats': 'onadata.apps.stats.south_migrations',
     'onadata.apps.logger': 'onadata.apps.logger.south_migrations',
     'onadata.apps.viewer': 'onadata.apps.viewer.south_migrations',
 }

@@ -26,8 +26,6 @@ from onadata.libs.renderers import renderers
 from onadata.libs.serializers.xform_serializer import XFormSerializer
 from onadata.libs.serializers.clone_xform_serializer import \
     CloneXFormSerializer
-from onadata.libs.serializers.share_xform_serializer import (
-    ShareXFormSerializer)
 from onadata.apps.main.models import UserProfile
 from onadata.apps.api import tools as utils
 from onadata.apps.api.permissions import XFormPermissions
@@ -641,27 +639,6 @@ Params for the custom xls report
 <b>GET</b> /api/v1/forms/public
 </pre>
 
-## Share a form with a specific user
-
-You can share a form with a  specific user by `POST` a payload with
-
-- `username` of the user you want to share the form with and
-- `role` you want the user to have on the form. Available roles are `readonly`,
-`dataentry`, `editor`, `manager`.
-
-<pre class="prettyprint">
-<b>POST</b> /api/v1/forms/<code>{pk}</code>/share
-</pre>
-
-> Example
->
->       curl -X POST -d '{"username": "alice", "role": "readonly"}' \
-https://example.com/api/v1/forms/123.json
-
-> Response
->
->        HTTP 204 NO CONTENT
-
 ## Clone a form to a specific user account
 
 You can clone a form to a specific user account using `GET` with
@@ -848,25 +825,6 @@ data (instance/submission per row)
                                        export_type,
                                        token,
                                        meta)
-
-    @detail_route(methods=['POST'])
-    def share(self, request, *args, **kwargs):
-        self.object = self.get_object()
-
-        data = {}
-        for key, val in request.data.iteritems():
-            data[key] = val
-        data.update({'xform': self.object.pk})
-
-        serializer = ShareXFormSerializer(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(data=serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @detail_route(methods=['GET'])
     def clone(self, request, *args, **kwargs):

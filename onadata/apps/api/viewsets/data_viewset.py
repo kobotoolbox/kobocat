@@ -43,7 +43,7 @@ This endpoint provides access to submitted data in JSON format. Where:
 
 * `pk` - the form unique identifier
 * `dataid` - submission data unique identifier
-* `owner` - username of the owner(user/organization) of the data point
+* `owner` - username of the owner of the data point
 
 ## GET JSON List of data end points
 
