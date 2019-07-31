@@ -28,6 +28,9 @@ from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
 
 
+UNDEFINED = object()
+
+
 # need to establish id_string of the xform before we run get_dict since
 # we now rely on data dictionary to parse the xml
 def get_id_string_from_xml_str(xml_str):
@@ -382,9 +385,8 @@ class Instance(models.Model):
 
         super(Instance, self).save(*args, **kwargs)
 
-    def set_deleted(self, deleted_at=Ellipsis):
-        # using Ellipsis to indicate that deleted_at was not explicitly set
-        if deleted_at is Ellipsis:
+    def set_deleted(self, deleted_at=UNDEFINED):
+        if deleted_at is UNDEFINED:
             deleted_at = timezone.now()
         self.deleted_at = deleted_at
         self.save()
