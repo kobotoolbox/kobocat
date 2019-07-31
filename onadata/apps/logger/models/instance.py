@@ -166,12 +166,14 @@ class Instance(models.Model):
         return self.xform
 
     @classmethod
-    def set_deleted_at(cls, instance_id, deleted_at=timezone.now()):
+    def set_deleted_at(cls, instance_id, deleted_at=UNDEFINED):
         try:
             instance = cls.objects.get(id=instance_id)
         except cls.DoesNotExist:
             pass
         else:
+            if deleted_at is UNDEFINED:
+                deleted_at = timezone.now()
             instance.set_deleted(deleted_at)
 
     def _check_active(self, force):
