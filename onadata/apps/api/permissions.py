@@ -75,7 +75,8 @@ class XFormPermissions(DjangoObjectPermissions):
             user = request.user
             return user.has_perms([CAN_CHANGE_XFORM], obj)
 
-        if request.method == 'PATCH' and view.action.endswith('validation_status'):
+        if request.method in ['PATCH', 'DELETE'] \
+                and view.action.endswith('validation_status'):
             user = request.user
             return user.has_perms([CAN_VALIDATE_XFORM], obj)
 
