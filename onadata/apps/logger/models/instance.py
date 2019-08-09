@@ -90,7 +90,7 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
         xform.num_of_submissions -= 1
         if xform.num_of_submissions < 0:
             xform.num_of_submissions = 0
-        xform.save()
+        xform.save(update_fields=['num_of_submissions'])
         profile_qs = User.profile.get_queryset()
         try:
             profile = profile_qs.select_for_update()\
@@ -101,7 +101,7 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
             profile.num_of_submissions -= 1
             if profile.num_of_submissions < 0:
                 profile.num_of_submissions = 0
-            profile.save()
+            profile.save(update_fields=['num_of_submissions'])
 
 
 @reversion.register
