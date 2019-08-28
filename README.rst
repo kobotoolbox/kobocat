@@ -1,3 +1,7 @@
+## Important notice when upgrading from `[TODO: INSERT FINAL 1DB RELEASE HERE]` or earlier
+
+Up to and including release `[TODO: INSERT FINAL 1DB RELEASE HERE]`, this project (KoBoCAT) and [KPI](https://github.com/kobotoolbox/kpi) both shared a common Postgres database. They now each have their own. **If you are upgrading an existing single-database installation, you must follow [these instructions](`TODO: LINK`)** to migrate the (smaller) KPI tables to a new database and adjust your configuration appropriately.
+
 About
 -----
 
