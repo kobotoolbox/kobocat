@@ -710,7 +710,7 @@ Delete a specific submission in a form
             payload (dict)
 
         Returns:
-            tuple(<dict>, <dict): PostgreSQL filters, Mongo filters.
+            tuple(<dict>, <dict>): PostgreSQL filters, Mongo filters.
                They are meant to be used respectively with Django Queryset
                and PyMongo query.
 
@@ -740,8 +740,8 @@ Delete a specific submission in a form
                 query.update(mongo_query)  # Overrides `_userform_id` if exists
             except AttributeError:
                 raise ValidationError({
-                    'payload': _('Invalid query: %(query)s' %
-                                 {'query': json.dumps(query)})
+                    'payload': _('Invalid query: %(query)s')
+                               % {'query': json.dumps(query)}
                 })
 
             query_kwargs = {
@@ -764,9 +764,9 @@ Delete a specific submission in a form
                                 for submission_id in submission_ids]
             except ValueError:
                 raise ValidationError({
-                    'payload': _('Invalid submission ids: %(submission_ids)s' % {
-                        'submission_ids': json.dumps(payload['submission_ids'])
-                    })
+                    'payload': _('Invalid submission ids: %(submission_ids)s')
+                               % {'submission_ids':
+                                  json.dumps(payload['submission_ids'])}
                 })
 
         if instance_ids is not None:
@@ -784,6 +784,8 @@ Delete a specific submission in a form
 
         xform = self.get_object()
         if not request.user.has_perm(permission, xform):
-            raise PermissionDenied(_(u"You don't have sufficient right to perform this operation."))
+            raise PermissionDenied(
+                _(u"You do not have sufficient rights to perform this operation.")
+            )
         return xform
 
