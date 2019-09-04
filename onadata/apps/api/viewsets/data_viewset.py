@@ -694,6 +694,8 @@ Delete a specific submission in a form
         try:
             payload = json.loads(request.data.get('payload', '{}'))
         except ValueError:
+            payload = None
+        if not isinstance(payload, dict):
             raise ValidationError({'payload': _('Invalid format')})
 
         return payload
