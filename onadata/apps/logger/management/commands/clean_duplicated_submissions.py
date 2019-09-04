@@ -90,24 +90,24 @@ class Command(BaseCommand):
             xml_hash_ref = None
             instance_id_ref = None
 
-            duplicated_instances_ids = []
+            duplicated_instance_ids = []
             for instance_with_same_uuid in instances_with_same_uuid:
                 instance_id = instance_with_same_uuid[0]
                 instance_xml_hash = instance_with_same_uuid[1]
 
                 if instance_xml_hash != xml_hash_ref:
                     self.__clean_up(instance_id_ref,
-                                    duplicated_instances_ids,
+                                    duplicated_instance_ids,
                                     purge)
                     xml_hash_ref = instance_xml_hash
                     instance_id_ref = instance_id
-                    duplicated_instances_ids = []
+                    duplicated_instance_ids = []
                     continue
 
-                duplicated_instances_ids.append(instance_id)
+                duplicated_instance_ids.append(instance_id)
 
             self.__clean_up(instance_id_ref,
-                            duplicated_instances_ids,
+                            duplicated_instance_ids,
                             purge)
 
         if not self.__vaccuum:
@@ -128,15 +128,15 @@ class Command(BaseCommand):
                 self.stdout.write(
                     '\t\tDone! New number: {}'.format(result['count']))
 
-    def __clean_up(self, instance_id_ref, duplicated_instances_ids, purge):
-        if instance_id_ref is not None and len(duplicated_instances_ids) > 0:
+    def __clean_up(self, instance_id_ref, duplicated_instance_ids, purge):
+        if instance_id_ref is not None and len(duplicated_instance_ids) > 0:
             self.__vaccuum = True
             with transaction.atomic():
                 self.stdout.write('Link attachments to instance #{}'.format(
                     instance_id_ref))
                 # Update attachments
                 Attachment.objects.select_for_update()\
-                    .filter(instance_id__in=duplicated_instances_ids)\
+                    .filter(instance_id__in=duplicated_instance_ids)\
                     .update(instance_id=instance_id_ref)
 
                 # Update Mongo
@@ -146,24 +146,24 @@ class Command(BaseCommand):
 
                 if purge:
                     self.stdout.write('\tPurging instances: {}'.format(
-                        duplicated_instances_ids))
+                        duplicated_instance_ids))
                     Instance.objects.select_for_update()\
-                        .filter(id__in=duplicated_instances_ids).delete()
+                        .filter(id__in=duplicated_instance_ids).delete()
                     ParsedInstance.objects.select_for_update()\
-                        .filter(instance_id__in=duplicated_instances_ids).delete()
+                        .filter(instance_id__in=duplicated_instance_ids).delete()
                     settings.MONGO_DB.instances.remove(
-                        {'_id': {'$in': duplicated_instances_ids}}
+                        {'_id': {'$in': duplicated_instance_ids}}
                     )
                 else:
                     self.stdout.write('\tMarking instances as deleted: {}'.format(
-                        duplicated_instances_ids))
+                        duplicated_instance_ids))
                     # We could loop through instances and use `Instance.set_deleted()`
                     # but it would be way slower.
                     Instance.objects.select_for_update()\
-                        .filter(id__in=duplicated_instances_ids)\
+                        .filter(id__in=duplicated_instance_ids)\
                         .update(deleted_at=timezone.now())
                     settings.MONGO_DB.instances.update_many(
-                        {'_id': {'$in': duplicated_instances_ids}},
+                        {'_id': {'$in': duplicated_instance_ids}},
                         {'$set': {
                             '_deleted_at': timezone.now().strftime(MONGO_STRFTIME)
                         }}
