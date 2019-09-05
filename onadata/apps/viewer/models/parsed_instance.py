@@ -73,6 +73,13 @@ class ParsedInstance(models.Model):
         app_label = "viewer"
 
     @classmethod
+    def get_base_query(cls, username, id_string):
+        userform_id = u'{}_{}'.format(username, id_string)
+        return {
+            cls.USERFORM_ID: userform_id
+        }
+
+    @classmethod
     @apply_form_field_names
     def query_mongo(cls, username, id_string, query, fields, sort, start=0,
                     limit=DEFAULT_LIMIT, count=False, hide_deleted=True):
@@ -177,7 +184,7 @@ class ParsedInstance(models.Model):
         query = MongoHelper.to_safe_dict(query, reading=True)
 
         if username and id_string:
-            query[cls.USERFORM_ID] = u'%s_%s' % (username, id_string)
+            query.update(cls.get_base_query(username, id_string))
             # check if query contains and _id and if its a valid ObjectID
             if '_uuid' in query and ObjectId.is_valid(query['_uuid']):
                 query['_uuid'] = ObjectId(query['_uuid'])
@@ -279,6 +286,10 @@ class ParsedInstance(models.Model):
             {"$set": {VALIDATION_STATUS: validation_status}},
             multi=True,
         )
+
+    @staticmethod
+    def bulk_delete(query):
+        return xform_instances.delete_many(query)
 
     def to_dict(self):
         if not hasattr(self, "_dict_cache"):
