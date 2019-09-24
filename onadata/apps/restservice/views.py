@@ -22,7 +22,7 @@ def add_service(request, username, id_string):
     if request.method == 'POST':
         return HttpResponseGone(
             'New REST services may no longer be added to KoBoCAT. Please '
-            'migrate ALL new *and existing* REST services to KPI!'
+            'use KPI instead.'
         )
 
     # do not show KPI hooks in this legacy view
