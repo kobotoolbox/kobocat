@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from django.utils.translation import gettext as _
+
 
 class DuplicateUUIDError(Exception):
     pass
