@@ -25,7 +25,10 @@ def add_service(request, username, id_string):
             'migrate ALL new *and existing* REST services to KPI!'
         )
 
-    data['list_services'] = RestService.objects.filter(xform=xform)
+    # do not show KPI hooks in this legacy view
+    data['list_services'] = RestService.objects.filter(
+        xform=xform
+    ).exclude(name='kpi_hook')
     data['username'] = username
     data['id_string'] = id_string
 
@@ -38,7 +41,8 @@ def delete_service(request, username, id_string):
         pk = request.POST.get('service-id')
         if pk:
             try:
-                rs = RestService.objects.get(pk=int(pk))
+                # do not allow KPI hooks to be deleted by this legacy view
+                rs = RestService.objects.exclude(name='kpi_hook').get(pk=int(pk))
             except RestService.DoesNotExist:
                 pass
             else:
