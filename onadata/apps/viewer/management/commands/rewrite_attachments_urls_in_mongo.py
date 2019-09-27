@@ -37,7 +37,8 @@ class Command(BaseCommand):
                             # Replace them with the new `dict` format
                             if type(attachment) != dict:
                                 filename = attachment
-                                xform_id, id, mimetype = self.__get_relationship(instance.get("_id"), filename)
+                                xform_id, id, mimetype = self.__get_relationship(
+                                    instance.get("_id"), filename)
                                 attachment = {
                                     "mimetype": mimetype,
                                     "download_url": self.__secure_url(filename),
@@ -48,10 +49,12 @@ class Command(BaseCommand):
                                 }
                             else:
                                 filename = attachment.get("filename")
-                                attachment["download_url"] = self.__secure_url(filename)
+                                attachment["download_url"] = self.__secure_url(
+                                    filename)
 
                             for suffix in settings.THUMB_CONF.keys():
-                                attachment["download_{}_url".format(suffix)] = self.__secure_url(filename, suffix)
+                                attachment["download_{}_url".format(suffix)] = \
+                                    self.__secure_url(filename, suffix)
 
                         except Exception as e:
                             print("ERROR - {}".format(str(e)))
@@ -60,7 +63,10 @@ class Command(BaseCommand):
                     done += 1
                     self.__last_id = instance.get("_id")
                     xform_instances.save(instance)
-                    progress = "\r(%s/%s records) - %.2f %% done..." % (done, instances_count, (float(done) / float(instances_count)) * 100)
+                    progress = "\r(%s/%s records) - %.2f %% done..." % (
+                        done, instances_count,
+                        (float(done) / float(instances_count)) * 100
+                    )
                     sys.stdout.write(progress)
                     sys.stdout.flush()
 
