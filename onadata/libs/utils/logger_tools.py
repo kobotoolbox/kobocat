@@ -299,12 +299,21 @@ def create_instance(username, xml_file, media_files,
     xform = get_xform_from_submission(xml, username, uuid)
     check_submission_permissions(request, xform)
 
+    # get new and deprecated uuid's
+    new_uuid = get_uuid_from_xml(xml)
+
     # Dorey's rule from 2012 (commit 890a67aa):
     #   Ignore submission as a duplicate IFF
     #    * a submission's XForm collects start time
     #    * the submitted XML is an exact match with one that
     #      has already been submitted for that user.
-    if xform.has_start_time:
+    # The start-time requirement protected submissions with identical responses
+    # from being rejected as duplicates *before* KoBoCAT had the concept of
+    # submission UUIDs. Nowadays, OpenRosa requires clients to send a UUID (in
+    # `<instanceID>`) within every submission; if the incoming XML has a UUID
+    # and still exactly matches an existing submission, it's certainly a
+    # duplicate (https://docs.opendatakit.org/openrosa-metadata/#fields).
+    if xform.has_start_time or new_uuid is not None:
         # XML matches are identified by identical content hash OR, when a
         # content hash is not present, by string comparison of the full
         # content, which is slow! Use the management command
@@ -315,9 +324,6 @@ def create_instance(username, xml_file, media_files,
         ).first()
     else:
         existing_instance = None
-
-    # get new and deprecated uuid's
-    new_uuid = get_uuid_from_xml(xml)
 
     if existing_instance:
         # ensure we have saved the extra attachments

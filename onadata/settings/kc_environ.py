@@ -271,7 +271,7 @@ CELERY_BEAT_SCHEDULE = {
     # See https://github.com/kobotoolbox/kobocat/issues/315
     'log-stuck-exports-and-mark-failed': {
         'task': 'onadata.apps.viewer.tasks.log_stuck_exports_and_mark_failed',
-        'schedule': timedelta(minutes=1),
+        'schedule': timedelta(hours=6),
         'options': {'queue': 'kobocat_queue'}
     },
 }
