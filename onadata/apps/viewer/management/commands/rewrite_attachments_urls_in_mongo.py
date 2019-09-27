@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import json
 import sys
-import time
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils.http import urlencode
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from onadata.apps.viewer.models.parsed_instance import xform_instances
 from onadata.apps.logger.models.instance import Instance
@@ -16,7 +14,7 @@ from onadata.apps.logger.models.instance import Instance
 
 class Command(BaseCommand):
 
-    help = _("Rewrite attachments urls to point to new protected endpoint")
+    help = _('Rewrite attachments urls to point to new protected endpoint')
     BATCH_SIZE = 1000
 
     def handle(self, *args, **kwargs):
@@ -34,7 +32,10 @@ class Command(BaseCommand):
                 for instance in cursor:
                     for attachment in instance.get("_attachments"):
                         try:
-                            if type(attachment) != dict:  # seems that old instances, do not use the
+                            # Attachments in old instances were saved as strings
+                            # which were their `download_url`
+                            # Replace them with the new `dict` format
+                            if type(attachment) != dict:
                                 filename = attachment
                                 xform_id, id, mimetype = self.__get_relationship(instance.get("_id"), filename)
                                 attachment = {
@@ -72,8 +73,10 @@ class Command(BaseCommand):
 
     def __get_data(self):
         query = {"$and": [
-            {"_deleted_at": {"$exists": False}},
-            {"_deleted_at": None},
+            {"$or": [
+                {"_deleted_at": {"$exists": False}},
+                {"_deleted_at": None}
+            ]},
             {"_attachments": {"$ne": ""}},
             {"_attachments": {"$ne": []}},
             {"_attachments.download_small_url": {"$exists": False}}

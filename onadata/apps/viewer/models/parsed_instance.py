@@ -192,8 +192,8 @@ class ParsedInstance(models.Model):
             fields = json.loads(fields, object_hook=json_util.object_hook)
         fields = fields if fields else []
 
-        # TODO: current mongo (2.0.4 of this writing)
-        # cant mix including and excluding fields in a single query
+        # TODO: current mongo (3.4 of this writing)
+        # cannot mix including and excluding fields in a single query
         if type(fields) == list and len(fields) > 0:
             fields_to_select = dict(
                 [(MongoHelper.encode(field), 1) for field in fields])
@@ -205,7 +205,7 @@ class ParsedInstance(models.Model):
         """
         Applies pagination and sorting on mongo cursor.
 
-        :param mongo_cursor: pymongo.cursor.Cursor
+        :param cursor: pymongo.cursor.Cursor
         :param start: integer
         :param limit: integer
         :param sort: dict
