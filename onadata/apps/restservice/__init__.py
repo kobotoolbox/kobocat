@@ -1,7 +1,7 @@
 SERVICE_KPI_HOOK = (u"kpi_hook", u"KPI Hook POST")
 
 SERVICE_CHOICES = (
-    SERVICE_KPI_HOOK
+    SERVICE_KPI_HOOK,
 )
 
 
