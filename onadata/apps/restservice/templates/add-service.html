@@ -2,8 +2,11 @@
 {% block content %}
     <div id="addserviceform-container">
     <p>
-      New REST services may no longer be added to KoBoCAT. Please migrate ALL
-      new <strong>and existing</strong> REST services to KPI!
+      Please manage REST Services within the new user interface. Go to the
+      <a href="{{ koboform_url }}">Project Dashboard</a> and navigate to
+      <span style="white-space: nowrap"><strong>
+        Your Project &gt; Settings &gt; REST Services.
+      </strong></span>
     </p>
     <ol id="restservice_list">
         {% for sv in list_services %}
