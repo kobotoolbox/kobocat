@@ -7,7 +7,6 @@ from django.shortcuts import get_object_or_404
 from django.conf import settings
 
 from onadata.apps.logger.models import XForm
-from onadata.apps.restservice.utils import call_ziggy_services
 from onadata.libs.utils import common_tags
 
 xform_instances = settings.MONGO_DB.instances
@@ -169,22 +168,3 @@ def ziggy_to_formhub_instance(ziggy_instance):
     formhub_dict[common_tags.USERFORM_ID] = '{}_{}'.format(
         ziggy_instance.xform.user.username, ziggy_instance.xform.id_string)
     return formhub_dict
-
-
-def rest_service_ziggy_submission(sender, instance, raw, created,
-                                  update_fields, **kwargs):
-    # TODO: this only works if the formName within ziggy matches this form's
-    # name
-    if created and instance.xform:
-        # convert instance to a mongo style record
-        formhub_instance = ziggy_to_formhub_instance(instance)
-        # create mongo instance and capture its object id
-        object_id = xform_instances.save(formhub_instance)
-        # update _uuid since its whats used in f2dhis2 service calls
-        xform_instances.update({'_id': object_id},
-                               {'$set': {common_tags.UUID: object_id}})
-        object_id_str = str(object_id)
-        services_called = call_ziggy_services(instance, object_id_str)
-        return services_called
-
-post_save.connect(rest_service_ziggy_submission, sender=ZiggyInstance)
