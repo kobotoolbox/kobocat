@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-import json
 import requests
 
 from django.conf import settings
@@ -31,3 +30,5 @@ class ServiceDefinition(RestServiceInterface):
 
             # Save successful
             Instance.objects.filter(pk=data.get("instance_id")).update(posted_to_kpi=True)
+        else:
+            logging.warning('This endpoint: `{}` is not valid for `KPI Hook`')
