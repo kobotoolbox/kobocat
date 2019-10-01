@@ -35,14 +35,13 @@ def get_dimensions((width, height), longest_side):
     return flat(width, height)
 
 
-def _save_thumbnails(image, path, size, suffix):
+def _save_thumbnails(image, original_path, size, suffix):
+    # Thumbnail format will be set by original file extension.
+    # Use same format to keep transparency of GIF/PNG
     nm = NamedTemporaryFile(suffix='.%s' % image.format)
     default_storage = get_storage_class()()
     try:
         # Ensure conversion to float in operations
-        # Converting to RGBA make the background white instead of black for
-        # transparent PNGs/GIFs
-        image = image.convert("RGBA")
         image.thumbnail(get_dimensions(image.size, float(size)), Image.ANTIALIAS)
     except ZeroDivisionError:
         pass
@@ -57,39 +56,40 @@ def _save_thumbnails(image, path, size, suffix):
     # i.e if `file_<suffix>.jpg` exists, Storage will save `a_<suffix>_<random_string>.jpg`
     # but nothing in the code is aware about this `<random_string>
     try:
-        default_storage.delete(get_path(path, suffix))
+        default_storage.delete(get_path(original_path, suffix))
     except IOError:
         pass
 
     default_storage.save(
-        get_path(path, suffix), ContentFile(nm.read()))
+        get_path(original_path, suffix), ContentFile(nm.read()))
 
     nm.close()
 
 
 def resize(filename):
     default_storage = get_storage_class()()
-    path = default_storage.url(filename)
-    req = requests.get(path)
-    if req.status_code == 200:
-        im = StringIO(req.content)
-        image = Image.open(im)
+    is_local = default_storage.__class__.__name__ == 'FileSystemStorage'
+    image = None
+    original_path = None
+
+    if is_local:
+        path = default_storage.path(filename)
+        image = Image.open(path)
+        original_path = path
+    else:
+        path = default_storage.url(filename)
+        original_path = filename
+        req = requests.get(path)
+        if req.status_code == 200:
+            im = StringIO(req.content)
+            image = Image.open(im)
+
+    if image:
         conf = settings.THUMB_CONF
         [_save_thumbnails(
-            image, filename,
+            image, original_path,
             conf[key]['size'],
             conf[key]['suffix']) for key in settings.THUMB_ORDER]
-
-
-def resize_local_env(filename):
-    default_storage = get_storage_class()()
-    path = default_storage.path(filename)
-    image = Image.open(path)
-    conf = settings.THUMB_CONF
-
-    [_save_thumbnails(
-        image, path, conf[key]['size'],
-        conf[key]['suffix']) for key in settings.THUMB_ORDER]
 
 
 def image_url(attachment, suffix):
@@ -101,20 +101,16 @@ def image_url(attachment, suffix):
         return url
     else:
         default_storage = get_storage_class()()
-        fs = get_storage_class('django.core.files.storage.FileSystemStorage')()
         if suffix in settings.THUMB_CONF:
             size = settings.THUMB_CONF[suffix]['suffix']
             filename = attachment.media_file.name
             if default_storage.exists(filename):
-                if default_storage.exists(get_path(filename, size)) and\
+                if default_storage.exists(get_path(filename, size)) and \
                         default_storage.size(get_path(filename, size)) > 0:
                     url = default_storage.url(
                         get_path(filename, size))
                 else:
-                    if default_storage.__class__ != fs.__class__:
-                        resize(filename)
-                    else:
-                        resize_local_env(filename)
+                    resize(filename)
                     return image_url(attachment, suffix)
             else:
                 return None

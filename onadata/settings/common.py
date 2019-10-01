@@ -420,7 +420,6 @@ THUMB_CONF = {
 }
 # order of thumbnails from largest to smallest
 THUMB_ORDER = ['large', 'medium', 'small']
-IMG_FILE_TYPE = 'jpg'
 
 # Number of times Celery retries to send data to external rest service
 REST_SERVICE_MAX_RETRIES = 3
