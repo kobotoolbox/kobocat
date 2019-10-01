@@ -562,4 +562,6 @@ if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
     USE_X_FORWARDED_HOST = True
 
 SESSION_ENGINE = "redis_sessions.session"
-SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
+SESSION_REDIS = RedisHelper.session_config(default="redis://redis_cache:6380/2")
+
+LOCK_REDIS = RedisHelper.lock_config(default="redis://redis_cache:6380/3")
