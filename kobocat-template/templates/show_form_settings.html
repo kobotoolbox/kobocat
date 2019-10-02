@@ -61,14 +61,6 @@
         </div>
       </div>  <!-- END .settings__general -->
 
-      {% if is_owner %}
-      <div class="settings__rest-services">
-          <h2 class="settings__group-label">{% trans "Legacy Rest Services" %}</h2>
-          <div id='restservice_tab'>
-            {% trans "Loading..." %}
-          </div>
-      </div>
-      {% endif %}
     </div>
   </div>
   {% endif %}
@@ -190,17 +182,6 @@ $(document).ready(function() {
     {% endif %}
     });
 
-  // REST Service
-  $(document).ready(function() {
-      $.get('{% url "onadata.apps.restservice.views.add_service" content_user.username xform.id_string %}', function(data){
-          $('#restservice_tab').html(data);
-          // hide whole section if there are no rest services
-          // as the legacy code here only allows for deleting
-          if ($('#restservice_tab').find('#restservice_list li').length === 0) {
-              $('.settings__rest-services').hide();
-          }
-      });
-  });
 </script>
 
     <!-- NEW SANDBOX JQUERY CALLS -->

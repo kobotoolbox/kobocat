@@ -112,6 +112,7 @@ ENKETO_API_INSTANCE_IFRAME_URL = ENKETO_URL + ENKETO_API_ROOT + ENKETO_API_ENDPO
 
 KPI_URL = os.environ.get('KPI_URL', False)
 KPI_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KPI_URL)
+KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 
 # specifically for site urls sent to enketo for form retrieval
 # `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.
@@ -422,7 +423,6 @@ THUMB_CONF = {
 }
 # order of thumbnails from largest to smallest
 THUMB_ORDER = ['large', 'medium', 'small']
-IMG_FILE_TYPE = 'jpg'
 
 # Number of times Celery retries to send data to external rest service
 REST_SERVICE_MAX_RETRIES = 3
