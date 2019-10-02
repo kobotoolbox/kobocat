@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -21,7 +22,8 @@ def save_kpi_hook_service(sender, instance, **kwargs):
         if kpi_hook_service is None:
 
             kpi_hook_service = RestService(
-                service_url="/api/v2/assets/{}/hook-signal/".format(instance.id_string),
+                service_url=settings.KPI_HOOK_ENDPOINT_PATTERN.format(
+                    asset_uid=instance.id_string),
                 xform=instance,
                 name=SERVICE_KPI_HOOK[0]
             )

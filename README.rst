@@ -1,7 +1,23 @@
 Important notice when upgrading from ``[TODO: INSERT FINAL 1DB RELEASE HERE]`` or earlier
----------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 
 Up to and including release ``[TODO: INSERT FINAL 1DB RELEASE HERE]``, this project (KoBoCAT) and `KPI <https://github.com/kobotoolbox/kpi>`_ both shared a common Postgres database. They now each have their own. **If you are upgrading an existing single-database installation, you must follow** `these instructions <TODO: LINK>`_ to migrate the (smaller) KPI tables to a new database and adjust your configuration appropriately.
+
+
+Deprecation Notices
+-------------------
+
+Much of the user-facing features of this application are being migrated to
+https://github.com/kobotoolbox/kpi. KoBoCAT's data-access API and OpenRosa
+functions will remain intact, and any plans to the contrary will be announced
+well in advance. For more details and discussion, please refer to
+https://community.kobotoolbox.org/t/contemplating-the-future-of-kobocat/2743.
+
+As features are migrated, we will list them here along with the last release
+where each was present:
+
+* REST Services - an improved version `has been added to KPI <https://github.com/kobotoolbox/kpi/pull/1864>`_.
+  Last KoBoCAT release `2.019.39 <https://github.com/kobotoolbox/kobocat/releases/tag/2.019.39>`_.
 
 About
 -----

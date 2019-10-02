@@ -6,6 +6,7 @@ from hashlib import md5
 
 from django.conf import settings
 from django.db import models
+from django.utils.http import urlencode
 
 from instance import Instance
 
@@ -77,5 +78,5 @@ class Attachment(models.Model):
             kobocat_url=settings.KOBOCAT_URL,
             media_url=settings.MEDIA_URL,
             suffix=suffix,
-            filename=self.media_file.name
+            filename=urlencode({"media_file": self.media_file.name})
         )
