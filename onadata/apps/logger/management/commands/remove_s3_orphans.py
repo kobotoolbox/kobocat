@@ -7,12 +7,12 @@ import re
 import sys
 import time
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.storage import get_storage_class
-from django.db import connection
 from django.db.models import Value as V
 from django.db.models.functions import Concat
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext as _
 
 from onadata.apps.logger.models import Attachment
 from onadata.apps.viewer.models import Export
@@ -66,11 +66,31 @@ def fix_bad_characters(str_):
 
 
 class Command(BaseCommand):
-    help = ugettext_lazy("Removes attachments orphans from S3")
+    help = _('Removes orphan files in S3')
+
+    def add_arguments(self, parser):
+        super(Command, self).add_arguments(parser)
+
+        parser.add_argument(
+            "--dry-run",
+            action='store_true',
+            default=False,
+            help="Do not delete files",
+        )
+
+        parser.add_argument(
+            "--log-files",
+            action='store_true',
+            default=True,
+            help="Save deleted files to a CSV",
+        )
 
     def handle(self, *args, **kwargs):
 
         Bucket._get_all = _get_all
+
+        dry_run = kwargs['dry_run']
+        log_files = kwargs['log_files']
 
         self._s3 = get_storage_class('onadata.libs.utils.extended_s3boto_storage.ExtendedS3BotoStorage')()
         all_files = self._s3.bucket.list()
@@ -78,10 +98,17 @@ class Command(BaseCommand):
         orphans = 0
 
         now = time.time()
-        csv_filepath = "/srv/logs/orphans_files.csv"
+        csv_filepath = '/srv/logs/orphan_files-{}.csv'.format(int(now))
 
-        with open(csv_filepath, "w") as csv:
-            csv.write("type,filename,filesize\n")
+        print('Bucket name: {}'.format(settings.AWS_STORAGE_BUCKET_NAME))
+        if dry_run:
+            print('Dry run mode activated')
+        if log_files:
+            print('CSV: {}'.format(csv_filepath))
+
+        if log_files:
+            with open(csv_filepath, "w") as csv:
+                csv.write("type,filename,filesize\n")
 
         for f in all_files:
             try:
@@ -98,10 +125,13 @@ class Command(BaseCommand):
                             filesize = f.size
                             orphans += 1
                             size_to_reclaim += filesize
-                            csv = codecs.open(csv_filepath, "a", "utf-8")
-                            csv.write("{},{},{}\n".format("attachment", filename, filesize))
-                            csv.close()
-                            self.delete(f)
+                            if log_files:
+                                csv = codecs.open(csv_filepath, "a", "utf-8")
+                                csv.write("{},{},{}\n".format("attachment", filename, filesize))
+                                csv.close()
+
+                            if not dry_run:
+                                self.delete(f)
 
                     elif re.match(r"[^\/]*\/exports\/[^\/]*\/[^\/]*\/.+", filename):
                         # KC Export
@@ -111,31 +141,12 @@ class Command(BaseCommand):
                             filesize = f.size
                             orphans += 1
                             size_to_reclaim += filesize
-                            csv = codecs.open(csv_filepath, "a", "utf-8")
-                            csv.write("{},{},{}\n".format("attachment", filename, filesize))
-                            csv.close()
-                            self.delete(f)
-
-                    elif re.match(r"[^\/]*\/exports\/.+", filename):
-                        # KPI Export.
-                        # TODO Create the same command in KPI after merging `two-databases`.
-                        does_exist = False
-                        with connection.cursor() as cursor:
-                            cursor.execute("SELECT EXISTS(SELECT id FROM kpi_exporttask WHERE result = %s)", [filename])
-                            try:
-                                row = cursor.fetchone()
-                                does_exist = row[0]
-                            except:
-                                pass
-
-                        if not does_exist:
-                            filesize = f.size
-                            orphans += 1
-                            size_to_reclaim += filesize
-                            csv = codecs.open(csv_filepath, "a", "utf-8")
-                            csv.write("{},{},{}\n".format("attachment", filename, filesize))
-                            csv.close()
-                            self.delete(f)
+                            if log_files:
+                                csv = codecs.open(csv_filepath, "a", "utf-8")
+                                csv.write("{},{},{}\n".format("export", filename, filesize))
+                                csv.close()
+                            if not dry_run:
+                                self.delete(f)
 
                 if time.time() - now >= 5 * 60:
                     print("[{}] Still alive...".format(str(int(time.time()))))
@@ -143,7 +154,7 @@ class Command(BaseCommand):
 
             except Exception as e:
                 print("ERROR - {}".format(str(e)))
-                sys.exit()
+                sys.exit(-1)
 
         print("Orphans: {}".format(orphans))
         print("Size: {}".format(self.sizeof_fmt(size_to_reclaim)))

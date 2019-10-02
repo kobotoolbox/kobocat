@@ -3,6 +3,7 @@ from datetime import timedelta
 import logging
 import os
 
+from celery.schedules import crontab
 from celery.signals import after_setup_logger
 import dj_database_url
 
@@ -272,6 +273,20 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'onadata.apps.viewer.tasks.log_stuck_exports_and_mark_failed',
         'schedule': timedelta(hours=6),
         'options': {'queue': 'kobocat_queue'}
+    },
+    # Schedule every Saturday at 4:00 AM UTC. Can be customized in admin section
+    'remove-s3-orphans': {
+        'task': 'onadata.apps.logger.tasks.remove_s3_orphans',
+        'schedule': crontab(hour=4, minute=0, day_of_week=6),
+        'options': {'queue': 'kobocat_queue'},
+        'enabled': False,
+    },
+    # Schedule every day at 5:00 AM UTC. Can be customized in admin section
+    'remove-revisions': {
+        'task': 'onadata.apps.logger.tasks.remove_revisions',
+        'schedule': crontab(hour=4, minute=0),
+        'options': {'queue': 'kobocat_queue'},
+        'enabled': False,
     },
 }
 

@@ -12,7 +12,7 @@ from reversion.management.commands.deleterevisions import Command as RevisionCom
 
 class Command(RevisionCommand):
 
-    help = "Deletes revisions (by chunks) for a given app [and model]"
+    help = "Removes revisions (by chunks) for a given app [and model]"
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)

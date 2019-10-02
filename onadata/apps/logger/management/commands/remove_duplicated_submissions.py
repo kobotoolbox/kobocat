@@ -17,11 +17,11 @@ from onadata.libs.utils.common_tags import MONGO_STRFTIME
 
 class Command(BaseCommand):
 
-    help = "Deletes duplicated submissions (i.e same `uuid` and same `xml`)"
+    help = "Removes duplicated submissions (i.e same `uuid` and same `xml`)"
 
     def __init__(self, **kwargs):
         super(Command, self).__init__(**kwargs)
-        self.__vaccuum = False
+        self.__vacuum = False
         self.__users = set([])
 
     def add_arguments(self, parser):
@@ -110,7 +110,7 @@ class Command(BaseCommand):
                             duplicated_instance_ids,
                             purge)
 
-        if not self.__vaccuum:
+        if not self.__vacuum:
             if purge:
                 self.stdout.write('No instances have been purged.')
             else:
@@ -130,7 +130,7 @@ class Command(BaseCommand):
 
     def __clean_up(self, instance_id_ref, duplicated_instance_ids, purge):
         if instance_id_ref is not None and len(duplicated_instance_ids) > 0:
-            self.__vaccuum = True
+            self.__vacuum = True
             with transaction.atomic():
                 self.stdout.write('Link attachments to instance #{}'.format(
                     instance_id_ref))
