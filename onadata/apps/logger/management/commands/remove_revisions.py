@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from datetime import timedelta
 import sys
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction, models, router, connection
 from django.utils import timezone
 from reversion.models import Revision, Version
@@ -56,6 +57,16 @@ class Command(RevisionCommand):
         keep_revision_ids = set()
         # By default, delete nothing.
         can_delete = False
+
+        asset_content_type = ContentType.objects.get(app_label='kpi', model='asset')
+        # Force keep assets' revisions even if `self.models()` returns only
+        # registered models.
+        keep_revision_ids.update(Version.objects.using(using).filter(
+            model_db=model_db,
+            content_type_id=asset_content_type).
+                                 values_list('revision_id', flat=True)
+                                 )
+
         # Get all revisions for the given revision manager and model.
         for model in self.get_models(options):
             if verbosity >= 1:
