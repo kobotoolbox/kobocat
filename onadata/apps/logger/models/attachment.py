@@ -74,7 +74,7 @@ class Attachment(models.Model):
         if suffix != "original" and suffix not in settings.THUMB_CONF.keys():
             raise Exception("Invalid image thumbnail")
 
-        return u"{kobocat_url}{media_url}{suffix}?media_file={filename}".format(
+        return u"{kobocat_url}{media_url}{suffix}?{filename}".format(
             kobocat_url=settings.KOBOCAT_URL,
             media_url=settings.MEDIA_URL,
             suffix=suffix,
