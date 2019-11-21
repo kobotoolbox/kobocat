@@ -85,7 +85,10 @@ class Command(BaseCommand):
             ]},
             {"_attachments": {"$ne": ""}},
             {"_attachments": {"$ne": []}},
-            {"_attachments.download_small_url": {"$exists": False}}
+            {"$or": [
+                {"_attachments.download_url": {"$regex": ".*media_file=media_file.*"}},
+                {"_attachments.download_small_url": {"$exists": False}}
+            ]}
         ]}
 
         if self.__last_id is not None:
