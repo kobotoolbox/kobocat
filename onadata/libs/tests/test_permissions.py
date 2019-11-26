@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 from guardian.shortcuts import get_users_with_perms
 
 from onadata.apps.api import tools
 from onadata.apps.main.models.user_profile import UserProfile
 from onadata.apps.main.tests.test_base import TestBase
+from onadata.libs.constants import CAN_ADD_XFORM_TO_PROFILE
 from onadata.libs.permissions import (
     get_object_users_with_permissions,
     ManagerRole,
-    CAN_ADD_XFORM_TO_PROFILE,
     ReadOnlyRole,
     OwnerRole,
     EditorRole)

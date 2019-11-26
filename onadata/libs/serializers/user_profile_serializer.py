@@ -1,19 +1,21 @@
-import copy
-import six
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
+import copy
+
+import six
 from django.conf import settings
-from django.forms import ValidationError as FormValidationError
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.core.validators import ValidationError
+from django.forms import ValidationError as FormValidationError
 from registration.models import RegistrationProfile
 from rest_framework import serializers
 
-from onadata.apps.main.forms import UserProfileForm
 from onadata.apps.main.forms import RegistrationFormUserProfile
+from onadata.apps.main.forms import UserProfileForm
 from onadata.apps.main.models import UserProfile
+from onadata.libs.constants import CAN_VIEW_PROFILE
+from onadata.libs.permissions import is_organization
 from onadata.libs.serializers.fields.json_field import JsonField
-from onadata.libs.permissions import CAN_VIEW_PROFILE, is_organization
 
 
 def _get_first_last_names(name, limit=30):
@@ -190,7 +192,6 @@ class UserProfileWithTokenSerializer(UserProfileSerializer):
         extra_kwargs = {
             "url": {'lookup_field': 'user'}
         }
-
 
     def get_api_token(self, object):
         return object.user.auth_token.key

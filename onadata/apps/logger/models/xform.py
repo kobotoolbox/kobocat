@@ -1,34 +1,42 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
+import io
 import json
 import os
-import pytz
 import re
-import io
-
-from hashlib import md5
-from django.utils import timezone
+from cStringIO import StringIO
 from datetime import datetime
+from hashlib import md5
+from xml.sax import saxutils
+
+import pytz
 from django.conf import settings
-from django.db import models
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
-from django.db.models.signals import post_save, post_delete
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import get_storage_class
+from django.core.urlresolvers import reverse
+from django.db import models
+from django.db.models.signals import post_save, post_delete
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy, ugettext as _
 from guardian.shortcuts import \
     assign_perm, \
     get_perms_for_model
-from cStringIO import StringIO
 from taggit.managers import TaggableManager
-from xml.sax import saxutils
 
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
-from ....koboform.pyxform_utils import convert_csv_to_xls
-from onadata.apps.logger.fields import LazyDefaultBooleanField
-from onadata.apps.logger.exceptions import DuplicateUUIDError
-
+from onadata.libs.constants import (
+    CAN_ADD_SUBMISSIONS,
+    CAN_VALIDATE_XFORM,
+    CAN_VIEW_XFORM,
+    CAN_DELETE_DATA_XFORM,
+    CAN_TRANSFER_OWNERSHIP,
+    CAN_MOVE_TO_FOLDER,
+)
+from onadata.koboform.pyxform_utils import convert_csv_to_xls
 
 try:
     from formpack.utils.xls_to_ss_structure import xls_to_dicts
@@ -105,11 +113,12 @@ class XForm(BaseModel):
         verbose_name_plural = ugettext_lazy("XForms")
         ordering = ("id_string",)
         permissions = (
-            ("view_xform", _("Can view associated data")),
-            ("report_xform", _("Can make submissions to the form")),
-            ("move_xform", _(u"Can move form between projects")),
-            ("transfer_xform", _(u"Can transfer form ownership.")),
-            ("validate_xform", _(u"Can validate submissions.")),
+            (CAN_VIEW_XFORM, _("Can view associated data")),
+            (CAN_ADD_SUBMISSIONS, _("Can make submissions to the form")),
+            (CAN_MOVE_TO_FOLDER, _(u"Can move form between projects")),
+            (CAN_TRANSFER_OWNERSHIP, _(u"Can transfer form ownership")),
+            (CAN_VALIDATE_XFORM, _(u"Can validate submissions")),
+            (CAN_DELETE_DATA_XFORM, _(u"Can delete submissions")),
         )
 
     def file_name(self):

@@ -1,18 +1,20 @@
-from datetime import datetime
-from django.contrib.contenttypes.models import ContentType
-import os
-import json
-from bson import json_util
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
+import json
+import os
+from datetime import datetime
+
+from bson import json_util
 from django.conf import settings
-from django.core.urlresolvers import reverse
-from django.core.files.storage import default_storage
-from django.core.files.storage import get_storage_class
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.storage import default_storage
+from django.core.files.storage import get_storage_class
+from django.core.urlresolvers import reverse
 from django.db import IntegrityError
-from rest_framework.authtoken.models import Token
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
@@ -27,40 +29,48 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
 from guardian.shortcuts import assign_perm, remove_perm, get_users_with_perms
+from rest_framework.authtoken.models import Token
 
-from onadata.apps.main.forms import UserProfileForm, FormLicenseForm,\
-    DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL,\
-    QuickConverter, SourceForm, PermissionForm, MediaForm, MapboxLayerForm,\
-    ActivateSMSSupportFom, ExternalExportForm
-from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
-from onadata.apps.viewer.models.data_dictionary import DataDictionary,\
-    upload_to
-from onadata.apps.viewer.models.parsed_instance import\
-    DATETIME_FORMAT, ParsedInstance
-from onadata.apps.viewer.views import attachment_url
-from onadata.apps.sms_support.tools import check_form_sms_compatibility,\
-    is_sms_related
+from onadata.apps.main.forms import UserProfileForm, FormLicenseForm, \
+    DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
+    QuickConverter, SourceForm, PermissionForm, MediaForm, MapboxLayerForm, \
+    ActivateSMSSupportFom, ExternalExportForm
+from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.apps.sms_support.autodoc import get_autodoc_for
 from onadata.apps.sms_support.providers import providers_doc
-from onadata.libs.utils.bamboo import get_new_bamboo_dataset,\
+from onadata.apps.sms_support.tools import check_form_sms_compatibility, \
+    is_sms_related
+from onadata.apps.viewer.models.data_dictionary import DataDictionary, \
+    upload_to
+from onadata.apps.viewer.models.parsed_instance import \
+    DATETIME_FORMAT, ParsedInstance
+from onadata.apps.viewer.views import attachment_url
+from onadata.libs.constants import (
+    CAN_CHANGE_XFORM,
+    CAN_VALIDATE_XFORM,
+    CAN_DELETE_DATA_XFORM,
+    CAN_VIEW_XFORM,
+    CAN_ADD_SUBMISSIONS,
+)
+from onadata.libs.utils.bamboo import get_new_bamboo_dataset, \
     delete_bamboo_dataset, ensure_rest_service
 from onadata.libs.utils.decorators import is_owner
-from onadata.libs.utils.logger_tools import response_with_mimetype_and_name,\
+from onadata.libs.utils.export_tools import upload_template_for_external_export
+from onadata.libs.utils.log import audit_log, Actions
+from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
     publish_form
+from onadata.libs.utils.qrcode import generate_qrcode
 from onadata.libs.utils.user_auth import add_cors_headers
-from onadata.libs.utils.user_auth import check_and_set_user_and_form
 from onadata.libs.utils.user_auth import check_and_set_user
+from onadata.libs.utils.user_auth import check_and_set_user_and_form
 from onadata.libs.utils.user_auth import get_xform_and_perms
+from onadata.libs.utils.user_auth import has_delete_data_permission
 from onadata.libs.utils.user_auth import has_permission
-from onadata.libs.utils.user_auth import has_edit_permission
 from onadata.libs.utils.user_auth import helper_auth_helper
 from onadata.libs.utils.user_auth import set_profile_data
-from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.qrcode import generate_qrcode
 from onadata.libs.utils.viewer_tools import enketo_url
-from onadata.libs.utils.export_tools import upload_template_for_external_export
 
 
 def home(request):
@@ -371,14 +381,16 @@ def set_xform_owner_data(data, xform, request, username, id_string):
 
     for perm in get_users_with_perms(xform, attach_perms=True).items():
         has_perm = []
-        if 'change_xform' in perm[1]:
+        if CAN_CHANGE_XFORM in perm[1]:
             has_perm.append(_(u"Can Edit"))
-        if 'view_xform' in perm[1]:
+        if CAN_VIEW_XFORM in perm[1]:
             has_perm.append(_(u"Can View"))
-        if 'report_xform' in perm[1]:
-            has_perm.append(_(u"Can submit to"))
-        if 'validate_xform' in perm[1]:
+        if CAN_ADD_SUBMISSIONS in perm[1]:
+            has_perm.append(_(u"Can Submit To"))
+        if CAN_VALIDATE_XFORM in perm[1]:
             has_perm.append(_(u"Can Validate"))
+        if CAN_DELETE_DATA_XFORM in perm[1]:
+            has_perm.append(_(u"Can Delete Data"))
         users_with_perms.append((perm[0], u" | ".join(has_perm)))
     data['users_with_perms'] = users_with_perms
     data['permission_form'] = PermissionForm(username)
@@ -389,7 +401,7 @@ def show(request, username=None, id_string=None, uuid=None):
     if uuid:
         return redirect_to_public_link(request, uuid)
 
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
+    xform, is_owner, can_edit, can_view, can_delete_data = get_xform_and_perms(
         username, id_string, request)
     # no access
     if not (xform.shared or can_view or request.session.get('public_link')):
@@ -404,6 +416,7 @@ def show(request, username=None, id_string=None, uuid=None):
     data['is_owner'] = is_owner
     data['can_edit'] = can_edit
     data['can_view'] = can_view or request.session.get('public_link')
+    data['can_delete_data'] = can_delete_data
     data['xform'] = xform
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
@@ -423,13 +436,14 @@ def show(request, username=None, id_string=None, uuid=None):
 
     return render(request, "show.html", data)
 
+
 # SETTINGS SCREEN FOR KPI, LOADED IN IFRAME 
 @require_GET
 def show_form_settings(request, username=None, id_string=None, uuid=None):
     if uuid:
         return redirect_to_public_link(request, uuid)
 
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
+    xform, is_owner, can_edit, can_view, can_delete_data = get_xform_and_perms(
         username, id_string, request)
     # no access
     if not (xform.shared or can_view or request.session.get('public_link')):
@@ -444,6 +458,7 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['is_owner'] = is_owner
     data['can_edit'] = can_edit
     data['can_view'] = can_view or request.session.get('public_link')
+    data['can_delete_data'] = can_delete_data
     data['xform'] = xform
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
@@ -462,7 +477,6 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
         data['sms_support_doc'] = get_autodoc_for(xform)
 
     return render(request, "show_form_settings.html", data)
-
 
 
 @login_required
@@ -1115,7 +1129,15 @@ def set_perm(request, username, id_string):
     except KeyError:
         return HttpResponseBadRequest()
 
-    if perm_type in ['edit', 'view', 'report', 'validate', 'remove']:
+    perms_by_type = {
+        'edit': CAN_CHANGE_XFORM,
+        'view': CAN_VIEW_XFORM,
+        'report': CAN_ADD_SUBMISSIONS,
+        'validate': CAN_VALIDATE_XFORM,
+        'delete_data': CAN_DELETE_DATA_XFORM
+    }
+
+    if perm_type in perms_by_type.keys() or perm_type == 'remove':
         try:
             user = User.objects.get(username=for_user)
         except User.DoesNotExist:
@@ -1124,78 +1146,39 @@ def set_perm(request, username, id_string):
                 _(u"Wrong username <b>%s</b>." % for_user),
                 extra_tags='alert-error')
         else:
-            if perm_type == 'edit' and\
-                    not user.has_perm('change_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("Edit permissions on '%(id_string)s' assigned to "
-                        "'%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('change_xform', user, xform)
-            elif perm_type == 'view' and\
-                    not user.has_perm('view_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("View permissions on '%(id_string)s' "
-                        "assigned to '%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('view_xform', user, xform)
-            elif perm_type == 'report' and\
-                    not user.has_perm('report_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("Report permissions on '%(id_string)s' "
-                        "assigned to '%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('report_xform', user, xform)
-            elif perm_type == 'validate' and\
-                    not user.has_perm('validate_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("Validate permissions on '%(id_string)s' assigned to "
-                        "'%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('validate_xform', user, xform)
-            elif perm_type == 'remove':
+            if perm_type == 'remove':
                 audit = {
                     'xform': xform.id_string
                 }
                 audit_log(
                     Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
                     _("All permissions on '%(id_string)s' "
-                        "removed from '%(for_user)s'.") %
+                      "removed from '%(for_user)s'.") %
                     {
                         'id_string': xform.id_string,
                         'for_user': for_user
                     }, audit, request)
-                remove_perm('change_xform', user, xform)
-                remove_perm('view_xform', user, xform)
-                remove_perm('report_xform', user, xform)
-                remove_perm('validate_xform', user, xform)
+                remove_perm(CAN_CHANGE_XFORM, user, xform)
+                remove_perm(CAN_VIEW_XFORM, user, xform)
+                remove_perm(CAN_ADD_SUBMISSIONS, user, xform)
+                remove_perm(CAN_VALIDATE_XFORM, user, xform)
+                remove_perm(CAN_DELETE_DATA_XFORM, user, xform)
+
+            elif not user.has_perm(perms_by_type[perm_type], xform):
+                audit = {
+                    'xform': xform.id_string
+                }
+                audit_log(
+                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
+                    _("`%(codename)` permission on '%(id_string)s' assigned to "
+                      "'%(for_user)s'.") %
+                    {
+                        'codename': perms_by_type[perm_type],
+                        'id_string': xform.id_string,
+                        'for_user': for_user
+                    }, audit, request)
+                assign_perm(CAN_CHANGE_XFORM, user, xform)
+
     elif perm_type == 'link':
         current = MetaData.public_link(xform)
         if for_user == 'all':
@@ -1235,9 +1218,7 @@ def set_perm(request, username, id_string):
 def delete_data(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
     response_text = u''
-    if not xform or not has_edit_permission(
-        xform, owner, request, xform.shared
-    ):
+    if not xform or not has_delete_data_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
 
     data_id = request.POST.get('id')

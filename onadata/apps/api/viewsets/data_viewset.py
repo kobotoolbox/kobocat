@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals, absolute_import
+
 import json
 
 from django.db.models import Q
@@ -27,7 +29,11 @@ from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
 from onadata.apps.api.permissions import XFormDataPermissions
-from onadata.libs.permissions import CAN_CHANGE_XFORM
+from onadata.libs.constants import (
+    CAN_CHANGE_XFORM,
+    CAN_VALIDATE_XFORM,
+    CAN_DELETE_DATA_XFORM
+)
 from onadata.libs.serializers.data_serializer import (
     DataSerializer, DataListSerializer, DataInstanceSerializer)
 from onadata.libs import filters
@@ -419,7 +425,7 @@ Delete a specific submission in a form
         Bulk delete instances
         """
         xform = self.__validate_permission_on_bulk_action(request,
-                                                          'change_xform')
+                                                          CAN_DELETE_DATA_XFORM)
         payload = self.__get_payload(request)
 
         postgres_query, mongo_query = self.__build_db_queries(xform, payload)
@@ -440,7 +446,7 @@ Delete a specific submission in a form
     def bulk_validation_status(self, request, *args, **kwargs):
 
         xform = self.__validate_permission_on_bulk_action(request,
-                                                          'validate_xform')
+                                                          CAN_VALIDATE_XFORM)
         payload = self.__get_payload(request)
 
         try:
@@ -553,7 +559,7 @@ Delete a specific submission in a form
         data = {}
 
         if request.method != "GET":
-            if request.user.has_perm("validate_xform", instance.asset):
+            if request.user.has_perm(CAN_VALIDATE_XFORM, instance.asset):
                 if request.method == "PATCH" and \
                         not add_validation_status_to_instance(request, instance):
                     http_status = status.HTTP_400_BAD_REQUEST

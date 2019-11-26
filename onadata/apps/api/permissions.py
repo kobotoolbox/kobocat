@@ -1,9 +1,16 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, absolute_import
+
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.permissions import IsAuthenticated
 
-from onadata.libs.permissions import CAN_ADD_XFORM_TO_PROFILE
-from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VALIDATE_XFORM
+from onadata.libs.constants import (
+    CAN_ADD_XFORM_TO_PROFILE,
+    CAN_CHANGE_XFORM,
+    CAN_VALIDATE_XFORM,
+    CAN_DELETE_DATA_XFORM
+)
 from onadata.apps.api.tools import get_user_profile_or_none, \
     check_inherit_permission_from_project
 from onadata.apps.logger.models import XForm
@@ -63,6 +70,13 @@ class XFormPermissions(DjangoObjectPermissions):
 
         return super(XFormPermissions, self).has_permission(request, view)
 
+    def get_required_object_permissions(self, method, model_cls):
+        kwargs = {
+            'app_label': model_cls._meta.app_label,
+            'model_name': model_cls._meta.model_name
+        }
+        return [perm % kwargs for perm in self.perms_map[method]]
+
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
         if request.method == 'GET' and view.action in ('list', 'retrieve'):
@@ -70,6 +84,18 @@ class XFormPermissions(DjangoObjectPermissions):
             xform = get_object_or_404(XForm, pk=pk)
             if xform.shared_data:
                 return True
+
+        return super(XFormPermissions, self).has_object_permission(
+            request, view, obj)
+
+
+class XFormDataPermissions(XFormPermissions):
+
+    def __init__(self, *args, **kwargs):
+        super(XFormDataPermissions, self).__init__(*args, **kwargs)
+        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_DELETE_DATA_XFORM]
+
+    def has_object_permission(self, request, view, obj):
 
         if request.method == 'DELETE' and view.action == 'labels':
             user = request.user
@@ -80,20 +106,7 @@ class XFormPermissions(DjangoObjectPermissions):
             user = request.user
             return user.has_perms([CAN_VALIDATE_XFORM], obj)
 
-        return super(XFormPermissions, self).has_object_permission(
-            request, view, obj)
-
-
-class XFormDataPermissions(XFormPermissions):
-
-    # TODO: move other data-specific logic out of `XFormPermissions` and into
-    # this class
-
-    def __init__(self, *args, **kwargs):
-        super(XFormDataPermissions, self).__init__(*args, **kwargs)
-        # Those who can edit submissions can also delete them, following the
-        # behavior of `onadata.apps.main.views.delete_data`
-        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
+        return super(XFormDataPermissions, self).has_object_permission(request, view, obj)
 
 
 class UserProfilePermissions(DjangoObjectPermissions):

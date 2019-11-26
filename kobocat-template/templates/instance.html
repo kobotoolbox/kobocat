@@ -68,6 +68,7 @@ var numRecords = null;
 var browsePos = null;
 
 var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
+var canDeleteData = {% if can_delete_data %}true;{% else %}false;{% endif %}
 
 (function($) {
 
@@ -92,7 +93,7 @@ var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
           var id = this.params['id'];
           var query = '{"_id": ' + id + '}';
           _isFirstLoad = false
-          loadData(context, query, canEdit);
+          loadData(context, query, canEdit, canDeleteData);
       });
 
       // #uuid/uuid route
@@ -100,43 +101,43 @@ var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
           var uuid = this.params['uuid'];
           var query = '{"_uuid": "' + uuid + '"}';
           _isFirstLoad = false
-          loadData(context, query, canEdit);
+          loadData(context, query, canEdit, canDeleteData);
       });
 
 
-      // Delete modal
-      this.get('#del/:id', function(context) { with(this) {
+      if (canDeleteData) {
+          // Delete modal
+          this.get('#del/:id', function(context) { with(this) {
+              $("#delete-modal").modal("show");
+          }
+          });
 
-            $("#delete-modal").modal("show");
+          // Delete route
+          this.get('#delete/:id', function(context) {
 
+              var id = this.params['id'];
+              var next = $('li.next').children('a').attr('href');
+              next = next.replace("#/", "");
+
+              var prev = $('li.prev').children('a').attr('href');
+              prev = prev.replace("#/", "");
+              var redirect_route = '#/';
+
+              if(next > 0 && next != id ){
+                  redirect_route = '#/'  + next;
+              }
+              else if(prev > 0 && prev != id ){
+                  redirect_route = '#/'  + prev;
+              }
+              else {
+                  // Deleting the last instance
+                  redirect_route ='#data-view/';
+              }
+
+              deleteData(context, id, redirect_route);
+          });
       }
-      });
 
-
-      // Delete route
-      this.get('#delete/:id', function(context) {
-
-          var id = this.params['id'];
-          var next = $('li.next').children('a').attr('href');
-          next = next.replace("#/", "");
-
-          var prev = $('li.prev').children('a').attr('href');
-          prev = prev.replace("#/", "");
-          var redirect_route = '#/';
-
-          if(next > 0 && next != id ){
-              redirect_route = '#/'  + next;
-          }
-          else if(prev > 0 && prev != id ){
-              redirect_route = '#/'  + prev;
-          }
-          else {
-              // Deleting the last instance
-              redirect_route ='#data-view/';
-          }
-
-          deleteData(context, id, redirect_route);
-      });
       this.bind('error', {}, function(){
           //alert('Invalid route requested')
           //app.setLocation('#/');

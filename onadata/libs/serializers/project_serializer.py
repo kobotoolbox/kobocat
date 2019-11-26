@@ -1,4 +1,6 @@
-from django.forms import widgets
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
