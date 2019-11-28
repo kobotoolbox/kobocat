@@ -70,13 +70,6 @@ class XFormPermissions(DjangoObjectPermissions):
 
         return super(XFormPermissions, self).has_permission(request, view)
 
-    def get_required_object_permissions(self, method, model_cls):
-        kwargs = {
-            'app_label': model_cls._meta.app_label,
-            'model_name': model_cls._meta.model_name
-        }
-        return [perm % kwargs for perm in self.perms_map[method]]
-
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
         if request.method == 'GET' and view.action in ('list', 'retrieve'):
