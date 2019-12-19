@@ -27,7 +27,6 @@ from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.libs.models.base_model import BaseModel
 from ....koboform.pyxform_utils import convert_csv_to_xls
 from onadata.apps.logger.fields import LazyDefaultBooleanField
-from onadata.apps.logger.exceptions import DuplicateUUIDError
 
 
 try:
