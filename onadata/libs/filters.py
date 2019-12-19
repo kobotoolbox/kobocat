@@ -6,8 +6,8 @@ from django.utils import six
 from rest_framework import filters
 from rest_framework.exceptions import ParseError
 
-
 from onadata.apps.logger.models import XForm, Instance
+from onadata.apps.main.models import MetaData
 
 
 class AnonDjangoObjectPermissionFilter(filters.DjangoObjectPermissionsFilter):
@@ -134,7 +134,11 @@ class XFormPermissionFilterMixin(object):
 class MetaDataFilter(XFormPermissionFilterMixin,
                      filters.DjangoObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
-        return self._xform_filter_queryset(request, queryset, view, 'xform')
+        queryset = self._xform_filter_queryset(request, queryset, view, 'xform')
+        data_type = request.query_params.get('data_type')
+        if data_type is not None:
+            queryset = queryset.filter(data_type=data_type)
+        return queryset
 
 
 class AttachmentFilter(XFormPermissionFilterMixin,
