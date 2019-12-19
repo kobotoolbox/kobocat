@@ -23,11 +23,11 @@ class MetaDataViewSet(viewsets.ModelViewSet):
 
     ### Permissions
 
-    This endpoint applys the same permissions someone has on the form.
+    This endpoint applies the same permissions someone has on the form.
 
     ## Get list of metadata
 
-    Returns a list of metadata accross all forms requesting user has access to.
+    Returns a list of metadata across all forms requesting user has access to.
 
     <pre class="prettyprint">GET /api/v1/metadata</pre>
 
@@ -194,3 +194,13 @@ Accept: image/png </pre>
         serializer = self.get_serializer(self.object)
 
         return Response(serializer.data)
+
+    def perform_destroy(self, *args, **kwargs):
+        # Delete file
+        try:
+            file_ = self.get_object()
+            file_.data_file.delete(save=False)
+        except OSError:
+            pass
+
+        return super(MetaDataViewSet, self).perform_destroy(*args, **kwargs)
