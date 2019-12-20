@@ -3,7 +3,7 @@
 pybamboo==0.5.8.1
 pytz==2018.9
 
-Django>=1.8,<1.9
+-e git+https://github.com/qedsoftware/django.git@stable/1.8.20#egg=django
 dj-database-url==0.4.0
 django-guardian==1.4.1
 django-registration-redux==1.3
