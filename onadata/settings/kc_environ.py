@@ -3,8 +3,9 @@ from datetime import timedelta
 import logging
 import os
 
-from celery.signals import after_setup_logger
 import dj_database_url
+from celery.signals import after_setup_logger
+from django.utils.six.moves.urllib.parse import quote
 
 from onadata.settings.common import *
 
@@ -134,8 +135,14 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 # MongoDB - moved here from common.py
 if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
-    MONGO_CONNECTION_URL = (
-        "mongodb://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/%(NAME)s") % MONGO_DATABASE
+    MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
+        format(
+            user=MONGO_DATABASE['USER'],
+            password=quote(MONGO_DATABASE['PASSWORD']),
+            host=MONGO_DATABASE['HOST'],
+            port=MONGO_DATABASE['PORT'],
+            db_name=MONGO_DATABASE['NAME']
+        )
 else:
     MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
 
