@@ -135,9 +135,9 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # MongoDB - moved here from common.py
 if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
     MONGO_CONNECTION_URL = (
-        "mongodb://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s") % MONGO_DATABASE
+        "mongodb://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/%(NAME)s") % MONGO_DATABASE
 else:
-    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s" % MONGO_DATABASE
+    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
 
 # PyMongo 3 does acknowledged writes by default
 # https://emptysqua.re/blog/pymongos-new-default-safe-writes/
