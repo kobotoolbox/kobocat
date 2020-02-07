@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import os
 import re
 
-from django.utils.six.moves.urllib.parse import unquote
+from django.utils.six.moves.urllib.parse import unquote_plus
 
 
 class RedisHelper(object):
@@ -30,7 +30,7 @@ class RedisHelper(object):
             if match.group('password') is None:
                 password = None
             else:
-                password = unquote(match.group('password'))
+                password = unquote_plus(match.group('password'))
 
             redis_connection_dict = {
                 'host': match.group('host'),

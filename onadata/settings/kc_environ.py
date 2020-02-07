@@ -5,7 +5,7 @@ import os
 
 import dj_database_url
 from celery.signals import after_setup_logger
-from django.utils.six.moves.urllib.parse import quote
+from django.utils.six.moves.urllib.parse import quote_plus
 
 from onadata.settings.common import *
 
@@ -138,7 +138,7 @@ if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
     MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
         format(
             user=MONGO_DATABASE['USER'],
-            password=quote(MONGO_DATABASE['PASSWORD']),
+            password=quote_plus(MONGO_DATABASE['PASSWORD']),
             host=MONGO_DATABASE['HOST'],
             port=MONGO_DATABASE['PORT'],
             db_name=MONGO_DATABASE['NAME']
