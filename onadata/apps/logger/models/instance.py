@@ -372,7 +372,7 @@ class Instance(models.Model):
 
         self._set_geom()
         self._set_json()
-        self._set_survey_type()
+        #self._set_survey_type()
         self._set_uuid()
         self._populate_xml_hash()
 
