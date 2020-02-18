@@ -1,14 +1,10 @@
-# Important notice when upgrading from `[TODO: INSERT FINAL 1DB RELEASE HERE]` or earlier
+# KoBoCAT
 
-Up to and including release `[TODO: INSERT FINAL 1DB RELEASE HERE]`,
-this project (KoBoCAT) and [KPI](https://github.com/kobotoolbox/kpi)
-both shared a common Postgres database. They now each have their own.
-**If you are upgrading an existing single-database installation, you
-must follow** [these instructions](TODO:%20LINK) to migrate the
-(smaller) KPI tables to a new database and adjust your configuration
-appropriately.
+## Important notice when upgrading from `2.019.52-final-shared-database` or earlier
 
-# Deprecation Notices
+Up to and including release [`2.019.52-final-shared-database`](https://github.com/kobotoolbox/kobocat/releases/tag/2.019.52-final-shared-database), this project (KoBoCAT) and [KPI](https://github.com/kobotoolbox/kpi) both shared a common Postgres database. They now each have their own. **If you are upgrading an existing single-database installation, you must follow [these instructions](https://community.kobotoolbox.org/t/upgrading-to-separate-databases-for-kpi-and-kobocat/7202)** to migrate the KPI tables to a new database and adjust your configuration appropriately.
+
+## Deprecation Notices
 
 Much of the user-facing features of this application are being migrated
 to <https://github.com/kobotoolbox/kpi>. KoBoCAT's data-access API and
@@ -25,7 +21,7 @@ release where each was present:
     release
     [2.019.39](https://github.com/kobotoolbox/kobocat/releases/tag/2.019.39).
 
-# About
+## About
 
 kobocat is the data collection platform used in KoBoToolbox. It is based
 on the excellent [onadata](http://github.com/onaio/onadata) platform
@@ -37,7 +33,7 @@ Please refer to
 [kobo-install](https://github.com/kobotoolbox/kobo-install) for
 instructions on how to install KoBoToolbox.
 
-# Code Structure
+## Code Structure
 
   - **logger** - This app serves XForms to and receives submissions from
     ODK Collect and Enketo.
@@ -47,7 +43,7 @@ instructions on how to install KoBoToolbox.
   - **main** - This app is the glue that brings logger and viewer
     together.
 
-# Localization
+## Localization
 
 To generate a locale from scratch (ex. Spanish)
 
