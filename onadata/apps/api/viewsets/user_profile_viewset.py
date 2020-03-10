@@ -1,19 +1,18 @@
+# coding: utf-8
 from django.conf import settings
 from django.contrib.auth.models import User
-
-from rest_framework import serializers
 from rest_framework import status
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import ParseError
 from rest_framework.generics import get_object_or_404
-from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
-from onadata.libs.mixins.object_lookup_mixin import ObjectLookupMixin
-from onadata.libs.serializers.user_profile_serializer import\
-    UserProfileSerializer
-from onadata.apps.main.models import UserProfile
 from onadata.apps.api.permissions import UserProfilePermissions
+from onadata.apps.main.models import UserProfile
+from onadata.libs.mixins.object_lookup_mixin import ObjectLookupMixin
+from onadata.libs.serializers.user_profile_serializer import \
+    UserProfileSerializer
 
 
 class UserProfileViewSet(ObjectLookupMixin, ModelViewSet):
