@@ -483,7 +483,7 @@ def enter_data(request, username, id_string):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, user__username__iexact=username,
                               id_string__exact=id_string)
-    if not has_edit_permission(xform, owner, request, xform.shared):
+    if not has_edit_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
 
     form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
@@ -524,7 +524,7 @@ def edit_data(request, username, id_string, data_id):
     instance = get_object_or_404(
         Instance, pk=data_id, xform=xform)
     instance_attachments = image_urls_dict(instance)
-    if not has_edit_permission(xform, owner, request, xform.shared):
+    if not has_edit_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
     if not hasattr(settings, 'ENKETO_URL'):
         return HttpResponseRedirect(reverse(

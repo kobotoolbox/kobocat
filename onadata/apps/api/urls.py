@@ -359,11 +359,11 @@ class MultiLookupRouterWithPatchList(MultiLookupRouter):
             mapping={
                 'get': 'list',
                 'post': 'create',
-                'patch': 'modify'
+                'patch': 'bulk_validation_status',
+                'delete': 'bulk_delete'
             },
             name='{basename}-list',
             initkwargs={'suffix': 'List'})
-
 
 
 router = MultiLookupRouter(trailing_slash=False)

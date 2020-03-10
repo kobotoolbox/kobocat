@@ -1485,13 +1485,3 @@ def username_list(request):
         data = [user['username'] for user in users]
 
     return HttpResponse(json.dumps(data), content_type='application/json')
-
-@require_GET
-def media_endpoint(request):
-    """
-    Returns medias endpoint prefix.
-    :param request:
-    :return: dict
-    """
-    data = {"result": settings.MEDIA_URL}
-    return HttpResponse(json.dumps(data), content_type='application/json')

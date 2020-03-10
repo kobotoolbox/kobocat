@@ -1,9 +1,17 @@
+# coding: utf-8
+from django.conf import settings
+from django.contrib.auth.models import (
+    AnonymousUser,
+    Permission,
+    User
+)
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.permissions import IsAuthenticated
 
+
 from onadata.libs.permissions import CAN_ADD_XFORM_TO_PROFILE
-from onadata.libs.permissions import CAN_CHANGE_XFORM
+from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VALIDATE_XFORM
 from onadata.apps.api.tools import get_user_profile_or_none
 from onadata.apps.logger.models import XForm
 
@@ -42,6 +50,13 @@ class XFormPermissions(DjangoObjectPermissions):
         owner = view.kwargs.get('owner')
         is_authenticated = request and request.user.is_authenticated()
 
+        if request.user:
+            user = request.user
+            if user.is_anonymous():
+                user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
+        else:
+            return False
+
         if 'pk' in view.kwargs:
 
             # Allow anonymous users to access shared data
@@ -52,12 +67,23 @@ class XFormPermissions(DjangoObjectPermissions):
                     return True
 
         if is_authenticated and view.action == 'create':
-            owner = owner or request.user.username
+            owner = owner or user.username
 
-            return request.user.has_perm(CAN_ADD_XFORM_TO_PROFILE,
-                                         get_user_profile_or_none(owner))
+            return user.has_perm(CAN_ADD_XFORM_TO_PROFILE,
+                                 get_user_profile_or_none(owner))
 
-        return super(XFormPermissions, self).has_permission(request, view)
+        if hasattr(view, 'get_queryset'):
+            queryset = view.get_queryset()
+        else:
+            queryset = getattr(view, 'queryset', None)
+
+        assert queryset is not None, (
+            'Cannot apply XFormPermissions on a view that '
+            'does not set `.queryset` or have a `.get_queryset()` method.'
+        )
+
+        perms = self.get_required_permissions(request.method, queryset.model)
+        return user.has_perms(perms)
 
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
@@ -69,8 +95,12 @@ class XFormPermissions(DjangoObjectPermissions):
 
         if request.method == 'DELETE' and view.action == 'labels':
             user = request.user
-
             return user.has_perms([CAN_CHANGE_XFORM], obj)
+
+        if request.method in ['PATCH', 'DELETE'] \
+                and view.action.endswith('validation_status'):
+            user = request.user
+            return user.has_perms([CAN_VALIDATE_XFORM], obj)
 
         return super(XFormPermissions, self).has_object_permission(
             request, view, obj)
@@ -87,15 +117,29 @@ class XFormDataPermissions(XFormPermissions):
         # behavior of `onadata.apps.main.views.delete_data`
         self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
 
+    def has_permission(self, request, view):
+
+        # Ugly hack to allow Anonymous list all public `XForm`s
+        # ToDo Does anybody know about this?
+        # We should remove this and display `XForm`s based on `AnonymousUser`s
+        # permissions on list endpoint.
+        if view.kwargs.get('pk') == 'public':
+            return True
+
+        return super(XFormDataPermissions, self).has_permission(request, view)
+
 
 class UserProfilePermissions(DjangoObjectPermissions):
 
-    authenticated_users_only = False
+    authenticated_users_only = True
 
     def has_permission(self, request, view):
         # allow anonymous users to create new profiles
         if request.user.is_anonymous() and view.action == 'create':
             return True
+
+        if view.action == 'list':
+            return request.user.is_superuser
 
         return \
             super(UserProfilePermissions, self).has_permission(request, view)
@@ -160,6 +204,15 @@ class MetaDataObjectPermissions(HasXFormObjectPermissionMixin,
 
 
 class AttachmentObjectPermissions(DjangoObjectPermissions):
+
+    def __init__(self, *args, **kwargs):
+        # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
+        # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
+        self.perms_map['GET'] = ['%(app_label)s.view_xform']
+        self.perms_map['OPTIONS'] = ['%(app_label)s.view_xform']
+        self.perms_map['HEAD'] = ['%(app_label)s.view_xform']
+        return super(AttachmentObjectPermissions, self).__init__(*args, **kwargs)
+
     def has_object_permission(self, request, view, obj):
         view.model = XForm
 

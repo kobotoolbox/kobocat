@@ -96,6 +96,7 @@ class XForm(BaseModel):
     tags = TaggableManager()
 
     has_kpi_hooks = LazyDefaultBooleanField(default=False)
+    kpi_asset_uid = models.CharField(max_length=32, null=True)
 
     class Meta:
         app_label = 'logger'
@@ -216,7 +217,7 @@ class XForm(BaseModel):
         if self.num_of_submissions == 0 or force_update:
             count = self.instances.filter(deleted_at__isnull=True).count()
             self.num_of_submissions = count
-            self.save()
+            self.save(update_fields=['num_of_submissions'])
         return self.num_of_submissions
     submission_count.short_description = ugettext_lazy("Submission Count")
 
@@ -337,6 +338,7 @@ class XForm(BaseModel):
             "validation_statuses": default_validation_statuses
         }
 
+
 def update_profile_num_submissions(sender, instance, **kwargs):
     profile_qs = User.profile.get_queryset()
     try:
@@ -348,7 +350,8 @@ def update_profile_num_submissions(sender, instance, **kwargs):
         profile.num_of_submissions -= instance.num_of_submissions
         if profile.num_of_submissions < 0:
             profile.num_of_submissions = 0
-        profile.save()
+        profile.save(update_fields=['num_of_submissions'])
+
 
 post_delete.connect(update_profile_num_submissions, sender=XForm,
                     dispatch_uid='update_profile_num_submissions')
@@ -358,5 +361,7 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
     if created:
         for perm in get_perms_for_model(XForm):
             assign_perm(perm.codename, instance.user, instance)
+
+
 post_save.connect(set_object_permissions, sender=XForm,
                   dispatch_uid='xform_object_permissions')

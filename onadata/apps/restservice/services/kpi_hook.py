@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-import json
+import re
 import requests
 
 from django.conf import settings
@@ -19,13 +19,23 @@ class ServiceDefinition(RestServiceInterface):
         }
         headers = {"Content-Type": "application/json"}
 
-        # Build the url in the service to avoid saving hardcoded domain name in the DB
-        url = "{}{}".format(
-            settings.KPI_INTERNAL_URL,
-            endpoint
-        )
-        response = requests.post(url, headers=headers, json=post_data)
-        response.raise_for_status()
+        # Verify if endpoint starts with `/assets/` before sending the request to`kpi`
+        pattern = r'{}'.format(settings.KPI_HOOK_ENDPOINT_PATTERN.replace(
+            '{asset_uid}', '[^/]*'))
 
-        # Save successful
-        Instance.objects.filter(pk=data.get("instance_id")).update(posted_to_kpi=True)
+        # Match v2 and v1 endpoints.
+        if re.match(pattern, endpoint) or re.match(pattern[7:], endpoint):
+            # Build the url in the service to avoid saving hardcoded domain name in the DB
+            url = "{}{}".format(
+                settings.KPI_INTERNAL_URL,
+                endpoint
+            )
+            response = requests.post(url, headers=headers, json=post_data)
+            response.raise_for_status()
+
+            # Save successful
+            Instance.objects.filter(pk=data.get("instance_id")).update(posted_to_kpi=True)
+        else:
+            logging.warning('This endpoint: `{}` is not valid for `KPI Hook`'.format(
+                endpoint
+            ))
