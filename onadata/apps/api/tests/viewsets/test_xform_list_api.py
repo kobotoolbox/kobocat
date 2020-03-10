@@ -1,3 +1,4 @@
+# coding: utf-8
 import os
 import unittest
 
@@ -10,13 +11,13 @@ from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 
 
-class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
+class TestXFormListApi(TestAbstractViewSet):
     def setUp(self):
         super(self.__class__, self).setUp()
         self.view = XFormListApi.as_view({
             "get": "list"
         })
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
     def test_get_xform_list(self):
         request = self.factory.get('/')

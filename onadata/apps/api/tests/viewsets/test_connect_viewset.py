@@ -10,10 +10,8 @@ from rest_framework import authentication
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
     TestAbstractViewSet
 from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
-from onadata.apps.api.viewsets.project_viewset import ProjectViewSet
 
 from onadata.libs.authentication import DigestAuthentication
-from onadata.libs.serializers.project_serializer import ProjectSerializer
 
 
 class TestConnectViewSet(TestAbstractViewSet):
@@ -47,31 +45,6 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, self.data)
-
-    def test_get_starred_projects(self):
-        self._project_create()
-
-        # add star as bob
-        view = ProjectViewSet.as_view({
-            'get': 'star',
-            'post': 'star'
-        })
-        request = self.factory.post('/', **self.extra)
-        response = view(request, pk=self.project.pk)
-
-        # get starred projects
-        view = ConnectViewSet.as_view({
-            'get': 'starred',
-        })
-        request = self.factory.get('/', **self.extra)
-        response = view(request, user=self.user)
-
-        self.assertEqual(response.status_code, 200)
-
-        request.user = self.user
-        self.project_data = ProjectSerializer(
-            self.project, context={'request': request}).data
-        self.assertEqual(response.data, [self.project_data])
 
     def test_user_list_with_digest(self):
         view = ConnectViewSet.as_view(

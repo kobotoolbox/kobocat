@@ -1,11 +1,13 @@
+# coding: utf-8
 import json
 
-from onadata.apps.main.urls import router
-from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
+from django.contrib.auth.models import User
+from rest_framework import status
+
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.user_profile_viewset import UserProfileViewSet
 from onadata.apps.main.models import UserProfile
-from django.contrib.auth.models import User
 from onadata.libs.serializers.user_profile_serializer import (
     _get_first_last_names
 )
@@ -23,7 +25,6 @@ def _profile_data():
         'twitter': u'denoerama',
         'require_auth': False,
         'password': 'denodeno',
-        'is_org': False,
     }
 
 
@@ -40,8 +41,12 @@ class TestUserProfileViewSet(TestAbstractViewSet):
     def test_profiles_list(self):
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, [self.user_profile_data()])
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Anonymous User
+        request = self.factory.get('/')
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_profiles_get(self):
         """Test get user profile"""
@@ -50,18 +55,18 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         })
         request = self.factory.get('/', **self.extra)
         response = view(request)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'Expected URL keyword argument `user`.'})
 
         # by username
         response = view(request, user='bob')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, self.user_profile_data())
 
         # by pk
         response = view(request, user=self.user.pk)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, self.user_profile_data())
 
     def test_profiles_get_anon(self):
@@ -70,35 +75,18 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         })
         request = self.factory.get('/')
         response = view(request)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data, {'detail': 'Expected URL keyword argument `user`.'})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
         request = self.factory.get('/')
         response = view(request, user='bob')
-        data = self.user_profile_data()
-        del data['email']
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, data)
-        self.assertNotIn('email', response.data)
-
-    def test_profiles_get_org_anon(self):
-        self._org_create()
-        self.client.logout()
-        view = UserProfileViewSet.as_view({
-            'get': 'retrieve'
-        })
-        request = self.factory.get('/')
-        response = view(request, user=self.company_data['org'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['name'], self.company_data['name'])
-        self.assertIn('is_org', response.data)
-        self.assertEqual(response.data['is_org'], True)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_profile_create(self):
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
         data = _profile_data()
         request = self.factory.post(
             '/api/v1/profiles', data=json.dumps(data),
@@ -136,9 +124,6 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         self.assertNotIn('email', response.data)
 
     def test_profile_create_missing_name_field(self):
-        request = self.factory.get('/', **self.extra)
-        response = self.view(request)
-        self.assertEqual(response.status_code, 200)
         data = _profile_data()
         del data['name']
         request = self.factory.post(
@@ -167,13 +152,10 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         response = self.view(request, user=self.user.username)
         profile = UserProfile.objects.get(user=self.user)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(profile.country, country)
 
     def test_profile_create_mixed_case(self):
-        request = self.factory.get('/', **self.extra)
-        response = self.view(request)
-        self.assertEqual(response.status_code, 200)
         data = _profile_data()
 
         request = self.factory.post(
@@ -217,7 +199,7 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         request = self.factory.post('/', data=post_data, **self.extra)
         response = view(request, user='bob')
         user = User.objects.get(username__iexact=self.user.username)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(user.check_password(new_password))
 
     def test_change_password_wrong_current_password(self):

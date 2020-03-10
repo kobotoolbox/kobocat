@@ -7,7 +7,7 @@ from django.core.files.storage import get_storage_class
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
 
-from onadata.apps.api.tests.viewsets import test_abstract_viewset
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import TestAbstractViewSet
 from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Instance
@@ -21,10 +21,10 @@ def ordered_instances(xform):
     return Instance.objects.filter(xform=xform).order_by('id')
 
 
-class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
+class TestBriefcaseAPI(TestAbstractViewSet):
 
     def setUp(self):
-        super(test_abstract_viewset.TestAbstractViewSet, self).setUp()
+        super(TestAbstractViewSet, self).setUp()
         self.factory = APIRequestFactory()
         self._login_user_and_profile()
         self.login_username = 'bob'
@@ -116,7 +116,7 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
         response = view(request, username=self.user.username)
         self.assertTrue(response.status_code, 404)
 
-    def test_view_submission_list_OtherUser(self):
+    def test_view_submission_list_other_user(self):
         view = BriefcaseApi.as_view({'get': 'list'})
         self._publish_xml_form()
         self._make_submissions()
@@ -186,7 +186,7 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
                 self.assertContains(response, expected_submission_list)
             last_index += 2
 
-    def test_view_downloadSubmission(self):
+    def test_view_download_submission(self):
         view = BriefcaseApi.as_view({'get': 'retrieve'})
         self._publish_xml_form()
         self.maxDiff = None
@@ -216,7 +216,7 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
 
-    def test_view_downloadSubmission_OtherUser(self):
+    def test_view_download_submission_other_user(self):
         view = BriefcaseApi.as_view({'get': 'retrieve'})
         self._publish_xml_form()
         self.maxDiff = None
@@ -243,7 +243,7 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
         response = view(request, username=self.user.username)
         self.assertEqual(response.status_code, 404)
 
-    def test_publish_xml_form_OtherUser(self):
+    def test_publish_xml_form_other_user(self):
         view = BriefcaseApi.as_view({'post': 'create'})
         # deno cannot publish form to bob's account
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}

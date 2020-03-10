@@ -61,14 +61,12 @@ class TestXFormViewSet(TestAbstractViewSet):
     # TODO: unprojectify
     '''
     def test_form_list(self):
-        self._publish_xls_form_to_project()
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
 
     def test_submission_count_for_today_in_form_list(self):
 
-        self._publish_xls_form_to_project()
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -99,14 +97,12 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response.data[0]['num_of_submissions'], 1)
 
     def test_form_list_anon(self):
-        self._publish_xls_form_to_project()
         request = self.factory.get('/')
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, [])
 
     def test_public_form_list(self):
-        self._publish_xls_form_to_project()
         self.view = XFormViewSet.as_view({
             'get': 'retrieve',
         })
@@ -135,7 +131,6 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     def test_form_list_other_user_access(self):
         """Test that a different user has no access to bob's form"""
-        self._publish_xls_form_to_project()
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -155,7 +150,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     def test_form_list_filter_by_user(self):
         # publish bob's form
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
         previous_user = self.user
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
@@ -172,7 +167,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         bobs_form_data = response.data
 
         # publish alice's form
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
@@ -200,7 +195,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response.data, [])
 
     def test_form_get(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({
             'get': 'retrieve'
         })
@@ -212,7 +207,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     @unittest.skip('Fails under Django 1.6')
     def test_form_format(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({
             'get': 'form'
         })
@@ -264,7 +259,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response_doc.toxml(), expected_doc.toxml())
 
     def test_form_tags(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({
             'get': 'labels',
             'post': 'labels',
@@ -308,7 +303,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     @unittest.skip('Fails under Django 1.6')
     def test_enketo_url_no_account(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({
             'get': 'enketo'
         })
@@ -324,7 +319,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     @unittest.skip('Fails under Django 1.6')
     def test_enketo_url(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({
             'get': 'enketo'
         })
@@ -407,7 +402,7 @@ class TestXFormViewSet(TestAbstractViewSet):
     # TODO: unprojectify
     '''
     def test_partial_update(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({
             'patch': 'partial_update'
         })
@@ -434,7 +429,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     def test_set_form_private(self):
         key = 'shared'
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         self.xform.__setattr__(key, True)
         self.xform.save()
         view = XFormViewSet.as_view({
@@ -453,7 +448,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     def test_set_form_bad_value(self):
         key = 'shared'
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({
             'patch': 'partial_update'
         })
@@ -469,7 +464,7 @@ class TestXFormViewSet(TestAbstractViewSet):
                           [u"'String' value must be either True or False."]})
 
     def test_set_form_bad_key(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         self.xform.save()
         view = XFormViewSet.as_view({
             'patch': 'partial_update'
@@ -484,7 +479,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertFalse(response.data['public'])
 
     def test_form_delete(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         self.xform.save()
         view = XFormViewSet.as_view({
             'delete': 'destroy'
@@ -498,7 +493,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             self.xform.reload()
 
     def test_form_share_endpoint(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         alice_profile = self._create_user_profile(alice_data)
 
@@ -525,7 +520,7 @@ class TestXFormViewSet(TestAbstractViewSet):
                                                      self.xform))
 
     def test_form_clone_endpoint(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         alice_profile = self._create_user_profile(alice_data)
         view = XFormViewSet.as_view({
@@ -569,7 +564,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(data, XFormSerializer(None).data)
 
     def test_external_export(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
         data_value = 'template 1|http://xls_server'
         self._add_form_metadata(self.xform, 'external_export',
@@ -603,7 +598,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             self.assertEquals(response.url, expected_url)
 
     def test_external_export_error(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
         data_value = 'template 1|http://xls_server'
         self._add_form_metadata(self.xform, 'external_export',
@@ -638,7 +633,7 @@ class TestXFormViewSet(TestAbstractViewSet):
                         .startswith("J2X client could not generate report."))
 
     def test_csv_import(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({'post': 'csv_import'})
         csv_import = open(os.path.join(settings.ONADATA_DIR, 'libs',
                                        'tests', 'fixtures', 'good.csv'))
@@ -650,7 +645,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response.data.get('updates'), 0)
 
     def test_csv_import_fail(self):
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({'post': 'csv_import'})
         csv_import = open(os.path.join(settings.ONADATA_DIR, 'libs',
                                        'tests', 'fixtures', 'bad.csv'))
@@ -662,7 +657,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     def test_csv_import_fail_invalid_field_post(self):
         """Test that invalid post returns 400 with the error in json respone"""
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         view = XFormViewSet.as_view({'post': 'csv_import'})
         csv_import = open(os.path.join(settings.ONADATA_DIR, 'libs',
                                        'tests', 'fixtures', 'bad.csv'))

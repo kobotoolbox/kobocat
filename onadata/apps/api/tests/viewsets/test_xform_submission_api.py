@@ -12,14 +12,14 @@ from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Attachment
 
 
-class TestXFormSubmissionApi(TestAbstractViewSet, TransactionTestCase):
+class TestXFormSubmissionApi(TestAbstractViewSet):
     def setUp(self):
         super(self.__class__, self).setUp()
         self.view = XFormSubmissionApi.as_view({
             "head": "create",
             "post": "create"
         })
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
     def test_post_submission_anonymous(self):
         s = self.surveys[0]

@@ -1,26 +1,29 @@
-import json
+# coding: utf-8
 import os
 import re
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.contrib.auth.models import Permission
-from django.test import TransactionTestCase
-from django_digest.test import Client as DigestClient
-from tempfile import NamedTemporaryFile
-from django.contrib.auth.models import User
-from django_digest.test import DigestAuth
 from django.contrib.auth import authenticate
-
+from django.contrib.auth.models import (
+    AnonymousUser,
+    Permission,
+    User
+)
+from django.test import TransactionTestCase, TestCase
+from django_digest.test import Client as DigestClient
+from django_digest.test import DigestAuth
+from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
-from onadata.apps.main.models import UserProfile, MetaData
-from onadata.apps.main import tests as main_tests
 from onadata.apps.logger.models import Instance, XForm, Attachment
 from onadata.apps.logger.views import submission
+from onadata.apps.main import tests as main_tests
+from onadata.apps.main.models import UserProfile, MetaData
 
 
-class TestAbstractViewSet(TransactionTestCase):
+class TestAbstractViewSet(TestCase):
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
                'transport_2011-07-25_19-06-01',
@@ -44,7 +47,50 @@ class TestAbstractViewSet(TransactionTestCase):
         super(TestAbstractViewSet, self).setUp()
         self.factory = APIRequestFactory()
         self._login_user_and_profile()
+        self._add_permissions_to_user(AnonymousUser())
         self.maxDiff = None
+
+    def publish_xls_form(self, publish_data={}, merge=True, public=False):
+        if merge:
+            data = {
+                'owner': 'http://testserver/api/v1/users/%s'
+                         % self.user.username,
+                'public': False,
+                'public_data': False,
+                'description': u'transportation_2011_07_25',
+                'downloadable': True,
+                'allows_sms': False,
+                'encrypted': False,
+                'sms_id_string': u'transportation_2011_07_25',
+                'id_string': u'transportation_2011_07_25',
+                'title': u'transportation_2011_07_25',
+            }
+            data.update(publish_data)
+        else:
+            data = publish_data
+
+        path = os.path.join(
+            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
+            "transportation", "transportation.xls")
+
+        xform_list_url = reverse('xform-list')
+
+        with open(path) as xls_file:
+            post_data = {'xls_file': xls_file}
+            response = self.client.post(xform_list_url, data=post_data)
+            self.assertEqual(response.status_code, 201)
+            self.xform = XForm.objects.all().order_by('pk').reverse()[0]
+            data.update({
+                'url':
+                    'http://testserver/api/v1/forms/%s' % (self.xform.pk)
+            })
+
+            # Input was a private so change to public if project public
+            if public:
+                data['shared_data'] = data['shared'] = True
+
+            self.assertDictContainsSubset(data, response.data)
+            self.form_data = response.data
 
     def user_profile_data(self):
         return {
@@ -61,9 +107,19 @@ class TestAbstractViewSet(TransactionTestCase):
             'gravatar': self.user.profile.gravatar,
             'require_auth': False,
             'user': 'http://testserver/api/v1/users/bob',
-            'is_org': False,
             'metadata': {},
         }
+
+    def _add_permissions_to_user(self, user, save=True):
+        # Gives `user` unrestricted model-level access to everything listed in
+        # `auth_permission`.  Without this, actions
+        # on individual instances are immediately denied and object-level permissions
+        # are never considered.
+        if user.is_anonymous():
+            user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
+        user.user_permissions = Permission.objects.all()
+        if save:
+            user.save()
 
     def _set_api_permissions(self, user):
         add_userprofile = Permission.objects.get(
@@ -79,6 +135,8 @@ class TestAbstractViewSet(TransactionTestCase):
             first_name=self.profile_data['name'],
             email=self.profile_data['email'])
         user.set_password(self.profile_data['password1'])
+        if created:
+            self._add_permissions_to_user(user, save=False)
         user.save()
         new_profile, created = UserProfile.objects.get_or_create(
             user=user, name=self.profile_data['name'],
