@@ -254,10 +254,6 @@ urlpatterns = patterns(
         'onadata.apps.sms_support.views.import_submission',
         name='sms_submission'),
 
-    # Ziggy
-    url(r"^(?P<username>[^/]+)/form-submissions$",
-        'onadata.apps.logger.views.ziggy_submissions'),
-
     # static media
     # Media are now served by NginX.
     # url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
