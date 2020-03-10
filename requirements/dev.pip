@@ -10,3 +10,7 @@ shell_command
 statsd
 twill
 Werkzeug
+sqlparse
+pytest==3.10
+pytest-django
+pytest-env
