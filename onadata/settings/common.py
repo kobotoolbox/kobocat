@@ -556,7 +556,7 @@ DEFAULT_VALIDATION_STATUSES = [
     },
 ]
 
-# Make Django use NginX $host. Useful when running with ./manage.py runserver_plus
+# Make Django use NGINX $host. Useful when running with ./manage.py runserver_plus
 # It avoids adding the debugger webserver port (i.e. `:8000`) at the end of urls.
 if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
     USE_X_FORWARDED_HOST = True
