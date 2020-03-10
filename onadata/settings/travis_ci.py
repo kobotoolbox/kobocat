@@ -1,5 +1,5 @@
+# coding: utf-8
 # this preset is used for automated testing of formhub
-#
 from common import *  # nopep8
 
 DATABASES = {
@@ -31,7 +31,7 @@ else:
     MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s" % MONGO_DATABASE
 
 MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
+    MONGO_CONNECTION_URL, j=True, tz_aware=True)
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
 ### END MONGO ###
