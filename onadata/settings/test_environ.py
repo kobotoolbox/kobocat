@@ -91,17 +91,7 @@ if CSRF_COOKIE_DOMAIN:
     SESSION_COOKIE_DOMAIN = CSRF_COOKIE_DOMAIN
     SESSION_COOKIE_NAME = 'kobonaut'
 
-# "Although the setting offers little practical benefit, it's sometimes
-# required by security auditors."
-# -- https://docs.djangoproject.com/en/2.2/ref/settings/#csrf-cookie-httponly
-CSRF_COOKIE_HTTPONLY = True
-# SESSION_COOKIE_HTTPONLY is more useful, but it defaults to True.
-
-if os.environ.get(PUBLIC_REQUEST_SCHEME, '').lower() == 'https':
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
-SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
+SESSION_SERIALIZER ='django.contrib.sessions.serializers.JSONSerializer'
 
 # for debugging
 # print "KOBOFORM_URL=%s" % KOBOFORM_URL
