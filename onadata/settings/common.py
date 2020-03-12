@@ -188,6 +188,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Django 1.8 removes TransactionMiddleware (was deprecated in 1.6). See:
     # https://docs.djangoproject.com/en/1.6/topics/db/transactions/#transaction-middleware
