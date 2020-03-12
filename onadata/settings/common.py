@@ -564,3 +564,13 @@ if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
 
 SESSION_ENGINE = "redis_sessions.session"
 SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
+
+# "Although the setting offers little practical benefit, it's sometimes
+# required by security auditors."
+# -- https://docs.djangoproject.com/en/2.2/ref/settings/#csrf-cookie-httponly
+CSRF_COOKIE_HTTPONLY = True
+# SESSION_COOKIE_HTTPONLY is more useful, but it defaults to True.
+
+if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
