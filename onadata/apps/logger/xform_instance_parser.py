@@ -1,9 +1,16 @@
-import re
-import logging
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import, division
+
 import dateutil.parser
+import logging
+import re
+import sys
 from xml.dom import minidom, Node
+
+import six
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.translation import ugettext as _
+
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
 
@@ -287,10 +294,15 @@ class XFormInstanceParser(object):
         self._attributes = {}
         try:
             self.parse(xml_str)
-        except Exception as err:
+        except Exception as e:
             logger = logging.getLogger("console_logger")
             logger.error(
                 "Failed to parse instance '%s'" % xml_str, exc_info=True)
+            # `self.parse()` has been wrapped in to try/except but it makes the
+            # exception silently ignored.
+            # `logger_tool.py::safe_create_instance()` needs the exception
+            # to return the correct HTTP code
+            six.reraise(*sys.exc_info())
 
     def parse(self, xml_str):
         self._xml_obj = clean_and_parse_xml(xml_str)
