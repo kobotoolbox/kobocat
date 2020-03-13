@@ -57,3 +57,5 @@ custom_template
 .vagrant
 Vagrantfile
 ansible
+
+/src
