@@ -31,6 +31,7 @@ class ParseError(Exception):
 
 
 def datetime_from_str(text):
+    print('DATETIME FROM STR')
     # Assumes text looks like 2011-01-01T09:50:06.966
     if text is None:
         return None

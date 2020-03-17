@@ -347,13 +347,13 @@ class Instance(models.Model):
 
     @staticmethod
     def get_hash(input_string):
-        '''
+        """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param basestring input_sting: The string to be hashed.
+        :param basestring input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
-        '''
+        """
         if isinstance(input_string, unicode):
             input_string = input_string.encode('utf-8')
         return sha256(input_string).hexdigest()

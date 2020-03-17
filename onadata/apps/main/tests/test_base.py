@@ -59,8 +59,7 @@ class TestBase(TestCase):
     def _create_user(self, username, password):
         user, created = User.objects.get_or_create(username=username)
         user.set_password(password)
-        if created:
-            self._add_permissions_to_user(user, save=False)
+        self._add_permissions_to_user(user, save=False)
         user.save()
 
         return user

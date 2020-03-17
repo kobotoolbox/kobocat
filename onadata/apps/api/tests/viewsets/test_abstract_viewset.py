@@ -135,8 +135,7 @@ class TestAbstractViewSet(TestCase):
             first_name=self.profile_data['name'],
             email=self.profile_data['email'])
         user.set_password(self.profile_data['password1'])
-        if created:
-            self._add_permissions_to_user(user, save=False)
+        self._add_permissions_to_user(user, save=False)
         user.save()
         new_profile, created = UserProfile.objects.get_or_create(
             user=user, name=self.profile_data['name'],

@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
+
 import os
 import shutil
 import codecs
@@ -149,8 +152,10 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         view = BriefcaseApi.as_view({'get': 'list'})
         self._publish_xml_form()
         self._make_submissions()
-        params = {'formId': self.xform.id_string}
-        params['numEntries'] = 2
+        params = {
+            'formId': self.xform.id_string,
+            'numEntries': 2
+        }
         instances = ordered_instances(self.xform)
 
         self.assertEqual(instances.count(), NUM_INSTANCES)
@@ -213,6 +218,8 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             text = f.read()
             text = text.replace(u'{{submissionDate}}',
                                 instance.date_created.isoformat())
+            text = text.replace(u'{{xform_uuid}}',
+                                self.xform.uuid)
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
 

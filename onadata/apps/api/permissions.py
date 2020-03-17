@@ -39,6 +39,7 @@ class XFormPermissions(DjangoObjectPermissions):
     def __init__(self, *args, **kwargs):
         # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
         # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
+        self.perms_map = DjangoObjectPermissions.perms_map.copy()
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['HEAD'] = ['%(app_label)s.view_%(model_name)s']
@@ -113,6 +114,7 @@ class XFormDataPermissions(XFormPermissions):
 
     def __init__(self, *args, **kwargs):
         super(XFormDataPermissions, self).__init__(*args, **kwargs)
+        self.perms_map = XFormPermissions.perms_map.copy()
         # Those who can edit submissions can also delete them, following the
         # behavior of `onadata.apps.main.views.delete_data`
         self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
@@ -134,9 +136,6 @@ class UserProfilePermissions(DjangoObjectPermissions):
     authenticated_users_only = True
 
     def has_permission(self, request, view):
-        # allow anonymous users to create new profiles
-        if request.user.is_anonymous() and view.action == 'create':
-            return True
 
         if view.action == 'list':
             return request.user.is_superuser
@@ -208,6 +207,7 @@ class AttachmentObjectPermissions(DjangoObjectPermissions):
     def __init__(self, *args, **kwargs):
         # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
         # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
+        self.perms_map = DjangoObjectPermissions.perms_map.copy()
         self.perms_map['GET'] = ['%(app_label)s.view_xform']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_xform']
         self.perms_map['HEAD'] = ['%(app_label)s.view_xform']
@@ -228,5 +228,6 @@ class ConnectViewsetPermissions(IsAuthenticated):
 
         return super(ConnectViewsetPermissions, self)\
             .has_permission(request, view)
+
 
 __permissions__ = [DjangoObjectPermissions, IsAuthenticated]

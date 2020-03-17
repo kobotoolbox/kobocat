@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
+
 import os
 import shutil
 import codecs
@@ -106,7 +109,7 @@ class TestBriefcaseAPI(TestBase):
         response = self.client.get(self._download_submission_url, data=params)
         self.assertTrue(response.status_code, 404)
 
-    def test_view_submission_list_OtherUser(self):
+    def test_view_submission_list_other_user(self):
         self._publish_xml_form()
         self._make_submissions()
         params = {'formId': self.xform.id_string}
@@ -173,7 +176,7 @@ class TestBriefcaseAPI(TestBase):
                 self.assertEqual(response.content, expected_submission_list)
             last_index += 2
 
-    def test_view_downloadSubmission(self):
+    def test_view_download_submission(self):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
@@ -201,7 +204,7 @@ class TestBriefcaseAPI(TestBase):
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
 
-    def test_view_downloadSubmission_OtherUser(self):
+    def test_view_download_submission_other_user(self):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
@@ -221,7 +224,7 @@ class TestBriefcaseAPI(TestBase):
         response = view_download_submission(request, self.user.username)
         self.assertEqual(response.status_code, 403)
 
-    def test_publish_xml_form_OtherUser(self):
+    def test_publish_xml_form_other_user(self):
         # deno cannot publish form to bob's account
         self._create_user('deno', 'deno')
         count = XForm.objects.count()

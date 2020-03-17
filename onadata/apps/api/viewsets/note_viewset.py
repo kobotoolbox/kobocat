@@ -1,6 +1,7 @@
-from django.utils.translation import ugettext as _
-from guardian.shortcuts import assign_perm
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
 
+from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -59,10 +60,17 @@ A `GET` request will return the list of notes applied to a data point.
 """
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
-    permission_classes = [permissions.ViewDjangoObjectPermissions,
-                          permissions.IsAuthenticated, ]
+    permission_classes = [
+        permissions.ViewDjangoObjectPermissions,
+        permissions.IsAuthenticated
+    ]
 
-    #u This used to be post_save. Part of it is here, permissions validation
+    def get_queryset(self):
+        # Allows users to see only their notes
+        # ToDo what about users who has write access to XForm?
+        return Note.objects.filter(instance__xform__user_id=self.request.user.pk).all()
+
+    # This used to be post_save. Part of it is here, permissions validation
     # has been moved to the note serializer
     def perform_create(self, serializer):
         obj = serializer.save(user=self.request.user)

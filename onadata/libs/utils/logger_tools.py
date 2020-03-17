@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
+
 from datetime import date, datetime
 import os
 import pytz
@@ -74,12 +76,12 @@ mongo_instances = settings.MONGO_DB.instances
 
 def _get_instance(xml, new_uuid, submitted_by, status, xform,
                   defer_counting=False):
-    '''
+    """
     `defer_counting=False` will set a Python-only attribute of the same name on
     the *new* `Instance` if one is created. This will prevent
     `update_xform_submission_count()` from doing anything, which avoids locking
     any rows in `logger_xform` or `main_userprofile`.
-    '''
+    """
     # check if its an edit submission
     old_uuid = get_deprecated_uuid_from_xml(xml)
     instances = Instance.objects.filter(uuid=old_uuid)
@@ -174,7 +176,8 @@ def check_edit_submission_permissions(request_user, xform):
 
 
 def check_submission_permissions(request, xform):
-    """Check that permission is required and the request user has permission.
+    """
+    Check that permission is required and the request user has permission.
 
     The user does no have permissions iff:
         * the user is authed,
@@ -201,10 +204,10 @@ def check_submission_permissions(request, xform):
 
 
 def save_attachments(instance, media_files):
-    '''
+    """
     Returns `True` if any new attachment was saved, `False` if all attachments
     were duplicates or none were provided
-    '''
+    """
     any_new_attachment = False
     for f in media_files:
         attachment_filename = generate_attachment_filename(instance, f.name)
