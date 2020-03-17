@@ -1,15 +1,21 @@
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
+
 import os
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.test import TransactionTestCase
-from django_digest.test import DigestAuth
-from django.contrib.auth.models import AnonymousUser
 import simplejson as json
+from django.contrib.auth.models import AnonymousUser
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django_digest.test import DigestAuth
+from guardian.shortcuts import assign_perm
 
-from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Attachment
+from onadata.libs.permissions import (
+    CAN_ADD_SUBMISSIONS
+)
 
 
 class TestXFormSubmissionApi(TestAbstractViewSet):
@@ -305,15 +311,14 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                     'alice is not allowed to make submissions to bob',
                     status_code=403)
 
-    # TODO: unprojectify
-    '''
     def test_post_submission_require_auth_data_entry_role(self):
         self.user.profile.require_auth = True
         self.user.profile.save()
 
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         alice_profile = self._create_user_profile(alice_data)
-        DataEntryRole.add(alice_profile.user, self.xform)
+
+        assign_perm(CAN_ADD_SUBMISSIONS, alice_profile.user, self.xform)
 
         count = Attachment.objects.count()
         s = self.surveys[0]
@@ -336,7 +341,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.assertEqual(count, Attachment.objects.count())
 
                 # rewind the file and redo the request since they were
-                # consummed
+                # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
                 auth = DigestAuth('alice', 'bobbob')
@@ -344,7 +349,6 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 response = self.view(request, username=self.user.username)
                 self.assertContains(response, 'Successful submission',
                                     status_code=201)
-    '''
 
     def test_post_submission_json_without_submission_key(self):
         data = {"id": "transportation_2011_07_25"}

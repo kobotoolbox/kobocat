@@ -33,15 +33,17 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     def get_hash(self, obj):
         return u"md5:%s" % obj.hash
 
-    # Tests are expecting this "public" to be passed only "True" or "False"
+    # Tests are expecting this `public` to be passed only "True" or "False"
     # and as a string. I don't know how it worked pre-migrations to django 1.8
-    # but now it must be implemented manually
+    # but now it must be implemented manually.
+    # As of 2020-03-16, does not seem to be true anymore. `shared` is a boolean
     def validate(self, attrs):
         shared = attrs.get('shared')
-        if shared not in (None, 'True', 'False'):
-            msg = "'%s' value must be either True or False." % shared
-            raise serializers.ValidationError({'shared': msg})
-        attrs['shared'] = shared == 'True'
+        if shared not in (None, True, False, 'True', 'False'):
+            raise serializers.ValidationError({
+                'shared': "'{}' value must be either True or False.".format(shared)
+            })
+        attrs['shared'] = shared is True or shared == 'True'
         return attrs
 
     class Meta:

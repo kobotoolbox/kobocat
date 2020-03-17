@@ -111,17 +111,7 @@ class TestUserProfileViewSet(TestAbstractViewSet):
             '/api/v1/profiles', data=json.dumps(data),
             content_type="application/json")
         response = self.view(request)
-        self.assertEqual(response.status_code, 201)
-        del data['password']
-        del data['email']
-        profile = UserProfile.objects.get(user__username=data['username'])
-        data['id'] = profile.user.pk
-        data['gravatar'] = profile.gravatar
-        data['url'] = 'http://testserver/api/v1/profiles/deno'
-        data['user'] = 'http://testserver/api/v1/users/deno'
-        data['metadata'] = {}
-        self.assertEqual(response.data, data)
-        self.assertNotIn('email', response.data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_profile_create_missing_name_field(self):
         data = _profile_data()
@@ -183,7 +173,7 @@ class TestUserProfileViewSet(TestAbstractViewSet):
             HTTP_ACCEPT='application/javascript',
             **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         msg = "%s already exists" % data['username']
         self.assertIn(msg, response.data['username'][0])
@@ -213,5 +203,5 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         request = self.factory.post('/', data=post_data, **self.extra)
         response = view(request, user='bob')
         user = User.objects.get(username__iexact=self.user.username)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(user.check_password(new_password))

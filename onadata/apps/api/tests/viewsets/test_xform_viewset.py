@@ -9,6 +9,7 @@ import unittest
 from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
+from guardian.shortcuts import assign_perm
 from httmock import urlmatch, HTTMock
 from rest_framework import status
 from xml.dom import minidom, Node
@@ -19,6 +20,15 @@ from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.logger.models import XForm
 from onadata.libs.serializers.xform_serializer import XFormSerializer
 from onadata.apps.main.models import MetaData
+
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
+    TestAbstractViewSet
+from onadata.libs.permissions import (
+    CAN_ADD_SUBMISSIONS,
+    CAN_VIEW_XFORM,
+    CAN_ADD_XFORM,
+    CAN_CHANGE_XFORM
+)
 
 
 @urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
@@ -58,18 +68,18 @@ class TestXFormViewSet(TestAbstractViewSet):
             'get': 'list',
         })
 
-    # TODO: unprojectify
-    '''
     def test_form_list(self):
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_submission_count_for_today_in_form_list(self):
 
+        self.publish_xls_form()
+
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('submission_count_for_today', response.data[0].keys())
         self.assertEqual(response.data[0]['submission_count_for_today'], 0)
         self.assertEqual(response.data[0]['num_of_submissions'], 0)
@@ -80,42 +90,45 @@ class TestXFormViewSet(TestAbstractViewSet):
             for s in ['transport_2011-07-25_19-05-36']]
 
         # instantiate date that is NOT naive; timezone is enabled
-        current_timzone_name = timezone.get_current_timezone_name()
-        current_timezone = pytz.timezone(current_timzone_name)
+        current_timezone_name = timezone.get_current_timezone_name()
+        current_timezone = pytz.timezone(current_timezone_name)
         today = datetime.today()
         current_date = current_timezone.localize(
             datetime(today.year,
                      today.month,
                      today.day))
         self._make_submission(paths[0], forced_submission_time=current_date)
-        self.assertEqual(self.response.status_code, 201)
+        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
 
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]['submission_count_for_today'], 1)
         self.assertEqual(response.data[0]['num_of_submissions'], 1)
 
     def test_form_list_anon(self):
+        self.publish_xls_form()
         request = self.factory.get('/')
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
     def test_public_form_list(self):
+        self.publish_xls_form()
+
         self.view = XFormViewSet.as_view({
             'get': 'retrieve',
         })
         request = self.factory.get('/', **self.extra)
         response = self.view(request, pk='public')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
         # public shared form
         self.xform.shared = True
         self.xform.save()
         response = self.view(request, pk='public')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.form_data['public'] = True
         del self.form_data['date_modified']
         del response.data[0]['date_modified']
@@ -126,14 +139,18 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.xform.shared = False
         self.xform.save()
         response = self.view(request, pk='public')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
     def test_form_list_other_user_access(self):
-        """Test that a different user has no access to bob's form"""
+        """
+        Test that a different user has no access to bob's form
+        """
+        self.publish_xls_form()
+
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [self.form_data])
 
         # test with different user
@@ -144,7 +161,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertNotEqual(previous_user,  self.user)
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         # should be empty
         self.assertEqual(response.data, [])
 
@@ -158,7 +175,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(self.user.username, 'alice')
         self.assertNotEqual(previous_user,  self.user)
 
-        ReadOnlyRole.add(self.user, self.xform)
+        assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
         view = XFormViewSet.as_view({
             'get': 'retrieve'
         })
@@ -171,7 +188,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         # should be both bob's and alice's form
         self.assertEqual(sorted(response.data),
                          sorted([bobs_form_data, self.form_data]))
@@ -179,19 +196,19 @@ class TestXFormViewSet(TestAbstractViewSet):
         # apply filter, see only bob's forms
         request = self.factory.get('/', data={'owner': 'bob'}, **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [bobs_form_data])
 
         # apply filter, see only alice's forms
         request = self.factory.get('/', data={'owner': 'alice'}, **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [self.form_data])
 
         # apply filter, see a non existent user
         request = self.factory.get('/', data={'owner': 'noone'}, **self.extra)
         response = self.view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
     def test_form_get(self):
@@ -202,7 +219,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         formid = self.xform.pk
         request = self.factory.get('/', **self.extra)
         response = view(request, pk=formid)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, self.form_data)
 
     @unittest.skip('Fails under Django 1.6')
@@ -222,17 +239,17 @@ class TestXFormViewSet(TestAbstractViewSet):
         request = self.factory.get('/', **self.extra)
         # test for unsupported format
         response = view(request, pk=formid, format='csvzip')
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # test for supported formats
         response = view(request, pk=formid, format='json')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertDictContainsSubset(data, response.data)
         response = view(request, pk=formid, format='xml')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_doc = minidom.parseString(response.data)
         response = view(request, pk=formid, format='xls')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         xml_path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
@@ -278,7 +295,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         # add tag "hello"
         request = self.factory.post('/', data={"tags": "hello"}, **self.extra)
         response = view(request, pk=formid)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data, [u'hello'])
 
         # check filter by tag
@@ -286,19 +303,19 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.form_data = XFormSerializer(
             self.xform, context={'request': request}).data
         response = list_view(request, pk=formid)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [self.form_data])
 
         request = self.factory.get('/', data={"tags": "goodbye"}, **self.extra)
         response = list_view(request, pk=formid)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
         # remove tag "hello"
         request = self.factory.delete('/', data={"tags": "hello"},
                                       **self.extra)
         response = view(request, pk=formid, label='hello')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
     @unittest.skip('Fails under Django 1.6')
@@ -355,16 +372,14 @@ class TestXFormViewSet(TestAbstractViewSet):
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
-            self.assertEqual(response.status_code, 201)
-            xform = self.user.xforms.all()[0]
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            xform = self.user.xforms.get(uuid=response.data.get('uuid'))
             data.update({
                 'url':
                 'http://testserver/api/v1/forms/%s' % xform.pk
             })
             self.assertDictContainsSubset(data, response.data)
-            self.assertTrue(OwnerRole.user_has_role(self.user, xform))
-            self.assertEquals("owner", response.data['users'][0]['role'])
-    '''
+            self.assertTrue(xform.user.pk == self.user.pk)
 
     def test_publish_invalid_xls_form(self):
         view = XFormViewSet.as_view({
@@ -377,7 +392,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             error_msg = '[row : 5] Question or group with no name.'
             self.assertEqual(response.data.get('text'), error_msg)
 
@@ -393,14 +408,12 @@ class TestXFormViewSet(TestAbstractViewSet):
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             error_msg = (
                 'There should be a choices sheet in this xlsform. Please '
                 'ensure that the choices sheet name is all in small caps.')
             self.assertEqual(response.data.get('text'), error_msg)
 
-    # TODO: unprojectify
-    '''
     def test_partial_update(self):
         self.publish_xls_form()
         view = XFormViewSet.as_view({
@@ -441,8 +454,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
         request = self.factory.patch('/', data=data, **self.extra)
         response = view(request, pk=self.xform.id)
-
-        self.xform.reload()
+        self.xform.refresh_from_db()
         self.assertFalse(self.xform.__getattribute__(key))
         self.assertFalse(response.data['public'])
 
@@ -492,61 +504,6 @@ class TestXFormViewSet(TestAbstractViewSet):
         with self.assertRaises(XForm.DoesNotExist):
             self.xform.reload()
 
-    def test_form_share_endpoint(self):
-        self.publish_xls_form()
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
-        alice_profile = self._create_user_profile(alice_data)
-
-        view = XFormViewSet.as_view({
-            'post': 'share'
-        })
-        formid = self.xform.pk
-
-        ROLES = [ReadOnlyRole,
-                 DataEntryRole,
-                 EditorRole,
-                 ManagerRole,
-                 OwnerRole]
-        for role_class in ROLES:
-            self.assertFalse(role_class.user_has_role(alice_profile.user,
-                                                      self.xform))
-
-            data = {'username': 'alice', 'role': role_class.name}
-            request = self.factory.post('/', data=data, **self.extra)
-            response = view(request, pk=formid)
-
-            self.assertEqual(response.status_code, 204)
-            self.assertTrue(role_class.user_has_role(alice_profile.user,
-                                                     self.xform))
-
-    def test_form_clone_endpoint(self):
-        self.publish_xls_form()
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
-        alice_profile = self._create_user_profile(alice_data)
-        view = XFormViewSet.as_view({
-            'post': 'clone'
-        })
-        formid = self.xform.pk
-        count = XForm.objects.count()
-
-        data = {'username': 'mjomba'}
-        request = self.factory.post('/', data=data, **self.extra)
-        response = view(request, pk=formid)
-        self.assertEqual(response.status_code, 400)
-
-        data = {'username': 'alice'}
-        request = self.factory.post('/', data=data, **self.extra)
-        response = view(request, pk=formid)
-        self.assertFalse(self.user.has_perm('can_add_xform', alice_profile))
-        self.assertEqual(response.status_code, 403)
-
-        ManagerRole.add(self.user, alice_profile)
-        request = self.factory.post('/', data=data, **self.extra)
-        response = view(request, pk=formid)
-        self.assertTrue(self.user.has_perm('can_add_xform', alice_profile))
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(count + 1, XForm.objects.count())
-
     def test_xform_serializer_none(self):
         data = {
             'title': u'',
@@ -559,7 +516,9 @@ class TestXFormViewSet(TestAbstractViewSet):
             'allows_sms': False,
             'uuid': u'',
             'instances_with_geopoints': False,
-            'num_of_submissions': 0
+            'num_of_submissions': 0,
+            'has_kpi_hooks': False,
+            'kpi_asset_uid': u'',
         }
         self.assertEqual(data, XFormSerializer(None).data)
 
@@ -577,7 +536,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             for s in ['transport_2011-07-25_19-05-36']]
 
         self._make_submission(paths[0])
-        self.assertEqual(self.response.status_code, 201)
+        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
 
         view = XFormViewSet.as_view({
             'get': 'retrieve',
@@ -610,7 +569,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             for s in ['transport_2011-07-25_19-05-36']]
 
         self._make_submission(paths[0])
-        self.assertEqual(self.response.status_code, 201)
+        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
 
         view = XFormViewSet.as_view({
             'get': 'retrieve',
@@ -627,7 +586,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             pk=formid,
             format='xls')
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = json.loads(response.data)
         self.assertTrue(data.get('error')
                         .startswith("J2X client could not generate report."))
@@ -640,7 +599,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         post_data = {'csv_file': csv_import}
         request = self.factory.post('/', data=post_data, **self.extra)
         response = view(request, pk=self.xform.id)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get('additions'), 9)
         self.assertEqual(response.data.get('updates'), 0)
 
@@ -652,11 +611,13 @@ class TestXFormViewSet(TestAbstractViewSet):
         post_data = {'csv_file': csv_import}
         request = self.factory.post('/', data=post_data, **self.extra)
         response = view(request, pk=self.xform.id)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIsNotNone(response.data.get('error'))
 
     def test_csv_import_fail_invalid_field_post(self):
-        """Test that invalid post returns 400 with the error in json respone"""
+        """
+        Test that invalid post returns 400 with the error in json response
+        """
         self.publish_xls_form()
         view = XFormViewSet.as_view({'post': 'csv_import'})
         csv_import = open(os.path.join(settings.ONADATA_DIR, 'libs',
@@ -664,6 +625,5 @@ class TestXFormViewSet(TestAbstractViewSet):
         post_data = {'wrong_file_field': csv_import}
         request = self.factory.post('/', data=post_data, **self.extra)
         response = view(request, pk=self.xform.id)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIsNotNone(response.data.get('error'))
-    '''

@@ -826,32 +826,6 @@ data (instance/submission per row)
                                        token,
                                        meta)
 
-    @detail_route(methods=['GET'])
-    def clone(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        data = {'xform': self.object.pk, 'username': request.data['username']}
-        serializer = CloneXFormSerializer(data=data)
-        if serializer.is_valid():
-            clone_to_user = User.objects.get(username=data['username'])
-            if not request.user.has_perm(
-                'can_add_xform',
-                UserProfile.objects.get_or_create(user=clone_to_user)[0]
-            ):
-                raise exceptions.PermissionDenied(
-                    detail=_(u"User %(user)s has no permission to add "
-                             "xforms to account %(account)s" %
-                             {'user': request.user.username,
-                              'account': data['username']}))
-            xform = serializer.save()
-            serializer = XFormSerializer(
-                xform.cloned_form, context={'request': request})
-
-            return Response(data=serializer.data,
-                            status=status.HTTP_201_CREATED)
-
-        return Response(data=serializer.errors,
-                        status=status.HTTP_400_BAD_REQUEST)
-
     @detail_route(methods=['POST'])
     def csv_import(self, request, *args, **kwargs):
         """ Endpoint for CSV data imports

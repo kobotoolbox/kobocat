@@ -1,14 +1,20 @@
 # coding: utf-8
+from __future__ import unicode_literals, absolute_import
+
 import os
 import unittest
 
 from django.conf import settings
-from django.test import TransactionTestCase
 from django_digest.test import DigestAuth
+from guardian.shortcuts import assign_perm
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
+from onadata.libs.permissions import (
+    CAN_ADD_SUBMISSIONS,
+    CAN_VIEW_XFORM
+)
 
 
 class TestXFormListApi(TestAbstractViewSet):
@@ -98,8 +104,6 @@ class TestXFormListApi(TestAbstractViewSet):
         response = self.view(request, username=self.user.username)
         self.assertEqual(response.status_code, 401)
 
-    # TODO: unprojectify
-    '''
     def test_get_xform_list_other_user_with_no_role(self):
         request = self.factory.get('/')
         response = self.view(request)
@@ -107,7 +111,7 @@ class TestXFormListApi(TestAbstractViewSet):
         alice_profile = self._create_user_profile(alice_data)
 
         self.assertFalse(
-            ReadOnlyRole.user_has_role(alice_profile.user, self.xform)
+            alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
         auth = DigestAuth('alice', 'bobbob')
@@ -131,9 +135,9 @@ class TestXFormListApi(TestAbstractViewSet):
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         alice_profile = self._create_user_profile(alice_data)
 
-        ReadOnlyRole.add(alice_profile.user, self.xform)
+        assign_perm(CAN_VIEW_XFORM, alice_profile.user, self.xform)
         self.assertTrue(
-            ReadOnlyRole.user_has_role(alice_profile.user, self.xform)
+            alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
         auth = DigestAuth('alice', 'bobbob')
@@ -157,10 +161,9 @@ class TestXFormListApi(TestAbstractViewSet):
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         alice_profile = self._create_user_profile(alice_data)
 
-        DataEntryRole.add(alice_profile.user, self.xform)
-
+        assign_perm(CAN_ADD_SUBMISSIONS, alice_profile.user, self.xform)
         self.assertTrue(
-            DataEntryRole.user_has_role(alice_profile.user, self.xform)
+            alice_profile.user.has_perms([CAN_ADD_SUBMISSIONS], self.xform)
         )
 
         auth = DigestAuth('alice', 'bobbob')
@@ -183,7 +186,6 @@ class TestXFormListApi(TestAbstractViewSet):
             self.assertTrue(response.has_header('Date'))
             self.assertEqual(response['Content-Type'],
                              'text/xml; charset=utf-8')
-    '''
 
     @unittest.skip('Fails under Django 1.6')
     def test_retrieve_xform_xml(self):

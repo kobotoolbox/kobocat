@@ -269,7 +269,6 @@ class TestDataViewSet(TestBase):
         formid = self.xform.pk
         alice_data = _data_list(formid)[0]
 
-
         request = self.factory.get('/', **self.extra)
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
