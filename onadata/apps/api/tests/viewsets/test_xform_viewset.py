@@ -1,37 +1,33 @@
-# coding=utf-8
+# coding: utf-8
+# from __future__ import unicode_literals, absolute_import  - Tests failed when imported
+
 import json
 import os
 import re
-import requests
-import pytz
 import unittest
-
 from datetime import datetime
-from django.utils import timezone
-from django.conf import settings
-from guardian.shortcuts import assign_perm
-from httmock import urlmatch, HTTMock
-from rest_framework import status
 from xml.dom import minidom, Node
+
+import pytz
+import requests
+from django.conf import settings
+from django.utils import timezone
+from guardian.shortcuts import assign_perm
+from httmock import urlmatch, HTTMock, all_requests
+from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.logger.models import XForm
-from onadata.libs.serializers.xform_serializer import XFormSerializer
 from onadata.apps.main.models import MetaData
-
-from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
-    TestAbstractViewSet
 from onadata.libs.permissions import (
-    CAN_ADD_SUBMISSIONS,
-    CAN_VIEW_XFORM,
-    CAN_ADD_XFORM,
-    CAN_CHANGE_XFORM
+    CAN_VIEW_XFORM
 )
+from onadata.libs.serializers.xform_serializer import XFormSerializer
 
 
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
+@all_requests
 def enketo_mock(url, request):
     response = requests.Response()
     response.status_code = 201
@@ -41,7 +37,7 @@ def enketo_mock(url, request):
     return response
 
 
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
+@all_requests
 def enketo_error_mock(url, request):
     response = requests.Response()
     response.status_code = 400
@@ -51,12 +47,11 @@ def enketo_error_mock(url, request):
     return response
 
 
-@urlmatch(netloc=r'(.*\.)?xls_server$')
+@all_requests
 def external_mock(url, request):
     response = requests.Response()
     response.status_code = 201
-    response._content = \
-        "/xls/ee3ff9d8f5184fc4a8fdebc2547cc059"
+    response._content = '/xls/ee3ff9d8f5184fc4a8fdebc2547cc059'
     return response
 
 
@@ -318,7 +313,6 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
-    @unittest.skip('Fails under Django 1.6')
     def test_enketo_url_no_account(self):
         self.publish_xls_form()
         view = XFormViewSet.as_view({
@@ -334,7 +328,6 @@ class TestXFormViewSet(TestAbstractViewSet):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(response.data, data)
 
-    @unittest.skip('Fails under Django 1.6')
     def test_enketo_url(self):
         self.publish_xls_form()
         view = XFormViewSet.as_view({
@@ -396,7 +389,6 @@ class TestXFormViewSet(TestAbstractViewSet):
             error_msg = '[row : 5] Question or group with no name.'
             self.assertEqual(response.data.get('text'), error_msg)
 
-    @unittest.skip('Fails under Django 1.6')
     def test_publish_invalid_xls_form_no_choices(self):
         view = XFormViewSet.as_view({
             'post': 'create'
@@ -409,9 +401,10 @@ class TestXFormViewSet(TestAbstractViewSet):
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            error_msg = (
-                'There should be a choices sheet in this xlsform. Please '
-                'ensure that the choices sheet name is all in small caps.')
+            error_msg = ("There should be a choices sheet in this xlsform. "
+                         "Please ensure that the choices sheet name is all in "
+                         "small caps and has columns 'list name', 'name', "
+                         "and 'label' (or aliased column names).")
             self.assertEqual(response.data.get('text'), error_msg)
 
     def test_partial_update(self):
@@ -543,17 +536,13 @@ class TestXFormViewSet(TestAbstractViewSet):
         })
         data = {'meta': metadata.pk}
         formid = self.xform.pk
-        request = self.factory.get('/', data=data,
-                                   **self.extra)
+        request = self.factory.get('/', data=data, **self.extra)
+
         with HTTMock(external_mock):
             # External export
-            response = view(
-                request,
-                pk=formid,
-                format='xls')
-            self.assertEqual(response.status_code, 302)
-            expected_url = \
-                'http://xls_server/xls/ee3ff9d8f5184fc4a8fdebc2547cc059'
+            response = view(request, pk=formid, format='xls')
+            self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+            expected_url = 'http://xls_server/xls/ee3ff9d8f5184fc4a8fdebc2547cc059'
             self.assertEquals(response.url, expected_url)
 
     def test_external_export_error(self):
