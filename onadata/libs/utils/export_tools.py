@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
+
 import csv
 from datetime import datetime, date
 import json

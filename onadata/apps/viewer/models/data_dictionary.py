@@ -53,17 +53,25 @@ class DataDictionary(XForm):
 
     PREFIX_NAME_REGEX = re.compile(r'(?P<prefix>.+/)(?P<name>[^/]+)$')
 
+    class Meta:
+        app_label = "viewer"
+        proxy = True
+
     def __init__(self, *args, **kwargs):
         self.instances_for_export = lambda d: d.instances.all()
         super(DataDictionary, self).__init__(*args, **kwargs)
 
-    def _set_uuid_in_xml(self, file_name=None):
+    def set_uuid_in_xml(self, file_name=None, id_string=None):
         """
         Add bind to automatically set UUID node in XML.
         """
-        if not file_name:
-            file_name = self.file_name()
-        file_name, file_ext = os.path.splitext(file_name)
+
+        if id_string:
+            root_node = id_string
+        else:
+            if not file_name:
+                file_name = self.file_name()
+            root_node, _ = os.path.splitext(file_name)
 
         doc = clean_and_parse_xml(self.xml)
         model_nodes = doc.getElementsByTagName("model")
@@ -85,12 +93,12 @@ class DataDictionary(XForm):
         # get the first child whose id attribute matches our id_string
         survey_nodes = [node for node in instance_node.childNodes
                         if node.nodeType == Node.ELEMENT_NODE and
-                        (node.tagName == file_name or
+                        (node.tagName == root_node or
                          node.attributes.get('id'))]
 
         if len(survey_nodes) != 1:
             raise Exception(
-                u"Multiple survey nodes with the id '%s'" % self.id_string)
+                u"Multiple survey nodes with the id '{}'".format(root_node))
 
         survey_node = survey_nodes[0]
         formhub_nodes = [n for n in survey_node.childNodes
@@ -116,7 +124,7 @@ class DataDictionary(XForm):
             # append the calculate bind node
             calculate_node = doc.createElement("bind")
             calculate_node.setAttribute(
-                "nodeset", "/%s/formhub/uuid" % file_name)
+                "nodeset", "/%s/formhub/uuid" % root_node)
             calculate_node.setAttribute("type", "string")
             calculate_node.setAttribute("calculate", "'%s'" % self.uuid)
             model_node.appendChild(calculate_node)
@@ -125,17 +133,13 @@ class DataDictionary(XForm):
         # hack
         # http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-\
         # and-silly-whitespace/
-        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-        output_re = re.compile('\n.*(<output.*>)\n(  )*')
-        prettyXml = text_re.sub('>\g<1></', self.xml)
-        inlineOutput = output_re.sub('\g<1>', prettyXml)
-        inlineOutput = re.compile('<label>\s*\n*\s*\n*\s*</label>').sub(
-            '<label></label>', inlineOutput)
-        self.xml = inlineOutput
-
-    class Meta:
-        app_label = "viewer"
-        proxy = True
+        text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+        output_re = re.compile(r'\n.*(<output.*>)\n(  )*')
+        pretty_xml = text_re.sub(r'>\g<1></', self.xml)
+        inline_output = output_re.sub(r'\g<1>', pretty_xml)
+        inline_output = re.compile(r'<label>\s*\n*\s*\n*\s*</label>').sub(
+            '<label></label>', inline_output)
+        self.xml = inline_output
 
     def add_instances(self):
         if not hasattr(self, "_dict_organizer"):
@@ -155,7 +159,7 @@ class DataDictionary(XForm):
             self.xml = survey.to_xml()
             self._mark_start_time_boolean()
             set_uuid(self)
-            self._set_uuid_in_xml()
+            self.set_uuid_in_xml(id_string=survey.id_string)
         super(DataDictionary, self).save(*args, **kwargs)
 
     def file_name(self):
