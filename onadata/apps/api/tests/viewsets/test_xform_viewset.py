@@ -217,7 +217,6 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, self.form_data)
 
-    @unittest.skip('Fails under Django 1.6')
     def test_form_format(self):
         self.publish_xls_form()
         view = XFormViewSet.as_view({
@@ -225,7 +224,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         })
         formid = self.xform.pk
         data = {
-            "name": "transportation",
+            "name": "transportation_2011_07_25",  # Since commit 3c0e17d0b6041ae96b06c3ef4d2f78a2d0739cbc
             "title": "transportation_2011_07_25",
             "default_language": "default",
             "id_string": "transportation_2011_07_25",
@@ -262,7 +261,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         uuid_nodes = [
             node for node in model_node.childNodes
             if node.nodeType == Node.ELEMENT_NODE
-            and node.getAttribute("nodeset") == "/transportation/formhub/uuid"]
+            and node.getAttribute("nodeset") == "/transportation_2011_07_25/formhub/uuid"]
         self.assertEqual(len(uuid_nodes), 1)
         uuid_node = uuid_nodes[0]
         uuid_node.setAttribute("calculate", "''")
