@@ -74,10 +74,10 @@ def get_accessible_forms(owner=None, shared_form=False, shared_data=False):
 
 
 def publish_xlsform(request, user, existing_xform=None):
-    '''
+    """
     If `existing_xform` is specified, that form will be overwritten with the
     new XLSForm
-    '''
+    """
     if not request.user.has_perm(
         'can_add_xform',
         UserProfile.objects.get_or_create(user=user)[0]

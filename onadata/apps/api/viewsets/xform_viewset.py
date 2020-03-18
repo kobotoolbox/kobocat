@@ -1,16 +1,17 @@
-import os
-import json
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
 
+import json
+import os
 from datetime import datetime
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
-from django.contrib.auth.models import User
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.utils.translation import ugettext as _
-from django.utils import six
 from django.shortcuts import get_object_or_404
-
+from django.utils import six
+from django.utils.translation import ugettext as _
 from rest_framework import exceptions
 from rest_framework import status
 from rest_framework.decorators import detail_route
@@ -18,31 +19,27 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ModelViewSet
 
+from onadata.apps.api import tools as utils
+from onadata.apps.api.permissions import XFormPermissions
+from onadata.apps.logger.models.xform import XForm
+from onadata.apps.viewer.models.export import Export
 from onadata.libs import filters
+from onadata.libs.exceptions import NoRecordsFoundError, J2XException
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
 from onadata.libs.mixins.labels_mixin import LabelsMixin
 from onadata.libs.renderers import renderers
 from onadata.libs.serializers.xform_serializer import XFormSerializer
-from onadata.libs.serializers.clone_xform_serializer import \
-    CloneXFormSerializer
-from onadata.apps.main.models import UserProfile
-from onadata.apps.api import tools as utils
-from onadata.apps.api.permissions import XFormPermissions
-from onadata.apps.logger.models.xform import XForm
-from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
-from onadata.apps.viewer.models.export import Export
-from onadata.libs.exceptions import NoRecordsFoundError, J2XException
-from onadata.libs.utils.export_tools import generate_export,\
-    should_create_new_export, generate_external_export
-from onadata.libs.utils.common_tags import SUBMISSION_TIME
 from onadata.libs.utils import log
+from onadata.libs.utils.common_tags import SUBMISSION_TIME
+from onadata.libs.utils.csv_import import submit_csv
+from onadata.libs.utils.export_tools import generate_export, \
+    should_create_new_export, generate_external_export
 from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.string import str2bool
-
-from onadata.libs.utils.csv_import import submit_csv
 from onadata.libs.utils.viewer_tools import _get_form_url
+from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
 
 EXPORT_EXT = {
     'xls': Export.XLS_EXPORT,
@@ -811,7 +808,7 @@ data (instance/submission per row)
 
         xform = self.get_object()
         export_type = kwargs.get('format')
-        query = request.GET.get("query", {})
+        query = request.GET.get('query', {})
         token = request.GET.get('token')
         meta = request.GET.get('meta')
 
@@ -828,7 +825,8 @@ data (instance/submission per row)
 
     @detail_route(methods=['POST'])
     def csv_import(self, request, *args, **kwargs):
-        """ Endpoint for CSV data imports
+        """
+        Endpoint for CSV data imports
 
         Calls :py:func:`onadata.libs.utils.csv_import.submit_csv`
         passing with the `request.FILES.get('csv_file')` upload for import.
