@@ -1,14 +1,18 @@
-from django.utils.translation import ugettext as _
-from guardian.shortcuts import assign_perm
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
 
+from django.contrib.contenttypes.models import ContentType
+from guardian.models import UserObjectPermission
+from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from onadata.apps.api import permissions
+from onadata.libs.permissions import CAN_VIEW_XFORM
 from onadata.libs.mixins.view_permission_mixin import ViewPermissionMixin
 from onadata.libs.serializers.note_serializer import NoteSerializer
-from onadata.apps.logger.models import Note
+from onadata.apps.logger.models import Note, XForm
 
 
 class NoteViewSet(ViewPermissionMixin, ModelViewSet):
@@ -59,10 +63,34 @@ A `GET` request will return the list of notes applied to a data point.
 """
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
-    permission_classes = [permissions.ViewDjangoObjectPermissions,
-                          permissions.IsAuthenticated, ]
+    permission_classes = [
+        permissions.ViewDjangoObjectPermissions,
+        permissions.IsAuthenticated
+    ]
 
-    #u This used to be post_save. Part of it is here, permissions validation
+    def get_queryset(self):
+        # Allows users to see only notes of instances they're allowed to see
+        user = self.request.user
+        xform_content_type = ContentType.objects.get(app_label='logger',
+                                                     model='xform')
+        user_xform_ids = [
+            int(id_) for id_ in UserObjectPermission.objects.filter(
+                content_type=xform_content_type,
+                permission__codename=CAN_VIEW_XFORM,
+                user_id__in=user.pk).values_list('object_pk',
+                                                 flat=True).distinct()
+        ]
+
+        anonymous_xform_ids = [
+            int(id_) for id_ in XForm.objects.filter(shared_data=True)
+            .values_list('pk', flat=True).distinct()
+        ]
+
+        xform_ids = set(anonymous_xform_ids + user_xform_ids)
+
+        return Note.objects.filter(instance__xform_id__in=xform_ids).all()
+
+    # This used to be post_save. Part of it is here, permissions validation
     # has been moved to the note serializer
     def perform_create(self, serializer):
         obj = serializer.save(user=self.request.user)
