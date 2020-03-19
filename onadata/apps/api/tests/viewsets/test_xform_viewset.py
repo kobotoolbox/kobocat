@@ -4,7 +4,6 @@
 import json
 import os
 import re
-import unittest
 from datetime import datetime
 from xml.dom import minidom, Node
 
@@ -105,8 +104,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.publish_xls_form()
         request = self.factory.get('/')
         response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, [])
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_form_list_other_user_access(self):
         """

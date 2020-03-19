@@ -37,10 +37,9 @@ class DjangoObjectPermissionsAllowAnon(DjangoObjectPermissions):
 
 class XFormPermissions(DjangoObjectPermissions):
 
-    authenticated_users_only = False
-
     def __init__(self, *args, **kwargs):
 
+        self._allowed_actions_for_anonymous = ['retrieve']
         # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
         # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
         self.perms_map = DjangoObjectPermissions.perms_map.copy()
@@ -52,50 +51,40 @@ class XFormPermissions(DjangoObjectPermissions):
         return super(XFormPermissions, self).__init__(*args, **kwargs)
 
     def has_permission(self, request, view):
-        owner = view.kwargs.get('owner')
-        is_authenticated = request and request.user.is_authenticated()
+        # Allow anonymous users to access shared data
+        if request.method in SAFE_METHODS and \
+                view.action in self._allowed_actions_for_anonymous:
+            return True
 
-        if request.user:
-            user = request.user
-            if user.is_anonymous():
-                user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
-        else:
-            return False
-
-        if 'pk' in view.kwargs:
-
-            # Allow anonymous users to access shared data
-            if request.method == 'GET' and view.action in ('list', 'retrieve'):
-                pk = view.kwargs.get('pk')
-                xform = get_object_or_404(XForm, pk=pk)
-                if xform.shared_data:
-                    return True
-
-        if is_authenticated and view.action == 'create':
-            owner = owner or user.username
-
-            return user.has_perm(CAN_ADD_XFORM_TO_PROFILE,
-                                 get_user_profile_or_none(owner))
-
-        if hasattr(view, 'get_queryset'):
-            queryset = view.get_queryset()
-        else:
-            queryset = getattr(view, 'queryset', None)
-
-        assert queryset is not None, (
-            'Cannot apply XFormPermissions on a view that '
-            'does not set `.queryset` or have a `.get_queryset()` method.'
-        )
-
-        perms = self.get_required_permissions(request.method, queryset.model)
-        return user.has_perms(perms)
+        return super(XFormPermissions, self).has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
-        if request.method == 'GET' and view.action in ('list', 'retrieve'):
-            pk = view.kwargs.get('pk')
-            xform = get_object_or_404(XForm, pk=pk)
-            if xform.shared_data:
+        if request.method in SAFE_METHODS and view.action == 'retrieve':
+            if obj.shared_data:
+                return True
+
+        return super(XFormPermissions, self).has_object_permission(
+            request, view, obj)
+
+
+class XFormDataPermissions(XFormPermissions):
+
+    def __init__(self, *args, **kwargs):
+        super(XFormDataPermissions, self).__init__(*args, **kwargs)
+        self.perms_map = XFormPermissions.perms_map.copy()
+        # Those who can edit submissions can also delete them, following the
+        # behavior of `onadata.apps.main.views.delete_data`
+        self.perms_map = XFormPermissions.perms_map.copy()
+        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
+        self._allowed_actions_for_anonymous = ['retrieve', 'list']
+
+    def has_object_permission(self, request, view, obj):
+        # Allow anonymous users to access shared data
+        if request.method in SAFE_METHODS and view.action == 'retrieve':
+            # pk = view.kwargs.get('pk')
+            # xform = get_object_or_404(XForm, pk=pk)
+            if obj.shared_data:
                 return True
 
         if request.method == 'DELETE' and view.action == 'labels':
@@ -107,33 +96,8 @@ class XFormPermissions(DjangoObjectPermissions):
             user = request.user
             return user.has_perms([CAN_VALIDATE_XFORM], obj)
 
-        return super(XFormPermissions, self).has_object_permission(
+        return super(XFormDataPermissions, self).has_object_permission(
             request, view, obj)
-
-
-class XFormDataPermissions(XFormPermissions):
-
-    # TODO: move other data-specific logic out of `XFormPermissions` and into
-    # this class
-
-    def __init__(self, *args, **kwargs):
-        super(XFormDataPermissions, self).__init__(*args, **kwargs)
-        self.perms_map = XFormPermissions.perms_map.copy()
-        # Those who can edit submissions can also delete them, following the
-        # behavior of `onadata.apps.main.views.delete_data`
-        self.perms_map = XFormPermissions.perms_map.copy()
-        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
-
-    #def has_permission(self, request, view):
-
-        # Ugly hack to allow Anonymous list all public `XForm`s
-        # ToDo Does anybody know about this?
-        # We should remove this and display `XForm`s based on `AnonymousUser`s
-        # permissions on list endpoint.
-        #if view.kwargs.get('pk') == 'public':
-        #    return True
-
-        #return super(XFormDataPermissions, self).has_permission(request, view)
 
 
 class UserProfilePermissions(DjangoObjectPermissions):
@@ -242,7 +206,7 @@ class NoteObjectPermissions(DjangoObjectPermissions):
 
     def has_permission(self, request, view):
         # Data will be filtered in `NoteViewSet`
-        if request.method in SAFE_METHODS and view.action in ['list', 'retrieve']:
+        if request.method in SAFE_METHODS and view.action == 'retrieve':
             return True
 
         return super(NoteObjectPermissions, self).has_permission(request, view)
