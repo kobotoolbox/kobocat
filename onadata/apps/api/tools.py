@@ -55,22 +55,22 @@ def _get_id_for_type(record, mongo_field):
     return {"$substr": [mongo_str, 0, 10]} if isinstance(date_field, datetime)\
         else mongo_str
 
-
-def get_accessible_forms(owner=None, shared_form=False, shared_data=False):
-    xforms = XForm.objects.filter()
-
-    if shared_form and not shared_data:
-        xforms = xforms.filter(shared=True)
-    elif (shared_form and shared_data) or \
-            (owner == 'public' and not shared_form and not shared_data):
-        xforms = xforms.filter(Q(shared=True) | Q(shared_data=True))
-    elif not shared_form and shared_data:
-        xforms = xforms.filter(shared_data=True)
-
-    if owner != 'public':
-        xforms = xforms.filter(user__username=owner)
-
-    return xforms.distinct()
+# TODO verify tests without this method, then delete
+# def get_accessible_forms(owner=None, shared_form=False, shared_data=False):
+#     xforms = XForm.objects.filter()
+#
+#     if shared_form and not shared_data:
+#         xforms = xforms.filter(shared=True)
+#     elif (shared_form and shared_data) or \
+#             (owner == 'public' and not shared_form and not shared_data):
+#         xforms = xforms.filter(Q(shared=True) | Q(shared_data=True))
+#     elif not shared_form and shared_data:
+#         xforms = xforms.filter(shared_data=True)
+#
+#     if owner != 'public':
+#         xforms = xforms.filter(user__username=owner)
+#
+#     return xforms.distinct()
 
 
 def publish_xlsform(request, user, existing_xform=None):

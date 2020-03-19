@@ -90,7 +90,7 @@ class TestDataViewSet(TestBase):
         formid = self.xform.pk
         response = view(request, pk=formid)
         # data not found for anonymous access to private data
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.xform.shared_data = True
         self.xform.save()
         response = view(request, pk=formid)
@@ -115,36 +115,6 @@ class TestDataViewSet(TestBase):
         self.assertIsInstance(response.data, dict)
         self.assertDictContainsSubset(data, response.data)
 
-    def test_data_public_authenticated_user(self):
-        self._make_submissions()
-        view = DataViewSet.as_view({'get': 'list'})
-        request = self.factory.get('/', **self.extra)
-        response = view(request, pk='public')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, [])
-        self.xform.shared_data = True
-        self.xform.save()
-        formid = self.xform.pk
-        data = _data_list(formid)
-        response = view(request, pk='public')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, data)
-
-    def test_data_public_anon_user(self):
-        self._make_submissions()
-        view = DataViewSet.as_view({'get': 'list'})
-        request = self.factory.get('/')
-        response = view(request, pk='public')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, [])
-        self.xform.shared_data = True
-        self.xform.save()
-        formid = self.xform.pk
-        data = _data_list(formid)
-        response = view(request, pk='public')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, data)
-
     def test_data_bad_formid(self):
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
@@ -160,7 +130,7 @@ class TestDataViewSet(TestBase):
         formid = 98918
         self.assertEqual(XForm.objects.filter(pk=formid).count(), 0)
         response = view(request, pk=formid)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_data_bad_dataid(self):
         self._make_submissions()
@@ -179,7 +149,7 @@ class TestDataViewSet(TestBase):
         data = _data_instance(dataid)
         view = DataViewSet.as_view({'get': 'retrieve'})
         response = view(request, pk=formid, dataid=dataid)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_data_with_query_parameter(self):
         self._make_submissions()
@@ -303,7 +273,7 @@ class TestDataViewSet(TestBase):
         dataid = self.xform.instances.all().order_by('id')[0].pk
 
         response = view(request, pk=formid, dataid=dataid)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         # add data check
         self.assertEqual(
             response.data,
@@ -327,7 +297,7 @@ class TestDataViewSet(TestBase):
         response = view(request, pk=formid)
 
         # data not found for anonymous access to private data
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.xform.shared_data = True
         self.xform.save()
 

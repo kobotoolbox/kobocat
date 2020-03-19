@@ -630,12 +630,6 @@ Params for the custom xls report
 >
 >        HTTP 200 OK
 
-## Get list of public forms
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/forms/public
-</pre>
-
 ## Clone a form to a specific user account
 
 You can clone a form to a specific user account using `GET` with
@@ -700,14 +694,12 @@ data (instance/submission per row)
     extra_lookup_fields = None
     permission_classes = [XFormPermissions, ]
     # TODO: Figure out what `updatable_fields` does; if nothing, remove it
-    updatable_fields = set(('description', 'downloadable', 'require_auth',
-                            'shared', 'shared_data', 'title'))
+    #updatable_fields = set(('description', 'downloadable', 'require_auth',
+    #                         'shared', 'shared_data', 'title'))
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.TagFilter,
                        filters.XFormOwnerFilter,
                        filters.XFormIdStringFilter)
-
-    public_forms_endpoint = 'public'
 
     def create(self, request, *args, **kwargs):
         owner = _get_owner(request)
@@ -792,19 +784,9 @@ data (instance/submission per row)
         return Response(data, http_status)
 
     def retrieve(self, request, *args, **kwargs):
-        lookup_field = self.lookup_field
-        lookup = self.kwargs.get(lookup_field)
-
-        if lookup == self.public_forms_endpoint:
-            self.object_list = self._get_public_forms_queryset()
-
-            page = self.paginate_queryset(self.object_list)
-            if page is not None:
-                serializer = self.get_pagination_serializer(page)
-            else:
-                serializer = self.get_serializer(self.object_list, many=True)
-
-            return Response(serializer.data)
+        # TODO - Delete not used anymore
+        #lookup_field = self.lookup_field
+        #lookup = self.kwargs.get(lookup_field)
 
         xform = self.get_object()
         export_type = kwargs.get('format')

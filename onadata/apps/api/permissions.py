@@ -124,16 +124,16 @@ class XFormDataPermissions(XFormPermissions):
         self.perms_map = XFormPermissions.perms_map.copy()
         self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
 
-    def has_permission(self, request, view):
+    #def has_permission(self, request, view):
 
         # Ugly hack to allow Anonymous list all public `XForm`s
         # ToDo Does anybody know about this?
         # We should remove this and display `XForm`s based on `AnonymousUser`s
         # permissions on list endpoint.
-        if view.kwargs.get('pk') == 'public':
-            return True
+        #if view.kwargs.get('pk') == 'public':
+        #    return True
 
-        return super(XFormDataPermissions, self).has_permission(request, view)
+        #return super(XFormDataPermissions, self).has_permission(request, view)
 
 
 class UserProfilePermissions(DjangoObjectPermissions):

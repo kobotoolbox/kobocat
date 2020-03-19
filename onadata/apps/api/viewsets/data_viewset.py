@@ -339,28 +339,6 @@ Payload
 >           "label": "Not Approved"
 >       }
 
-## Get list of public data endpoints
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/data/public
-</pre>
-
-> Example
->
->       curl -X GET https://example.com/api/v1/data/public
-
-> Response
->
->        [{
->            "id": 4240,
->            "id_string": "dhis2form"
->            "title": "dhis2form"
->            "description": "dhis2form"
->            "url": "https://example.com/api/v1/data/4240"
->         },
->            ...
->        ]
-
 ## Get enketo edit link for a submission instance
 
 <pre class="prettyprint">
@@ -410,8 +388,6 @@ Delete a specific submission in a form
     lookup_field = 'pk'
     lookup_fields = ('pk', 'dataid')
     extra_lookup_fields = None
-    public_data_endpoint = 'public'
-
     queryset = XForm.objects.all()
 
     def bulk_delete(self, request, *args, **kwargs):
@@ -470,8 +446,7 @@ Delete a specific submission in a form
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
-        if pk is not None and dataid is None \
-                and pk != self.public_data_endpoint:
+        if pk is not None and dataid is None:
             serializer_class = DataListSerializer
         elif pk is not None and dataid is not None:
             serializer_class = DataInstanceSerializer
@@ -490,11 +465,11 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+                raise ParseError(_(u"Invalid pk `%(pk)s`" % {'pk': pk}))
             try:
                 int(dataid)
             except ValueError:
-                raise ParseError(_(u"Invalid dataid %(dataid)s"
+                raise ParseError(_(u"Invalid dataid `%(dataid)s`"
                                    % {'dataid': dataid}))
 
             obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
@@ -530,10 +505,7 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                if pk == self.public_data_endpoint:
-                    qs = self._get_public_forms_queryset()
-                else:
-                    raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+                raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
             else:
                 qs = self._filtered_or_shared_qs(qs, pk)
 
@@ -660,17 +632,6 @@ Delete a specific submission in a form
         if lookup_field not in kwargs.keys():
             self.object_list = self.filter_queryset(self.get_queryset())
             serializer = self.get_serializer(self.object_list, many=True)
-
-            return Response(serializer.data)
-
-        if lookup == self.public_data_endpoint:
-            self.object_list = self._get_public_forms_queryset()
-
-            page = self.paginate_queryset(self.object_list)
-            if page is not None:
-                serializer = self.get_pagination_serializer(page)
-            else:
-                serializer = self.get_serializer(self.object_list, many=True)
 
             return Response(serializer.data)
 
