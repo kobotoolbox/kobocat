@@ -109,7 +109,6 @@ class XFormListRenderer(BaseRenderer):
 
         xml.endElement(self.root_node)
         xml.endDocument()
-
         return stream.getvalue()
 
     def _to_xml(self, xml, data):

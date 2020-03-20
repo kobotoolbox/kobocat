@@ -46,7 +46,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         ]
         self.authentication_classes = authentication_classes + [
             auth_class for auth_class in self.authentication_classes
-                if not auth_class in authentication_classes
+                if auth_class not in authentication_classes
         ]
 
     def get_openrosa_headers(self):
@@ -56,7 +56,8 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         return {
             'Date': dt,
             'X-OpenRosa-Version': '1.0',
-            'X-OpenRosa-Accept-Content-Length': DEFAULT_CONTENT_LENGTH
+            'X-OpenRosa-Accept-Content-Length': DEFAULT_CONTENT_LENGTH,
+            'Content-Type': 'text/xml; charset=utf-8'
         }
 
     def get_renderers(self):

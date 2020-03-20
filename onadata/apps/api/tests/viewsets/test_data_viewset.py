@@ -11,10 +11,10 @@ from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import XForm
 from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
-from httmock import urlmatch, HTTMock
+from httmock import all_requests, HTTMock
 
 
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
+@all_requests
 def enketo_mock(url, request):
     response = requests.Response()
     response.status_code = 201
@@ -264,7 +264,6 @@ class TestDataViewSet(TestBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
-    @unittest.skip('Fails under Django 1.6')
     def test_get_enketo_edit_url(self):
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'enketo'})

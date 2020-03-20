@@ -2,7 +2,6 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
-import unittest
 
 from django.conf import settings
 from django_digest.test import DigestAuth
@@ -187,7 +186,6 @@ class TestXFormListApi(TestAbstractViewSet):
             self.assertEqual(response['Content-Type'],
                              'text/xml; charset=utf-8')
 
-    @unittest.skip('Fails under Django 1.6')
     def test_retrieve_xform_xml(self):
         self.view = XFormListApi.as_view({
             "get": "retrieve"
@@ -200,6 +198,13 @@ class TestXFormListApi(TestAbstractViewSet):
         response = self.view(request, pk=self.xform.pk)
         self.assertEqual(response.status_code, 200)
 
+        self.assertEqual(response['Content-Type'],
+                         'text/xml; charset=utf-8')
+        self.assertTrue(response.has_header('X-OpenRosa-Version'))
+        self.assertTrue(
+            response.has_header('X-OpenRosa-Accept-Content-Length'))
+        self.assertTrue(response.has_header('Date'))
+
         path = os.path.join(
             os.path.dirname(__file__),
             '..', 'fixtures', 'Transportation Form.xml')
@@ -209,12 +214,6 @@ class TestXFormListApi(TestAbstractViewSet):
             data = {"form_uuid": self.xform.uuid}
             content = response.render().content.strip()
             self.assertEqual(content, form_xml % data)
-            self.assertTrue(response.has_header('X-OpenRosa-Version'))
-            self.assertTrue(
-                response.has_header('X-OpenRosa-Accept-Content-Length'))
-            self.assertTrue(response.has_header('Date'))
-            self.assertEqual(response['Content-Type'],
-                             'text/xml; charset=utf-8')
 
     def _load_metadata(self, xform=None):
         data_value = "screenshot.png"
