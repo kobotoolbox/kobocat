@@ -13,9 +13,19 @@ from django.utils.translation import ugettext as _
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
-from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
-    SUBMISSION_TIME, MONGO_STRFTIME, BAMBOO_DATASET_ID, DELETEDAT, TAGS,\
-    NOTES, SUBMITTED_BY, VALIDATION_STATUS
+from onadata.libs.utils.common_tags import (
+    ID,
+    UUID,
+    ATTACHMENTS,
+    GEOLOCATION,
+    SUBMISSION_TIME,
+    MONGO_STRFTIME,
+    DELETEDAT,
+    TAGS,
+    NOTES,
+    SUBMITTED_BY,
+    VALIDATION_STATUS
+)
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 from onadata.apps.api.mongo_helper import MongoHelper
@@ -236,7 +246,6 @@ class ParsedInstance(models.Model):
         data = {
             UUID: self.instance.uuid,
             ID: self.instance.id,
-            BAMBOO_DATASET_ID: self.instance.xform.bamboo_dataset,
             self.USERFORM_ID: u'%s_%s' % (
                 self.instance.xform.user.username,
                 self.instance.xform.id_string),

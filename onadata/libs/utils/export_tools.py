@@ -32,9 +32,21 @@ from onadata.apps.viewer.models.export import Export
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.libs.utils.viewer_tools import create_attachments_zipfile
 from onadata.libs.utils.common_tags import (
-    ID, XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION, BAMBOO_DATASET_ID,
-    DELETEDAT, USERFORM_ID, INDEX, PARENT_INDEX, PARENT_TABLE_NAME,
-    SUBMISSION_TIME, UUID, TAGS, NOTES)
+    ID,
+    XFORM_ID_STRING,
+    STATUS,
+    ATTACHMENTS,
+    GEOLOCATION,
+    DELETEDAT,
+    USERFORM_ID,
+    INDEX,
+    PARENT_INDEX,
+    PARENT_TABLE_NAME,
+    SUBMISSION_TIME,
+    UUID,
+    TAGS,
+    NOTES
+)
 from onadata.libs.exceptions import J2XException
 from .analyser_export import generate_analyser
 
@@ -174,7 +186,7 @@ def dict_to_joined_export(data, index, indices, name):
 
 class ExportBuilder(object):
     IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION,
-                       BAMBOO_DATASET_ID, DELETEDAT]
+                       DELETEDAT]
     # fields we export but are not within the form's structure
     EXTRA_FIELDS = [ID, UUID, SUBMISSION_TIME, INDEX, PARENT_TABLE_NAME,
                     PARENT_INDEX, TAGS, NOTES]

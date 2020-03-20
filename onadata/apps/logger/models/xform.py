@@ -89,7 +89,6 @@ class XForm(BaseModel):
                                    re.DOTALL)
     uuid_node_location = 2
     uuid_bind_location = 4
-    bamboo_dataset = models.CharField(max_length=60, default=u'')
     instances_with_geopoints = models.BooleanField(default=False)
     num_of_submissions = models.IntegerField(default=0)
 

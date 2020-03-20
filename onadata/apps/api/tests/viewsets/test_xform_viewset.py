@@ -324,7 +324,6 @@ class TestXFormViewSet(TestAbstractViewSet):
             'sms_id_string': u'transportation_2011_07_25',
             'id_string': u'transportation_2011_07_25',
             'title': u'transportation_2011_07_25',
-            'bamboo_dataset': u''
         }
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",

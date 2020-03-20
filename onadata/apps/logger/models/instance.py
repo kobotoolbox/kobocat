@@ -20,9 +20,19 @@ from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser,\
     clean_and_parse_xml, get_uuid_from_xml
-from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
-    DELETEDAT, GEOLOCATION, ID, MONGO_STRFTIME, NOTES, SUBMISSION_TIME, TAGS,\
-    UUID, XFORM_ID_STRING, SUBMITTED_BY
+from onadata.libs.utils.common_tags import (
+    ATTACHMENTS,
+    DELETEDAT,
+    GEOLOCATION,
+    ID,
+    MONGO_STRFTIME,
+    NOTES,
+    SUBMISSION_TIME,
+    TAGS,
+    UUID,
+    XFORM_ID_STRING,
+    SUBMITTED_BY
+)
 from onadata.libs.utils.model_tools import set_uuid
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
@@ -316,7 +326,6 @@ class Instance(models.Model):
         data = {
             UUID: self.uuid,
             ID: self.id,
-            BAMBOO_DATASET_ID: self.xform.bamboo_dataset,
             self.USERFORM_ID: u'%s_%s' % (
                 self.user.username,
                 self.xform.id_string),

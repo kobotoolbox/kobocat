@@ -595,7 +595,7 @@ class TestPandasMongoBridge(TestBase):
         # remove dynamic fields
         ignore_list = [
             '_uuid', 'meta/instanceID', 'formhub/uuid', '_submission_time',
-            '_id', '_bamboo_dataset_id']
+            '_id']
         for item in ignore_list:
             data_0.pop(item)
         expected_data_0 = {
@@ -640,7 +640,8 @@ class TestPandasMongoBridge(TestBase):
         # remove dynamic fields
         ignore_list = [
             '_uuid', 'meta/instanceID', 'formhub/uuid', '_submission_time',
-            '_id', '_bamboo_dataset_id']
+            '_id'
+        ]
         for item in ignore_list:
             # pop unwanted keys from main section
             for d in data["groups_in_repeats"]:

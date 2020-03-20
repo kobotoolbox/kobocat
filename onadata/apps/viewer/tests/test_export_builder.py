@@ -859,7 +859,6 @@ class TestExportBuilder(TestBase):
         submission_1 = {
             "_id": 579827,
             "geolocation": "-1.2625482 36.7924794 0.0 21.0",
-            "_bamboo_dataset_id": "",
             "meta/instanceID": "uuid:2a8129f5-3091-44e1-a579-bed2b07a12cf",
             "name": "Smith",
             "formhub/uuid": "633ec390e024411ba5ce634db7807e62",
@@ -883,7 +882,6 @@ class TestExportBuilder(TestBase):
             "_id": 579828,
             "_submission_time": "2013-07-03T08:26:10",
             "_uuid": "5b4752eb-e13c-483e-87cb-e67ca6bb61e5",
-            "_bamboo_dataset_id": "",
             "_xform_id_string": "test_data_types",
             "_userform_id": "larryweya_test_data_types",
             "_status": "submitted_via_web",

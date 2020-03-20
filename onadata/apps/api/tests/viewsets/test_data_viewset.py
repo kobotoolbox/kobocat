@@ -34,7 +34,6 @@ def _data_list(formid):
 
 def _data_instance(dataid):
     return {
-        u'_bamboo_dataset_id': u'',
         u'_attachments': [],
         u'_geolocation': [None, None],
         u'_xform_id_string': u'transportation_2011_07_25',
@@ -341,7 +340,6 @@ class TestDataViewSet(TestBase):
         dataid = self.xform.instances.all().order_by('id')[0].pk
 
         data = {
-            u'_bamboo_dataset_id': u'',
             u'_attachments': [{u'download_url': self.attachment.secure_url(),
                                u'download_small_url': self.attachment.secure_url('small'),
                                u'download_medium_url': self.attachment.secure_url('medium'),

@@ -33,7 +33,6 @@ DATE = u"_date"
 GEOLOCATION = u"_geolocation"
 SUBMISSION_TIME = u'_submission_time'
 DELETEDAT = u"_deleted_at"  # marker for delete surveys
-BAMBOO_DATASET_ID = u"_bamboo_dataset_id"
 SUBMITTED_BY = u"_submitted_by"
 VALIDATION_STATUS = u"_validation_status"
 
