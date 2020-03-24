@@ -62,7 +62,7 @@ A `GET` request will return the list of notes applied to a data point.
     permission_classes = [permissions.ViewDjangoObjectPermissions,
                           permissions.IsAuthenticated, ]
 
-    #u This used to be post_save. Part of it is here, permissions validation
+    # This used to be post_save. Part of it is here, permissions validation
     # has been moved to the note serializer
     def perform_create(self, serializer):
         obj = serializer.save(user=self.request.user)
@@ -72,6 +72,19 @@ A `GET` request will return the list of notes applied to a data point.
         assign_perm('view_note', self.request.user, obj)
         # make sure parsed_instance saves to mongo db
         obj.instance.parsed_instance.save()
+
+    def update(self, request, *args, **kwargs):
+        """Override update to refresh the MongoDB representation of the instance when a note is edited.
+
+        We call the parent method first, to save the updated note to the DB. It returns a response, which we return
+        after making sure that MongoDB is updated.
+        """
+        response = super(NoteViewSet, self).update(request, *args, **kwargs)
+        obj = self.get_object()
+        instance = obj.instance
+        # update mongo data
+        instance.parsed_instance.save()
+        return response
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()
