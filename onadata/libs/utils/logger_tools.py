@@ -488,13 +488,18 @@ def publish_form(callback):
         # ODK validation errors are vanilla errors and it masks a lot of regular
         # errors if we try to catch it so let's catch it, BUT reraise it
         # if we don't see typical ODK validation error messages in it.
-        if u"ODK Validate Errors" not in e.message:
+        try:
+            unicode_message = e.message.decode('utf-8')
+        except UnicodeDecodeError:
+            unicode_message = None
+        if unicode_message is None:
             raise
-
+        if u"ODK Validate Errors" not in unicode_message:
+            raise
         # error in the XLS file; show an error to the user
         return {
             'type': 'alert-error',
-            'text': unicode(e)
+            'text': unicode_message
         }
 
 
