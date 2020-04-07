@@ -1,3 +1,4 @@
+import unittest
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.models import UserProfile
@@ -16,13 +17,15 @@ class TestUserSettings(TestBase):
         response = self.client.get(self.settings_url)
         self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("This feature is now deported on the KPI's API")
     def test_show_existing_profile_data(self):
         profile, created = UserProfile.objects.get_or_create(user=self.user)
         profile.name = "Bobby"
         profile.save()
         response = self.client.get(self.settings_url)
-        self.assertContains(response, profile.name)
+        self.assertContains(response, self.user.u.name)
 
+    @unittest.skip("This feature is now deported on the KPI's API")
     def test_update_user_settings(self):
         post_data = {
             'name': 'Bobby',
@@ -40,7 +43,7 @@ class TestUserSettings(TestBase):
         for key, value in post_data.iteritems():
             try:
                 self.assertEqual(self.user.profile.__dict__[key], value)
-            except KeyError, e:
+            except KeyError as e:
                 if key == 'email':
                     self.assertEqual(self.user.__dict__[key], value)
                 else:
