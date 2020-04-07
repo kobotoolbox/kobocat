@@ -1,18 +1,17 @@
-from datetime import datetime
-from django.contrib.contenttypes.models import ContentType
-import os
 import json
-from bson import json_util
+import os
+from datetime import datetime
 
+from bson import json_util
 from django.conf import settings
-from django.core.urlresolvers import reverse
-from django.core.files.storage import default_storage
-from django.core.files.storage import get_storage_class
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import messages
-from django.db import IntegrityError
-from rest_framework.authtoken.models import Token
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.storage import default_storage
+from django.core.files.storage import get_storage_class
+from django.core.urlresolvers import reverse
+from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
@@ -27,38 +26,41 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
 from guardian.shortcuts import assign_perm, remove_perm, get_users_with_perms
+from rest_framework.authtoken.models import Token
 
-from onadata.apps.main.forms import UserProfileForm, FormLicenseForm,\
-    DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL,\
-    QuickConverter, SourceForm, PermissionForm, MediaForm, MapboxLayerForm,\
-    ActivateSMSSupportFom, ExternalExportForm
-from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
-from onadata.apps.viewer.models.data_dictionary import DataDictionary,\
-    upload_to
-from onadata.apps.viewer.models.parsed_instance import\
-    DATETIME_FORMAT, ParsedInstance
-from onadata.apps.viewer.views import attachment_url
-from onadata.apps.sms_support.tools import check_form_sms_compatibility,\
-    is_sms_related
+from onadata.apps.main.forms import UserProfileForm, FormLicenseForm, \
+    DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
+    QuickConverter, SourceForm, PermissionForm, MediaForm, MapboxLayerForm, \
+    ActivateSMSSupportFom, ExternalExportForm
+from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.apps.sms_support.autodoc import get_autodoc_for
 from onadata.apps.sms_support.providers import providers_doc
+from onadata.apps.sms_support.tools import check_form_sms_compatibility, \
+    is_sms_related
+from onadata.apps.viewer.models.data_dictionary import DataDictionary, \
+    upload_to
+from onadata.apps.viewer.models.parsed_instance import \
+    DATETIME_FORMAT, ParsedInstance
+from onadata.apps.viewer.views import attachment_url
 from onadata.libs.utils.decorators import is_owner
-from onadata.libs.utils.logger_tools import response_with_mimetype_and_name,\
-    publish_form
-from onadata.libs.utils.user_auth import add_cors_headers
-from onadata.libs.utils.user_auth import check_and_set_user_and_form
-from onadata.libs.utils.user_auth import check_and_set_user
-from onadata.libs.utils.user_auth import get_xform_and_perms
-from onadata.libs.utils.user_auth import has_permission
-from onadata.libs.utils.user_auth import has_edit_permission
-from onadata.libs.utils.user_auth import helper_auth_helper
-from onadata.libs.utils.user_auth import set_profile_data
-from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.qrcode import generate_qrcode
-from onadata.libs.utils.viewer_tools import enketo_url
 from onadata.libs.utils.export_tools import upload_template_for_external_export
+from onadata.libs.utils.log import audit_log, Actions
+from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
+    publish_form
+from onadata.libs.utils.qrcode import generate_qrcode
+from onadata.libs.utils.user_auth import (
+    add_cors_headers,
+    check_and_set_user,
+    check_and_set_user_and_form,
+    get_xform_and_perms,
+    has_edit_permission,
+    has_permission,
+    helper_auth_helper,
+    set_profile_data
+)
+from onadata.libs.utils.viewer_tools import enketo_url
 
 
 def home(request):
@@ -189,7 +191,11 @@ def profile(request, username):
                     'form_url': enketo_webform_url},
                 'form_o': survey
             }
-        form_result = publish_form(set_form)
+        with transaction.atomic():
+            # publish_form must be wrapped into `transaction.atomic` because of
+            # https://stackoverflow.com/a/23326971/1141214
+            form_result = publish_form(set_form)
+
         if form_result['type'] == 'alert-success':
             # comment the following condition (and else)
             # when we want to enable sms check for all.
@@ -1233,7 +1239,7 @@ def delete_data(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
     response_text = u''
     if not xform or not has_edit_permission(
-        xform, owner, request, xform.shared
+        xform, owner, request
     ):
         return HttpResponseForbidden(_(u'Not shared.'))
 
