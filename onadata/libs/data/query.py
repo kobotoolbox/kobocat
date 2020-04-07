@@ -14,7 +14,9 @@ def _count_group(field, name, xform):
 
 
 def _dictfetchall(cursor):
-    "Returns all rows from a cursor as a dict"
+    """
+    Returns all rows from a cursor as a dict
+    """
     desc = cursor.description
 
     return [
