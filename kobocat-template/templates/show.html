@@ -686,26 +686,6 @@
             </div>
         </div>
         <br/>
-        <div class="kc-hide">
-            <h3>{% trans "bamboo" %}</h3>
-            {% if xform.bamboo_dataset %}
-                {% blocktrans with dataset=xform.bamboo_dataset %}bamboo dataset: <strong><a href="http://bamboo.io/datasets/{{ dataset }}/info">{{ dataset }}</a></strong>{% endblocktrans %}
-            {% else %}
-                {% blocktrans %}bamboo link is <strong>not active</strong>{% endblocktrans %}
-            {% endif %}
-            {% if xform.submission_count = 0 %}
-                <br />{% trans "bamboo requires at least one submission." %}
-            {% else %}<form action="{% url "onadata.apps.main.views.link_to_bamboo" content_user.username xform.id_string %}" method="post">
-                {% csrf_token %}
-                {% if xform.bamboo_dataset %}
-                    <input type="submit" class="btn" value="{% trans "Regenerate" %}" />
-                {% else %}
-                    <input type="submit" class="btn" value="{% trans "Activate" %}" />
-                {% endif %}
-                </form>
-            {% endif %}
-        </div>
-        <br/>
         <div class="clearfix bordered kc-hide">
                 <h3 data-toggle="collapse" class="toggler" data-target="#sms_tab">{% trans "SMS Support" %} (<acronym title="SMS Support is in beta stage now. Please use carefully as API and IDs might change.">beta</acronym>)</h3>
                 <div id='sms_tab' class="collapse">
