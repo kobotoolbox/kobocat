@@ -29,7 +29,8 @@ from onadata.libs.utils.common_tags import (
     DELETEDAT,
     TAGS,
     NOTES,
-    SUBMITTED_BY
+    SUBMITTED_BY,
+    VALIDATION_STATUS
 )
 from onadata.libs.utils.export_tools import question_types_to_exclude
 
@@ -88,7 +89,7 @@ class AbstractDataFrameBuilder(object):
     IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ID, ATTACHMENTS, GEOLOCATION,
                        DELETEDAT, SUBMITTED_BY]
     # fields NOT within the form def that we want to include
-    ADDITIONAL_COLUMNS = [UUID, SUBMISSION_TIME, TAGS, NOTES]
+    ADDITIONAL_COLUMNS = [UUID, SUBMISSION_TIME, TAGS, NOTES, VALIDATION_STATUS]
     BINARY_SELECT_MULTIPLES = False
     """
     Group functionality used by any DataFrameBuilder i.e. XLS, CSV and KML

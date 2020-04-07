@@ -609,6 +609,7 @@ class ExportBuilder(object):
     def to_flat_csv_export(
             self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
+
         from onadata.apps.viewer.pandas_mongo_bridge import\
             CSVDataFrameBuilder
 

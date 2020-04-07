@@ -187,7 +187,6 @@ class TestBase(TestCase):
 
             url_prefix = '%s/' % username if username else ''
             url = '/%ssubmission' % url_prefix
-
             request = self.factory.post(url, post_data)
             request.user = authenticate(username=auth.username,
                                         password=auth.password)

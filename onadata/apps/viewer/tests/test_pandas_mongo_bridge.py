@@ -626,6 +626,7 @@ class TestPandasMongoBridge(TestBase):
             u'_gps_longitude': u'36.7923571',
             u'_gps_altitude': u'0.0',
             u'_gps_precision': u'30.0',
+            u'_validation_status': {},
         }
         self.maxDiff = None
         self.assertEqual(data_0, expected_data_0)

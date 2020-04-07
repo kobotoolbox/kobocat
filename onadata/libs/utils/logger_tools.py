@@ -132,25 +132,25 @@ def get_uuid_from_submission(xml):
 
 
 def get_xform_from_submission(xml, username, uuid=None):
-        # check alternative form submission ids
-        uuid = uuid or get_uuid_from_submission(xml)
+    # check alternative form submission ids
+    uuid = uuid or get_uuid_from_submission(xml)
 
-        if not username and not uuid:
-            raise InstanceInvalidUserError()
+    if not username and not uuid:
+        raise InstanceInvalidUserError()
 
-        if uuid:
-            # try find the form by its uuid which is the ideal condition
-            try:
-                xform = XForm.objects.get(uuid=uuid)
-            except XForm.DoesNotExist:
-                pass
-            else:
-                return xform
+    if uuid:
+        # try find the form by its uuid which is the ideal condition
+        try:
+            xform = XForm.objects.get(uuid=uuid)
+        except XForm.DoesNotExist:
+            pass
+        else:
+            return xform
 
-        id_string = get_id_string_from_xml_str(xml)
+    id_string = get_id_string_from_xml_str(xml)
 
-        return get_object_or_404(XForm, id_string__exact=id_string,
-                                 user__username=username)
+    return get_object_or_404(XForm, id_string__exact=id_string,
+                             user__username=username)
 
 
 def _has_edit_xform_permission(xform, user):
@@ -162,8 +162,8 @@ def _has_edit_xform_permission(xform, user):
 
 def check_edit_submission_permissions(request_user, xform):
     if xform and request_user and request_user.is_authenticated():
-        requires_auth = UserProfile.objects.get_or_create(user=xform.user
-            )[0].require_auth
+        requires_auth = UserProfile.objects.get_or_create(
+            user=xform.user)[0].require_auth
         has_edit_perms = _has_edit_xform_permission(xform, request_user)
 
         if requires_auth and not has_edit_perms:
