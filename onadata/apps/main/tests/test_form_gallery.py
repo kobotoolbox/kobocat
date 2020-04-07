@@ -40,6 +40,8 @@ class TestFormGallery(TestBase):
 
     def test_clone_id_string_starts_with_number(self):
         self._publish_transportation_id_string_starts_with_number_form()
+        # The following lines are useless since `self.xform.id_string` does not
+        # start with numbers.
         self._create_user_and_login('alice', 'alice')
         count = XForm.objects.count()
         self.client.post(
@@ -51,7 +53,8 @@ class TestFormGallery(TestBase):
                                 "transportation",
                                 "transportation.id_starts_with_num.xls")
         count = XForm.objects.count()
-        TestBase._publish_xls_file(self, xls_path)
+        response = TestBase._publish_xls_file(self, xls_path)
 
-        self.assertEqual(XForm.objects.count(), count + 1)
+        self.assertContains(response, 'Names must begin with a letter')
+        self.assertEqual(XForm.objects.count(), count)
         self.xform = XForm.objects.all().reverse()[0]

@@ -524,6 +524,7 @@ def export_download(request, username, id_string, export_type, filename):
     default_storage = get_storage_class()()
     if not isinstance(default_storage, FileSystemStorage):
         return HttpResponseRedirect(default_storage.url(export.filepath))
+
     basename = os.path.splitext(export.filename)[0]
     response = response_with_mimetype_and_name(
         mime_type, name=basename, extension=ext,

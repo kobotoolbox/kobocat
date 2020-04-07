@@ -478,8 +478,10 @@ class TestProcess(TestBase):
         self.assertTrue(len(md.hash) > 16)
 
     def test_uuid_injection_in_cascading_select(self):
-        """Test that the uuid is injected in the right instance node for
-        forms with a cascading select"""
+        """
+        Test that the uuid is injected in the right instance node for
+        forms with a cascading select
+        """
         pre_count = XForm.objects.count()
         xls_path = os.path.join(
             self.this_directory, "fixtures", "cascading_selects",
@@ -521,7 +523,7 @@ class TestProcess(TestBase):
                                 node.nodeType == Node.ELEMENT_NODE and
                                 node.tagName == "bind" and
                                 node.getAttribute("nodeset") ==
-                                "/%s/formhub/uuid" % file_name]
+                                "/%s/formhub/uuid" % xform.id_string]
         self.assertEqual(len(calculate_bind_nodes), 1)
         calculate_bind_node = calculate_bind_nodes[0]
         self.assertEqual(
@@ -530,7 +532,9 @@ class TestProcess(TestBase):
     def test_csv_publishing(self):
         csv_text = '\n'.join([
             'survey,,', ',type,name,label',
-            ',text,whatsyourname,"What is your name?"', 'choices,,'])
+            ',text,whatsyourname,"What is your name?"',
+            'choices,,',
+            'settings,,', ',id_string', ',identity'])
         url = reverse('onadata.apps.main.views.profile',
                       kwargs={'username': self.user.username})
         num_xforms = XForm.objects.count()

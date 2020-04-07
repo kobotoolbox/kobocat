@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 
 from onadata.apps.main.views import api
 from onadata.apps.api.mongo_helper import MongoHelper
+from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from test_base import TestBase
 
 
