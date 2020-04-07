@@ -383,6 +383,11 @@ def _get_google_token(request, redirect_to_url):
 
 
 def export_list(request, username, id_string, export_type):
+    try:
+        Export.EXPORT_TYPE_DICT[export_type]
+    except KeyError:
+        return HttpResponseBadRequest(_('Invalid export type'))
+
     if export_type == Export.GDOC_EXPORT:
         redirect_url = reverse(
             export_list,

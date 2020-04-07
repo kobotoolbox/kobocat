@@ -10,9 +10,12 @@ from requests import ConnectionError
 
 from onadata.apps.viewer.models.export import Export
 from onadata.libs.exceptions import NoRecordsFoundError
-from onadata.libs.utils.export_tools import generate_export,\
-    generate_attachments_zip_export, generate_kml_export,\
+from onadata.libs.utils.export_tools import (
+    generate_export,
+    generate_attachments_zip_export,
+    generate_kml_export,
     generate_external_export
+)
 from onadata.libs.utils.logger_tools import mongo_sync_status, report_exception
 
 

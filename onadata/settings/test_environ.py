@@ -53,16 +53,12 @@ if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
     LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
     LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
-if TESTING_MODE:
-    MEDIA_ROOT = '/tmp/test_media/'
-    subprocess.call(["rm", "-r", MEDIA_ROOT])
-    MONGO_DATABASE['NAME'] = "formhub_test"
-    CELERY_TASK_ALWAYS_EAGER = True
-    BROKER_BACKEND = 'memory'
-    ENKETO_API_TOKEN = 'abc'
-    # TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
-else:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media/')
+MEDIA_ROOT = '/tmp/test_media/'
+subprocess.call(["rm", "-r", MEDIA_ROOT])
+MONGO_DATABASE['NAME'] = "formhub_test"
+CELERY_TASK_ALWAYS_EAGER = True
+BROKER_BACKEND = 'memory'
+ENKETO_API_TOKEN = 'abc'
 
 if PRINT_EXCEPTION and DEBUG:
     MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
@@ -171,5 +167,3 @@ LOGGING['loggers']['django.db.backends'] = {
             'level': 'WARNING',
             'propagate': True
         }
-
-CELERY_TASK_ALWAYS_EAGER = True
