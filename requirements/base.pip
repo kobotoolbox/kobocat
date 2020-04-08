@@ -28,7 +28,6 @@ django-nose==1.4.2
 python-digest==1.7
 raven==6.1.0
 -e git+https://github.com/dimagi/django-digest@0eb1c921329dd187c343b61acfbec4e98450136e#egg=django_digest
--e git+https://github.com/onaio/python-json2xlsclient.git@5a39387752d819cb6387f75569dbea9a5288aa6f#egg=python_json2xlsclient
 
 # new export code relies on
 pandas>=0.12.0

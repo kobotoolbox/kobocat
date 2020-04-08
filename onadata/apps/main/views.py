@@ -37,7 +37,7 @@ from onadata.apps.logger.views import enter_data
 from onadata.apps.main.forms import UserProfileForm, FormLicenseForm, \
     DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
     QuickConverter, SourceForm, PermissionForm, MediaForm, MapboxLayerForm, \
-    ActivateSMSSupportFom, ExternalExportForm
+    ActivateSMSSupportFom
 from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.apps.sms_support.autodoc import get_autodoc_for
 from onadata.apps.sms_support.providers import providers_doc
@@ -49,7 +49,6 @@ from onadata.apps.viewer.models.parsed_instance import \
     DATETIME_FORMAT, ParsedInstance
 from onadata.apps.viewer.views import attachment_url
 from onadata.libs.utils.decorators import is_owner
-from onadata.libs.utils.export_tools import upload_template_for_external_export
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
     publish_form
@@ -375,7 +374,6 @@ def set_xform_owner_data(data, xform, request, username, id_string):
     data['source_form'] = SourceForm()
     data['media_form'] = MediaForm()
     data['mapbox_layer_form'] = MapboxLayerForm()
-    data['external_export_form'] = ExternalExportForm()
     users_with_perms = []
 
     for perm in get_users_with_perms(xform, attach_perms=True).items():
@@ -422,7 +420,6 @@ def show(request, username=None, id_string=None, uuid=None):
     data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
     data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
-    data['external_export'] = MetaData.external_export(xform)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
@@ -431,6 +428,7 @@ def show(request, username=None, id_string=None, uuid=None):
         data['sms_support_doc'] = get_autodoc_for(xform)
 
     return render(request, "show.html", data)
+
 
 # SETTINGS SCREEN FOR KPI, LOADED IN IFRAME 
 @require_GET
@@ -462,7 +460,6 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
     data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
-    data['external_export'] = MetaData.external_export(xform)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
@@ -471,7 +468,6 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
         data['sms_support_doc'] = get_autodoc_for(xform)
 
     return render(request, "show_form_settings.html", data)
-
 
 
 @login_required
@@ -777,42 +773,6 @@ def edit(request, username, id_string):
                     'id_string': xform.id_string
                 }, audit, request)
             MetaData.supporting_docs(xform, request.FILES.get('doc'))
-        elif request.POST.get("template_token") \
-                and request.POST.get("template_token"):
-            template_name = request.POST.get("template_name")
-            template_token = request.POST.get("template_token")
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("External export added to '%(id_string)s'.") %
-                {
-                    'id_string': xform.id_string
-                }, audit, request)
-            merged = template_name + '|' + template_token
-            MetaData.external_export(xform, merged)
-        elif request.POST.get("external_url") \
-                and request.FILES.get("xls_template"):
-            template_upload_name = request.POST.get("template_upload_name")
-            external_url = request.POST.get("external_url")
-
-            try:
-                SSRFProtect.validate(external_url)
-            except SSRFProtectException:
-                return HttpResponseForbidden(_(u'URL {url} is forbidden.').format(
-                    url=external_url))
-
-            xls_template = request.FILES.get("xls_template")
-
-            result = upload_template_for_external_export(external_url,
-                                                         xls_template)
-            status_code = result.split('|')[0]
-            token = result.split('|')[1]
-            if status_code == '201':
-                data_value =\
-                    template_upload_name + '|' + external_url + '/xls/' + token
-                MetaData.external_export(xform, data_value=data_value)
 
         xform.update()
 
@@ -986,8 +946,7 @@ def delete_metadata(request, username, id_string, data_id):
             }))
         except Exception:
             return HttpResponseServerError()
-    elif (request.GET.get('map_name_del', False) or
-          request.GET.get('external_del', False)) and username == req_username:
+    elif request.GET.get('map_name_del', False) and username == req_username:
         data.delete()
         audit = {
             'xform': xform.id_string

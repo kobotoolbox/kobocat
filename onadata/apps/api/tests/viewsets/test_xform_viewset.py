@@ -46,14 +46,6 @@ def enketo_error_mock(url, request):
     return response
 
 
-@all_requests
-def external_mock(url, request):
-    response = requests.Response()
-    response.status_code = 201
-    response._content = '/xls/ee3ff9d8f5184fc4a8fdebc2547cc059'
-    return response
-
-
 class TestXFormViewSet(TestAbstractViewSet):
 
     def setUp(self):
@@ -481,71 +473,6 @@ class TestXFormViewSet(TestAbstractViewSet):
             'kpi_asset_uid': u'',
         }
         self.assertEqual(data, XFormSerializer(None).data)
-
-    def test_external_export(self):
-        self.publish_xls_form()
-
-        data_value = 'template 1|http://xls_server'
-        self._add_form_metadata(self.xform, 'external_export',
-                                data_value)
-        metadata = MetaData.objects.get(xform=self.xform,
-                                        data_type='external_export')
-        paths = [os.path.join(
-            self.main_directory, 'fixtures', 'transportation',
-            'instances_w_uuid', s, s + '.xml')
-            for s in ['transport_2011-07-25_19-05-36']]
-
-        self._make_submission(paths[0])
-        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
-
-        view = XFormViewSet.as_view({
-            'get': 'retrieve',
-        })
-        data = {'meta': metadata.pk}
-        formid = self.xform.pk
-        request = self.factory.get('/', data=data, **self.extra)
-
-        with HTTMock(external_mock):
-            # External export
-            response = view(request, pk=formid, format='xls')
-            self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-            expected_url = 'http://xls_server/xls/ee3ff9d8f5184fc4a8fdebc2547cc059'
-            self.assertEquals(response.url, expected_url)
-
-    def test_external_export_error(self):
-        self.publish_xls_form()
-
-        data_value = 'template 1|http://xls_server'
-        self._add_form_metadata(self.xform, 'external_export',
-                                data_value)
-
-        paths = [os.path.join(
-            self.main_directory, 'fixtures', 'transportation',
-            'instances_w_uuid', s, s + '.xml')
-            for s in ['transport_2011-07-25_19-05-36']]
-
-        self._make_submission(paths[0])
-        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
-
-        view = XFormViewSet.as_view({
-            'get': 'retrieve',
-        })
-        formid = self.xform.pk
-        token = 'http://xls_server/xls/' +\
-            '8e86d4bdfa7f435ab89485aeae4ea6f5'
-        data = {'token': token}
-        request = self.factory.get('/', data=data, **self.extra)
-
-        # External export
-        response = view(
-            request,
-            pk=formid,
-            format='xls')
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        data = json.loads(response.data)
-        self.assertTrue(data.get('error')
-                        .startswith("J2X client could not generate report."))
 
     def test_csv_import(self):
         self.publish_xls_form()

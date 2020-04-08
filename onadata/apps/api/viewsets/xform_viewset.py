@@ -34,7 +34,7 @@ from onadata.libs.utils import log
 from onadata.libs.utils.common_tags import SUBMISSION_TIME
 from onadata.libs.utils.csv_import import submit_csv
 from onadata.libs.utils.export_tools import generate_export, \
-    should_create_new_export, generate_external_export
+    should_create_new_export
 from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.string import str2bool
@@ -47,11 +47,7 @@ EXPORT_EXT = {
     'csv': Export.CSV_EXPORT,
     'csvzip': Export.CSV_ZIP_EXPORT,
     'savzip': Export.SAV_ZIP_EXPORT,
-    'uuid': Export.EXTERNAL_EXPORT,
 }
-
-# Supported external exports
-external_export_types = ['xls']
 
 
 def _get_export_type(export_type):
@@ -110,17 +106,10 @@ def _generate_new_export(request, xform, query, export_type):
     extension = _get_extension_from_export_type(export_type)
 
     try:
-        if export_type == Export.EXTERNAL_EXPORT:
-            export = generate_external_export(
-                export_type, xform.user.username,
-                xform.id_string, None, request.GET.get('token'), query,
-                request.GET.get('meta')
-            )
-        else:
-            export = generate_export(
-                export_type, extension, xform.user.username,
-                xform.id_string, None, query
-            )
+        export = generate_export(
+            export_type, extension, xform.user.username,
+            xform.id_string, None, query
+        )
         audit = {
             "xform": xform.id_string,
             "export_type": export_type
@@ -190,17 +179,6 @@ def value_for_type(form, field, value):
     return value
 
 
-def external_export_response(export):
-    if isinstance(export, Export) \
-            and export.internal_status == Export.SUCCESSFUL:
-        return HttpResponseRedirect(export.export_url)
-    else:
-        http_status = status.HTTP_400_BAD_REQUEST
-
-    return Response(json.dumps(export), http_status,
-                    content_type="application/json")
-
-
 def log_export(request, xform, export_type):
     # log download as well
     audit = {
@@ -220,10 +198,6 @@ def custom_response_handler(request, xform, query, export_type,
                             token=None, meta=None):
     export_type = _get_export_type(export_type)
 
-    if export_type in external_export_types and \
-            (token is not None) or (meta is not None):
-        export_type = Export.EXTERNAL_EXPORT
-
     # check if we need to re-generate,
     # we always re-generate if a filter is specified
     if should_regenerate_export(xform, export_type, request):
@@ -235,9 +209,6 @@ def custom_response_handler(request, xform, query, export_type,
             export = _generate_new_export(request, xform, query, export_type)
 
     log_export(request, xform, export_type)
-
-    if export_type == Export.EXTERNAL_EXPORT:
-        return external_export_response(export)
 
     # get extension from file_path, exporter could modify to
     # xlsx if it exceeds limits
@@ -788,8 +759,6 @@ data (instance/submission per row)
         xform = self.get_object()
         export_type = kwargs.get('format')
         query = request.GET.get('query', {})
-        token = request.GET.get('token')
-        meta = request.GET.get('meta')
 
         if export_type is None or export_type in ['json']:
             # perform default viewset retrieve, no data export

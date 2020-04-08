@@ -236,34 +236,3 @@ class MetaData(models.Model):
             return data_values
         else:
             return None
-
-    @staticmethod
-    def external_export(xform, data_value=None):
-        data_type = 'external_export'
-
-        if data_value:
-            result = MetaData(data_type=data_type, xform=xform,
-                              data_value=data_value)
-            result.save()
-            return result
-
-        return MetaData.objects.filter(xform=xform, data_type=data_type)\
-            .order_by('-id')
-
-    @property
-    def external_export_url(self):
-        parts = self.data_value.split('|')
-
-        return parts[1] if len(parts) > 1 else None
-
-    @property
-    def external_export_name(self):
-        parts = self.data_value.split('|')
-
-        return parts[0] if len(parts) > 1 else None
-
-    @property
-    def external_export_template(self):
-        parts = self.data_value.split('|')
-
-        return parts[1].replace('xls', 'templates') if len(parts) > 1 else None

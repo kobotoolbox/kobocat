@@ -308,11 +308,6 @@ def create_export(request, username, id_string, export_type):
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
 
-    if export_type == Export.EXTERNAL_EXPORT:
-        # check for template before trying to generate a report
-        if not MetaData.external_export(xform=xform):
-            return HttpResponseForbidden(_(u'No XLS Template set.'))
-
     query = request.POST.get("query")
     force_xlsx = request.POST.get('xls') != 'true'
 
@@ -329,13 +324,10 @@ def create_export(request, username, id_string, export_type):
 
     binary_select_multiples = getattr(settings, 'BINARY_SELECT_MULTIPLES',
                                       False)
-    # external export option
-    meta = request.POST.get("meta")
     options = {
         'group_delimiter': group_delimiter,
         'split_select_multiples': split_select_multiples,
         'binary_select_multiples': binary_select_multiples,
-        'meta': meta.replace(",", "") if meta else None
     }
 
     try:
@@ -402,33 +394,13 @@ def export_list(request, username, id_string, export_type):
     if not has_permission(xform, owner, request):
         return HttpResponseForbidden(_(u'Not shared.'))
 
-    if export_type == Export.EXTERNAL_EXPORT:
-        # check for template before trying to generate a report
-        if not MetaData.external_export(xform=xform):
-            return HttpResponseForbidden(_(u'No XLS Template set.'))
-    # Get meta and token
-    export_token = request.GET.get('token')
-    export_meta = request.GET.get('meta')
-    options = {
-        'meta': export_meta,
-        'token': export_token,
-    }
-
-    metadata = MetaData.objects.filter(xform=xform,
-                                       data_type="external_export")\
-        .values('id', 'data_value')
-
-    for m in metadata:
-        m['data_value'] = m.get('data_value').split('|')[0]
-
     data = {
         'username': owner.username,
         'xform': xform,
         'export_type': export_type,
         'export_type_name': Export.EXPORT_TYPE_DICT[export_type],
         'exports': Export.objects.filter(
-            xform=xform, export_type=export_type).order_by('-created_on'),
-        'metas': metadata
+            xform=xform, export_type=export_type).order_by('-created_on')
     }
 
     return render(request, 'export_list.html', data)
@@ -474,19 +446,16 @@ def export_progress(request, username, id_string, export_type):
                 try:
                     url = google_export_xls(
                         export.full_filepath, xform.title, token, blob=True)
-                except Exception, e:
+                except Exception as e:
                     status['error'] = True
                     status['message'] = e.message
                 else:
                     export.export_url = url
                     export.save()
                     status['url'] = url
-            if export.export_type == Export.EXTERNAL_EXPORT \
-                    and export.export_url is None:
-                status['url'] = url
+
         # mark as complete if it either failed or succeeded but NOT pending
-        if export.status == Export.SUCCESSFUL \
-                or export.status == Export.FAILED:
+        if export.status == Export.SUCCESSFUL or export.status == Export.FAILED:
             status['complete'] = True
         statuses.append(status)
 
@@ -504,8 +473,7 @@ def export_download(request, username, id_string, export_type, filename):
     # find the export entry in the db
     export = get_object_or_404(Export, xform=xform, filename=filename)
 
-    if (export_type == Export.GDOC_EXPORT or export_type == Export.EXTERNAL_EXPORT) \
-            and export.export_url is not None:
+    if export_type == Export.GDOC_EXPORT and export.export_url is not None:
         return HttpResponseRedirect(export.export_url)
 
     ext, mime_type = export_def_from_filename(export.filename)
