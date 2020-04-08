@@ -267,7 +267,7 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
             instance=instance)
 
     if not created:
-        pi.save(async=False)
+        pi.save(asynchronous=False)
 
     # Now that the slow tasks are complete and we are (hopefully!) close to the
     # end of the transaction, update the submission count if the `Instance` was
@@ -335,7 +335,7 @@ def create_instance(username, xml_file, media_files,
             raise DuplicateInstance()
         else:
             # Update Mongo via the related ParsedInstance
-            existing_instance.parsed_instance.save(async=False)
+            existing_instance.parsed_instance.save(asynchronous=False)
             return existing_instance
     else:
         instance = save_submission(xform, xml, media_files, new_uuid,
@@ -640,14 +640,14 @@ def update_mongo_for_xform(xform, only_update_missing=True):
     sys.stdout.write(
         "Total no of instances to update: %d\n" % len(instance_ids))
     instances = Instance.objects.only('id').in_bulk(
-        [id for id in instance_ids])
+        [id_ for id_ in instance_ids])
     total = len(instances)
     done = 0
-    for id, instance in instances.items():
+    for id_, instance in instances.items():
         (pi, created) = ParsedInstance.objects.get_or_create(instance=instance)
-        if not pi.save(async=False):
+        if not pi.save(asynchronous=False):
             print("\033[91m[ERROR] - Instance #{}/uuid:{} - Could not save the parsed instance\033[0m".format(
-                id, instance.uuid))
+                id_, instance.uuid))
         else:
             done += 1
 

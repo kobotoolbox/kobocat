@@ -166,7 +166,7 @@ def add_validation_status_to_instance(request, instance):
         if validation_status:
             instance.validation_status = validation_status
             instance.save()
-            success = instance.parsed_instance.update_mongo(async=False)
+            success = instance.parsed_instance.update_mongo(asynchronous=False)
 
     return success
 
@@ -194,7 +194,7 @@ def get_validation_status(validation_status_uid, asset, username):
 def remove_validation_status_from_instance(instance):
     instance.validation_status = {}
     instance.save()
-    return instance.parsed_instance.update_mongo(async=False)
+    return instance.parsed_instance.update_mongo(asynchronous=False)
 
 
 def get_media_file_response(metadata):

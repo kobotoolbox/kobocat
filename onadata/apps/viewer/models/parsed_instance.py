@@ -268,14 +268,14 @@ class ParsedInstance(models.Model):
 
         return MongoHelper.to_safe_dict(d)
 
-    def update_mongo(self, async=True):
+    def update_mongo(self, asynchronous=True):
         d = self.to_dict_for_mongo()
         if d.get("_xform_id_string") is None:
             # if _xform_id_string, Instance could not be parsed.
             # so, we don't update mongo.
             return False
         else:
-            if async:
+            if asynchronous:
                 # TODO update self.instance after async save is made
                 update_mongo_instance.apply_async((), {"record": d})
             else:
@@ -344,7 +344,7 @@ class ParsedInstance(models.Model):
             self.lat = self.instance.point.y
             self.lng = self.instance.point.x
 
-    def save(self, async=False, *args, **kwargs):
+    def save(self, asynchronous=False, *args, **kwargs):
         # start/end_time obsolete: originally used to approximate for
         # instanceID, before instanceIDs were implemented
         created = self.pk is None
@@ -356,7 +356,7 @@ class ParsedInstance(models.Model):
         # insert into Mongo.
         # Signal has been removed because of a race condition.
         # Rest Services were called before data was saved in DB.
-        success = self.update_mongo(async)
+        success = self.update_mongo(asynchronous)
         if success and created:
             call_service(self)
         return success

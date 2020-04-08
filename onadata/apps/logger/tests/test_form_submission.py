@@ -379,7 +379,7 @@ class TestFormSubmission(TestBase):
         self.assertEqual(self.response.status_code, 201)
         # query mongo for the _geopoint field
         query_args['count'] = False
-        records = ParsedInstance.query_mongo(**query_args)
+        records = len(ParsedInstance.query_mongo(**query_args))
         self.assertEqual(len(records), 1)
         # submit the edited instance
         xml_submission_file_path = os.path.join(
@@ -389,7 +389,7 @@ class TestFormSubmission(TestBase):
         )
         self._make_submission(xml_submission_file_path)
         self.assertEqual(self.response.status_code, 201)
-        records = ParsedInstance.query_mongo(**query_args)
+        records = len(ParsedInstance.query_mongo(**query_args))
         self.assertEqual(len(records), 1)
         cached_geopoint = records[0][GEOLOCATION]
         # the cached geopoint should equal the gps field
