@@ -201,6 +201,8 @@ class TestBriefcaseAPI(TestBase):
             text = f.read()
             text = text.replace(u'{{submissionDate}}',
                                 instance.date_created.isoformat())
+            text = text.replace(u'{{xform_uuid}}',
+                                self.xform.uuid)
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
 

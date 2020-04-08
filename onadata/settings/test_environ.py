@@ -78,8 +78,8 @@ KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
 KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-                                  'onadata.koboform.context_processors.koboform_integration',
-                              ) + TEMPLATE_CONTEXT_PROCESSORS
+    'onadata.koboform.context_processors.koboform_integration',
+) + TEMPLATE_CONTEXT_PROCESSORS
 
 # MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
 
@@ -113,9 +113,10 @@ MONGO_CONNECTION = MockMongoClient(
     MONGO_CONNECTION_URL, j=True, tz_aware=True)
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
+# To-Do Remove lines below, not needed anymore with MockMongo
 # Clear out the test database
-if TESTING_MODE:
-    MONGO_DB.instances.drop()
+#if TESTING_MODE:
+#    MONGO_DB.instances.drop()
 
 # BEGIN external service integration codes
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')

@@ -85,7 +85,7 @@ class TestFormAPIDelete(TestBase):
         query = '{"_id": %s}' % instance.id
         self.mongo_args.update({"query": query})
         # check that query_mongo will not return the deleted record
-        after = ParsedInstance.query_mongo(**self.mongo_args)
+        after = list(ParsedInstance.query_mongo(**self.mongo_args))
         self.assertEqual(len(after), count - 1)
 
     def test_delete_updates_mongo(self):

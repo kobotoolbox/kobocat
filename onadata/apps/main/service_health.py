@@ -6,9 +6,12 @@ from django.http import HttpResponse
 
 from onadata.apps.logger.models import Instance
 
+
 def service_health(request):
-    ''' Return a HTTP 200 if some very basic runtime tests of the application
-    pass. Otherwise, return HTTP 500 '''
+    """
+    Return a HTTP 200 if some very basic runtime tests of the application
+    pass. Otherwise, return HTTP 500
+    """
     any_failure = False
 
     t0 = time.time()

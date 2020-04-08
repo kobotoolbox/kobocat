@@ -8,7 +8,7 @@ from pandas.core.frame import DataFrame
 # an immediate fix to an error with the installation of pandas v0.15
 try:
     from pandas.io.parsers import ExcelWriter
-except ImportError, e:
+except ImportError:
     from pandas import ExcelWriter
 
 from pyxform.survey_element import SurveyElement
@@ -230,7 +230,7 @@ class AbstractDataFrameBuilder(object):
                 'query': query,
                 'fields': fields,
                 # TODO: we might want to add this in for the user
-                # to sepcify a sort order
+                # to specify a sort order
                 'sort': '{}',
                 'start': start,
                 'limit': limit,
