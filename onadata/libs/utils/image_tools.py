@@ -93,9 +93,10 @@ def resize(filename):
 
 
 def image_url(attachment, suffix):
-    '''Return url of an image given size(@param suffix)
+    """
+    Return url of an image given size(@param suffix)
     e.g large, medium, small, or generate required thumbnail
-    '''
+    """
     url = attachment.media_file.url
     if suffix == 'original':
         return url

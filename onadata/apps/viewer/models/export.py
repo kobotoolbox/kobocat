@@ -33,7 +33,7 @@ class Export(models.Model):
     SAV_ZIP_EXPORT = 'sav_zip'
     SAV_EXPORT = 'sav'
     EXTERNAL_EXPORT = 'external'
-    ANALYSER_EXPORT= 'analyser'
+    ANALYSER_EXPORT = 'analyser'
 
     EXPORT_MIMES = {
         'xls': 'vnd.ms-excel',

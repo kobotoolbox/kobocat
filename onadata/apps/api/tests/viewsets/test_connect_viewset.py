@@ -103,7 +103,6 @@ class TestConnectViewSet(TestAbstractViewSet):
     @patch('onadata.libs.serializers.password_reset_serializer.send_mail')
     def test_request_reset_password(self, mock_send_mail):
 
-
         data = {'email': self.user.email,
                 'reset_url': u'http://testdomain.com/reset_form'}
         request = self.factory.post('/', data=data)
