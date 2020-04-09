@@ -9,8 +9,11 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.import_tools import django_file
 from onadata.apps.logger.import_tools import create_instance
-from onadata.libs.utils.backup_tools import _date_created_from_filename,\
-    create_zip_backup, restore_backup_from_zip
+from onadata.libs.utils.backup_tools import (
+    _date_created_from_filename,
+    create_zip_backup,
+    restore_backup_from_zip
+)
 
 
 class TestBackupTools(TestBase):

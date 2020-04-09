@@ -752,10 +752,6 @@ data (instance/submission per row)
         return Response(data, http_status)
 
     def retrieve(self, request, *args, **kwargs):
-        # TODO - Delete not used anymore
-        #lookup_field = self.lookup_field
-        #lookup = self.kwargs.get(lookup_field)
-
         xform = self.get_object()
         export_type = kwargs.get('format')
         query = request.GET.get('query', {})
@@ -767,9 +763,7 @@ data (instance/submission per row)
         return custom_response_handler(request,
                                        xform,
                                        query,
-                                       export_type,
-                                       token,
-                                       meta)
+                                       export_type)
 
     @detail_route(methods=['POST'])
     def csv_import(self, request, *args, **kwargs):

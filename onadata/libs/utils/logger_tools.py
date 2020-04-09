@@ -98,7 +98,6 @@ def _get_instance(xml, new_uuid, submitted_by, status, xform,
         instance.save()
     else:
         # new submission
-
         # Avoid `Instance.objects.create()` so that we can set a Python-only
         # attribute, `defer_counting`, before saving
         instance = Instance()

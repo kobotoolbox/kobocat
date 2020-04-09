@@ -10,7 +10,7 @@ from django.contrib.auth.models import (
     Permission,
     User
 )
-from django.test import TransactionTestCase, TestCase
+from django.test import TestCase
 from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
 from rest_framework.reverse import reverse
