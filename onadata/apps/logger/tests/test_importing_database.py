@@ -1,6 +1,7 @@
 import os
-import glob
+import shutil
 
+from django.core.files.storage import get_storage_class
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
@@ -14,12 +15,6 @@ CUR_DIR = os.path.dirname(CUR_PATH)
 DB_FIXTURES_PATH = os.path.join(CUR_DIR, 'data_from_sdcard')
 
 
-def images_count(username="bob"):
-    images = glob.glob(
-        os.path.join(settings.MEDIA_ROOT, username, 'attachments', '*'))
-    return len(images)
-
-
 class TestImportingDatabase(TestBase):
 
     def setUp(self):
@@ -29,15 +24,38 @@ class TestImportingDatabase(TestBase):
                 settings.ONADATA_DIR, "apps", "logger", "fixtures",
                 "test_forms", "tutorial.xls"))
 
+    def _images_count(self, instance):
+        placeholder_path = '{username}/attachments/{xform_uuid}/{instance_uuid}'
+        attachments_path = placeholder_path.format(
+            username=self.user.username,
+            xform_uuid=instance.xform.uuid,
+            instance_uuid=instance.uuid
+        )
+        storage = get_storage_class()()
+        _, images = storage.listdir(attachments_path)
+        return len(images)
+
     def tearDown(self):
         # delete everything we imported
         Instance.objects.all().delete()  # ?
-        if settings.TESTING_MODE:
-            images = glob.glob(
-                os.path.join(settings.MEDIA_ROOT, self.user.username,
-                             'attachments', '*'))
-            for image in images:
-                os.remove(image)
+
+        storage = get_storage_class()()
+        root_attachments_path = '{username}/attachments/'.format(
+            username=self.user.username
+        )
+
+        def _recursive_delete(path):
+            directories, files = storage.listdir(path)
+            for file_ in files:
+                storage.delete(os.path.join(path, file_))
+            for directory in directories:
+                _recursive_delete(os.path.join(path, directory))
+
+        if storage.__class__.__name__ == 'FileSystemStorage':
+            storage.location
+            shutil.rmtree(os.path.join(storage.location, root_attachments_path))
+        else:
+            _recursive_delete(root_attachments_path)
 
     def test_importing_b1_and_b2(self):
         """
@@ -52,22 +70,26 @@ class TestImportingDatabase(TestBase):
         1 photo survey (duplicate, completed)
         1 simple survey (marked as complete)
         """
+        queryset = Instance.objects
         # import from sd card
-        initial_instance_count = Instance.objects.count()
-        initial_image_count = images_count()
+        initial_instances_count = queryset.count()
+        initial_images_count = 0
+        for instance in queryset.all():
+            initial_images_count += self._images_count(instance)
 
         import_instances_from_zip(os.path.join(
             DB_FIXTURES_PATH, "bulk_submission.zip"), self.user)
 
         instance_count = Instance.objects.count()
-        image_count = images_count()
+        images_count = 0
+        for instance in queryset.all():
+            images_count += self._images_count(instance)
         # Images are not duplicated
-        # TODO: Figure out how to get this test passing.
-        self.assertEqual(image_count, initial_image_count + 2)
+        self.assertEqual(images_count, initial_images_count + 2)
 
         # Instance count should have incremented
         # by 1 (or 2) based on the b1 & b2 data sets
-        self.assertEqual(instance_count, initial_instance_count + 2)
+        self.assertEqual(instance_count, initial_instances_count + 2)
 
     def test_badzipfile_import(self):
         total, success, errors = import_instances_from_zip(

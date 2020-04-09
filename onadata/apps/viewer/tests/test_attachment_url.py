@@ -24,7 +24,7 @@ class TestAttachmentUrl(TestBase):
             Attachment.objects.count(), self.attachment_count + 1)
         response = self.client.get(
             self.url, {"media_file": self.attachment_media_file})
-        self.assertEqual(response.status_code, 302)  # redirects to amazon
+        self.assertEqual(response.status_code, 200)  # nginx is used as proxy
 
     def test_attachment_not_found(self):
         response = self.client.get(
