@@ -1,4 +1,6 @@
 # coding: utf-8
+from __future__ import absolute_import
+
 import base64
 import os
 import re
@@ -227,7 +229,8 @@ class TestBase(TestCase):
 
     def _make_submissions(self, username=None, add_uuid=False,
                           should_store=True):
-        """Make test fixture submissions to current xform.
+        """
+        Make test fixture submissions to current xform.
 
         :param username: submit under this username, default None.
         :param add_uuid: add UUID to submission, default False.

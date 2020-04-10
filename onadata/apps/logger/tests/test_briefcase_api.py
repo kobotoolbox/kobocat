@@ -2,7 +2,6 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
-import shutil
 import codecs
 
 from django.core.urlresolvers import reverse
@@ -18,6 +17,7 @@ from onadata.apps.logger.views import form_upload
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.views import submission
+from onadata.libs.utils.storage import delete_user_storage
 
 NUM_INSTANCES = 4
 storage = get_storage_class()()
@@ -313,5 +313,4 @@ class TestBriefcaseAPI(TestBase):
     def tearDown(self):
         # remove media files
         if self.user:
-            if storage.exists(self.user.username):
-                shutil.rmtree(storage.path(self.user.username))
+            delete_user_storage(self.user.username)

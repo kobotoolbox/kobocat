@@ -54,7 +54,6 @@ if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
     LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
 MEDIA_ROOT = '/tmp/test_media/'
-subprocess.call(["rm", "-r", MEDIA_ROOT])
 MONGO_DATABASE['NAME'] = "formhub_test"
 CELERY_TASK_ALWAYS_EAGER = True
 BROKER_BACKEND = 'memory'
@@ -113,10 +112,6 @@ MONGO_CONNECTION = MockMongoClient(
     MONGO_CONNECTION_URL, j=True, tz_aware=True)
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
-# To-Do Remove lines below, not needed anymore with MockMongo
-# Clear out the test database
-#if TESTING_MODE:
-#    MONGO_DB.instances.drop()
 
 # BEGIN external service integration codes
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
@@ -161,7 +156,7 @@ if 'RAVEN_DSN' in os.environ:
         except raven.exceptions.InvalidGitRepository:
             pass
 
-POSTGIS_VERSION = (2, 1, 2)
+POSTGIS_VERSION = (2, 5, 0)
 
 # DISABLE Django DB logging
 LOGGING['loggers']['django.db.backends'] = {

@@ -19,6 +19,7 @@ from onadata.apps.main.views import profile, download_media_data
 from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import formList, download_xform, xformsManifest
 from onadata.libs.utils.briefcase_client import BriefcaseClient
+from onadata.libs.utils.storage import delete_user_storage
 
 storage = get_storage_class()()
 
@@ -120,7 +121,7 @@ class TestBriefcaseClient(TestBase):
 
         if is_local:
             does_root_folder_exist = storage.exists(forms_folder_path)
-            does_media_folder_exist = storage.exist(form_media_path)
+            does_media_folder_exist = storage.exists(form_media_path)
         else:
             # `django-storage.exists()` does not work with folders on AWS
             sub_folders, files = storage.listdir(forms_folder_path)
@@ -142,6 +143,7 @@ class TestBriefcaseClient(TestBase):
         if is_local:
             does_instances_folder_exist = storage.exists(instance_folder_path)
         else:
+            sub_folders, _ = storage.listdir(forms_folder_path)
             does_instances_folder_exist = 'instances' in sub_folders
 
         self.assertTrue(does_instances_folder_exist)
@@ -178,5 +180,4 @@ class TestBriefcaseClient(TestBase):
     def tearDown(self):
         # remove media files
         for username in ['bob', 'deno']:
-            if storage.exists(username):
-                shutil.rmtree(storage.path(username))
+            delete_user_storage(username)

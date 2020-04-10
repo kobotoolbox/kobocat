@@ -1,5 +1,7 @@
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
+
 import os
-import shutil
 
 from django.core.files.storage import get_storage_class
 from django.core.urlresolvers import reverse
@@ -9,6 +11,7 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.views import bulksubmission
+from onadata.libs.utils.storage import delete_user_storage
 
 CUR_PATH = os.path.abspath(__file__)
 CUR_DIR = os.path.dirname(CUR_PATH)
@@ -37,25 +40,9 @@ class TestImportingDatabase(TestBase):
 
     def tearDown(self):
         # delete everything we imported
-        Instance.objects.all().delete()  # ?
-
-        storage = get_storage_class()()
-        root_attachments_path = '{username}/attachments/'.format(
-            username=self.user.username
-        )
-
-        def _recursive_delete(path):
-            directories, files = storage.listdir(path)
-            for file_ in files:
-                storage.delete(os.path.join(path, file_))
-            for directory in directories:
-                _recursive_delete(os.path.join(path, directory))
-
-        if storage.__class__.__name__ == 'FileSystemStorage':
-            storage.location
-            shutil.rmtree(os.path.join(storage.location, root_attachments_path))
-        else:
-            _recursive_delete(root_attachments_path)
+        Instance.objects.all().delete()
+        if self.user:
+            delete_user_storage(self.user.username)
 
     def test_importing_b1_and_b2(self):
         """
