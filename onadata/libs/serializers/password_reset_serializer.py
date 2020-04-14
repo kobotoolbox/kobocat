@@ -47,7 +47,7 @@ def get_user_from_uid(uid):
         uid = urlsafe_base64_decode(uid)
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        raise ValidationError(_(u"Invalid uid %s") % uid)
+        raise ValidationError(_("Invalid uid %s") % uid)
 
     return user
 
@@ -101,7 +101,7 @@ class PasswordResetSerializer(serializers.Serializer):
         users = User.objects.filter(email__iexact=value)
 
         if users.count() == 0:
-            raise ValidationError(_(u"User '%(value)s' does not exist.")
+            raise ValidationError(_("User '%(value)s' does not exist.")
                                   % {"value": value})
 
         return value

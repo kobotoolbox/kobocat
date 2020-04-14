@@ -9,13 +9,13 @@ from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.logger.models import XForm
 
 METADATA_TYPES = (
-    ('data_license', _(u"Data License")),
-    ('form_license', _(u"Form License")),
-    ('mapbox_layer', _(u"Mapbox Layer")),
-    ('media', _(u"Media")),
-    ('public_link', _(u"Public Link")),
-    ('source', _(u"Source")),
-    ('supporting_doc', _(u"Supporting Document")),
+    ('data_license', _("Data License")),
+    ('form_license', _("Form License")),
+    ('mapbox_layer', _("Mapbox Layer")),
+    ('media', _("Media")),
+    ('public_link', _("Public Link")),
+    ('source', _("Source")),
+    ('supporting_doc', _("Supporting Document")),
 )
 
 
@@ -41,9 +41,9 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_file = attrs.get('data_file')
 
         if media == 'media' and data_file is None:
-            URLValidator(message=_(u"Invalid url %s." % value))(value)
+            URLValidator(message=_("Invalid url %s." % value))(value)
         if value is None:
-            msg = {'data_value': u"This field is required."}
+            msg = {'data_value': "This field is required."}
             raise serializers.ValidationError(msg)
 
         return super(MetaDataSerializer, self).validate(attrs)

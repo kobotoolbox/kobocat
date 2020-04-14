@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.views import show, edit, download_metadata,\
     download_media_data, delete_metadata
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormMetadata(TestBase):

@@ -31,7 +31,7 @@ class DataListSerializer(serializers.Serializer):
         query_params = (request and request.query_params) or {}
         query = {
             ParsedInstance.USERFORM_ID:
-            u'%s_%s' % (obj.user.username, obj.id_string)
+            '%s_%s' % (obj.user.username, obj.id_string)
         }
         limit = query_params.get('limit', False)
         start = query_params.get('start', False)
@@ -78,8 +78,8 @@ class DataInstanceSerializer(serializers.Serializer):
         query_params = (request and request.query_params) or {}
         query = {
             ParsedInstance.USERFORM_ID:
-            u'%s_%s' % (obj.xform.user.username, obj.xform.id_string),
-            u'_id': obj.pk
+            '%s_%s' % (obj.xform.user.username, obj.xform.id_string),
+            '_id': obj.pk
         }
         query_kwargs = {
             'query': json.dumps(query),
@@ -102,7 +102,7 @@ class SubmissionSerializer(serializers.Serializer):
             'message': _("Successful submission."),
             'formid': obj.xform.id_string,
             'encrypted': obj.xform.encrypted,
-            'instanceID': u'uuid:%s' % obj.uuid,
+            'instanceID': 'uuid:%s' % obj.uuid,
             'submissionDate': obj.date_created.isoformat(),
             'markedAsCompleteDate': obj.date_modified.isoformat()
         }

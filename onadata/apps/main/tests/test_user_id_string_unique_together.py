@@ -2,7 +2,7 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 
-from test_base import TestBase
+from .test_base import TestBase
 from onadata.apps.logger.models import XForm
 
 

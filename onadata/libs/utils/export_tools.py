@@ -55,11 +55,11 @@ from .analyser_export import generate_analyser
 xform_instances = settings.MONGO_DB.instances
 
 QUESTION_TYPES_TO_EXCLUDE = [
-    u'note',
+    'note',
 ]
 # the bind type of select multiples that we use to compare
-MULTIPLE_SELECT_BIND_TYPE = u"select"
-GEOPOINT_BIND_TYPE = u"geopoint"
+MULTIPLE_SELECT_BIND_TYPE = "select"
+GEOPOINT_BIND_TYPE = "geopoint"
 
 
 def encode_if_str(row, key, encode_dates=False):
@@ -95,14 +95,14 @@ class DictOrganizer(object):
             obs[table_name] = []
         this_index = len(obs[table_name])
         obs[table_name].append({
-            u"_parent_table_name": parent_table_name,
-            u"_parent_index": parent_index,
+            "_parent_table_name": parent_table_name,
+            "_parent_index": parent_index,
         })
         for k, v in d.items():
             if type(v) != dict and type(v) != list:
                 assert k not in obs[table_name][-1]
                 obs[table_name][-1][k] = v
-        obs[table_name][-1][u"_index"] = this_index
+        obs[table_name][-1]["_index"] = this_index
 
         for k, v in d.items():
             if type(v) == dict:
@@ -134,7 +134,7 @@ class DictOrganizer(object):
             "d": d[root_name],
             "obs": result,
             "table_name": root_name,
-            "parent_table_name": u"",
+            "parent_table_name": "",
             "parent_index": -1,
         }
         self._build_obs_from_dict(**kwargs)
@@ -251,7 +251,7 @@ class ExportBuilder(object):
                         build_sections(
                             current_section, child, sections, select_multiples,
                             gps_fields, encoded_fields, field_delimiter)
-                elif isinstance(child, Question) and child.bind.get(u"type")\
+                elif isinstance(child, Question) and child.bind.get("type")\
                         not in QUESTION_TYPES_TO_EXCLUDE:
                     # add to survey_sections
                     if isinstance(child, Question):
@@ -261,7 +261,7 @@ class ExportBuilder(object):
                                 child.get_abbreviated_xpath(),
                                 field_delimiter),
                             'xpath': child_xpath,
-                            'type': child.bind.get(u"type")
+                            'type': child.bind.get("type")
                         })
 
                         if MongoHelper.is_attribute_invalid(child_xpath):
@@ -271,7 +271,7 @@ class ExportBuilder(object):
                                 {child_xpath: MongoHelper.encode(child_xpath)})
 
                     # if its a select multiple, make columns out of its choices
-                    if child.bind.get(u"type") == MULTIPLE_SELECT_BIND_TYPE\
+                    if child.bind.get("type") == MULTIPLE_SELECT_BIND_TYPE\
                             and self.SPLIT_SELECT_MULTIPLES:
                         for c in child.children:
                             _xpath = c.get_abbreviated_xpath()
@@ -292,7 +292,7 @@ class ExportBuilder(object):
                              for c in child.children])
 
                     # split gps fields within this section
-                    if child.bind.get(u"type") == GEOPOINT_BIND_TYPE:
+                    if child.bind.get("type") == GEOPOINT_BIND_TYPE:
                         # add columns for geopoint components
                         xpaths = DataDictionary.get_additional_geopoint_xpaths(
                             child.get_abbreviated_xpath())
@@ -342,7 +342,7 @@ class ExportBuilder(object):
             selections = []
             if data:
                 selections = [
-                    u'{0}/{1}'.format(
+                    '{0}/{1}'.format(
                         xpath, selection) for selection in data.split()]
             if not cls.BINARY_SELECT_MULTIPLES:
                 row.update(dict(
@@ -796,7 +796,7 @@ def query_mongo(username, id_string, query=None, hide_deleted=True):
     query = json.loads(query, object_hook=json_util.object_hook)\
         if query else {}
     query = MongoHelper.to_safe_dict(query)
-    query[USERFORM_ID] = u'{0}_{1}'.format(username, id_string)
+    query[USERFORM_ID] = '{0}_{1}'.format(username, id_string)
     if hide_deleted:
         # display only active elements
         # join existing query with deleted_at_query on an $and

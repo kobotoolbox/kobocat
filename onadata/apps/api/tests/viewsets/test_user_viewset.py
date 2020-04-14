@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from collections import OrderedDict
 
 from rest_framework import status
@@ -14,10 +15,10 @@ class TestUserViewSet(TestAbstractViewSet):
         super(self.__class__, self).setUp()
         self.data = OrderedDict([
             ('id', self.user.pk),
-            ('username', u'bob'),
-            ('first_name', u'Bob'),
-            ('last_name', u''),
-            ('url', u'http://testserver/api/v1/users/bob')
+            ('username', 'bob'),
+            ('first_name', 'Bob'),
+            ('last_name', ''),
+            ('url', 'http://testserver/api/v1/users/bob')
         ])
 
     def test_user_get(self):

@@ -35,7 +35,7 @@ class TestXForm(TestBase):
         self.assertTrue(isinstance(self.xform.xml, unicode))
 
         # change title
-        self.xform.title = u'Random Title'
+        self.xform.title = 'Random Title'
 
         self.assertNotIn(self.xform.title, self.xform.xml)
 

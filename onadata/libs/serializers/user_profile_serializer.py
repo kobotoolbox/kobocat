@@ -31,10 +31,10 @@ def _get_first_last_names(name, limit=30):
 
     name_split = name.split()
     first_name = name_split[0]
-    last_name = u''
+    last_name = ''
 
     if len(name_split) > 1:
-        last_name = u' '.join(name_split[1:])
+        last_name = ' '.join(name_split[1:])
 
     return first_name, last_name
 
@@ -119,13 +119,13 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
         created_by = self.context['request'].user
         created_by = None if created_by.is_anonymous() else created_by
         profile = UserProfile.objects.create(
-            user=new_user, name=validated_data.get('name', u''),
+            user=new_user, name=validated_data.get('name', ''),
             created_by=created_by,
-            city=validated_data.get('city', u''),
-            country=validated_data.get('country', u''),
-            organization=validated_data.get('organization', u''),
-            home_page=validated_data.get('home_page', u''),
-            twitter=validated_data.get('twitter', u''))
+            city=validated_data.get('city', ''),
+            country=validated_data.get('country', ''),
+            organization=validated_data.get('organization', ''),
+            home_page=validated_data.get('home_page', ''),
+            twitter=validated_data.get('twitter', ''))
 
         return profile
 

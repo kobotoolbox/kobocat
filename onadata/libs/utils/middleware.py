@@ -52,8 +52,8 @@ class SqlLogging:
         from sys import stdout
         if stdout.isatty():
             for query in connection.queries:
-                print "\033[1;31m[%s]\033[0m \033[1m%s\033[0m" % (
-                    query['time'], " ".join(query['sql'].split()))
+                print("\033[1;31m[%s]\033[0m \033[1m%s\033[0m" % (
+                    query['time'], " ".join(query['sql'].split())))
 
         return response
 

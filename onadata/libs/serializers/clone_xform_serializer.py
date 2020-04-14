@@ -28,7 +28,7 @@ class CloneXFormSerializer(serializers.Serializer):
         try:
             User.objects.get(username=value)
         except User.DoesNotExist:
-            raise ValidationError(_(u"User '%(value)s' does not exist."
+            raise ValidationError(_("User '%(value)s' does not exist."
                                     % {"value": value}))
 
         return value

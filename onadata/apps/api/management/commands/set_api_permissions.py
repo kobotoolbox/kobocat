@@ -11,7 +11,7 @@ from onadata.libs.utils.user_auth import set_api_permissions_for_user
 
 
 class Command(BaseCommand):
-    help = _(u"Set object permissions for all objects.")
+    help = _("Set object permissions for all objects.")
 
     # TODO: unprojectify
     '''

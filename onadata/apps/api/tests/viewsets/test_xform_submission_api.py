@@ -77,7 +77,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.assertEqual(response.status_code, 401)
 
                 # rewind the file and redo the request since they were
-                # consummed
+                # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
                 auth = DigestAuth('bob', 'bobbob')
@@ -116,7 +116,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.assertEqual(response.status_code, 401)
 
                 # rewind the file and redo the request since they were
-                # consummed
+                # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
                 auth = DigestAuth('alice', 'bobbob')
@@ -136,7 +136,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             response = self.view(request)
             self.assertEqual(response.status_code, 401)
 
-            # redo the request since it were consummed
+            # redo the request since it were consumed
             request = self.factory.post('/submission', data, format='json')
             auth = DigestAuth('bob', 'bobbob')
             request.META.update(auth(request.META, response))
@@ -231,7 +231,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.assertEqual(response.status_code, 401)
 
                 # rewind the file and redo the request since they were
-                # consummed
+                # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
                 auth = DigestAuth('bob', 'bobbob')
@@ -300,7 +300,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.assertEqual(count, Attachment.objects.count())
 
                 # rewind the file and redo the request since they were
-                # consummed
+                # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
                 auth = DigestAuth('alice', 'bobbob')
@@ -356,7 +356,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         response = self.view(request)
         self.assertEqual(response.status_code, 401)
 
-        # redo the request since it's been consummed
+        # redo the request since it's been consumed
         request = self.factory.post('/submission', data, format='json')
         auth = DigestAuth('bob', 'bobbob')
         request.META.update(auth(request.META, response))

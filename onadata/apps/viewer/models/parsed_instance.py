@@ -70,8 +70,8 @@ def update_mongo_instance(record):
 
 
 class ParsedInstance(models.Model):
-    USERFORM_ID = u'_userform_id'
-    STATUS = u'_status'
+    USERFORM_ID = '_userform_id'
+    STATUS = '_status'
     DEFAULT_LIMIT = 30000
     DEFAULT_BATCHSIZE = 1000
 
@@ -87,7 +87,7 @@ class ParsedInstance(models.Model):
 
     @classmethod
     def get_base_query(cls, username, id_string):
-        userform_id = u'{}_{}'.format(username, id_string)
+        userform_id = '{}_{}'.format(username, id_string)
         return {
             cls.USERFORM_ID: userform_id
         }
@@ -123,9 +123,9 @@ class ParsedInstance(models.Model):
             query = json.loads(
                 query, object_hook=json_util.object_hook) if query else {}
         if not (isinstance(pipeline, dict) or isinstance(pipeline, list)):
-            raise Exception(_(u"Invalid pipeline! %s" % pipeline))
+            raise Exception(_("Invalid pipeline! %s" % pipeline))
         if not isinstance(query, dict):
-            raise Exception(_(u"Invalid query! %s" % query))
+            raise Exception(_("Invalid query! %s" % query))
         query = MongoHelper.to_safe_dict(query)
         if hide_deleted:
             # display only active elements
@@ -248,7 +248,7 @@ class ParsedInstance(models.Model):
         data = {
             UUID: self.instance.uuid,
             ID: self.instance.id,
-            self.USERFORM_ID: u'%s_%s' % (
+            self.USERFORM_ID: '%s_%s' % (
                 self.instance.xform.user.username,
                 self.instance.xform.id_string),
             ATTACHMENTS: _get_attachments_from_instance(self.instance),
@@ -325,7 +325,7 @@ class ParsedInstance(models.Model):
         """
         datadict = json.loads(self.instance.xform.json)
         for item in datadict['children']:
-            if type(item) == dict and item.get(u'type') == type_value:
+            if type(item) == dict and item.get('type') == type_value:
                 return item['name']
 
     def get_data_dictionary(self):

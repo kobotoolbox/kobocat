@@ -14,7 +14,7 @@ from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.views import kml_export, export_download
 from onadata.libs.utils.export_tools import generate_export
 from onadata.libs.utils.user_auth import http_auth_string
-from test_base import TestBase
+from .test_base import TestBase
 
 class TestFormExports(TestBase):
 

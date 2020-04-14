@@ -1,16 +1,15 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-import os
-import re
-import mimetypes
 
+import mimetypes
+import os
 from hashlib import md5
 
 from django.conf import settings
 from django.db import models
 from django.utils.http import urlencode
 
-from instance import Instance
+from .instance import Instance
 
 
 def generate_attachment_filename(instance, filename):
@@ -28,7 +27,7 @@ def upload_to(attachment, filename):
 
 
 def hash_attachment_contents(contents):
-    return u'%s' % md5(contents).hexdigest()
+    return '%s' % md5(contents).hexdigest()
 
 
 class Attachment(models.Model):
@@ -61,7 +60,7 @@ class Attachment(models.Model):
             media_file_hash = hash_attachment_contents(self.media_file.read())
             self.media_file.seek(media_file_position)
             return media_file_hash
-        return u''
+        return ''
 
     @property
     def filename(self):
@@ -76,7 +75,7 @@ class Attachment(models.Model):
         if suffix != "original" and suffix not in settings.THUMB_CONF.keys():
             raise Exception("Invalid image thumbnail")
 
-        return u"{kobocat_url}{media_url}{suffix}?{media_file}".format(
+        return "{kobocat_url}{media_url}{suffix}?{media_file}".format(
             kobocat_url=settings.KOBOCAT_URL,
             media_url=settings.MEDIA_URL,
             suffix=suffix,

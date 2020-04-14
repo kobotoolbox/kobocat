@@ -1,7 +1,8 @@
+#!/usr/bin/env python
+# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-#!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 coding=utf-8
+
 import os
 
 from django.contrib.auth.models import User

@@ -101,8 +101,8 @@ class TestBriefcaseAPI(TestBase):
                     '{{resumptionCursor}}', '%s' % last_index)
             self.assertEqual(response.content, expected_submission_list)
 
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': uuid}
         params = {'formId': formId}
@@ -180,10 +180,10 @@ class TestBriefcaseAPI(TestBase):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         instance = Instance.objects.get(uuid=instanceId)
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
@@ -199,9 +199,9 @@ class TestBriefcaseAPI(TestBase):
             'view', 'downloadSubmission.xml')
         with codecs.open(download_submission_path, encoding='utf-8') as f:
             text = f.read()
-            text = text.replace(u'{{submissionDate}}',
+            text = text.replace('{{submissionDate}}',
                                 instance.date_created.isoformat())
-            text = text.replace(u'{{xform_uuid}}',
+            text = text.replace('{{xform_uuid}}',
                                 self.xform.uuid)
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
@@ -210,9 +210,9 @@ class TestBriefcaseAPI(TestBase):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
@@ -286,13 +286,13 @@ class TestBriefcaseAPI(TestBase):
             response = form_upload(request, username=self.user.username)
             self.assertContains(
                 response,
-                u'Form with this id or SMS-keyword already exists',
+                'Form with this id or SMS-keyword already exists',
                 status_code=400)
 
     def test_submission_with_instance_id_on_root_node(self):
         self._publish_xml_form()
-        message = u"Successful submission."
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        message = "Successful submission."
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         self.assertRaises(
             Instance.DoesNotExist, Instance.objects.get, uuid=instanceId)
         submission_path = os.path.join(

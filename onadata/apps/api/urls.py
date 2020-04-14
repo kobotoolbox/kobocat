@@ -326,9 +326,9 @@ Example using curl:
             lookup_list = self.get_lookup_regexes(viewset)
             if lookup_list:
                 # lookup = lookups[0]
-                lookup_list = [u'/'.join(k) for k in lookup_list]
+                lookup_list = ['/'.join(k) for k in lookup_list]
             else:
-                lookup_list = [u'']
+                lookup_list = ['']
             routes = self.get_routes(viewset)
             for route in routes:
                 mapping = self.get_method_map(viewset, route.mapping)

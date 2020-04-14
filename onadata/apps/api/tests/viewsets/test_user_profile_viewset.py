@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import json
 
 from django.contrib.auth.models import User
@@ -16,14 +17,14 @@ from onadata.libs.serializers.user_profile_serializer import (
 
 def _profile_data():
     return {
-        'username': u'deno',
-        'name': u'Dennis',
-        'email': u'deno@columbia.edu',
-        'city': u'Denoville',
-        'country': u'US',
-        'organization': u'Dono Inc.',
-        'website': u'deno.com',
-        'twitter': u'denoerama',
+        'username': 'deno',
+        'name': 'Dennis',
+        'email': 'deno@columbia.edu',
+        'city': 'Denoville',
+        'country': 'US',
+        'organization': 'Dono Inc.',
+        'website': 'deno.com',
+        'twitter': 'denoerama',
         'require_auth': False,
         'password': 'denodeno',
     }
@@ -135,9 +136,9 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         self.assertEqual(last_name, "ion de la Liberte D'Expression")
 
     def test_partial_updates(self):
-        self.assertEqual(self.user.profile.country, u'US')
+        self.assertEqual(self.user.profile.country, 'US')
 
-        country = u'KE'
+        country = 'KE'
         data = {'country': country}
         request = self.factory.patch('/', data=data, **self.extra)
         response = self.view(request, user=self.user.username)
@@ -164,10 +165,10 @@ class TestUserProfileViewSet(TestAbstractViewSet):
         data['gravatar'] = unicode(profile.gravatar)
         data['url'] = 'http://testserver/api/v1/profiles/deno'
         data['user'] = 'http://testserver/api/v1/users/deno'
-        data['username'] = u'deno'
+        data['username'] = 'deno'
         data['metadata'] = {}
 
-        data['username'] = u'deno'
+        data['username'] = 'deno'
         request = self.factory.post(
             '/api/v1/profiles', data=json.dumps(data),
             content_type="application/json",

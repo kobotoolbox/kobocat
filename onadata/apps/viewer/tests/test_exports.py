@@ -83,7 +83,7 @@ class TestExports(TestBase):
                 'instances', survey, survey + '.xml'),
             forced_submission_time=self._submission_time)
         na_rep_restore = settings.NA_REP
-        settings.NA_REP = u''
+        settings.NA_REP = ''
         response = self.client.get(reverse(
             'csv_export',
             kwargs={
@@ -888,7 +888,7 @@ class TestExports(TestBase):
                             {
                                 'children/cartoons/name': 'Flinstones',
                                 'children/cartoons/why':
-                                u"I like bamb bam\u0107",
+                                "I like bamb bam\u0107",
                             }
                         ]
                     },
@@ -970,7 +970,7 @@ class TestExports(TestBase):
                     },
                     {
                         'children/cartoons/name': 'Flinstones',
-                        'children/cartoons/why': u"I like bamb bam\u0107",
+                        'children/cartoons/why': "I like bamb bam\u0107",
                         '_index': 2,
                         '_parent_table_name': 'children',
                         '_parent_index': 1

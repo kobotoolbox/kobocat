@@ -281,7 +281,7 @@ class TestBase(TestCase):
         return client
 
     def _get_response_content(self, response):
-        contents = u''
+        contents = ''
         if response.streaming:
             actual_content = StringIO()
             for content in response.streaming_content:

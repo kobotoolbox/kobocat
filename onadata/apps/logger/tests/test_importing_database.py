@@ -84,7 +84,7 @@ class TestImportingDatabase(TestBase):
                 CUR_DIR, "Water_Translated_2011_03_10.xml"), self.user)
         self.assertEqual(total, 0)
         self.assertEqual(success, 0)
-        expected_errors = [u'File is not a zip file']
+        expected_errors = ['File is not a zip file']
         self.assertEqual(errors, expected_errors)
 
     def test_bulk_import_post(self):

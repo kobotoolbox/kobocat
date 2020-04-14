@@ -15,6 +15,6 @@ def print_time(func):
         result = func(*args, **kwargs)
         end = time.time()
         seconds = end - start
-        print "SECONDS:", seconds, func.__name__, kwargs
+        print("SECONDS:", seconds, func.__name__, kwargs)
         return result
     return wrapped_func

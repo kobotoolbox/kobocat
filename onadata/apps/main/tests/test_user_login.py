@@ -4,8 +4,8 @@ import unittest
 
 from django.contrib.auth.models import User
 
-from test_base import TestBase
-from test_user_profile import TestUserProfile
+from .test_base import TestBase
+from .test_user_profile import TestUserProfile
 
 
 class TestUserLogin(TestBase):

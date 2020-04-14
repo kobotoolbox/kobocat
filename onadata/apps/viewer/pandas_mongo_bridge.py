@@ -41,8 +41,8 @@ from onadata.libs.utils.export_tools import question_types_to_exclude
 xform_instances = settings.MONGO_DB.instances
 
 # the bind type of select multiples that we use to compare
-MULTIPLE_SELECT_BIND_TYPE = u"select"
-GEOPOINT_BIND_TYPE = u"geopoint"
+MULTIPLE_SELECT_BIND_TYPE = "select"
+GEOPOINT_BIND_TYPE = "geopoint"
 
 # column group delimiters
 GROUP_DELIMITER_SLASH = '/'
@@ -181,7 +181,7 @@ class AbstractDataFrameBuilder(object):
                     tags.append('"%s"' % tag)
                 else:
                     tags.append(tag)
-            record.update({'_tags': u', '.join(sorted(tags))})
+            record.update({'_tags': ', '.join(sorted(tags))})
 
     @classmethod
     def _split_gps_fields(cls, record, gps_fields):
@@ -250,9 +250,9 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
     This builder can choose to query the data in batches and write to a single
     ExcelWriter object using multiple instances of DataFrameXLSWriter
     """
-    INDEX_COLUMN = u"_index"
-    PARENT_TABLE_NAME_COLUMN = u"_parent_table_name"
-    PARENT_INDEX_COLUMN = u"_parent_index"
+    INDEX_COLUMN = "_index"
+    PARENT_TABLE_NAME_COLUMN = "_parent_table_name"
+    PARENT_INDEX_COLUMN = "_parent_index"
     EXTRA_COLUMNS = [INDEX_COLUMN, PARENT_TABLE_NAME_COLUMN,
                      PARENT_INDEX_COLUMN]
     SHEET_NAME_MAX_CHARS = 30
@@ -435,7 +435,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
                     new_section_name, child, new_is_repeating)
             else:
                 # add to survey_sections
-                child_bind_type = child.bind.get(u"type")
+                child_bind_type = child.bind.get("type")
                 if isinstance(child, Question) and not \
                         question_types_to_exclude(child.type)\
                         and not child_bind_type == MULTIPLE_SELECT_BIND_TYPE:
@@ -542,7 +542,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
                             # collapse xpath
                             if parent_prefix:
                                 xpaths[0:len(parent_prefix)] = parent_prefix
-                            new_xpath = u"/".join(xpaths)
+                            new_xpath = "/".join(xpaths)
                             # check if this key exists in our ordered columns
                             if key in ordered_columns.keys():
                                 if new_xpath not in ordered_columns[key]:

@@ -78,7 +78,7 @@ class DataDictionary(XForm):
         doc = clean_and_parse_xml(self.xml)
         model_nodes = doc.getElementsByTagName("model")
         if len(model_nodes) != 1:
-            raise Exception(u"xml contains multiple model nodes")
+            raise Exception("xml contains multiple model nodes")
 
         model_node = model_nodes[0]
         instance_nodes = [node for node in model_node.childNodes if
@@ -87,8 +87,8 @@ class DataDictionary(XForm):
                           not node.hasAttribute("id")]
 
         if len(instance_nodes) != 1:
-            raise Exception(u"Multiple instance nodes without the id "
-                            u"attribute, can't tell which is the main one")
+            raise Exception("Multiple instance nodes without the id "
+                            "attribute, can't tell which is the main one")
 
         instance_node = instance_nodes[0]
 
@@ -100,7 +100,7 @@ class DataDictionary(XForm):
 
         if len(survey_nodes) != 1:
             raise Exception(
-                u"Multiple survey nodes with the id '{}'".format(root_node))
+                "Multiple survey nodes with the id '{}'".format(root_node))
 
         survey_node = survey_nodes[0]
         formhub_nodes = [n for n in survey_node.childNodes
@@ -109,7 +109,7 @@ class DataDictionary(XForm):
 
         if len(formhub_nodes) > 1:
             raise Exception(
-                u"Multiple formhub nodes within main instance node")
+                "Multiple formhub nodes within main instance node")
         elif len(formhub_nodes) == 1:
             formhub_node = formhub_nodes[0]
         else:
@@ -222,7 +222,7 @@ class DataDictionary(XForm):
         geo_xpaths = []
 
         for e in self.get_survey_elements():
-            if e.bind.get(u'type') == u'geopoint':
+            if e.bind.get('type') == 'geopoint':
                 geo_xpaths.append(e.get_abbreviated_xpath())
 
         return geo_xpaths
@@ -260,11 +260,11 @@ class DataDictionary(XForm):
 
         # replace the single question column with a column for each
         # item in a select all that apply question.
-        if survey_element.bind.get(u'type') == u'select':
+        if survey_element.bind.get('type') == 'select':
             result.pop()
             for child in survey_element.children:
                 result.append('/'.join([path, child.name]))
-        elif survey_element.bind.get(u'type') == u'geopoint':
+        elif survey_element.bind.get('type') == 'geopoint':
             result += self.get_additional_geopoint_xpaths(path)
 
         return result
@@ -290,8 +290,8 @@ class DataDictionary(XForm):
                 for suffix in cls.GEODATA_SUFFIXES]
 
     def _additional_headers(self):
-        return [u'_xform_id_string', u'_percentage_complete', u'_status',
-                u'_id', u'_attachments', u'_potential_duplicates']
+        return ['_xform_id_string', '_percentage_complete', '_status',
+                '_id', '_attachments', '_potential_duplicates']
 
     def get_headers(self, include_additional_headers=False):
         """
@@ -320,7 +320,7 @@ class DataDictionary(XForm):
                 self._survey_elements[e.get_abbreviated_xpath()] = e
 
         def remove_all_indices(xpath):
-            return re.sub(r"\[\d+\]", u"", xpath)
+            return re.sub(r"\[\d+\]", "", xpath)
 
         clean_xpath = remove_all_indices(abbreviated_xpath)
         return self._survey_elements.get(clean_xpath)
@@ -339,8 +339,8 @@ class DataDictionary(XForm):
         def xpath_cmp(x, y):
             # For the moment, we aren't going to worry about repeating
             # nodes.
-            new_x = re.sub(r"\[\d+\]", u"", x)
-            new_y = re.sub(r"\[\d+\]", u"", y)
+            new_x = re.sub(r"\[\d+\]", "", x)
+            new_y = re.sub(r"\[\d+\]", "", y)
             if new_x == new_y:
                 return cmp(x, y)
             if new_x not in self._xpaths and new_y not in self._xpaths:
@@ -387,7 +387,7 @@ class DataDictionary(XForm):
         del d[old_key]
 
     def _expand_select_all_that_apply(self, d, key, e):
-        if e and e.bind.get(u"type") == u"select":
+        if e and e.bind.get("type") == "select":
             options_selected = d[key].split()
             for i, child in enumerate(e.children):
                 new_key = child.get_abbreviated_xpath()
@@ -398,7 +398,7 @@ class DataDictionary(XForm):
             del d[key]
 
     def _expand_geocodes(self, d, key, e):
-        if e and e.bind.get(u"type") == u"geopoint":
+        if e and e.bind.get("type") == "geopoint":
             geodata = d[key].split()
             for i in range(len(geodata)):
                 new_key = "%s_%s" % (key, self.geodata_suffixes[i])

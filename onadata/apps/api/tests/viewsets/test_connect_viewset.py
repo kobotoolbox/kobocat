@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
@@ -9,10 +10,9 @@ from django_digest.test import DigestAuth, BasicAuth
 from mock import patch
 from rest_framework import authentication
 
-from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
-
 from onadata.libs.authentication import DigestAuthentication
 
 
@@ -25,14 +25,14 @@ class TestConnectViewSet(TestAbstractViewSet):
         })
         self.data = {
             'url': 'http://testserver/api/v1/profiles/bob',
-            'username': u'bob',
-            'name': u'Bob',
-            'email': u'bob@columbia.edu',
-            'city': u'Bobville',
-            'country': u'US',
-            'organization': u'Bob Inc.',
-            'website': u'bob.com',
-            'twitter': u'boberama',
+            'username': 'bob',
+            'name': 'Bob',
+            'email': 'bob@columbia.edu',
+            'city': 'Bobville',
+            'country': 'US',
+            'organization': 'Bob Inc.',
+            'website': 'bob.com',
+            'twitter': 'boberama',
             'gravatar': self.user.profile.gravatar,
             'require_auth': False,
             'user': 'http://testserver/api/v1/users/bob',
@@ -66,7 +66,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = view(request)
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data['detail'],
-                         u"Invalid username/password")
+                         "Invalid username/password")
         auth = DigestAuth('bob', 'bobbob')
         request.META.update(auth(request.META, response))
         request.session = self.client.session
@@ -90,7 +90,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = view(request)
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data['detail'],
-                         u"Invalid username/password.")
+                         "Invalid username/password.")
         auth = BasicAuth('bob', 'bobbob')
 
         # redo the request
@@ -106,7 +106,7 @@ class TestConnectViewSet(TestAbstractViewSet):
     def test_request_reset_password(self, mock_send_mail):
 
         data = {'email': self.user.email,
-                'reset_url': u'http://testdomain.com/reset_form'}
+                'reset_url': 'http://testdomain.com/reset_form'}
         request = self.factory.post('/', data=data)
         response = self.view(request)
 

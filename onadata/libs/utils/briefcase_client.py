@@ -240,8 +240,8 @@ class BriefcaseClient(object):
 
         for uuid in instances:
             self.logger.debug("Fetching %s %s submission" % (uuid, form_id))
-            form_str = u'%(formId)s[@version=null and @uiVersion=null]/'\
-                u'%(formId)s[@key=%(instanceId)s]' % {
+            form_str = '%(formId)s[@version=null and @uiVersion=null]/'\
+                '%(formId)s[@key=%(instanceId)s]' % {
                     'formId': form_id,
                     'instanceId': uuid
                 }

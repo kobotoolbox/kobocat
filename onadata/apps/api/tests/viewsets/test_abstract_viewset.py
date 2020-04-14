@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import re
 from tempfile import NamedTemporaryFile
@@ -58,13 +59,13 @@ class TestAbstractViewSet(TestCase):
                          % self.user.username,
                 'public': False,
                 'public_data': False,
-                'description': u'transportation_2011_07_25',
+                'description': 'transportation_2011_07_25',
                 'downloadable': True,
                 'allows_sms': False,
                 'encrypted': False,
-                'sms_id_string': u'transportation_2011_07_25',
-                'id_string': u'transportation_2011_07_25',
-                'title': u'transportation_2011_07_25',
+                'sms_id_string': 'transportation_2011_07_25',
+                'id_string': 'transportation_2011_07_25',
+                'title': 'transportation_2011_07_25',
             }
             data.update(publish_data)
         else:
@@ -97,14 +98,14 @@ class TestAbstractViewSet(TestCase):
         return {
             'id': self.user.pk,
             'url': 'http://testserver/api/v1/profiles/bob',
-            'username': u'bob',
-            'name': u'Bob',
-            'email': u'bob@columbia.edu',
-            'city': u'Bobville',
-            'country': u'US',
-            'organization': u'Bob Inc.',
-            'website': u'bob.com',
-            'twitter': u'boberama',
+            'username': 'bob',
+            'name': 'Bob',
+            'email': 'bob@columbia.edu',
+            'city': 'Bobville',
+            'country': 'US',
+            'organization': 'Bob Inc.',
+            'website': 'bob.com',
+            'twitter': 'boberama',
             'gravatar': self.user.profile.gravatar,
             'require_auth': False,
             'user': 'http://testserver/api/v1/users/bob',

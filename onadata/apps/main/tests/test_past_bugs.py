@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import os
 
 from onadata.apps.logger.models import XForm, Instance
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestInputs(TestBase):
@@ -50,7 +50,7 @@ class TestCascading(TestBase):
     def test_correct_id_string_picked(self):
         XForm.objects.all().delete()
         name = 'new_cascading_select.xls'
-        id_string = u'cascading_select_test'
+        id_string = 'cascading_select_test'
         self._publish_xls_file(os.path.join(
             self.this_directory, 'fixtures', 'bug_fixes', name))
         self.assertEqual(XForm.objects.count(), 1)

@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from rest_framework import status
@@ -28,7 +29,7 @@ List, Retrieve, Update, Create/Register users.
 >            "username": "demo",
 >            "name": "Demo User",
 >            "email": "demo@localhost.com",
->            "city": "Kisumu",
+>            "city": "Kisum",
 >            "country": "KE",
 >            ...
 >        }

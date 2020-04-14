@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.views import login_redirect
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormAuth(TestBase):

@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import requests
-import unittest
 
 from django.test import RequestFactory
 from guardian.shortcuts import assign_perm
@@ -25,23 +25,23 @@ def enketo_mock(url, request):
 
 def _data_list(formid):
     return [{
-        u'id': formid,
-        u'id_string': u'transportation_2011_07_25',
-        u'title': 'transportation_2011_07_25',
-        u'description': 'transportation_2011_07_25',
-        u'url': u'http://testserver/api/v1/data/%s' % formid
+        'id': formid,
+        'id_string': 'transportation_2011_07_25',
+        'title': 'transportation_2011_07_25',
+        'description': 'transportation_2011_07_25',
+        'url': 'http://testserver/api/v1/data/%s' % formid
     }]
 
 
 def _data_instance(dataid):
     return {
-        u'_attachments': [],
-        u'_geolocation': [None, None],
-        u'_xform_id_string': u'transportation_2011_07_25',
-        u'transport/available_transportation_types_to_referral_facility':
-        u'none',
-        u'_status': u'submitted_via_web',
-        u'_id': dataid
+        '_attachments': [],
+        '_geolocation': [None, None],
+        '_xform_id_string': 'transportation_2011_07_25',
+        'transport/available_transportation_types_to_referral_facility':
+        'none',
+        '_status': 'submitted_via_web',
+        '_id': dataid
     }
 
 
@@ -103,10 +103,10 @@ class TestDataViewSet(TestBase):
         self.assertDictContainsSubset(data, sorted(response.data)[0])
 
         data = {
-            u'_xform_id_string': u'transportation_2011_07_25',
-            u'transport/available_transportation_types_to_referral_facility':
-            u'none',
-            u'_submitted_by': u'bob',
+            '_xform_id_string': 'transportation_2011_07_25',
+            'transport/available_transportation_types_to_referral_facility':
+            'none',
+            '_submitted_by': 'bob',
         }
 
         view = DataViewSet.as_view({'get': 'retrieve'})
@@ -193,9 +193,9 @@ class TestDataViewSet(TestBase):
         request = self.factory.post('/', data={"tags": "hello"}, **self.extra)
         response = view(request, pk=pk)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data, [u'hello'])
+        self.assertEqual(response.data, ['hello'])
         for i in self.xform.instances.all():
-            self.assertIn(u'hello', i.tags.names())
+            self.assertIn('hello', i.tags.names())
         # remove tag "hello"
         request = self.factory.delete('/', data={"tags": "hello"},
                                       **self.extra)
@@ -203,7 +203,7 @@ class TestDataViewSet(TestBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
         for i in self.xform.instances.all():
-            self.assertNotIn(u'hello', i.tags.names())
+            self.assertNotIn('hello', i.tags.names())
 
     def test_labels_action_with_params(self):
         self._make_submissions()
@@ -341,30 +341,30 @@ class TestDataViewSet(TestBase):
         dataid = self.xform.instances.all().order_by('id')[0].pk
 
         data = {
-            u'_attachments': [{u'download_url': self.attachment.secure_url(),
-                               u'download_small_url': self.attachment.secure_url('small'),
-                               u'download_medium_url': self.attachment.secure_url('medium'),
-                               u'download_large_url': self.attachment.secure_url('large'),
-                               u'mimetype': self.attachment.mimetype,
-                               u'instance': self.attachment.instance.pk,
-                               u'filename': self.attachment.media_file.name,
-                               u'id': self.attachment.pk,
-                               u'xform': self.xform.id}
+            '_attachments': [{'download_url': self.attachment.secure_url(),
+                               'download_small_url': self.attachment.secure_url('small'),
+                               'download_medium_url': self.attachment.secure_url('medium'),
+                               'download_large_url': self.attachment.secure_url('large'),
+                               'mimetype': self.attachment.mimetype,
+                               'instance': self.attachment.instance.pk,
+                               'filename': self.attachment.media_file.name,
+                               'id': self.attachment.pk,
+                               'xform': self.xform.id}
                               ],
-            u'_geolocation': [None, None],
-            u'_xform_id_string': u'transportation_2011_07_25',
-            u'transport/available_transportation_types_to_referral_facility':
-            u'none',
-            u'_status': u'submitted_via_web',
-            u'_id': dataid
+            '_geolocation': [None, None],
+            '_xform_id_string': 'transportation_2011_07_25',
+            'transport/available_transportation_types_to_referral_facility':
+            'none',
+            '_status': 'submitted_via_web',
+            '_id': dataid
         }
         self.assertDictContainsSubset(data, sorted(response.data)[0])
 
         data = {
-            u'_xform_id_string': u'transportation_2011_07_25',
-            u'transport/available_transportation_types_to_referral_facility':
-            u'none',
-            u'_submitted_by': u'bob',
+            '_xform_id_string': 'transportation_2011_07_25',
+            'transport/available_transportation_types_to_referral_facility':
+            'none',
+            '_submitted_by': 'bob',
         }
         view = DataViewSet.as_view({'get': 'retrieve'})
         response = view(request, pk=formid, dataid=dataid)

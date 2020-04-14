@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 
 from onadata.apps.main.models import UserProfile
 from onadata.apps.main.views import profile_settings
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestUserSettings(TestBase):

@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import json
 
 from django.db.models import Q
@@ -463,11 +464,11 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                raise ParseError(_(u"Invalid pk `%(pk)s`" % {'pk': pk}))
+                raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
             try:
                 int(dataid)
             except ValueError:
-                raise ParseError(_(u"Invalid dataid `%(dataid)s`"
+                raise ParseError(_("Invalid dataid `%(dataid)s`"
                                    % {'dataid': dataid}))
 
             obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
@@ -486,7 +487,7 @@ Delete a specific submission in a form
             qs = XForm.objects.filter(**filter_kwargs)
 
             if not qs:
-                raise Http404(_(u"No data matches with given query."))
+                raise Http404(_("No data matches with given query."))
 
         return qs
 
@@ -503,7 +504,7 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+                raise ParseError(_("Invalid pk %(pk)s" % {'pk': pk}))
             else:
                 qs = self._filtered_or_shared_qs(qs, pk)
 
@@ -534,7 +535,7 @@ Delete a specific submission in a form
                     else:
                         http_status = status.HTTP_400_BAD_REQUEST
             else:
-                raise PermissionDenied(_(u"You do not have validate permissions."))
+                raise PermissionDenied(_("You do not have validate permissions."))
 
         if http_status == status.HTTP_200_OK:
             data = instance.validation_status
@@ -580,12 +581,12 @@ Delete a specific submission in a form
         self.object = self.get_object()
         data = {}
         if isinstance(self.object, XForm):
-            raise ParseError(_(u"Data id not provided."))
+            raise ParseError(_("Data id not provided."))
         elif isinstance(self.object, Instance):
             if request.user.has_perm("change_xform", self.object.xform):
                 return_url = request.query_params.get('return_url')
                 if not return_url:
-                    raise ParseError(_(u"return_url not provided."))
+                    raise ParseError(_("return_url not provided."))
 
                 try:
                     data["url"] = get_enketo_edit_url(
@@ -593,7 +594,7 @@ Delete a specific submission in a form
                 except EnketoError as e:
                     data['detail'] = "{}".format(e)
             else:
-                raise PermissionDenied(_(u"You do not have edit permissions."))
+                raise PermissionDenied(_("You do not have edit permissions."))
 
         return Response(data=data)
 
@@ -608,7 +609,7 @@ Delete a specific submission in a form
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
         if isinstance(self.object, XForm):
-            raise ParseError(_(u"Data id not provided."))
+            raise ParseError(_("Data id not provided."))
         elif isinstance(self.object, Instance):
             # Redundant permissions check that duplicates
             # `XFormDataPermissions`, left here to minimize changes. We're
@@ -618,8 +619,8 @@ Delete a specific submission in a form
             if request.user.has_perm(CAN_CHANGE_XFORM, self.object.xform):
                 self.object.delete()
             else:
-                raise PermissionDenied(_(u"You do not have delete "
-                                         u"permissions."))
+                raise PermissionDenied(_("You do not have delete "
+                                         "permissions."))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -746,7 +747,7 @@ Delete a specific submission in a form
         xform = self.get_object()
         if not request.user.has_perm(permission, xform):
             raise PermissionDenied(
-                _(u"You do not have sufficient rights to perform this operation.")
+                _("You do not have sufficient rights to perform this operation.")
             )
         return xform
 

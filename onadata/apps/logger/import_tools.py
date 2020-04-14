@@ -71,7 +71,7 @@ def import_instances_from_zip(zipfile_path, user, status="zip"):
 
         zf.extractall(temp_directory)
     except zipfile.BadZipfile, e:
-        errors = [u"%s" % e]
+        errors = ["%s" % e]
         return 0, 0, errors
     else:
         return import_instances_from_path(temp_directory, user, status)
