@@ -1,23 +1,22 @@
 # coding: utf-8
-from __future__ import absolute_import
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import base64
 import os
 import re
 import socket
 import urllib2
+from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
 
-from cStringIO import StringIO
-
 from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser, User, Permission
 from django.test import TestCase
 from django.test.client import Client
+from django.utils import timezone
 from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
-from django.contrib.auth import authenticate
-from django.utils import timezone
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.logger.models import XForm, Instance, Attachment

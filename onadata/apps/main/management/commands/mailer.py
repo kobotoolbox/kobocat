@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError

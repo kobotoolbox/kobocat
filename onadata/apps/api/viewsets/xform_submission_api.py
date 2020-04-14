@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import re
 import StringIO
@@ -8,8 +8,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
-from django.utils.decorators import method_decorator
-from django.db import transaction
 
 from rest_framework import permissions
 from rest_framework import status

@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from django.db import migrations, models
-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 class Migration(migrations.Migration):
 

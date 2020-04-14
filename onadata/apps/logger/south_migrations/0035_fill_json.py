@@ -1,4 +1,7 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.core.exceptions import ValidationError
 from south.v2 import DataMigration
 from onadata.libs.utils.model_tools import queryset_iterator

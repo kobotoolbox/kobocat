@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # encoding: utf-8
 import datetime
 from south.db import db

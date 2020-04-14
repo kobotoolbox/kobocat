@@ -1,16 +1,15 @@
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import, division
+from __future__ import unicode_literals, print_function, division, absolute_import
 
-import dateutil.parser
 import logging
 import re
 import sys
-from xml.dom import minidom, Node
 
+import dateutil.parser
 import six
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.translation import ugettext as _
-
+from xml.dom import minidom, Node
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
 

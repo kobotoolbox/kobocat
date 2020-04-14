@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from os import path
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \

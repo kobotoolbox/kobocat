@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 ### ISSUE 242 TEMPORARY FIX ###
 # See https://github.com/kobotoolbox/kobocat/issues/242
 

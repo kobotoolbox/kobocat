@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, print_function
-import functools
-import sys
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 from .kc_environ import *
 

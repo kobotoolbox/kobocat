@@ -1,4 +1,7 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from south.v2 import DataMigration
 
 from onadata.apps.logger.models.instance import Instance

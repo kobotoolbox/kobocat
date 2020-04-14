@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.libs.serializers.password_reset_serializer import \
     get_password_reset_email

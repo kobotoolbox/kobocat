@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from guardian.shortcuts import get_users_with_perms
 
 from onadata.apps.api import tools

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.core.validators import ValidationError
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _

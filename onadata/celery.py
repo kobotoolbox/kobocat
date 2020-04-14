@@ -1,3 +1,6 @@
+TO  BE REVIEWED UTF8
+TO  BE REVIEWED FUTURE 
+# coding: utf-8
 # http://celery.readthedocs.org/en/latest/django/first-steps-with-django.html
 from __future__ import absolute_import
 import os

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # This factory is not the same as the others, and doesn't use
 # django-factories but it mimics their functionality...
 from datetime import timedelta

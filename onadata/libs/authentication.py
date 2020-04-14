@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.utils.translation import ugettext as _
 from django_digest import HttpDigestAuthenticator
 from rest_framework.authentication import (
