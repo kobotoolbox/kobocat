@@ -99,7 +99,7 @@ class TestXFormInstanceParser(TestBase):
                   '<gps>-1.2625072 36.7924328 0.0 30.0</gps>' \
                   '<info>What</info></gps></test_item_name_matches_repeat>'
         clean_xml_str = xml_str.strip()
-        clean_xml_str = re.sub(ur">\s+<", "><", clean_xml_str)
+        clean_xml_str = re.sub(r">\s+<", "><", clean_xml_str)
         root_node = minidom.parseString(clean_xml_str).documentElement
         # get the first top-level gps element
         gps_node = root_node.firstChild.nextSibling

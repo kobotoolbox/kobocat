@@ -19,6 +19,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils import timezone
+from django.utils.encoding import smart_text
 from django.utils.translation import ugettext_lazy, ugettext as _
 from guardian.shortcuts import \
     assign_perm, \
@@ -146,7 +147,8 @@ class XForm(BaseModel):
         self.id_string = matches[0]
 
     def _set_title(self):
-        text = re.sub(r"\s+", " ", self.xml)
+        self.xml = smart_text(self.xml)
+        text = re.sub(r'\s+', ' ', self.xml)
         matches = title_pattern.findall(text)
         title_xml = matches[0][:XFORM_TITLE_LENGTH]
 
@@ -156,8 +158,6 @@ class XForm(BaseModel):
         if self.title and title_xml != self.title:
             title_xml = self.title[:XFORM_TITLE_LENGTH]
             title_xml = saxutils.escape(title_xml)
-            if isinstance(self.xml, str):
-                self.xml = self.xml.decode('utf-8')
             self.xml = title_pattern.sub(
                 "<h:title>%s</h:title>" % title_xml, self.xml)
 

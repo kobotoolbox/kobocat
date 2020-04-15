@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import os
 
 from django.test import TestCase
+from django.utils.encoding import smart_text
 
 from onadata.apps.main.google_doc import GoogleDoc
 
@@ -16,7 +17,7 @@ class TestGoogleDoc(TestCase):
             )
         input_path = os.path.join(folder, "input.html")
         with open(input_path) as f:
-            input_html = f.read()
+            input_html = smart_text(f.read())
         doc.set_html(input_html)
         self.assertEqual(doc._html, input_html)
         self.assertEqual(len(doc._sections), 14)
