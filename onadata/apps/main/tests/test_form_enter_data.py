@@ -1,25 +1,25 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import re
-import requests
 import unittest
-
-from urlparse import urlparse
 from time import time
-from httmock import urlmatch, HTTMock
+from urlparse import urlparse
 
-from django.test import RequestFactory
-from django.core.urlresolvers import reverse
-from django.core.validators import URLValidator
+import requests
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-
+from django.core.urlresolvers import reverse
+from django.core.validators import URLValidator
+from django.test import RequestFactory
+from django.utils.six import string_types
+from httmock import urlmatch, HTTMock
 from nose import SkipTest
 
-from onadata.apps.main.views import set_perm, show, qrcode
-from onadata.apps.main.models import MetaData
 from onadata.apps.logger.views import enter_data
+from onadata.apps.main.models import MetaData
+from onadata.apps.main.views import set_perm, show, qrcode
 from onadata.libs.utils.viewer_tools import enketo_url
 from .test_base import TestBase
 
@@ -68,7 +68,7 @@ class TestFormEnterData(TestBase):
             server_url = 'https://testserver.com/bob'
             form_id = "test_%s" % re.sub(re.compile("\."), "_", str(time()))
             url = enketo_url(server_url, form_id)
-            self.assertIsInstance(url, basestring)
+            self.assertIsInstance(url, string_types)
             self.assertIsNone(URLValidator()(url))
 
     def _get_grcode_view_response(self):

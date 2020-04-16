@@ -13,6 +13,7 @@ from django.db.models import F
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
+from django.utils.encoding import smart_text
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
@@ -244,15 +245,15 @@ class Instance(models.Model):
         set_uuid(self)
 
     def _populate_xml_hash(self):
-        '''
+        """
         Populate the `xml_hash` attribute of this `Instance` based on the content of the `xml`
         attribute.
-        '''
+        """
         self.xml_hash = self.get_hash(self.xml)
 
     @classmethod
     def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None, repopulate=False):
-        '''
+        """
         Populate the `xml_hash` field for `Instance` instances limited to the specified users
         and/or DB primary keys.
 
@@ -263,7 +264,7 @@ class Instance(models.Model):
         :param bool repopulate: Optional argument to force repopulation of existing hashes.
         :returns: Total number of `Instance`s updated.
         :rtype: int
-        '''
+        """
 
         filter_kwargs = dict()
         if usernames:
@@ -359,12 +360,11 @@ class Instance(models.Model):
         """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param basestring input_string: The string to be hashed.
+        :param string_types input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
         """
-        if isinstance(input_string, unicode):
-            input_string = input_string.encode('utf-8')
+        input_string = smart_text(input_string)
         return sha256(input_string).hexdigest()
 
     @property

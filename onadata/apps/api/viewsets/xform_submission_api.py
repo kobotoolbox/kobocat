@@ -7,6 +7,7 @@ import StringIO
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.utils.six import string_types
 from django.utils.translation import ugettext as _
 
 from rest_framework import permissions
@@ -44,7 +45,7 @@ def dict_lists2strings(d):
     :param d: The dict to convert.
     :returns: The converted dict."""
     for k, v in d.items():
-        if isinstance(v, list) and all([isinstance(e, basestring) for e in v]):
+        if isinstance(v, list) and all([isinstance(e, string_types) for e in v]):
             d[k] = ' '.join(v)
         elif isinstance(v, dict):
             d[k] = dict_lists2strings(v)
@@ -207,7 +208,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
         if not error:
             error_msg = _("Unable to create submission.")
             status_code = status.HTTP_400_BAD_REQUEST
-        elif isinstance(error, basestring):
+        elif isinstance(error, string_types):
             error_msg = error
             status_code = status.HTTP_400_BAD_REQUEST
         elif not is_json_request:

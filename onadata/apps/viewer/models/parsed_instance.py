@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import datetime
 import json
 import logging
@@ -9,9 +10,11 @@ from celery import task
 from dateutil import parser
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import pre_delete
+from django.utils.six import string_types
 from django.utils.translation import ugettext as _
 
+from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
@@ -30,8 +33,6 @@ from onadata.libs.utils.common_tags import (
 )
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
-from onadata.apps.api.mongo_helper import MongoHelper
-
 
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
@@ -102,7 +103,7 @@ class ParsedInstance(models.Model):
         if count:
             return [{"count": cursor.count()}]
 
-        if isinstance(sort, basestring):
+        if isinstance(sort, string_types):
             sort = json.loads(sort, object_hook=json_util.object_hook)
         sort = sort if sort else {}
 
@@ -119,7 +120,7 @@ class ParsedInstance(models.Model):
         pipeline - list of dicts or dict of mongodb pipeline operators,
         http://docs.mongodb.org/manual/reference/operator/aggregation-pipeline
         """
-        if isinstance(query, basestring):
+        if isinstance(query, string_types):
             query = json.loads(
                 query, object_hook=json_util.object_hook) if query else {}
         if not (isinstance(pipeline, dict) or isinstance(pipeline, list)):
@@ -153,7 +154,7 @@ class ParsedInstance(models.Model):
         if count:
             return [{"count": cursor.count()}]
 
-        if isinstance(sort, basestring):
+        if isinstance(sort, string_types):
             sort = json.loads(sort, object_hook=json_util.object_hook)
         sort = sort if sort else {}
 
@@ -191,7 +192,7 @@ class ParsedInstance(models.Model):
         fields_to_select = {cls.USERFORM_ID: 0}
         # TODO: give more detailed error messages to 3rd parties
         # using the API when json.loads fails
-        if isinstance(query, basestring):
+        if isinstance(query, string_types):
             query = json.loads(query, object_hook=json_util.object_hook)
         query = query if query else {}
         query = MongoHelper.to_safe_dict(query, reading=True)
@@ -208,7 +209,7 @@ class ParsedInstance(models.Model):
             query = {"$and": [query, {"_deleted_at": None}]}
 
         # fields must be a string array i.e. '["name", "age"]'
-        if isinstance(fields, basestring):
+        if isinstance(fields, string_types):
             fields = json.loads(fields, object_hook=json_util.object_hook)
         fields = fields if fields else []
 

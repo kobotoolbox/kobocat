@@ -1,6 +1,7 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 # vim: set fileencoding=utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 # this system uses structured settings as defined in
 # http://www.slideshare.net/jacobian/the-best-and-worst-of-django
 #
@@ -17,6 +18,7 @@ import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
 
+from django.utils.six import string_types
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
@@ -511,7 +513,7 @@ try:
 except ImportError:
     pass
 
-if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
+if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, string_types):
     # site templates overrides
     TEMPLATE_DIRS = (
         os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),

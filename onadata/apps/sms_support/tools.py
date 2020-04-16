@@ -2,24 +2,23 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-
-import mimetypes
-import io
 import copy
+import io
+import mimetypes
 from xml.parsers.expat import ExpatError
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import HttpRequest
+from django.utils.six import string_types
+from django.utils.translation import ugettext as _
 
-from onadata.apps.logger.xform_instance_parser import InstanceEmptyError,\
-    InstanceInvalidUserError, DuplicateInstance
 from onadata.apps.logger.exceptions import FormInactiveError
 from onadata.apps.logger.models import XForm
+from onadata.apps.logger.xform_instance_parser import InstanceEmptyError, \
+    InstanceInvalidUserError, DuplicateInstance
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import create_instance
-
 
 SMS_API_ERROR = 'SMS_API_ERROR'
 SMS_PARSING_ERROR = 'SMS_PARSING_ERROR'
@@ -56,7 +55,7 @@ def get_sms_instance_id(instance):
 
 
 def sms_media_to_file(file_object, name):
-    if isinstance(file_object, basestring):
+    if isinstance(file_object, string_types):
         file_object = io.BytesIO(file_object)
 
     def getsize(f):

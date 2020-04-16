@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.six import string_types
 
 from onadata.apps.viewer.models.parsed_instance import DATETIME_FORMAT
 from onadata.apps.api.mongo_helper import MongoHelper
@@ -38,7 +39,7 @@ class AuditLog(object):
                             val, DATETIME_FORMAT)
                     except ValueError:
                         pass
-            elif isinstance(query[cls.CREATED_ON], basestring):
+            elif isinstance(query[cls.CREATED_ON], string_types):
                 val = query[cls.CREATED_ON]
                 try:
                     created_on = datetime.strptime(val, DATETIME_FORMAT)
