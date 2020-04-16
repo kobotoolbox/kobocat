@@ -98,4 +98,4 @@ class TestNoteViewSet(TestBase):
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        self.assertEquals(response.data, [])
+        self.assertEqual(response.data, [])

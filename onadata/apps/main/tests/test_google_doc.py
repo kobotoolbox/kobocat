@@ -23,4 +23,4 @@ class TestGoogleDoc(TestCase):
         self.assertEqual(len(doc._sections), 14)
         output_path = os.path.join(folder, "navigation.html")
         with open(output_path) as f:
-            self.assertEquals(doc._navigation_html(), f.read())
+            self.assertEqual(doc._navigation_html(), f.read())

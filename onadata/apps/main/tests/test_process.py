@@ -283,7 +283,7 @@ class TestProcess(TestBase):
                 del d_from_db[k]
             self.assertTrue(d_from_db in data)
             data.remove(d_from_db)
-        self.assertEquals(data, [])
+        self.assertEqual(data, [])
 
     def _check_group_xpaths_do_not_appear_in_dicts_for_export(self):
         uuid = 'uuid:f3d8dc65-91a6-4d0f-9e97-802128083390'
@@ -443,9 +443,9 @@ class TestProcess(TestBase):
             self.assertEqual(actual_row, expected_row)
 
     def _check_delete(self):
-        self.assertEquals(self.user.xforms.count(), 1)
+        self.assertEqual(self.user.xforms.count(), 1)
         self.user.xforms.all()[0].delete()
-        self.assertEquals(self.user.xforms.count(), 0)
+        self.assertEqual(self.user.xforms.count(), 0)
 
     def test_405_submission(self):
         url = reverse('submissions')

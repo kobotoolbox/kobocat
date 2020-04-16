@@ -384,7 +384,7 @@ class TestDataViewSet(TestBase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         count = self.xform.instances.all().count()
-        self.assertEquals(before_count - 1, count)
+        self.assertEqual(before_count - 1, count)
 
         self._create_user_and_login(username='alice', password='alice')
         # Allow Alice to delete submissions.
@@ -398,5 +398,5 @@ class TestDataViewSet(TestBase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         count = self.xform.instances.all().count()
-        self.assertEquals(before_count - 2, count)
+        self.assertEqual(before_count - 2, count)
 

@@ -23,16 +23,16 @@ class TestUserIdStringUniqueTogether(TestBase):
 
         # first time
         response = self._publish_xls_file(xls_path)
-        self.assertEquals(XForm.objects.count(), 1)
+        self.assertEqual(XForm.objects.count(), 1)
 
         # second time
         response = self._publish_xls_file(xls_path)
         response_content = smart_text(response.content)
         self.assertIn("already exists.", response_content)
-        self.assertEquals(XForm.objects.count(), 1)
+        self.assertEqual(XForm.objects.count(), 1)
         self.client.logout()
 
         # first time
         self._create_user_and_login(username="carl", password="carl")
         response = self._publish_xls_file(xls_path)
-        self.assertEquals(XForm.objects.count(), 2)
+        self.assertEqual(XForm.objects.count(), 2)

@@ -170,7 +170,7 @@ class TestXFormInstanceParser(TestBase):
             "multiple_nodes_error.xml"
         )
         self._make_submission(xml_submission_file_path)
-        self.assertEquals(201, self.response.status_code)
+        self.assertEqual(201, self.response.status_code)
 
     def test_xml_repeated_group_to_dict(self):
         xml_file = os.path.join(
