@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy
 from guardian.shortcuts import get_perms_for_model, assign_perm
 from rest_framework.authtoken.models import Token
@@ -14,6 +15,7 @@ from onadata.libs.utils.gravatar import get_gravatar_img_link, gravatar_exists
 from onadata.apps.main.signals import set_api_permissions
 
 
+@python_2_unicode_compatible
 class UserProfile(models.Model):
     # This field is required.
     user = models.OneToOneField(User, related_name='profile')
@@ -38,7 +40,7 @@ class UserProfile(models.Model):
     num_of_submissions = models.IntegerField(default=0)
     metadata = JSONField(default={}, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s[%s]' % (self.name, self.user.username)
 
     @property
@@ -66,6 +68,8 @@ class UserProfile(models.Model):
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
+
+
 post_save.connect(create_auth_token, sender=User, dispatch_uid='auth_token')
 
 post_save.connect(set_api_permissions, sender=User,
@@ -79,6 +83,8 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
 
             if instance.created_by:
                 assign_perm(perm.codename, instance.created_by, instance)
+
+
 post_save.connect(set_object_permissions, sender=UserProfile,
                   dispatch_uid='set_object_permissions')
 
@@ -90,5 +96,8 @@ def default_user_profile_require_auth(
     instance.require_auth = \
         settings.REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT
     instance.save()
-post_save.connect(default_user_profile_require_auth, sender=UserProfile,
-                      dispatch_uid='default_user_profile_require_auth')
+
+
+post_save.connect(default_user_profile_require_auth,
+                  sender=UserProfile,
+                  dispatch_uid='default_user_profile_require_auth')

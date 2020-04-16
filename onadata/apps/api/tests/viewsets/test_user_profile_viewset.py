@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import json
 
 from django.contrib.auth.models import User
+from django.utils.six import text_type
 from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
@@ -162,7 +163,7 @@ class TestUserProfileViewSet(TestAbstractViewSet):
             user__username=data['username'].lower())
 
         data['id'] = profile.user.pk
-        data['gravatar'] = unicode(profile.gravatar)
+        data['gravatar'] = text_type(profile.gravatar)
         data['url'] = 'http://testserver/api/v1/profiles/deno'
         data['user'] = 'http://testserver/api/v1/users/deno'
         data['username'] = 'deno'

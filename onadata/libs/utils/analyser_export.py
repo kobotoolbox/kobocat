@@ -20,10 +20,11 @@ from zipfile import (
 import lxml.etree as etree
 import xlrd
 import openpyxl
+from django.utils.six import text_type
 from openpyxl.writer.excel import save_virtual_workbook
 
 
-NAMESPACES= {'xmlns': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+NAMESPACES = {'xmlns': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 
 
 def get_worksheet_indices(workbook_file):
@@ -86,7 +87,7 @@ def copy_cells(source_worksheet_file, destination_worksheet_file_path, new_strin
                 values = destination_c.xpath('.//xmlns:v', namespaces=NAMESPACES)
                 if values:
                     destination_v = values[0]
-                    destination_v.text = unicode(new_string_indices[int(destination_v.text)])
+                    destination_v.text = text_type(new_string_indices[int(destination_v.text)])
             destination_row.append(destination_c)
 
         # Clean up elements of the source worksheet to save memory.
@@ -122,7 +123,7 @@ def splice_shared_strings(source_file, destination_etree, new_string_indices):
             uniqueCount+= 1
 
     # Update the "uniqueCount" attribute.
-    destination_root.attrib['uniqueCount']= unicode(uniqueCount)
+    destination_root.attrib['uniqueCount']= text_type(uniqueCount)
 
 
 def insert_xlsform_worksheets(analyser_shared_strings, analyser_survey_worksheet_file_path, analyser_choices_worksheet_file_path, survey_file_xls):

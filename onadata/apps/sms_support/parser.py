@@ -1,19 +1,28 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
+import StringIO
 import base64
-from datetime import datetime, date
 import json
 import re
-import StringIO
+from datetime import datetime, date
 
+from django.utils.six import text_type
 from django.utils.translation import ugettext as _
 
 from onadata.apps.logger.models import XForm
-from onadata.apps.sms_support.tools import SMS_API_ERROR, SMS_PARSING_ERROR,\
-    SMS_SUBMISSION_REFUSED, sms_media_to_file, generate_instance,\
-    DEFAULT_SEPARATOR, NA_VALUE, META_FIELDS, MEDIA_TYPES,\
-    DEFAULT_DATE_FORMAT, DEFAULT_DATETIME_FORMAT, SMS_SUBMISSION_ACCEPTED,\
+from onadata.apps.sms_support.tools import (
+    SMS_API_ERROR,
+    generate_instance,
+    DEFAULT_SEPARATOR,
+    NA_VALUE,
+    META_FIELDS,
+    MEDIA_TYPES,
+    DEFAULT_DATE_FORMAT,
+    DEFAULT_DATETIME_FORMAT,
+    SMS_SUBMISSION_ACCEPTED,
     is_last
+)
 from onadata.libs.utils.logger_tools import dict2xform
 
 
@@ -93,7 +102,7 @@ def parse_sms_text(xform, identity, text):
                                       % {'except': repr(e)}, xlsf_name)
 
         if xlsf_type == 'text':
-            return safe_wrap(lambda: unicode(value))
+            return safe_wrap(lambda: text_type(value))
         elif xlsf_type == 'integer':
             return safe_wrap(lambda: int(value))
         elif xlsf_type == 'decimal':
@@ -141,7 +150,7 @@ def parse_sms_text(xform, identity, text):
             # Example: hello.jpg;dGhpcyBpcyBteSBwaWN0dXJlIQ==
             return media_value(value, medias)
         elif xlsf_type == 'barcode':
-            return safe_wrap(lambda: unicode(value))
+            return safe_wrap(lambda: text_type(value))
         elif xlsf_type == 'date':
             return safe_wrap(lambda: datetime.strptime(value,
                                                        xlsf_date_fmt).date())

@@ -1,10 +1,12 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import re
 
 from django.db import models
 from django.db.models.signals import post_save
+from django.utils.six import text_type
 from guardian.shortcuts import assign_perm, get_perms_for_model
 from pyxform import SurveyElementBuilder
 from pyxform.builder import create_survey_from_xls
@@ -212,7 +214,7 @@ class DataDictionary(XForm):
         """
         names = {}
         for elem in self.get_survey_elements():
-            names[MongoHelper.encode(unicode(elem.get_abbreviated_xpath()))] = \
+            names[MongoHelper.encode(text_type(elem.get_abbreviated_xpath()))] = \
                 elem.get_abbreviated_xpath()
         return names
 
@@ -247,7 +249,7 @@ class DataDictionary(XForm):
             return []
         if result is None:
             result = []
-        path = '/'.join([prefix, unicode(survey_element.name)])
+        path = '/'.join([prefix, text_type(survey_element.name)])
         if survey_element.children is not None:
             # add xpaths to result for each child
             indices = [''] if type(survey_element) != RepeatingSection else \

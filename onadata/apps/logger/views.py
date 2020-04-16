@@ -28,7 +28,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
 from django.template import RequestContext
-from django.utils import six
+from django.utils.six import string_types, text_type
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
@@ -71,7 +71,7 @@ IO_ERROR_STRINGS = [
 
 
 def _bad_request(e):
-    strerror = unicode(e)
+    strerror = text_type(e)
 
     return strerror and strerror in IO_ERROR_STRINGS
 
@@ -614,7 +614,7 @@ def view_download_submission(request, username):
         return authenticator.build_challenge_response()
     data = {}
     formId = request.GET.get('formId', None)
-    if not isinstance(formId, six.string_types):
+    if not isinstance(formId, string_types):
         return HttpResponseBadRequest()
 
     id_string = formId[0:formId.find('[')]

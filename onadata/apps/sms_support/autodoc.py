@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 nu
-
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
@@ -15,6 +14,8 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 import json
 import datetime
+
+from django.utils.six import text_type
 
 from .tools import (
     DEFAULT_SEPARATOR,
@@ -42,7 +43,7 @@ def get_sample_data_for(question, json_survey, as_names=False):
         or DEFAULT_DATETIME_FORMAT
 
     def safe_wrap(value):
-        return unicode(value)
+        return text_type(value)
 
     if as_names:
         return xlsf_name
@@ -97,7 +98,7 @@ def get_helper_text(question, json_survey):
         value = ('<span class="sms_autodoc_helper_type">%(type)s</span> '
                  '<span class="sms_autodoc_helper_message">%(text)s</span>'
                  % {'type': xlsf_type, 'text': value})
-        return unicode(value)
+        return text_type(value)
 
     if xlsf_type == 'text':
         return safe_wrap('Any string (excluding "%s")' % separator)

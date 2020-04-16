@@ -20,6 +20,7 @@ from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils import timezone
 from django.utils.encoding import smart_text
+
 from django.utils.translation import ugettext_lazy, ugettext as _
 from guardian.shortcuts import \
     assign_perm, \
@@ -47,7 +48,7 @@ def upload_to(instance, filename):
         'xls',
         os.path.split(filename)[1])
 
-
+@python_2_unicode_compatible
 class XForm(BaseModel):
     CLONED_SUFFIX = '_cloned'
     MAX_ID_LENGTH = 100
@@ -209,7 +210,7 @@ class XForm(BaseModel):
 
         super(XForm, self).save(*args, **kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         return getattr(self, "id_string", "")
 
     def submission_count(self, force_update=False):
