@@ -56,7 +56,7 @@ def iterate_through_instances(dirpath, callback):
                 xfxs = XFormInstanceFS(filepath)
                 try:
                     success_count += callback(xfxs)
-                except Exception, e:
+                except Exception as e:
                     errors.append("%s => %s" % (xfxs.filename, str(e)))
                 del(xfxs)
                 total_file_count += 1
@@ -70,7 +70,7 @@ def import_instances_from_zip(zipfile_path, user, status="zip"):
         zf = zipfile.ZipFile(zipfile_path)
 
         zf.extractall(temp_directory)
-    except zipfile.BadZipfile, e:
+    except zipfile.BadZipfile as  e:
         errors = ["%s" % e]
         return 0, 0, errors
     else:

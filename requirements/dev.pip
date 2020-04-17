@@ -1,14 +1,14 @@
-clint
-django-kombu
-django-snippetscream
-django-statsd-mozilla
-fabric
-gunicorn
+#clint
+#django-kombu
+#django-snippetscream
+#django-statsd-mozilla
+# fabric
+# gunicorn
 ipdb
 ipython
 shell_command
-statsd
-twill
+#statsd
+#twill
 Werkzeug
 sqlparse
 pytest==3.10

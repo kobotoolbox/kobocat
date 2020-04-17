@@ -77,6 +77,6 @@ class Command(BaseCommand):
                     else:
                         print(_('Problem with the file %(file)s')
                               % {'file': filename})
-                except (IOError, OSError), e:
+                except (IOError, OSError) as e:
                     print(_('Error on %(filename)s: %(error)s')
                           % {'filename': filename, 'error': e})

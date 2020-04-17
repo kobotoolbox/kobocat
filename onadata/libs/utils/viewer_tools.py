@@ -233,7 +233,7 @@ def create_attachments_zipfile(attachments, output_file=None):
                 try:
                     with storage.open(attachment.media_file.name, 'rb') as source_file:
                         zip_file.writestr(attachment.media_file.name, source_file.read())
-                except Exception, e:
+                except Exception as e:
                     report_exception("Error adding file \"{}\" to archive.".format(attachment.media_file.name), e)
 
     return output_file

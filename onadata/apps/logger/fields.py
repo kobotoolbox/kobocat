@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
+import collections
+
 from django.core.exceptions import FieldError
 from django.db import models
 
@@ -37,7 +39,7 @@ class LazyDefaultBooleanField(models.PositiveSmallIntegerField):
         super(LazyDefaultBooleanField, self).__init__(*args, **kwargs)
 
     def _get_lazy_default(self):
-        if callable(self.lazy_default):
+        if isinstance(self.lazy_default, collections.Callable):
             return self.lazy_default()
         else:
             return self.lazy_default
