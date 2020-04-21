@@ -319,8 +319,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
         returns a dictionary with the key being the name of the sheet,
         and values a list of dicts to feed into a DataFrame
         """
-        data = dict((section_name, [])
-                    for section_name in self.sections.keys())
+        data = dict((section_name, []) for section_name in self.sections.keys())
 
         main_section = self.sections[self.survey_name]
         main_sections_columns = main_section["columns"]
@@ -429,7 +428,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
                 # if its repeating, build a new section
                 if new_is_repeating:
                     new_section_name = get_valid_sheet_name(
-                        child.name, self.sections.keys())
+                        child.name, list(self.sections))
                     self._create_section(
                         new_section_name, child.get_abbreviated_xpath(), True)
 
@@ -467,7 +466,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
             if len(self.sections) > self.XLS_SHEET_COUNT_LIMIT:
                 self.exceeds_xls_limits = True
             else:
-                for section in self.sections.itervalues():
+                for section in self.sections.values():
                     if len(section["columns"]) > self.XLS_COLUMN_COUNT_MAX:
                         self.exceeds_xls_limits = True
                         break

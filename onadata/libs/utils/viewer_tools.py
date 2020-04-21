@@ -39,6 +39,7 @@ def get_path(path, suffix):
     return fileName + suffix + fileExtension
 
 
+# TODO VERIFY IF STILL USED
 def image_urls(instance):
     image_urls_dict_ = image_urls_dict(instance)
     return image_urls_dict_.values()

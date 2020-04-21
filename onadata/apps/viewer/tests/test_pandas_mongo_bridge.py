@@ -426,7 +426,7 @@ class TestPandasMongoBridge(TestBase):
         self.assertEqual(expected_result, record)
 
     def test_unicode_export(self):
-        unicode_char = unichr(40960)
+        unicode_char = chr(40960)
         # fake data
         data = [{"key": unicode_char}]
         columns = ["key"]

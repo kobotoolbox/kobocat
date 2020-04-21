@@ -206,10 +206,11 @@ if (os.getenv("RAVEN_DSN") or "") != "":
 
         # Set the `server_name` attribute. See https://docs.sentry.io/hosted/clients/python/advanced/
         server_name = os.environ.get('RAVEN_SERVER_NAME')
-        server_name = server_name or '.'.join(filter(None, (
+        server_name = server_name or '.'.join([_f for _f in (
             os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', None),
             os.environ.get('PUBLIC_DOMAIN_NAME', None)
-        )))
+        ) if _f])
+
         if server_name:
             RAVEN_CONFIG.update({'name': server_name})
 

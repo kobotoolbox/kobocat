@@ -276,7 +276,8 @@ class TestProcess(TestBase):
              }
         ]
         for d_from_db in self.data_dictionary.get_data_for_excel():
-            for k, v in d_from_db.items():
+            d_from_db_iter = dict(d_from_db)
+            for k, v in d_from_db_iter.items():
                 if (k != '_xform_id_string' and k != 'meta/instanceID') and v:
                     new_key = k[len('transport/'):]
                     d_from_db[new_key] = d_from_db[k]
@@ -396,7 +397,8 @@ class TestProcess(TestBase):
         dd = DataDictionary.objects.get(pk=self.xform.pk)
         for row, expected_dict in zip(actual_csv, data):
             d = dict(zip(headers, row))
-            for k, v in d.items():
+            d_iter = dict(d)
+            for k, v in d_iter.items():
                 if v in ["n/a", "False"] or k in dd._additional_headers():
                     del d[k]
             l = []

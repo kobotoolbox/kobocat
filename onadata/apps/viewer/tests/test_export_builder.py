@@ -389,6 +389,9 @@ class TestExportBuilder(TestBase):
                                 '_parent_table_name', '_parent_index',
                                 '_tags', '_notes']
             rows = [row for row in reader]
+
+            # TODO VALIDATE After UPGRADE TO PYTHON3
+
             actual_headers = [h.decode('utf-8') for h in rows[0]]
             self.assertEqual(sorted(actual_headers), sorted(expected_headers))
             data = dict(zip(rows[0], rows[1]))

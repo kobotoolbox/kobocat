@@ -83,7 +83,7 @@ class TestRemongo(TestBase):
         #     '_id_': {'key': [('_id', 1)], 'v': 1},
         #     '_userform_id_1': {'key': [('_userform_id', 1)], 'v': 1}}
         # lets make a list of the indexes
-        existing_indexes = [v['key'][0][0] for v in index_info.itervalues()
+        existing_indexes = [v['key'][0][0] for v in index_info.values()
                             if v['key'][0][1] == 1]
         all_indexes_found = True
         for index_item in index_list:

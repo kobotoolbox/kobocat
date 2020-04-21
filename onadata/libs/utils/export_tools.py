@@ -129,7 +129,7 @@ class DictOrganizer(object):
     def get_observation_from_dict(self, d):
         result = {}
         assert len(d.keys()) == 1
-        root_name = d.keys()[0]
+        root_name = list(d)[0]
         kwargs = {
             "d": d[root_name],
             "obs": result,
@@ -329,7 +329,7 @@ class ExportBuilder(object):
             self.GROUP_DELIMITER)
 
     def section_by_name(self, name):
-        matches = filter(lambda s: s['name'] == name, self.sections)
+        matches = [s for s in self.sections if s['name'] == name]
         assert(len(matches) == 1)
         return matches[0]
 
@@ -530,7 +530,7 @@ class ExportBuilder(object):
         for section in self.sections:
             section_name = section['name']
             work_sheet_title = ExportBuilder.get_valid_sheet_name(
-                "_".join(section_name.split("/")), work_sheet_titles.values())
+                "_".join(section_name.split("/")), list(work_sheet_titles.values()))
             work_sheet_titles[section_name] = work_sheet_title
             work_sheets[section_name] = wb.create_sheet(
                 title=work_sheet_title)

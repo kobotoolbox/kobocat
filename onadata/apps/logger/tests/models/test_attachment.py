@@ -38,7 +38,7 @@ class TestAttachment(TestBase):
             self.assertNotEqual(
                 url.find(thumbnail), -1)
             for size in ['small', 'medium', 'large']:
-                thumbnail = '%s-%s.jpg' % (filename, size)
+                thumbnail = f'{filename}-{size}.jpg'
                 self.assertTrue(
                     default_storage.exists(thumbnail))
                 default_storage.delete(thumbnail)
@@ -58,7 +58,7 @@ class TestAttachment(TestBase):
         for attachment in Attachment.objects.filter(instance=self.instance):
             filename = attachment.media_file.name.replace('.jpg', '')
             for size in settings.THUMB_CONF.keys():
-                thumbnail = '%s-%s.jpg' % (filename, size)
+                thumbnail = f'{filename}-{size}.jpg'
                 self.assertTrue(
                     default_storage.exists(thumbnail))
                 self.assertTrue(
