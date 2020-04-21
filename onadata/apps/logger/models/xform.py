@@ -21,15 +21,17 @@ from django.db.models.signals import post_save, post_delete
 from django.utils import timezone
 from django.utils.encoding import smart_text
 from django.utils.translation import ugettext_lazy, ugettext as _
-from guardian.shortcuts import \
-    assign_perm, \
+from guardian.shortcuts import (
+    assign_perm,
     get_perms_for_model
+)
 from taggit.managers import TaggableManager
 
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.xform_instance_parser import XLSFormError
-from onadata.libs.models.base_model import BaseModel
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
+from onadata.libs.models.base_model import BaseModel
+
 
 try:
     from formpack.utils.xls_to_ss_structure import xls_to_dicts
