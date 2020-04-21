@@ -1,18 +1,17 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-import json
 
-import urllib
-import urllib2
+import json
+from urllib.request import Request, urlopen
 
 import gdata
-import gdata.gauth
-import gdata.docs
 import gdata.data
+import gdata.docs
 import gdata.docs.client
 import gdata.docs.data
-
+import gdata.gauth
 from django.conf import settings
+from django.utils.http import urlencode
 
 oauth2_token = gdata.gauth.OAuth2Token(
     client_id=settings.GOOGLE_CLIENT_ID,
@@ -28,15 +27,15 @@ redirect_uri = oauth2_token.generate_authorize_url(
 
 
 def get_refreshed_token(token):
-    data = urllib.urlencode({
+    data = urlencode({
         'client_id': settings.GOOGLE_CLIENT_ID,
         'client_secret': settings.GOOGLE_CLIENT_SECRET,
         'refresh_token': token.refresh_token,
         'grant_type': 'refresh_token'})
-    request = urllib2.Request(
+    request = Request(
         url='https://accounts.google.com/o/oauth2/token',
         data=data)
-    request_open = urllib2.urlopen(request)
+    request_open = urlopen(request)
     response = request_open.read()
     request_open.close()
     tokens = json.loads(response)

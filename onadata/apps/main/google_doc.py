@@ -2,7 +2,7 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import re
-import urllib2
+from urllib.request import urlopen
 
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
@@ -63,7 +63,7 @@ class GoogleDoc(object):
             self.set_html_from_url(url)
 
     def set_html_from_url(self, url):
-        f = urllib2.urlopen(url)
+        f = urlopen(url)
         self.set_html(f.read())
         f.close()
 

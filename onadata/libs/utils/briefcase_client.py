@@ -1,20 +1,20 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
+import logging
+import math
+import mimetypes
 import os
 import time
-import math
-import logging
-import mimetypes
-import requests
-from requests.auth import HTTPDigestAuth
-from urlparse import urljoin
+from cStringIO import StringIO
+from urllib.parse import urljoin
 from xml.parsers.expat import ExpatError
 
-from cStringIO import StringIO
-
+import requests
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from requests.auth import HTTPDigestAuth
 
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.libs.utils.logger_tools import publish_xml_form, publish_form, \

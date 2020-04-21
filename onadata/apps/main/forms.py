@@ -2,13 +2,12 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import re
-import urllib2
-from urlparse import urlparse
+from urllib.request import urlopen
+from urllib.parse import urlparse
 from StringIO import StringIO
 
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
@@ -17,7 +16,6 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.conf import settings
 from recaptcha.client import captcha
 from registration.forms import RegistrationFormUniqueEmail
-from registration.models import RegistrationProfile
 
 from pyxform.xls2json_backends import csv_to_dict
 
@@ -322,7 +320,7 @@ class QuickConverter(QuickConverterFile, QuickConverterURL,
                 cleaned_xls_file = \
                     upload_to(None, cleaned_xls_file, user.username)
                 self.validate(cleaned_url)
-                xls_data = ContentFile(urllib2.urlopen(cleaned_url).read())
+                xls_data = ContentFile(urlopen(cleaned_url).read())
                 cleaned_xls_file = \
                     default_storage.save(cleaned_xls_file, xls_data)
             # publish the xls

@@ -5,7 +5,7 @@ import os
 import re
 import unittest
 from time import time
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 import requests
 from django.conf import settings

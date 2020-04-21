@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 import os.path
 from cStringIO import StringIO
-from urlparse import urljoin
+from urllib.parse import urljoin
 
 import requests
 from django.contrib.auth import authenticate
