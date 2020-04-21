@@ -365,7 +365,7 @@ class Instance(models.Model):
         :rtype: str
         """
         input_string = smart_text(input_string)
-        return sha256(input_string).hexdigest()
+        return sha256(input_string.encode()).hexdigest()
 
     @property
     def point(self):

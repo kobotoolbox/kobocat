@@ -247,7 +247,8 @@ class TestFormMetadata(TestBase):
             data_file=File(open(media_file), name),
             data_file_type='image/png')
         f = open(media_file)
-        media_hash = 'md5:%s' % hashlib.md5(f.read()).hexdigest()
+        md5_hash = hashlib.md5(f.read().encode()).hexdigest()
+        media_hash = f'md5:{md5_hash}'
         f.close()
         meta_hash = m.hash
         self.assertEqual(meta_hash, media_hash)

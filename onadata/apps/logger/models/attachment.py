@@ -27,7 +27,7 @@ def upload_to(attachment, filename):
 
 
 def hash_attachment_contents(contents):
-    return '%s' % md5(contents).hexdigest()
+    return md5(contents.encode()).hexdigest()
 
 
 class Attachment(models.Model):

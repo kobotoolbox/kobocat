@@ -151,8 +151,8 @@ class MetaData(models.Model):
             except IOError:
                 return ''
             else:
-                self.file_hash = 'md5:%s' \
-                    % md5(self.data_file.read()).hexdigest()
+                md5_hash = md5(self.data_file.read().encode()).hexdigest()
+                self.file_hash = f'md5:{md5_hash}'
 
                 return self.file_hash
 

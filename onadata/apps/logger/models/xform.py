@@ -263,7 +263,7 @@ class XForm(BaseModel):
 
     @property
     def hash(self):
-        return '%s' % md5(self.xml.encode('utf8')).hexdigest()
+        return md5(self.xml.encode()).hexdigest()
 
     @property
     def can_be_replaced(self):
