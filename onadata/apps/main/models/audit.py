@@ -33,7 +33,7 @@ class AuditLog(object):
         # check for the created_on key in query and turn its values into dates
         if type(query) == dict and cls.CREATED_ON in query:
             if type(query[cls.CREATED_ON]) is dict:
-                for op, val in query[cls.CREATED_ON].iteritems():
+                for op, val in query[cls.CREATED_ON].items():
                     try:
                         query[cls.CREATED_ON][op] = datetime.strptime(
                             val, DATETIME_FORMAT)

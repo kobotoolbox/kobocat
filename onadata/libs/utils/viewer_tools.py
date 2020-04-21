@@ -193,7 +193,7 @@ def enketo_url(form_url, id_string, instance_xml=None,
             'instance_id': instance_id,
             'return_url': return_url
         })
-        for key, value in instance_attachments.iteritems():
+        for key, value in instance_attachments.items():
             values.update({
                 'instance_attachments[' + key + ']': value
             })

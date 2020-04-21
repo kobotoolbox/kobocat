@@ -188,7 +188,7 @@ class AbstractDataFrameBuilder(object):
     @classmethod
     def _split_gps_fields(cls, record, gps_fields):
         updated_gps_fields = {}
-        for key, value in record.iteritems():
+        for key, value in record.items():
             if key in gps_fields and isinstance(value, string_types):
                 gps_xpaths = DataDictionary.get_additional_geopoint_xpaths(key)
                 gps_parts = dict([(xpath, None) for xpath in gps_xpaths])
@@ -292,7 +292,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
             data = self._format_for_dataframe(cursor)
 
             # write all cursor's data to their respective sheets
-            for section_name, section in self.sections.iteritems():
+            for section_name, section in self.sections.items():
                 records = data[section_name]
                 # TODO: currently ignoring nested repeats
                 # so ignore sections that have 0 records
@@ -335,7 +335,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
                                        self.survey_name)
             parent_index = main_section[self.CURRENT_INDEX_META]
 
-            for sheet_name, section in self.sections.iteritems():
+            for sheet_name, section in self.sections.items():
                 # skip default section i.e survey name
                 if sheet_name != self.survey_name:
                     xpath = section["xpath"]
@@ -521,7 +521,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
                 # for each list check for dict, we want to transform the key of
                 # this dict
                 if type(item) is dict:
-                    for nested_key, nested_val in item.iteritems():
+                    for nested_key, nested_val in item.items():
                         # given the key "children/details" and nested_key/
                         # abbreviated xpath
                         # "children/details/immunization/polio_1",
@@ -617,14 +617,14 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             self._tag_edit_string(record)
             flat_dict = {}
             # re index repeats
-            for key, value in record.iteritems():
+            for key, value in record.items():
                 reindexed = self._reindex(key, value, self.ordered_columns)
                 flat_dict.update(reindexed)
 
             # if delimetr is diferent, replace within record as well
             if self.group_delimiter != DEFAULT_GROUP_DELIMITER:
                 flat_dict = dict((self.group_delimiter.join(k.split('/')), v)
-                                 for k, v in flat_dict.iteritems())
+                                 for k, v in flat_dict.items())
             data.append(flat_dict)
         return data
 
@@ -652,7 +652,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
 
         columns = list(chain.from_iterable(
             [[xpath] if cols is None else cols
-             for xpath, cols in self.ordered_columns.iteritems()]))
+             for xpath, cols in self.ordered_columns.items()]))
 
         # use a different group delimiter if needed
         if self.group_delimiter != DEFAULT_GROUP_DELIMITER:

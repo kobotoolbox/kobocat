@@ -66,7 +66,7 @@ class TestProcess(TestBase):
         """
         Update stuff like submission time so we can compare within out fixtures
         """
-        for uuid, submission_time in self.uuid_to_submission_times.iteritems():
+        for uuid, submission_time in self.uuid_to_submission_times.items():
             xform_instances.update(
                 {UUID: uuid}, {'$set': {SUBMISSION_TIME: submission_time}})
 

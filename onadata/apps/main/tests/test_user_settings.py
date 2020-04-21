@@ -42,7 +42,7 @@ class TestUserSettings(TestBase):
         response = self.client.post(self.settings_url, post_data)
         self.assertEqual(response.status_code, 302)
         self.user = UserProfile.objects.get(pk=self.user.profile.pk).user
-        for key, value in post_data.iteritems():
+        for key, value in post_data.items():
             try:
                 self.assertEqual(self.user.profile.__dict__[key], value)
             except KeyError as e:

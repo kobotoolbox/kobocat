@@ -148,7 +148,7 @@ def dict_to_joined_export(data, index, indices, name):
     output = {}
     # TODO: test for _geolocation and attachment lists
     if isinstance(data, dict):
-        for key, val in data.iteritems():
+        for key, val in data.items():
             if isinstance(val, list) and key not in [NOTES, TAGS]:
                 output[key] = []
                 for child in val:
@@ -162,7 +162,7 @@ def dict_to_joined_export(data, index, indices, name):
                          PARENT_TABLE_NAME: name}
                     # iterate over keys within new_output and append to
                     # main output
-                    for out_key, out_val in new_output.iteritems():
+                    for out_key, out_val in new_output.items():
                         if isinstance(out_val, list):
                             if out_key not in output:
                                 output[out_key] = []
@@ -336,7 +336,7 @@ class ExportBuilder(object):
     @classmethod
     def split_select_multiples(cls, row, select_multiples):
         # for each select_multiple, get the associated data and split it
-        for xpath, choices in select_multiples.iteritems():
+        for xpath, choices in select_multiples.items():
             # get the data matching this xpath
             data = row.get(xpath)
             selections = []
@@ -359,7 +359,7 @@ class ExportBuilder(object):
     @classmethod
     def split_gps_components(cls, row, gps_fields):
         # for each gps_field, get associated data and split it
-        for xpath, gps_components in gps_fields.iteritems():
+        for xpath, gps_components in gps_fields.items():
             data = row.get(xpath)
             if data:
                 gps_parts = data.split()
@@ -369,7 +369,7 @@ class ExportBuilder(object):
 
     @classmethod
     def decode_mongo_encoded_fields(cls, row, encoded_fields):
-        for xpath, encoded_xpath in encoded_fields.iteritems():
+        for xpath, encoded_xpath in encoded_fields.items():
             if row.get(encoded_xpath):
                 val = row.pop(encoded_xpath)
                 row.update({xpath: val})
@@ -377,7 +377,7 @@ class ExportBuilder(object):
 
     @classmethod
     def decode_mongo_encoded_section_names(cls, data):
-        return dict([(MongoHelper.decode(k), v) for k, v in data.iteritems()])
+        return dict([(MongoHelper.decode(k), v) for k, v in data.items()])
 
     @classmethod
     def convert_type(cls, value, data_type):
@@ -484,14 +484,14 @@ class ExportBuilder(object):
 
         # write zipfile
         with ZipFile(path, 'w') as zip_file:
-            for section_name, csv_def in csv_defs.iteritems():
+            for section_name, csv_def in csv_defs.items():
                 csv_file = csv_def['csv_file']
                 csv_file.seek(0)
                 zip_file.write(
                     csv_file.name, "_".join(section_name.split("/")) + ".csv")
 
         # close files when we are done
-        for section_name, csv_def in csv_defs.iteritems():
+        for section_name, csv_def in csv_defs.items():
             csv_def['csv_file'].close()
 
     @classmethod
@@ -690,20 +690,20 @@ class ExportBuilder(object):
                             sav_writer, fields)
             index += 1
 
-        for section_name, sav_def in sav_defs.iteritems():
+        for section_name, sav_def in sav_defs.items():
             sav_def['sav_writer'].closeSavFile(
                 sav_def['sav_writer'].fh, mode='wb')
 
         # write zipfile
         with ZipFile(path, 'w') as zip_file:
-            for section_name, sav_def in sav_defs.iteritems():
+            for section_name, sav_def in sav_defs.items():
                 sav_file = sav_def['sav_file']
                 sav_file.seek(0)
                 zip_file.write(
                     sav_file.name, "_".join(section_name.split("/")) + ".sav")
 
         # close files when we are done
-        for section_name, sav_def in sav_defs.iteritems():
+        for section_name, sav_def in sav_defs.items():
             sav_def['sav_file'].close()
 
 

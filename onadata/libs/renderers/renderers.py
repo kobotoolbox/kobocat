@@ -121,7 +121,7 @@ class XFormListRenderer(BaseRenderer):
                 xml.endElement(self.element_node)
 
         elif isinstance(data, dict):
-            for key, value in six.iteritems(data):
+            for key, value in six.items(data):
                 xml.startElement(key, {})
                 self._to_xml(xml, value)
                 xml.endElement(key)
