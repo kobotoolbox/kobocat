@@ -109,5 +109,5 @@ class TestFormAPIDelete(TestBase):
         cursor = settings.MONGO_DB.instances.find(
             {common_tags.ID: instance.id})
         self.assertEqual(cursor.count(), 1)
-        record = cursor.next()
+        record = next(cursor)
         self.assertIsNotNone(record[common_tags.DELETEDAT])

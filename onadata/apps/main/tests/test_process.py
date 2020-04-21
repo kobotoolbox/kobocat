@@ -250,7 +250,7 @@ class TestProcess(TestBase):
 
         # test to make sure the headers in the actual csv are as expected
         actual_csv = self._get_csv_()
-        self.assertEqual(sorted(actual_csv.next()), sorted(expected_list))
+        self.assertEqual(sorted(next(actual_csv)), sorted(expected_list))
 
     def _check_data_for_csv_export(self):
 
@@ -354,7 +354,7 @@ class TestProcess(TestBase):
         actual_csv = self._get_response_content(response)
         actual_lines = actual_csv.split("\n")
         actual_csv = csv.reader(actual_lines)
-        headers = actual_csv.next()
+        headers = next(actual_csv)
         data = [
             {'meta/instanceID': 'uuid:5b2cc313-fc09-437e-8149-fcd32f695d41',
              '_uuid': '5b2cc313-fc09-437e-8149-fcd32f695d41',

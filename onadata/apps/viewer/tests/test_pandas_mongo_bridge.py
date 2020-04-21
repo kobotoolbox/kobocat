@@ -576,7 +576,7 @@ class TestPandasMongoBridge(TestBase):
         csv_df_builder.export_to(temp_file.name, data_frame_max_size=3)
         csv_file = open(temp_file.name)
         csv_reader = csv.reader(csv_file)
-        header = csv_reader.next()
+        header = next(csv_reader)
         self.assertEqual(
             len(header), 17 + len(AbstractDataFrameBuilder.ADDITIONAL_COLUMNS))
         rows = []

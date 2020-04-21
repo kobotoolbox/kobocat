@@ -23,7 +23,7 @@ class TestAuditLog(TestCase):
         cursor = AuditLog.query_mongo(
             account_user.username, None, None, sort, 0, 1)
         self.assertTrue(cursor.count() > 0)
-        record = cursor.next()
+        record = next(cursor)
         self.assertEqual(record['account'], "alice")
         self.assertEqual(record['user'], "bob")
         self.assertEqual(record['action'], Actions.FORM_PUBLISHED)

@@ -691,7 +691,7 @@ class TestExports(TestBase):
         storage = get_storage_class()()
         csv_file = storage.open(filepath)
         reader = csv.DictReader(csv_file)
-        data = reader.next()
+        data = next(reader)
         csv_file.close()
         return data
 
