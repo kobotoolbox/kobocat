@@ -81,4 +81,4 @@ django-redis-sessions==0.6.1
 redis==3.2.0
 
 # ssrf
--e git+https://github.com/kobotoolbox/ssrf-protect@755efe16694273ce66060a51e04f973dc034ca4e#egg=ssrf_protect
+-e git+https://github.com/kobotoolbox/ssrf-protect@9eec6c4aa37700c6e7ca90540a9407bd20acddb0#egg=ssrf_protect
