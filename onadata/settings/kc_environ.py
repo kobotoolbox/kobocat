@@ -300,5 +300,8 @@ if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
         },
         'options': {'queue': 'kobocat_queue'}
     }
+# ##### END ISSUE 242 FIX ######
 
-###### END ISSUE 242 FIX ######
+SESSION_ENGINE = "redis_sessions.session"
+SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
+

@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import StringIO
+import io
 import base64
 import json
 import re
@@ -353,7 +353,7 @@ def process_incoming_smses(username, incomings,
                 pass
 
         # process_incoming expectes submission to be a file-like object
-        xforms.append(StringIO.StringIO(xml_submission))
+        xforms.append(io.StringIO(xml_submission))
         medias.append(medias_submission)
         json_submissions.append(json_submission)
         xforms_notes.append(notes)

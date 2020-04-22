@@ -18,7 +18,7 @@ from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
 from django.shortcuts import render_to_response
 from django.utils.text import slugify
-from openpyxl.date_time import SharedDate
+from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
@@ -209,7 +209,17 @@ class ExportBuilder(object):
     def string_to_date_with_xls_validation(cls, date_str):
         date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
         try:
-            SharedDate().datetime_to_julian(date_obj)
+            # SharedDate().datetime_to_julian(date_obj)
+            # Copy code from v2.0.5. Could not find where SharedDate is in
+            # latest version of openpyxl (and if it's useful)
+            if isinstance(date, datetime.datetime):
+                to_excel(date)
+            elif isinstance(date, datetime.date):
+                to_excel(date)
+            elif isinstance(date, datetime.time):
+                time_to_days(date)
+            elif isinstance(date, datetime.timedelta):
+                timedelta_to_days(date)
         except ValueError:
             return date_str
         else:

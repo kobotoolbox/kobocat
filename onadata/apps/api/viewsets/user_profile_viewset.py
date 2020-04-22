@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 from django.conf import settings
 from django.contrib.auth.models import User
 from rest_framework import status
-from rest_framework.decorators import action_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -162,7 +162,7 @@ curl -X PATCH -d '{"country": "KE"}' https://example.com/api/v1/profiles/demo \
 
         return obj
 
-    @action_route(detail=True, methods=['POST'])
+    @action(detail=True, methods=['POST'])
     def change_password(self, request, *args, **kwargs):
         user_profile = self.get_object()
         current_password = request.data.get('current_password', None)

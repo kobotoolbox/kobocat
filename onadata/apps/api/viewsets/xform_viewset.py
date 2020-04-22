@@ -14,7 +14,7 @@ from django.utils import six
 from django.utils.translation import ugettext as _
 from rest_framework import exceptions
 from rest_framework import status
-from rest_framework.decorators import action_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ModelViewSet
@@ -715,7 +715,7 @@ data (instance/submission per row)
         # Let the superclass handle updates to the other fields
         return super(XFormViewSet, self).update(request, pk, *args, **kwargs)
 
-    @action_route(detail=True, methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def form(self, request, format='json', **kwargs):
         form = self.get_object()
         if format not in ['json', 'xml', 'xls', 'csv']:
@@ -729,7 +729,7 @@ data (instance/submission per row)
 
         return response
 
-    @action_route(detail=True, methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def enketo(self, request, **kwargs):
         self.object = self.get_object()
         form_url = _get_form_url(request, self.object.user.username)
@@ -762,7 +762,7 @@ data (instance/submission per row)
                                        query,
                                        export_type)
 
-    @action_route(detail=True, methods=['POST'])
+    @action(detail=True, methods=['POST'])
     def csv_import(self, request, *args, **kwargs):
         """
         Endpoint for CSV data imports

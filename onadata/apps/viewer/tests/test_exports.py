@@ -1,10 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import csv
 import datetime
 import json
 import os
-import StringIO
+import io
 import unittest
 from time import sleep
 
@@ -21,7 +22,6 @@ from onadata.apps.viewer.views import delete_export, export_list,\
     create_export, export_progress, export_download
 from onadata.apps.viewer.xls_writer import XlsWriter
 from onadata.apps.viewer.models.export import Export
-from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.logger.models import Instance
 from onadata.apps.viewer.tasks import create_xls_export
@@ -475,7 +475,7 @@ class TestExports(TestBase):
                                   "id_string": self.xform.id_string})
         response = self.client.get(csv_export_url)
         self.assertEqual(response.status_code, 200)
-        f = StringIO.StringIO(self._get_response_content(response))
+        f = io.StringIO(self._get_response_content(response))
         csv_reader = csv.reader(f)
         num_rows = len([row for row in csv_reader])
         f.close()
@@ -508,7 +508,7 @@ class TestExports(TestBase):
                                   "id_string": self.xform.id_string})
         response = self.client.get(csv_export_url)
         self.assertEqual(response.status_code, 200)
-        f = StringIO.StringIO(self._get_response_content(response))
+        f = io.StringIO(self._get_response_content(response))
         csv_reader = csv.DictReader(f)
         data = [row for row in csv_reader]
         f.close()

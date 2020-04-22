@@ -25,7 +25,7 @@ class XlsWriter(object):
         if file_object is not None:
             self._file = file_object
         else:
-            from StringIO import StringIO
+            from io import StringIO
             self._file = StringIO()
 
     def reset_workbook(self):

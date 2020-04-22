@@ -8,7 +8,6 @@ import sys
 import dateutil.parser
 import six
 from django.utils.encoding import smart_str, python_2_unicode_compatible
-from django.utils.encoding import
 from django.utils.translation import ugettext as _
 from django.utils.six import text_type
 from xml.dom import minidom, Node

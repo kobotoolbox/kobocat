@@ -2,7 +2,7 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import re
-import StringIO
+import io
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -75,7 +75,7 @@ def create_instance_from_json(username, request):
     submission_joined = dict_lists2strings(submission)
     xml_string = dict2xform(submission_joined, dict_form.get('id'))
 
-    xml_file = StringIO.StringIO(xml_string)
+    xml_file = io.StringIO(xml_string)
 
     return safe_create_instance(username, xml_file, [], None, request)
 

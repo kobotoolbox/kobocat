@@ -2,7 +2,7 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 from django import forms
 from rest_framework import status
-from rest_framework.decorators import action_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from taggit.forms import TagField
 
@@ -83,7 +83,7 @@ def process_label_request(request, label, instance):
 
 
 class LabelsMixin(object):
-    @action_route(detail=True, methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
+    @action(detail=True, methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
     def labels(self, request, format='json', **kwargs):
         xform = self.get_object()
         label = kwargs.get('label')

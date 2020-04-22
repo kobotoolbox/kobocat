@@ -4,7 +4,7 @@ dj-database-url
 # django-guardian
 django-registration-redux
 django-templated-email
-gdata
+gdata-python3
 httplib2
 modilabs-python-utils
 Pillow
@@ -33,7 +33,7 @@ raven
 
 # new export code relies on
 pandas>=0.12.0
-elaphe
+elaphe3
 # request
 
 # formpack exports
@@ -56,7 +56,9 @@ Markdown
 django-filter
 
 # captcha
-recaptcha-client==1.0.6
+# recaptcha-client==1.0.6
+-e git+https://github.com/dresiu/recaptcha-client-1.0.6-py3@48078f8131e2f3c2054d2099ef48cfe9a5745d0c#egg=recaptcha-client
+
 # unicodecsv==0.9.4
 dpath
 
@@ -92,3 +94,7 @@ django-timezone-field==3.0
 django-celery-beat==1.6.0
 django-oauth-toolkit==1.1.1
 jsonfield==2.1.1
+
+# Added packages
+simplejson
+djangorestframework-guardian

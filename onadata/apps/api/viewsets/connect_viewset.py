@@ -2,7 +2,7 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.decorators import action_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from onadata.apps.api.permissions import ConnectViewsetPermissions
@@ -115,7 +115,7 @@ using the `window.atob();` function.
 
         return Response(serializer.data)
 
-    @action_route(detail=False, methods=['POST'])
+    @action(detail=False, methods=['POST'])
     def reset(self, request, *args, **kwargs):
         context = {'request': request}
         data = request.data if request.data is not None else {}

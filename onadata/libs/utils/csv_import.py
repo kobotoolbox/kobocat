@@ -1,14 +1,16 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-import unicodecsv as ucsv
-import uuid
-import json
 
-import cStringIO
+import json
+import uuid
 from datetime import datetime
+
+import io
+import unicodecsv as ucsv
 from django.contrib.auth.models import User
-from onadata.libs.utils.logger_tools import dict2xml, safe_create_instance
+
 from onadata.apps.logger.models import Instance
+from onadata.libs.utils.logger_tools import dict2xml, safe_create_instance
 
 
 def get_submission_meta_dict(xform, instance_id):
@@ -71,7 +73,7 @@ def submit_csv(username, xform, csv_file):
     :rtype: Dict
     """
     if isinstance(csv_file, (str, unicode)):
-        csv_file = cStringIO.StringIO(csv_file)
+        csv_file = io.StringIO(csv_file)
     elif csv_file is None or not hasattr(csv_file, 'read'):
         return {'error': ('Invalid param type for `csv_file`. '
                           'Expected file or String '
@@ -111,7 +113,7 @@ def submit_csv(username, xform, csv_file):
         row_uuid = row.get('meta').get('instanceID')
         rollback_uuids.append(row_uuid.replace('uuid:', ''))
 
-        xml_file = cStringIO.StringIO(dict2xmlsubmission(row, xform, row_uuid,
+        xml_file = io.StringIO(dict2xmlsubmission(row, xform, row_uuid,
                                       submission_date))
 
         try:

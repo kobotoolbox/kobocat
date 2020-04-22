@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-from cStringIO import StringIO
+from io import StringIO
 from tempfile import NamedTemporaryFile
 
 from PIL import Image
@@ -14,15 +14,17 @@ from onadata.libs.utils.viewer_tools import get_path
 
 
 def flat(*nums):
-    '''Build a tuple of ints from float or integer arguments.
+    """
+    Build a tuple of ints from float or integer arguments.
     Useful because PIL crop and resize require integer points.
     source: https://gist.github.com/16a01455
-    '''
+    """
 
     return tuple(int(round(n)) for n in nums)
 
 
-def get_dimensions((width, height), longest_side):
+def get_dimensions(size_, longest_side):
+    width, height = size_
     if width > height:
         height = (height / width) * longest_side
         width = longest_side

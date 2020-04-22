@@ -11,8 +11,12 @@ shell_command
 #twill
 Werkzeug
 sqlparse
-pytest==3.10
+pytest
 pytest-django
 pytest-env
 mongomock
 mock
+
+
+#python 3
+httmock

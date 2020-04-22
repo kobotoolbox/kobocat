@@ -6,7 +6,7 @@ import math
 import mimetypes
 import os
 import time
-from cStringIO import StringIO
+from io import StringIO
 from urllib.parse import urljoin
 from xml.parsers.expat import ExpatError
 

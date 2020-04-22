@@ -1,8 +1,9 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-# import mock
+
 import os
-from cStringIO import StringIO
+from io import StringIO
+
 from django.conf import settings
 from onadata.libs.utils import csv_import
 from onadata.apps.logger.models import XForm

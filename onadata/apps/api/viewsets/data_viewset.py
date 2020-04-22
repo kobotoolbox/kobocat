@@ -10,7 +10,7 @@ from django.utils import six
 from django.utils.translation import ugettext as _
 
 from rest_framework import status
-from rest_framework.decorators import action_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ParseError, PermissionDenied
@@ -510,7 +510,7 @@ Delete a specific submission in a form
 
         return qs
 
-    @action_route(detail=True, methods=["GET", "PATCH", "DELETE"])
+    @action(detail=True, methods=["GET", "PATCH", "DELETE"])
     def validation_status(self, request, *args, **kwargs):
         """
         View or modify validation status of specific instance.
@@ -542,7 +542,7 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @action_route(detail=True, methods=['GET', 'POST', 'DELETE'],
+    @action(detail=True, methods=['GET', 'POST', 'DELETE'],
                   extra_lookup_fields=['label', ])
     def labels(self, request, *args, **kwargs):
         http_status = status.HTTP_400_BAD_REQUEST
@@ -576,7 +576,7 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @action_route(detail=True, methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def enketo(self, request, *args, **kwargs):
         self.object = self.get_object()
         data = {}

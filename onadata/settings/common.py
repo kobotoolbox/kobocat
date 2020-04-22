@@ -276,7 +276,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'onadata.libs.authentication.DigestAuthentication',
-        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
@@ -564,9 +564,6 @@ DEFAULT_VALIDATION_STATUSES = [
 # It avoids adding the debugger webserver port (i.e. `:8000`) at the end of urls.
 if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
     USE_X_FORWARDED_HOST = True
-
-SESSION_ENGINE = "redis_sessions.session"
-SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
 
 # "Although the setting offers little practical benefit, it's sometimes
 # required by security auditors."

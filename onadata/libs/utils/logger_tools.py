@@ -16,12 +16,15 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
-from django.core.servers.basehttp import FileWrapper
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_delete
-from django.http import HttpResponse, HttpResponseNotFound, \
-    StreamingHttpResponse, Http404
+from django.http import (
+    HttpResponse,
+    HttpResponseNotFound,
+    StreamingHttpResponse,
+    Http404
+)
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.encoding import DjangoUnicodeDecodeError
@@ -31,6 +34,7 @@ from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
 from xml.dom import Node
+from wsgiref.util import FileWrapper
 
 from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
 from onadata.apps.logger.models import Attachment

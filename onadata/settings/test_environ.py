@@ -20,7 +20,7 @@ DATABASES = {
 # Moreover, `apt-get update && apt-get install libsqlite3-mod-spatialite`
 #  should be executed inside the container
 DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
-SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
+SPATIALITE_LIBRARY_PATH = os.environ.get('SPATIALITE_LIBRARY_PATH', 'mod_spatialite')
 
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),

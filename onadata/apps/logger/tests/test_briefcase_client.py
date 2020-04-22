@@ -2,7 +2,7 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os.path
-from cStringIO import StringIO
+from io import StringIO
 from urllib.parse import urljoin
 
 import requests
