@@ -218,8 +218,10 @@ TEMPLATE_DIRS = (
 ANONYMOUS_USER_ID = -1
 
 INSTALLED_APPS = (
-    'django.contrib.auth',
     'django.contrib.contenttypes',
+    # Always put `contenttypes` before `auth`; see
+    # https://code.djangoproject.com/ticket/10827
+    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',

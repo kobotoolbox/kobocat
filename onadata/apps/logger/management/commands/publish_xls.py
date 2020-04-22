@@ -2,7 +2,6 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os
-from optparse import make_option
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
@@ -19,11 +18,11 @@ class Command(BaseCommand):
     help = ugettext_lazy("Publish an XLS file with the option of replacing an"
                          "existing one")
 
-    option_list = BaseCommand.option_list + (
-        make_option('-r', '--replace',
-                    action='store_true',
-                    dest='replace',
-                    help=ugettext_lazy("Replace existing form if any")),)
+    def add_arguments(self, parser):
+        parser.add_argument('-r', '--replace',
+                            action='store_true',
+                            dest='replace',
+                            help=ugettext_lazy("Replace existing form if any"))
 
     def handle(self, *args, **options):
         try:

@@ -19,7 +19,7 @@ from onadata.libs.utils.google import oauth2_token, get_refreshed_token,\
 
 def google_oauth2_request(request):
     token = None
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         try:
             ts = TokenStorageModel.objects.get(id=request.user)
         except TokenStorageModel.DoesNotExist:
@@ -50,7 +50,7 @@ def google_oauth2_request(request):
 def google_auth_return(request):
     if 'code' not in request.REQUEST:
         return HttpResponse("Invalid Request")
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         try:
             ts = TokenStorageModel.objects.get(id=request.user)
         except TokenStorageModel.DoesNotExist:
@@ -69,7 +69,7 @@ def google_auth_return(request):
 
 def refresh_access_token(token, user):
     token = get_refreshed_token(token)
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         return token
     try:
         ts = TokenStorageModel.objects.get(id=user)

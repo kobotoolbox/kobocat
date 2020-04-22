@@ -66,7 +66,7 @@ A `GET` request will return the list of notes applied to a data point.
 
     def get_queryset(self):
         # Allows users to see only notes of instances they're allowed to see
-        if self.request.user.is_anonymous():
+        if self.request.user.is_anonymous:
             user_id = settings.ANONYMOUS_USER_ID
         else:
             user_id = self.request.user.pk

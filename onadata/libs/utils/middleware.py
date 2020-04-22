@@ -82,6 +82,6 @@ class UsernameInResponseHeaderMiddleware(object):
             user = request.user
         except AttributeError:
             return response
-        if user.is_authenticated():
+        if user.is_authenticated:
             response['X-KoBoNaUt'] = request.user.username
         return response

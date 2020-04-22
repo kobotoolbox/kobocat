@@ -2,9 +2,10 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import re
+from StringIO import StringIO
 from urllib.request import urlopen
 from urllib.parse import urlparse
-from StringIO import StringIO
+
 
 from django import forms
 from django.contrib.auth.models import User

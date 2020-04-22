@@ -38,7 +38,7 @@ REDIRECT_IF_NOT_LOGGED_IN = [
 class ConditionalRedirects(object):
     def process_view(self, request, view, args, kwargs):
         view_name = view.__name__
-        is_logged_in = request.user.is_authenticated()
+        is_logged_in = request.user.is_authenticated
         login_url = reverse('auth_login')
 
         if koboform.active and koboform.autoredirect:

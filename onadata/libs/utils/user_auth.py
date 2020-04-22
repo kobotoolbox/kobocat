@@ -108,7 +108,7 @@ def get_xform_and_perms(username, id_string, request):
 
 
 def helper_auth_helper(request):
-    if request.user and request.user.is_authenticated():
+    if request.user and request.user.is_authenticated:
         return None
         # source, http://djangosnippets.org/snippets/243/
     if 'HTTP_AUTHORIZATION' in request.META:

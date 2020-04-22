@@ -4,7 +4,6 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import csv
-from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext_lazy
@@ -15,12 +14,14 @@ from onadata.libs.utils.model_tools import update_xform_uuid
 
 
 class Command(BaseCommand):
-    help = ugettext_lazy(
-        "Use a csv file with username, id_string and new_uuid to set new uuids"
-    )
-    option_list = BaseCommand.option_list + (
-        make_option('-f', '--file',
-                    help=ugettext_lazy("Path to csv file")),)
+
+    help = ugettext_lazy("Use a csv file with username, "
+                         "id_string and new_uuid to set new uuids")
+
+    def add_arguments(self, parser):
+
+        parser.add_argument('-f', '--file',
+                            help=ugettext_lazy("Path to csv file"))
 
     def handle(self, *args, **kwargs):
         # all options are required

@@ -117,7 +117,7 @@ class TestAbstractViewSet(TestCase):
         # `auth_permission`.  Without this, actions
         # on individual instances are immediately denied and object-level permissions
         # are never considered.
-        if user.is_anonymous():
+        if user.is_anonymous:
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
         user.user_permissions = Permission.objects.all()
         if save:

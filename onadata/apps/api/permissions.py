@@ -120,7 +120,7 @@ class HasXFormObjectPermissionMixin(object):
         perms = self.get_required_permissions(request.method, model_cls)
 
         if (request.user and
-                (request.user.is_authenticated() or
+                (request.user.is_authenticated or
                  not self.authenticated_users_only) and
                 request.user.has_perms(perms)):
 

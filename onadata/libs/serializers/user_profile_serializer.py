@@ -117,7 +117,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
         new_user.save()
 
         created_by = self.context['request'].user
-        created_by = None if created_by.is_anonymous() else created_by
+        created_by = None if created_by.is_anonymous else created_by
         profile = UserProfile.objects.create(
             user=new_user, name=validated_data.get('name', ''),
             created_by=created_by,

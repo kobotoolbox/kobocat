@@ -1,7 +1,6 @@
+#!/usr/bin/env python
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-#!/usr/bin/env python
-from optparse import make_option
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
@@ -15,19 +14,26 @@ class Command(BaseCommand):
     args = '[username] [id_string]'
     help = ugettext_lazy("Check the count of submissions in sqlite vs the "
                          "mongo db per form and optionally run remongo.")
-    option_list = BaseCommand.option_list + (make_option(
-        '-r', '--remongo',
-        action='store_true',
-        dest='remongo',
-        default=False,
-        help=ugettext_lazy("Whether to run remongo on the found set.")),
-        make_option(
-            '-a', '--all', action='store_true', dest='update_all',
-            default=False, help=ugettext_lazy(
-                "Update all instances for the selected "
-                "form(s), including existing ones. "
-                "Will delete and re-create mongo records. "
-                "Only makes sense when used with the -r option")))
+
+    def add_arguments(self, parser):
+
+        parser.add_argument('-r', '--remongo',
+                            action='store_true',
+                            dest='remongo',
+                            default=False,
+                            help=ugettext_lazy("Whether to run remongo on the "
+                                               "found set.")
+                            )
+
+        parser.add_argument('-a', '--all',
+                            action='store_true', dest='update_all',
+                            default=False,
+                            help=ugettext_lazy(
+                                "Update all instances for the selected "
+                                "form(s), including existing ones. "
+                                "Will delete and re-create mongo records. "
+                                "Only makes sense when used with the -r option")
+                            )
 
     def handle(self, *args, **kwargs):
         user = xform = None

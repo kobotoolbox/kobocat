@@ -3,15 +3,111 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 from django.conf.urls import patterns, include, url
 from django.conf import settings
+from django.contrib import admin
 from django.views.generic import RedirectView
+from django.views.i18n import JavaScriptCatalog
 
 from onadata.apps.api.urls import router, router_with_patch_list
 from onadata.apps.api.urls import XFormListApi
 from onadata.apps.api.urls import XFormSubmissionApi
 from onadata.apps.api.urls import BriefcaseApi
+from onadata.apps.main.service_health import service_health
 
-# Uncomment the next two lines to enable the admin:
-from django.contrib import admin
+from onadata.apps.main.views import (
+    # main website views
+    home,
+    tutorial,
+    about_us,
+    getting_started,
+    faq,
+    syntax,
+    privacy,
+    tos,
+    resources,
+    form_gallery,
+    members_list,
+    xls2xform,
+    support,
+    login_redirect,
+    username_list,
+    profile,
+    public_profile,
+    profile_settings,
+    clone_xlsform,
+    activity,
+    activity_api,
+    activity_fields,
+    api_token,
+
+    # form specific
+    show,
+    qrcode,
+    api,
+    public_api,
+    delete_data,
+    edit,
+    set_perm,
+    form_photos,
+    download_metadata,
+    delete_metadata,
+    download_media_data,
+    update_xform,
+    enketo_preview,
+    show_form_settings
+)
+
+# exporting stuff
+from onadata.apps.viewer.views import (
+    attachment_url,
+    data_export,
+    google_xls_export,
+    map_embed_view,
+    map_view,
+    instance,
+    add_submission_with,
+    thank_you_submission,
+    data_view,
+    create_export,
+    delete_export,
+    export_progress,
+    export_list,
+    export_download,
+    kml_export
+)
+from onadata.apps.logger.views import (
+    enter_data,
+    edit_data,
+    bulksubmission,
+    bulksubmission_form,
+    download_xform,
+    download_xlsform,
+    download_jsonform,
+    delete_xform,
+    toggle_downloadable
+)
+
+# SMS support
+from onadata.apps.sms_support.providers import (
+    import_submission_for_form,
+    import_submission
+)
+from onadata.apps.sms_support.views import (
+    import_submission_for_form as view_import_submission_for_form,
+    import_multiple_submissions_for_form,
+    import_multiple_submissions,
+    import_submission as view_import_submission
+)
+# Statistics for superusers. The username is irrelevant, but leave it as
+# the first part of the path to avoid collisions
+from onadata.apps.logger.views import (
+    superuser_stats,
+    retrieve_superuser_stats
+)
+
+from onadata.apps.main.google_export import (
+    google_auth_return,
+    google_oauth2_request
+)
 
 admin.autodiscover()
 
@@ -21,8 +117,7 @@ urlpatterns = patterns(
     (r'^i18n/', include('django.conf.urls.i18n')),
     url('^api/v1/', include(router.urls)),
     url('^api/v1/', include(router_with_patch_list.urls)),
-    url(r'^service_health/$',
-        'onadata.apps.main.service_health.service_health'),
+    url(r'^service_health/$', service_health),
     url(r'^api-docs/', RedirectView.as_view(url='/api/v1/')),
     url(r'^api/', RedirectView.as_view(url='/api/v1/')),
     url(r'^api/v1', RedirectView.as_view(url='/api/v1/')),
@@ -36,90 +131,87 @@ urlpatterns = patterns(
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
     # google urls
-    url(r'^gauthtest/$',
-        'onadata.apps.main.google_export.google_oauth2_request',
-        name='google-auth'),
-    url(r'^gwelcome/$',
-        'onadata.apps.main.google_export.google_auth_return',
-        name='google-auth-welcome'),
+    url(r'^gauthtest/$', google_oauth2_request, name='google-auth'),
+    url(r'^gwelcome/$', google_auth_return, name='google-auth-welcome'),
 
     # main website views
-    url(r'^$', 'onadata.apps.main.views.home'),
-    url(r'^tutorial/$', 'onadata.apps.main.views.tutorial', name='tutorial'),
-    url(r'^about-us/$', 'onadata.apps.main.views.about_us', name='about-us'),
-    url(r'^getting_started/$', 'onadata.apps.main.views.getting_started',
+    url(r'^$', home),
+    url(r'^tutorial/$', tutorial, name='tutorial'),
+    url(r'^about-us/$', about_us, name='about-us'),
+    url(r'^getting_started/$', getting_started,
         name='getting_started'),
-    url(r'^faq/$', 'onadata.apps.main.views.faq', name='faq'),
-    url(r'^syntax/$', 'onadata.apps.main.views.syntax', name='syntax'),
-    url(r'^privacy/$', 'onadata.apps.main.views.privacy', name='privacy'),
-    url(r'^tos/$', 'onadata.apps.main.views.tos', name='tos'),
-    url(r'^resources/$', 'onadata.apps.main.views.resources',
+    url(r'^faq/$', faq, name='faq'),
+    url(r'^syntax/$', syntax, name='syntax'),
+    url(r'^privacy/$', privacy, name='privacy'),
+    url(r'^tos/$', tos, name='tos'),
+    url(r'^resources/$', resources,
         name='resources'),
-    url(r'^forms/$', 'onadata.apps.main.views.form_gallery',
+    url(r'^forms/$', form_gallery,
         name='forms_list'),
-    url(r'^forms/(?P<uuid>[^/]+)$', 'onadata.apps.main.views.show'),
-    url(r'^people/$', 'onadata.apps.main.views.members_list'),
-    url(r'^xls2xform/$', 'onadata.apps.main.views.xls2xform'),
-    url(r'^support/$', 'onadata.apps.main.views.support'),
-    url(r'^login_redirect/$', 'onadata.apps.main.views.login_redirect'),
+    url(r'^forms/(?P<uuid>[^/]+)$', show),
+    url(r'^people/$', members_list),
+    url(r'^xls2xform/$', xls2xform),
+    url(r'^support/$', support),
+    url(r'^login_redirect/$', login_redirect),
     # Bring back old url because it's still used by `kpi`
     # ToDo Remove when `kpi#gallery-2` is merged into master
-    url(r"^attachment/$", 'onadata.apps.viewer.views.attachment_url'),
+    url(r"^attachment/$", attachment_url),
     url(r"^attachment/(?P<size>[^/]+)$",
-        'onadata.apps.viewer.views.attachment_url'),
-    url(r"^{}$".format(settings.MEDIA_URL.lstrip('/')), 'onadata.apps.viewer.views.attachment_url'),
+        attachment_url),
+    url(r"^{}$".format(settings.MEDIA_URL.lstrip('/')), attachment_url),
     url(r"^{}(?P<size>[^/]+)$".format(settings.MEDIA_URL.lstrip('/')),
-        'onadata.apps.viewer.views.attachment_url'),
-    url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog',
-        {'packages': ('main', 'viewer',)}),
-    url(r'^typeahead_usernames', 'onadata.apps.main.views.username_list',
+        attachment_url),
+    url(r'^jsi18n/$', JavaScriptCatalog.as_view(),
+        {'packages': ('main', 'viewer',)},
+        name='javascript-catalog'),
+    url(r'^typeahead_usernames', username_list,
         name='username_list'),
     url(r'^(?P<username>[^/]+)/$',
-        'onadata.apps.main.views.profile', name='user_profile'),
+        profile, name='user_profile'),
     url(r'^(?P<username>[^/]+)/profile$',
-        'onadata.apps.main.views.public_profile',
+        public_profile,
         name='public_profile'),
     url(r'^(?P<username>[^/]+)/settings',
-        'onadata.apps.main.views.profile_settings'),
+        profile_settings),
     url(r'^(?P<username>[^/]+)/cloneform$',
-        'onadata.apps.main.views.clone_xlsform'),
+        clone_xlsform),
     url(r'^(?P<username>[^/]+)/activity$',
-        'onadata.apps.main.views.activity'),
+        activity),
     url(r'^(?P<username>[^/]+)/activity/api$',
-        'onadata.apps.main.views.activity_api'),
-    url(r'^activity/fields$', 'onadata.apps.main.views.activity_fields'),
+        activity_api),
+    url(r'^activity/fields$', activity_fields),
     url(r'^(?P<username>[^/]+)/api-token$',
-        'onadata.apps.main.views.api_token'),
+        api_token),
 
     # form specific
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)$',
-        'onadata.apps.main.views.show'),
+        show),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/qrcode$',
-        'onadata.apps.main.views.qrcode', name='get_qrcode'),
+        qrcode, name='get_qrcode'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/api$',
-        'onadata.apps.main.views.api', name='mongo_view_api'),
+        api, name='mongo_view_api'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/public_api$',
-        'onadata.apps.main.views.public_api', name='public_api'),
+        public_api, name='public_api'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delete_data$',
-        'onadata.apps.main.views.delete_data', name='delete_data'),
+        delete_data, name='delete_data'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/edit$',
-        'onadata.apps.main.views.edit'),
+        edit),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/perms$',
-        'onadata.apps.main.views.set_perm'),
+        set_perm),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/photos',
-        'onadata.apps.main.views.form_photos'),
+        form_photos),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/doc/(?P<data_id>\d+)'
-        '', 'onadata.apps.main.views.download_metadata'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delete-doc/(?P<data_'
-        'id>\d+)', 'onadata.apps.main.views.delete_metadata'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/(?P<dat'
-        'a_id>\d+)', 'onadata.apps.main.views.download_media_data'),
+        '', download_metadata),
+    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delete-doc/'
+        r'(?P<data_id>\d+)', delete_metadata),
+    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/'
+        r'(?P<data_id>\d+)', download_media_data),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/update$',
-        'onadata.apps.main.views.update_xform'),
+        update_xform),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/preview$',
-        'onadata.apps.main.views.enketo_preview'),
+        enketo_preview),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/form_settings$',
-        'onadata.apps.main.views.show_form_settings', name='show_form_settings'),
+        show_form_settings, name='show_form_settings'),
 
     # briefcase api urls
     url(r"^(?P<username>\w+)/view/submissionList$",
@@ -137,50 +229,50 @@ urlpatterns = patterns(
 
     # exporting stuff
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.csv$",
-        'onadata.apps.viewer.views.data_export', name='csv_export',
+        data_export, name='csv_export',
         kwargs={'export_type': 'csv'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.xls",
-        'onadata.apps.viewer.views.data_export', name='xls_export',
+        data_export, name='xls_export',
         kwargs={'export_type': 'xls'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.csv.zip",
-        'onadata.apps.viewer.views.data_export', name='csv_zip_export',
+        data_export, name='csv_zip_export',
         kwargs={'export_type': 'csv_zip'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.sav.zip",
-        'onadata.apps.viewer.views.data_export', name='sav_zip_export',
+        data_export, name='sav_zip_export',
         kwargs={'export_type': 'sav_zip'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
-        'onadata.apps.viewer.views.kml_export'),
+        kml_export),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/gdocs$",
-        'onadata.apps.viewer.views.google_xls_export'),
+        google_xls_export),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/map_embed",
-        'onadata.apps.viewer.views.map_embed_view'),
+        map_embed_view),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/map",
-        'onadata.apps.viewer.views.map_view'),
+        map_view),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/instance",
-        'onadata.apps.viewer.views.instance'),
+        instance),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/enter-data",
-        'onadata.apps.logger.views.enter_data', name='enter_data'),
+        enter_data, name='enter_data'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/add-submission-with",
-        'onadata.apps.viewer.views.add_submission_with',
+        add_submission_with,
         name='add_submission_with'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/thank_you_submission",
-        'onadata.apps.viewer.views.thank_you_submission',
+        thank_you_submission,
         name='thank_you_submission'),
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/edit-data/(?P<data_id>"
-        "\d+)$", 'onadata.apps.logger.views.edit_data', name='edit_data'),
+    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/edit-data/"
+        r"(?P<data_id>\d+)$", edit_data, name='edit_data'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/view-data",
-        'onadata.apps.viewer.views.data_view'),
+        data_view),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/new$", 'onadata.apps.viewer.views.create_export'),
+        "/new$", create_export),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/delete$", 'onadata.apps.viewer.views.delete_export'),
+        "/delete$", delete_export),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/progress$", 'onadata.apps.viewer.views.export_progress'),
+        "/progress$", export_progress),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/$", 'onadata.apps.viewer.views.export_list'),
+        "/$", export_list),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
         "/(?P<filename>[^/]+)$",
-        'onadata.apps.viewer.views.export_download'),
+        export_download),
     url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
 
     url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),
@@ -200,59 +292,59 @@ urlpatterns = patterns(
         XFormListApi.as_view({'get': 'manifest'}),
         name='manifest-url'),
     url(r"^(?P<username>\w+)/xformsMedia/(?P<pk>[\d+^/]+)"
-        "/(?P<metadata>[\d+^/.]+)$",
+        r"/(?P<metadata>[\d+^/.]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^(?P<username>\w+)/xformsMedia/(?P<pk>[\d+^/]+)"
-        "/(?P<metadata>[\d+^/.]+)\.(?P<format>[a-z0-9]+)$",
+        r"/(?P<metadata>[\d+^/.]+)\.(?P<format>[a-z0-9]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^xformsMedia/(?P<pk>[\d+^/]+)/(?P<metadata>[\d+^/.]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^xformsMedia/(?P<pk>[\d+^/]+)/(?P<metadata>[\d+^/.]+)\."
-        "(?P<format>[a-z0-9]+)$",
+        r"(?P<format>[a-z0-9]+)$",
         XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     url(r"^(?P<username>\w+)/submission$",
         XFormSubmissionApi.as_view({'post': 'create', 'head': 'create'}),
         name='submissions'),
     url(r"^(?P<username>\w+)/bulk-submission$",
-        'onadata.apps.logger.views.bulksubmission'),
+        bulksubmission),
     url(r"^(?P<username>\w+)/bulk-submission-form$",
-        'onadata.apps.logger.views.bulksubmission_form'),
+        bulksubmission_form),
     url(r"^(?P<username>\w+)/forms/(?P<pk>[\d+^/]+)/form\.xml$",
         XFormListApi.as_view({'get': 'retrieve'}),
         name="download_xform"),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/form\.xml$",
-        'onadata.apps.logger.views.download_xform', name="download_xform"),
+        download_xform, name="download_xform"),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/form\.xls$",
-        'onadata.apps.logger.views.download_xlsform',
+        download_xlsform,
         name="download_xlsform"),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/form\.json",
-        'onadata.apps.logger.views.download_jsonform',
+        download_jsonform,
         name="download_jsonform"),
     url(r"^(?P<username>\w+)/delete/(?P<id_string>[^/]+)/$",
-        'onadata.apps.logger.views.delete_xform'),
+        delete_xform),
     url(r"^(?P<username>\w+)/(?P<id_string>[^/]+)/toggle_downloadable/$",
-        'onadata.apps.logger.views.toggle_downloadable'),
+        toggle_downloadable),
 
     # SMS support
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_submission/(?P<s'
-        'ervice>[a-z]+)/?$',
-        'onadata.apps.sms_support.providers.import_submission_for_form',
+    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_submission/'
+        r'(?P<service>[a-z]+)/?$',
+        import_submission_for_form,
         name='sms_submission_form_api'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_submission$',
-        'onadata.apps.sms_support.views.import_submission_for_form',
+        view_import_submission_for_form,
         name='sms_submission_form'),
     url(r"^(?P<username>[^/]+)/sms_submission/(?P<service>[a-z]+)/?$",
-        'onadata.apps.sms_support.providers.import_submission',
+        import_submission,
         name='sms_submission_api'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_multiple_submiss'
-        'ions$',
-        'onadata.apps.sms_support.views.import_multiple_submissions_for_form',
+    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/'
+        r'sms_multiple_submissions$',
+        import_multiple_submissions_for_form,
         name='sms_submissions_form'),
     url(r"^(?P<username>[^/]+)/sms_multiple_submissions$",
-        'onadata.apps.sms_support.views.import_multiple_submissions',
+        import_multiple_submissions,
         name='sms_submissions'),
     url(r"^(?P<username>[^/]+)/sms_submission$",
-        'onadata.apps.sms_support.views.import_submission',
+        view_import_submission,
         name='sms_submission'),
 
     # static media
@@ -266,10 +358,9 @@ urlpatterns = patterns(
     # Statistics for superusers. The username is irrelevant, but leave it as
     # the first part of the path to avoid collisions
     url(r"^(?P<username>[^/]+)/superuser_stats/$",
-        'onadata.apps.logger.views.superuser_stats'),
+        superuser_stats),
     url(r"^(?P<username>[^/]+)/superuser_stats/(?P<base_filename>[^/]+)$",
-        'onadata.apps.logger.views.retrieve_superuser_stats'),
-
+        retrieve_superuser_stats),
 )
 
 urlpatterns += patterns('django.contrib.staticfiles.views',

@@ -180,7 +180,7 @@ def add_submission_with(request, username, id_string):
     import uuid
     import requests
 
-    from django.template import loader, Context
+    from django.template import loader
     from dpath import util as dpath_util
     from dict2xml import dict2xml
 
@@ -200,8 +200,7 @@ def add_submission_with(request, username, id_string):
     context = {'username': username,
                'id_string': id_string,
                'xml_content': dict2xml(xml_dict)}
-    instance_xml = loader.get_template("instance_add.xml")\
-        .render(Context(context))
+    instance_xml = loader.get_template("instance_add.xml").render(context)
 
     url = settings.ENKETO_API_INSTANCE_IFRAME_URL
     return_url = reverse('thank_you_submission',
@@ -357,7 +356,7 @@ def create_export(request, username, id_string, export_type):
 
 def _get_google_token(request, redirect_to_url):
     token = None
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         try:
             ts = TokenStorageModel.objects.get(id=request.user)
         except TokenStorageModel.DoesNotExist:
@@ -575,7 +574,7 @@ def kml_export(request, username, id_string):
 
 def google_xls_export(request, username, id_string):
     token = None
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         try:
             ts = TokenStorageModel.objects.get(id=request.user)
         except TokenStorageModel.DoesNotExist:
@@ -682,7 +681,7 @@ def attachment_url(request, size='medium'):
         # the url
         xform = attachment.instance.xform
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             # This is not a DRF view, but we need to honor things like
             # `DigestAuthentication` (ODK Briefcase uses it!) and
             # `TokenAuthentication`. Let's try all the DRF authentication

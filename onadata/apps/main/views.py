@@ -165,7 +165,7 @@ def profile(request, username):
     data = {'form': form}
 
     # xlsform submission...
-    if request.method == 'POST' and request.user.is_authenticated():
+    if request.method == 'POST' and request.user.is_authenticated:
         def set_form():
             form = QuickConverter(request.POST, request.FILES)
             survey = form.publish(request.user).survey
@@ -865,7 +865,7 @@ def form_gallery(request):
     made a lot prettier.
     """
     data = {}
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         data['loggedin_user'] = request.user
     data['shared_forms'] = XForm.objects.filter(shared=True)
     # build list of shared forms with cloned suffix

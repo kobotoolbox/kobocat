@@ -5,7 +5,7 @@ import base64
 import os
 import re
 import socket
-from cStringIO import StringIO
+from io import StringIO
 from urllib.request import urlopen
 from urllib.error import URLError
 from tempfile import NamedTemporaryFile
@@ -52,7 +52,7 @@ class TestBase(TestCase):
         # `auth_permission`.  Without this, actions
         # on individual instances are immediately denied and object-level permissions
         # are never considered.
-        if user.is_anonymous():
+        if user.is_anonymous:
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
         user.user_permissions = Permission.objects.all()
         if save:
