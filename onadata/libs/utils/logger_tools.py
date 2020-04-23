@@ -28,7 +28,6 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.encoding import DjangoUnicodeDecodeError
-from django.utils.six import text_type
 from django.utils.translation import ugettext as _
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
@@ -462,7 +461,7 @@ def publish_form(callback):
     except (PyXFormError, XLSFormError) as e:
         return {
             'type': 'alert-error',
-            'text': text_type(e)
+            'text': str(e)
         }
     except IntegrityError as e:
         return {
@@ -479,7 +478,7 @@ def publish_form(callback):
         # form.publish returned None, not sure why...
         return {
             'type': 'alert-error',
-            'text': text_type(e)
+            'text': str(e)
         }
     except ProcessTimedOut as e:
         # catch timeout errors
@@ -494,13 +493,13 @@ def publish_form(callback):
         # ODK validation errors are vanilla errors and it masks a lot of regular
         # errors if we try to catch it so let's catch it, BUT reraise it
         # if we don't see typical ODK validation error messages in it.
-        if "ODK Validate Errors" not in e.message:
+        if "ODK Validate Errors" not in str(e):
             raise
 
         # error in the XLS file; show an error to the user
         return {
             'type': 'alert-error',
-            'text': text_type(e)
+            'text': str(e)
         }
 
 

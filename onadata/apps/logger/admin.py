@@ -18,4 +18,5 @@ class FormAdmin(admin.ModelAdmin):
             return qs
         return qs.filter(user=request.user)
 
+
 admin.site.register(XForm, FormAdmin)

@@ -34,12 +34,15 @@ class MultiLookupRouter(routers.DefaultRouter):
                 'delete': 'destroy'
             },
             name='{basename}-detail',
+            detail=True,
             initkwargs={'suffix': 'Instance'}
         ))
         self.lookups_routes.append(self.make_routes('lookup'))
         self.lookups_routes.append(self.make_routes('lookups'))
         # Dynamically generated routes.
         # Generated using @action or @link decorators on methods of the viewset
+
+        # FIXME find out with what value `detail` should be set
         self.lookups_routes.append(routers.Route(
             url=[
                 r'^{prefix}/{lookups}/{methodname}{trailing_slash}$',
@@ -48,6 +51,7 @@ class MultiLookupRouter(routers.DefaultRouter):
                 '{httpmethod}': '{methodname}',
             },
             name='{basename}-{methodnamehyphen}',
+            detail=True,
             initkwargs={}
         ))
 
@@ -60,10 +64,10 @@ class MultiLookupRouter(routers.DefaultRouter):
                 'post': 'create'
             },
             name='{basename}-list',
+            detail=False,
             initkwargs={'suffix': 'List'})
 
     def get_extra_lookup_regexes(self, route):
-
 
         ret = []
         base_regex = '(?P<{lookup_field}>[^/]+)'
@@ -74,7 +78,6 @@ class MultiLookupRouter(routers.DefaultRouter):
 
     def get_lookup_regexes(self, viewset):
         ret = []
-
 
         lookup_fields = getattr(viewset, 'lookup_fields', None)
         if lookup_fields:
@@ -112,13 +115,20 @@ class MultiLookupRouter(routers.DefaultRouter):
                     if 'extra_lookup_fields' in initkwargs:
                         uri = route.url[1]
                         uri = routers.replace_methodname(uri, methodname)
+
+                        # FIXME routers.Route() expects `detail` parameter
                         ret.append(routers.Route(
-                            url=uri, mapping=mapping, name='%s-extra' % name,
+                            url=uri,
+                            mapping=mapping,
+                            name='%s-extra' % name,
                             initkwargs=initkwargs,
                         ))
                     uri = routers.replace_methodname(route.url[0], methodname)
+                    # FIXME routers.Route() expects `detail` parameter
                     ret.append(routers.Route(
-                        url=uri, mapping=mapping, name=name,
+                        url=uri,
+                        mapping=mapping,
+                        name=name,
                         initkwargs=initkwargs,
                     ))
             else:
@@ -365,6 +375,7 @@ class MultiLookupRouterWithPatchList(MultiLookupRouter):
                 'delete': 'bulk_delete'
             },
             name='{basename}-list',
+            detail=False,
             initkwargs={'suffix': 'List'})
 
 
@@ -373,13 +384,13 @@ router.register(r'users', UserViewSet)
 router.register(r'user', ConnectViewSet)
 router.register(r'profiles', UserProfileViewSet)
 router.register(r'forms', XFormViewSet)
-router.register(r'notes', NoteViewSet, base_name='notes')
-router.register(r'metadata', MetaDataViewSet, base_name='metadata')
-router.register(r'media', AttachmentViewSet, base_name='attachment')
-router.register(r'formlist', XFormListApi, base_name='formlist')
-router.register(r'submissions', XFormSubmissionApi, base_name='submissions')
-router.register(r'briefcase', BriefcaseApi, base_name='briefcase')
+router.register(r'notes', NoteViewSet, basename='notes')
+router.register(r'metadata', MetaDataViewSet, basename='metadata')
+router.register(r'media', AttachmentViewSet, basename='attachment')
+router.register(r'formlist', XFormListApi, basename='formlist')
+router.register(r'submissions', XFormSubmissionApi, basename='submissions')
+router.register(r'briefcase', BriefcaseApi, basename='briefcase')
 
 
 router_with_patch_list = MultiLookupRouterWithPatchList(trailing_slash=False)
-router_with_patch_list.register(r'data', DataViewSet, base_name='data')
+router_with_patch_list.register(r'data', DataViewSet, basename='data')

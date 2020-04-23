@@ -1,11 +1,13 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.staticfiles.views import serve
 from django.views.generic import RedirectView
 from django.views.i18n import JavaScriptCatalog
+
 
 from onadata.apps.api.urls import router, router_with_patch_list
 from onadata.apps.api.urls import XFormListApi
@@ -111,10 +113,10 @@ from onadata.apps.main.google_export import (
 
 admin.autodiscover()
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
+    # url('') # Same as `url(r'^$', home)`?
     # change Language
-    (r'^i18n/', include('django.conf.urls.i18n')),
+    url(r'^i18n/', include('django.conf.urls.i18n')),
     url('^api/v1/', include(router.urls)),
     url('^api/v1/', include(router_with_patch_list.urls)),
     url(r'^service_health/$', service_health),
@@ -263,18 +265,17 @@ urlpatterns = patterns(
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/view-data",
         data_view),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/new$", create_export),
+        r"/new$", create_export),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/delete$", delete_export),
+        r"/delete$", delete_export),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/progress$", export_progress),
+        r"/progress$", export_progress),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/$", export_list),
+        r"/$", export_list),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
-        "/(?P<filename>[^/]+)$",
+        r"/(?P<filename>[^/]+)$",
         export_download),
-    url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
-
+    #url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
     url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),
 
     # odk data urls
@@ -351,6 +352,7 @@ urlpatterns = patterns(
     # Media are now served by NginX.
     # url(r'^media/(?P<path>.*)$', 'django.views.static.serve',
     #    {'document_root': settings.MEDIA_ROOT}),
+    url(r'^static/(?P<path>.*)$', serve),
 
     url(r'^favicon\.ico',
         RedirectView.as_view(url='/static/images/favicon.ico')),
@@ -361,7 +363,4 @@ urlpatterns = patterns(
         superuser_stats),
     url(r"^(?P<username>[^/]+)/superuser_stats/(?P<base_filename>[^/]+)$",
         retrieve_superuser_stats),
-)
-
-urlpatterns += patterns('django.contrib.staticfiles.views',
-                        url(r'^static/(?P<path>.*)$', 'serve'))
+]
