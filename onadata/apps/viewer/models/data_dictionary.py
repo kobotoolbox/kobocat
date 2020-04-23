@@ -133,7 +133,7 @@ class DataDictionary(XForm):
             calculate_node.setAttribute("calculate", "'%s'" % self.uuid)
             model_node.appendChild(calculate_node)
 
-        self.xml = doc.toprettyxml(indent="  ", encoding='utf-8')
+        self.xml = doc.toprettyxml(indent="  ", encoding='utf-8').decode()
         # hack
         # http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-\
         # and-silly-whitespace/

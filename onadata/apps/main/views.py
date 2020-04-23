@@ -144,13 +144,13 @@ def clone_xlsform(request, username):
     else:
         message = form_result
 
-    context = RequestContext(request, {
-        'message': message, 'message_list': message_list})
+    context = {'message': message, 'message_list': message_list}
 
     if request.is_ajax():
         res = loader.render_to_string(
             'message.html',
-            context_instance=context
+            context=context,
+            request=request
         ).replace("'", r"\'").replace('\n', '')
 
         return HttpResponse(

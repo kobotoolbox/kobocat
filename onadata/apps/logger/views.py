@@ -91,27 +91,29 @@ def _parse_int(num):
 
 
 def _html_submission_response(request, instance):
-    data = {}
-    data['username'] = instance.xform.user.username
-    data['id_string'] = instance.xform.id_string
-    data['domain'] = Site.objects.get(id=settings.SITE_ID).domain
+    data = {
+        'username': instance.xform.user.username,
+        'id_string': instance.xform.id_string,
+        'domain': Site.objects.get(id=settings.SITE_ID).domain
+    }
 
     return render(request, "submission.html", data)
 
 
 def _submission_response(request, instance):
-    data = {}
-    data['message'] = _("Successful submission.")
-    data['formid'] = instance.xform.id_string
-    data['encrypted'] = instance.xform.encrypted
-    data['instanceID'] = 'uuid:%s' % instance.uuid
-    data['submissionDate'] = instance.date_created.isoformat()
-    data['markedAsCompleteDate'] = instance.date_modified.isoformat()
+    data = {
+        'message': _("Successful submission."),
+        'formid': instance.xform.id_string,
+        'encrypted': instance.xform.encrypted,
+        'instanceID': f'uuid:{instance.uuid}',
+        'submissionDate': instance.date_created.isoformat(),
+        'markedAsCompleteDate': instance.date_modified.isoformat()
+    }
 
-    context = RequestContext(request, data)
+    #context = RequestContext(request, data)
     t = loader.get_template('submission.xml')
 
-    return BaseOpenRosaResponse(t.render(context))
+    return BaseOpenRosaResponse(t.render(data, request=request))
 
 
 @require_POST
@@ -283,13 +285,13 @@ def submission(request, username=None):
     # request.FILES is a django.utils.datastructures.MultiValueDict
     # for each key we have a list of values
     try:
-        xml_file_list = request.FILES.pop("xml_submission_file", [])
+        xml_file_list = list(request.FILES.pop("xml_submission_file", []))
         if len(xml_file_list) != 1:
             return OpenRosaResponseBadRequest(
                 _("There should be a single XML submission file.")
             )
         # save this XML file and media files as attachments
-        media_files = request.FILES.values()
+        media_files = list(request.FILES.values())
 
         # get uuid from post request
         uuid = request.POST.get('uuid')
@@ -332,10 +334,10 @@ def submission(request, username=None):
         else:
             raise
     finally:
-        if len(xml_file_list):
-            [_file.close() for _file in xml_file_list]
-        if len(media_files):
-            [_file.close() for _file in media_files]
+        for xml_file in xml_file_list:
+            xml_file.close()
+        for media_file in media_files:
+            media_file.close()
 
 
 def download_xform(request, username, id_string):

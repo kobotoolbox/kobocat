@@ -77,14 +77,13 @@ class TestAbstractViewSet(TestCase):
 
         xform_list_url = reverse('xform-list')
 
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             response = self.client.post(xform_list_url, data=post_data)
             self.assertEqual(response.status_code, 201)
             self.xform = XForm.objects.all().order_by('pk').reverse()[0]
             data.update({
-                'url':
-                    'http://testserver/api/v1/forms/%s' % (self.xform.pk)
+                'url': f'http://testserver/api/v1/forms/{self.xform.pk}'
             })
 
             # Input was a private so change to public if project public
@@ -188,7 +187,7 @@ class TestAbstractViewSet(TestCase):
 
         if add_uuid:
             path = self._add_uuid_to_submission_xml(path, self.xform)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             post_data = {'xml_submission_file': f}
 
             if media_file is not None:
@@ -252,7 +251,7 @@ class TestAbstractViewSet(TestCase):
             media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             self._make_submission(os.path.join(
                 self.main_directory, 'fixtures',
                 'transportation', 'instances', s, s + '.xml'), media_file=f)
