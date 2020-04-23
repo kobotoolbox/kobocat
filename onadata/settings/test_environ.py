@@ -164,3 +164,5 @@ LOGGING['loggers']['django.db.backends'] = {
             'level': 'WARNING',
             'propagate': True
         }
+
+GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_anonymous_user_instance'

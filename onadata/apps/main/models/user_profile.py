@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
+import datetime
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -101,3 +103,13 @@ def default_user_profile_require_auth(
 post_save.connect(default_user_profile_require_auth,
                   sender=UserProfile,
                   dispatch_uid='default_user_profile_require_auth')
+
+
+def get_anonymous_user_instance(User):
+    """
+    Force `AnonymousUser` to be saved with `pk` == `ANONYMOUS_USER_ID`
+    :param User: User class
+    :return: User instance
+    """
+    return User(pk=settings.ANONYMOUS_USER_ID,
+                username='AnonymousUser')
