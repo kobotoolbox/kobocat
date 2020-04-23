@@ -206,13 +206,15 @@ ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
 
 
-TEMPLATE_DIRS = (
-    os.path.join(ONADATA_DIR, 'libs/templates'),
-    # Put strings here, like "/home/html/django_templates"
-    # or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
+        'DIRS': [
+            os.path.join(ONADATA_DIR, 'libs/templates')
+        ]
+    }
+]
 
 # needed by guardian
 ANONYMOUS_USER_ID = -1
@@ -514,16 +516,6 @@ try:
     from local_settings import *  # nopep8
 except ImportError:
     pass
-
-if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, string_types):
-    # site templates overrides
-    TEMPLATE_DIRS = (
-        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
-    ) + TEMPLATE_DIRS
-    # site static files path
-    STATICFILES_DIRS += (
-        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
-    )
 
 # Transition from South to native migrations
 try:

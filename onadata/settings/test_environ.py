@@ -68,7 +68,18 @@ TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
     os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
 )
-TEMPLATE_DIRS = (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),) + TEMPLATE_DIRS
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
+        'DIRS': [
+            os.path.join(ONADATA_DIR, 'libs/templates'),
+            TEMPLATE_OVERRIDE_ROOT_DIR
+        ]
+    }
+]
+
 STATICFILES_DIRS += (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),)
 
 KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
