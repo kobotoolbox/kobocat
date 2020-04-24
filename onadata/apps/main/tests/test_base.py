@@ -93,7 +93,7 @@ class TestBase(TestCase):
         if not path.startswith('/%s/' % self.user.username):
             path = os.path.join(self.this_directory, path)
 
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             return self.client.post('/%s/' % self.user.username, post_data)
 
@@ -172,8 +172,8 @@ class TestBase(TestCase):
             tmp_file = NamedTemporaryFile(delete=False)
             split_xml = None
 
-            with open(path) as _file:
-                split_xml = re.split(r'(<transport>)', _file.read())
+            with open(path, 'rb') as _file:
+                split_xml = re.split(r'(<transport>)', _file.read().decode())
 
             split_xml[1:1] = [
                 '<formhub><uuid>%s</uuid></formhub>' % self.xform.uuid
@@ -182,7 +182,7 @@ class TestBase(TestCase):
             path = tmp_file.name
             tmp_file.close()
 
-        with open(path) as f:
+        with open(path, 'rb') as f:
             post_data = {'xml_submission_file': f}
 
             if username is None:
@@ -211,8 +211,8 @@ class TestBase(TestCase):
             os.unlink(tmp_file.name)
 
     def _make_submission_w_attachment(self, path, attachment_path):
-        with open(path) as f:
-            a = open(attachment_path)
+        with open(path, 'rb') as f:
+            a = open(attachment_path, 'rb')
             post_data = {'xml_submission_file': f, 'media_file': a}
             url = '/%s/submission' % self.user.username
             auth = DigestAuth('bob', 'bob')

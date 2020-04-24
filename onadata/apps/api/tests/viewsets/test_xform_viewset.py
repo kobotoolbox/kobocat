@@ -320,7 +320,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.xls")
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
@@ -340,7 +340,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.bad_id.xls")
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
@@ -355,7 +355,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.no_choices.xls")
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)

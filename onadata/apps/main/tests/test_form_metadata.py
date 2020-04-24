@@ -36,9 +36,10 @@ class TestFormMetadata(TestBase):
             name = 'transportation.xls'
         path = os.path.join(self.this_directory, "fixtures",
                             "transportation", name)
-        with open(path) as doc_file:
-            self.post_data = {}
-            self.post_data[data_type] = doc_file
+        with open(path, 'rb') as doc_file:
+            self.post_data = {
+                data_type: doc_file
+            }
             self.client.post(self.edit_url, self.post_data)
         if data_type == 'media':
             self.doc = MetaData.objects.filter(data_type='media').reverse()[0]

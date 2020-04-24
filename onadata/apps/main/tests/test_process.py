@@ -76,7 +76,7 @@ class TestProcess(TestBase):
         path = os.path.join(
             self.this_directory, 'fixtures', 'transportation',
             'instances', survey, survey + '.xml')
-        with open(path) as f:
+        with open(path, 'rb') as f:
             post_data = {'xml_submission_file': f, 'uuid': self.xform.uuid}
             url = '/submission'
             self.response = self.client.post(url, post_data)
@@ -151,7 +151,7 @@ class TestProcess(TestBase):
                             "transportation.xls")
         if not path.startswith('/%s/' % self.user.username):
             path = os.path.join(self.this_directory, path)
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             return self.client.post('/%s/' % self.user.username, post_data)
 

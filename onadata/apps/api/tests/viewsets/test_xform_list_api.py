@@ -37,8 +37,8 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
-            form_list_xml = f.read().strip()
+        with open(path, 'rb') as f:
+            form_list_xml = f.read().decode().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
             self.assertEqual(content, form_list_xml % data)
@@ -82,8 +82,8 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
-            form_list_xml = f.read().strip()
+        with open(path, 'rb') as f:
+            form_list_xml = f.read().decode().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
             self.assertEqual(content, form_list_xml % data)
@@ -174,8 +174,8 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
-            form_list_xml = f.read().strip()
+        with open(path, 'rb') as f:
+            form_list_xml = f.read().decode().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
             self.assertEqual(content, form_list_xml % data)
@@ -209,8 +209,8 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'Transportation Form.xml')
 
-        with open(path) as f:
-            form_xml = f.read().strip()
+        with open(path, 'rb') as f:
+            form_xml = f.read().decode().strip()
             data = {"form_uuid": self.xform.uuid}
             content = response.render().content.strip()
             self.assertEqual(content, form_xml % data)

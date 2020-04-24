@@ -162,8 +162,8 @@ class TestAbstractViewSet(TestCase):
         tmp_file = NamedTemporaryFile(delete=False)
         split_xml = None
 
-        with open(path) as _file:
-            split_xml = re.split(r'(<transport>)', _file.read())
+        with open(path, 'rb') as _file:
+            split_xml = re.split(r'(<transport>)', _file.read().decode())
 
         split_xml[1:1] = [
             '<formhub><uuid>%s</uuid></formhub>' % xform.uuid
@@ -283,7 +283,7 @@ class TestAbstractViewSet(TestCase):
         }
 
         if path and data_value:
-            with open(path) as media_file:
+            with open(path, 'rb') as media_file:
                 data.update({
                     'data_file': media_file,
                 })
