@@ -26,7 +26,7 @@
               <label class="settings__form-label">
                 {% trans "Accept Submissions" %}
               </label>
-              <label><input id="active-form" type="checkbox" class="ios-switch" {% if xform.downloadable %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}"><div class="switch"></div></label>
+              <label><input id="active-form" type="checkbox" class="ios-switch" {% if xform.downloadable %} checked=""{% endif %} data-url="{% url "edit_form" content_user.username xform.id_string %}"><div class="switch"></div></label>
             </div>
 
             <div class="settings__form-item">
@@ -35,9 +35,9 @@
                 {% for media in media_upload %}
                   <li class="{% cycle 'odd' 'even' %}">
                     <div>{{ media.data_value }}</div>
-                    <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
+                    <a href="{% url "download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
                     {% if can_edit %}
-                    <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
+                    <a href="{% url "download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
                     {% endif %}
                   </li>
                 {% endfor %}
@@ -46,7 +46,7 @@
               {% if can_edit %}
               <button class="single-project__button single-project__add-media">+ Add Document</button>
 
-              <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
+              <form action="{% url "edit_form" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
                   {% csrf_token %}
                   <ul class="nav nav-tabs">
                       <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
@@ -99,7 +99,7 @@
               Share Project Publicly
             </label>
             <label>
-              <input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" >
+              <input id="form-shared" type="checkbox" class="ios-switch" {% if xform.shared %} checked=""{% endif %} data-url="{% url "edit_form" content_user.username xform.id_string %}" >
               <div title="{% trans "Allow anyone from the web to view this page." %}" class="poshytip switch"></div>
             </label>
           </div>
@@ -109,7 +109,7 @@
               Share Data Publicly
             </label>
             <label>
-              <input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">
+              <input id="data-shared" type="checkbox" class="ios-switch" {% if xform.shared_data %} checked=""{% endif %} data-url="{% url "edit_form" content_user.username xform.id_string %}">
               <div title="{% trans "Allow anyone from the web to inspect this project&rsquo;s data." %}" class="poshytip switch"></div>
             </label>
           </div>
@@ -119,13 +119,13 @@
               Share project with other users
             </label>
             {% if public_link %}
-            {% url "onadata.apps.main.views.show" xform.uuid as form_url %}
+            {% url ""show_form"" xform.uuid as form_url %}
             {% blocktrans %}Sharing by link is <strong>on with URL <a href="{{ form_url }}">{{ base_url }}{{ form_url }}</a></strong>{% endblocktrans %}
             {% else %}
             {% blocktrans %}Sharing by link is <strong>off</strong>{% endblocktrans %}
             {% endif %}
             </strong>
-            <form action="{% url "onadata.apps.main.views.set_perm" content_user.username xform.id_string %}" method="post">
+            <form action="{% url "set_perm" content_user.username xform.id_string %}" method="post">
                 {% csrf_token %}
                 <input type="hidden" name="perm_type" value="link"/>
                 <input type="hidden" name="for_user" value="toggle"/>
@@ -138,7 +138,7 @@
                 {% endfor %}
             </ul>
             {% endif %}
-            <form action="{% url "onadata.apps.main.views.set_perm" content_user.username xform.id_string %}" method="post">
+            <form action="{% url "set_perm" content_user.username xform.id_string %}" method="post">
                 {% csrf_token %}
                 <table class="narrow-labels">
                 {{ permission_form.as_table }}
@@ -160,7 +160,7 @@
           <form>
           {% csrf_token %}
             <input type="text" id="title" class="input-xxlarge present" value="{{ xform.title }}" />
-            <a id="title_save" data-id="title" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+            <a id="title_save" data-id="title" href="" class="hidden single-project__button bind-save" data-url="{% url "edit_form" content_user.username xform.id_string %}">{% trans "save" %}</a>
           </form>
         {% else %}
           <h1>{{ xform.title }}</h1>
@@ -172,7 +172,7 @@
             <form class="single-project__toggle-description">
               {% csrf_token %}
               <input type="text" id="description" name="textarea" value="{% if xform.description %}{{ xform.description }}{% endif %}" placeholder="Add a description to your project"/>
-                <a id="description_save" data-id="description" href="" class="hidden single-project__button bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+                <a id="description_save" data-id="description" href="" class="hidden single-project__button bind-save" data-url="{% url "edit_form" content_user.username xform.id_string %}">{% trans "save" %}</a>
             </form>
           {% else %}
             <span>{{ xform.description }}</span>
@@ -184,16 +184,16 @@
           {% for doc in supporting_docs %}
               <div class="single-project__document">
                 {% if can_edit %}
-                  <a href="{% url "onadata.apps.main.views.delete_metadata" content_user.username xform.id_string doc.id %}?del=true" title="{% trans "remove" %}"> <i class="fa fa-trash-o"></i> </a>
+                  <a href="{% url "delete_metadata" content_user.username xform.id_string doc.id %}?del=true" title="{% trans "remove" %}"> <i class="fa fa-trash-o"></i> </a>
                 {% endif %}
-                <a href="{% url "onadata.apps.main.views.download_metadata" content_user.username xform.id_string doc.id %}">{{ doc.data_value }}</a>
+                <a href="{% url "download_metadata" content_user.username xform.id_string doc.id %}">{{ doc.data_value }}</a>
               </p>
           {% endfor %}
 
           {% if can_edit %}
             <button class="single-project__button single-project__add-bg-doc">+ Add Document</button>
 
-            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__bg-doc-upload hidden-form">
+            <form action="{% url "edit_form" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__bg-doc-upload hidden-form">
                 {% csrf_token %}
                 <table>
                     {{ doc_form.as_table }}
@@ -255,16 +255,16 @@
         </a>
 
         <div class="dashboard__download__drop hidden">
-          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}" class="download__drop-button">XLS</a>
-          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}" class="download__drop-button">CSV</a>
-          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
-          <!-- <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" class="download__drop-button">GDOCS</a> -->
-          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
-          <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'analyser' %}"  class="download__drop-button">Excel Analyser</a>
+          <a href="{% url "export_list" content_user.username xform.id_string 'xls' %}" class="download__drop-button">XLS</a>
+          <a href="{% url "export_list" content_user.username xform.id_string 'csv' %}" class="download__drop-button">CSV</a>
+          <a href="{% url "export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
+          <!-- <a href="{% url "export_list" content_user.username xform.id_string 'gdoc' %}" class="download__drop-button">GDOCS</a> -->
+          <a href="{% url "export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
+          <a href="{% url "export_list" content_user.username xform.id_string 'analyser' %}"  class="download__drop-button">Excel Analyser</a>
           <a href="{% url "formpack_export_menu" content_user.username xform.id_string %}"  class="download__drop-button">Advanced Downloads (beta)</a>
           <!-- or: /<username>/exports/<id_string>/    onadata.apps.export.views._wrapper     formpack_export_menu -->
 
-          <!-- a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" class="download__drop-button">SAV ZIP</a> -->
+          <!-- a href="{% url "export_list" content_user.username xform.id_string 'sav_zip' %}" class="download__drop-button">SAV ZIP</a> -->
         </div>
       </div>
 
@@ -278,7 +278,7 @@
           <i class="fa fa-eye"></i>
           <span>View gallery</span>
         </a>
-        <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
+        <a href="{% url "export_list" content_user.username xform.id_string 'zip' %}" class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
           <i class="fa fa-download"></i>
           <span>Download all photos</span>
         </a>
@@ -351,7 +351,7 @@
           <span>View on map</span>
         </a>
 
-        <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}" class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
+        <a href="{% url "export_list" content_user.username xform.id_string 'kml'%}" class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
           <i class="fa fa-download"></i>
           <span>Download GPS points</span>
         </a>
@@ -479,7 +479,7 @@
                     {{ field }}
                 {% endfor %}
                 <a id="form-license_edit" data-id="form-license" href="" class="btn btn-small bind-edit">{% trans "edit" %}</a>
-                <a id="form-license_save" data-id="form-license" style="display:none" href="" class="btn btn-small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+                <a id="form-license_save" data-id="form-license" style="display:none" href="" class="btn btn-small btn-primary bind-save" data-url="{% url "edit_form" content_user.username xform.id_string %}">{% trans "save" %}</a>
             {% else %}
                 {{ form_license|default:'No license' }}
             {% endif %}
@@ -508,80 +508,80 @@
         <br>
         <div class="btn-toolbar" style="margin-bottom: 9px">
           <div class="btn-group">
-            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}" rel="tooltip" data-original-title="{% trans 'csv exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "csv" %}</font></a>
+            <a class="btn" href="{% url "export_list" content_user.username xform.id_string 'csv' %}" rel="tooltip" data-original-title="{% trans 'csv exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "csv" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li>
-                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv' %}"/>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "export_list" content_user.username xform.id_string 'csv' %}"/>
               </li>
             </ul>
           </div>
           <div class="btn-group">
-            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv_zip' %}" rel="tooltip" data-original-title="{% trans 'csv zip exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "csv zip" %}</font></a>
+            <a class="btn" href="{% url "export_list" content_user.username xform.id_string 'csv_zip' %}" rel="tooltip" data-original-title="{% trans 'csv zip exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "csv zip" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li>
-                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'csv_zip' %}"/>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "export_list" content_user.username xform.id_string 'csv_zip' %}"/>
               </li>
             </ul>
           </div>
           <div class="btn-group">
-            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}" rel="tooltip" data-original-title="{% trans 'SPSS data files zip exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "sav zip" %}</font></a>
+            <a class="btn" href="{% url "export_list" content_user.username xform.id_string 'sav_zip' %}" rel="tooltip" data-original-title="{% trans 'SPSS data files zip exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "sav zip" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li>
-                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'sav_zip' %}"/>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "export_list" content_user.username xform.id_string 'sav_zip' %}"/>
               </li>
             </ul>
           </div>
           <div class="btn-group">
-            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}" rel="tooltip" data-original-title="{% trans 'xls exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "xls" %}</font></a>
+            <a class="btn" href="{% url "export_list" content_user.username xform.id_string 'xls' %}" rel="tooltip" data-original-title="{% trans 'xls exports' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "xls" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li>
-                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'xls' %}"/>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "export_list" content_user.username xform.id_string 'xls' %}"/>
               </li>
             </ul>
           </div>
           <div class="btn-group">
-            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}" rel="tooltip" data-original-title="{% trans 'Export to kml File (Google Earth)' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "kml" %}</font></a>
+            <a class="btn" href="{% url "export_list" content_user.username xform.id_string 'kml'%}" rel="tooltip" data-original-title="{% trans 'Export to kml File (Google Earth)' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "kml" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li>
-                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml' %}"/>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "export_list" content_user.username xform.id_string 'kml' %}"/>
               </li>
             </ul>
           </div>
 
           <div class="btn-group">
-            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}" rel="tooltip" data-original-title="{% trans 'Export a zip folder of attachments' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "zip" %}</font></a>
+            <a class="btn" href="{% url "export_list" content_user.username xform.id_string 'zip' %}" rel="tooltip" data-original-title="{% trans 'Export a zip folder of attachments' %}"><i class="icon-download-alt"></i> <font color=#000>{% trans "zip" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li>
-                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'zip' %}"/>
+                <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "export_list" content_user.username xform.id_string 'zip' %}"/>
               </li>
             </ul>
           </div>
           <div class="btn-group">
-            <a class="btn" href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}" rel="tooltip" data-original-title="{% trans 'Export to google docs' %}" target="_blank"><i class="icon-download-alt"></i> <font color=#000>{% trans "gdocs" %}</font></a>
+            <a class="btn" href="{% url "export_list" content_user.username xform.id_string 'gdoc' %}" rel="tooltip" data-original-title="{% trans 'Export to google docs' %}" target="_blank"><i class="icon-download-alt"></i> <font color=#000>{% trans "gdocs" %}</font></a>
             <button class="btn dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
                 <li>
-                    <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'gdoc' %}"/>
+                    <input class="input-xxlarge" type="text" size="16" value="{{base_url}}{% url "export_list" content_user.username xform.id_string 'gdoc' %}"/>
                 </li>
             </ul>
           </div>
@@ -595,7 +595,7 @@
                     {{ field }}
                 {% endfor %}
                 <a id="data-license_edit" data-id="data-license" href="" class="btn btn-small bind-edit">{% trans "edit" %}</a>
-                <a id="data-license_save" data-id="data-license" style="display:none" href="" class="btn btn-small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+                <a id="data-license_save" data-id="data-license" style="display:none" href="" class="btn btn-small btn-primary bind-save" data-url="{% url "edit_form" content_user.username xform.id_string %}">{% trans "save" %}</a>
             {% else %}
                 {{ data_license|default:'No license' }}
             {% endif %}
@@ -631,16 +631,16 @@
         <div class="clearfix bordered kc-hide">
                 <h3 data-toggle="collapse" class="toggler" data-target="#source_tab">{% trans "Source" %}</h3>
                 <div id='source_tab' class="collapse">
-                <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+                <form action="{% url "edit_form" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
 
                 {% if source.data_file %}
-                    <p><a href="{% url "onadata.apps.main.views.download_metadata" content_user.username xform.id_string source.id %}">{{ source.data_file.name }}</p></a>
+                    <p><a href="{% url "download_metadata" content_user.username xform.id_string source.id %}">{{ source.data_file.name }}</p></a>
                 {% endif %}
                 {% csrf_token %}
                 <input type="text" id="source" class="input-xxlarge present" disabled="" rows="3" value="{{ source.data_value|default:"None provided" }}" />
                 {% if can_edit %}
                     <a id="source_edit" data-id="source" href="" class="btn small bind-edit">{% trans "edit" %}</a>
-                    <a id="source_save" data-id="source" style="display:none" href="" class="btn small btn-primary bind-save" data-url="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}">{% trans "save" %}</a>
+                    <a id="source_save" data-id="source" style="display:none" href="" class="btn small btn-primary bind-save" data-url="{% url "edit_form" content_user.username xform.id_string %}">{% trans "save" %}</a>
                 {% endif %}
 
 
@@ -671,11 +671,11 @@
             <p><a href="{{ mapbox_layer.link }}" target="_blank">{{ mapbox_layer.map_name }}</a> &ndash;
             {% trans "Attribution:" %} {{ mapbox_layer.attribution }}
             {% if can_edit %}
-            &ndash;<a href="{% url "onadata.apps.main.views.delete_metadata" content_user.username xform.id_string mapbox_layer.id %}?map_name_del=true"> {% trans "remove" %} </a></p>
+            &ndash;<a href="{% url "delete_metadata" content_user.username xform.id_string mapbox_layer.id %}?map_name_del=true"> {% trans "remove" %} </a></p>
             {% endif %}
             {% endif %}
             {% if can_edit %}
-            <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post">
+            <form action="{% url "edit_form" content_user.username xform.id_string %}" method="post">
                 {% csrf_token %}
                 <table>
                 {{ mapbox_layer_form.as_table }}
@@ -689,7 +689,7 @@
         <div class="clearfix bordered kc-hide">
                 <h3 data-toggle="collapse" class="toggler" data-target="#sms_tab">{% trans "SMS Support" %} (<acronym title="SMS Support is in beta stage now. Please use carefully as API and IDs might change.">beta</acronym>)</h3>
                 <div id='sms_tab' class="collapse">
-                <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+                <form action="{% url "edit_form" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data">
 
                 {% if xform.allows_sms %}
                     <p>{% blocktrans %}This form has enabled SMS submissions.{% endblocktrans %} {% blocktrans with id_string=xform.sms_id_string %}Submit to this form using the “<em>{{ id_string }}</em>” identifier.{% endblocktrans %}</p>

@@ -492,7 +492,7 @@ def enter_data(request, username, id_string):
     try:
         url = enketo_url(form_url, xform.id_string)
         if not url:
-            return HttpResponseRedirect(reverse('onadata.apps.main.views.show',
+            return HttpResponseRedirect(reverse('show_form',
                                         kwargs={'username': username,
                                                 'id_string': id_string}))
         return HttpResponseRedirect(url)
@@ -512,7 +512,7 @@ def enter_data(request, username, id_string):
             _("Enketo error: enketo replied %s") % e, fail_silently=True)
         return render(request, "profile.html", data)
 
-    return HttpResponseRedirect(reverse('onadata.apps.main.views.show',
+    return HttpResponseRedirect(reverse('show_form',
                                 kwargs={'username': username,
                                         'id_string': id_string}))
 
@@ -529,7 +529,7 @@ def edit_data(request, username, id_string, data_id):
         return HttpResponseForbidden(_('Not shared.'))
     if not hasattr(settings, 'ENKETO_URL'):
         return HttpResponseRedirect(reverse(
-            'onadata.apps.main.views.show',
+            'show_form',
             kwargs={'username': username, 'id_string': id_string}))
 
     url = '%sdata/edit_url' % settings.ENKETO_URL
@@ -562,9 +562,10 @@ def edit_data(request, username, id_string, data_id):
             context.enketo = url
             return HttpResponseRedirect(url)
     return HttpResponseRedirect(
-        reverse('onadata.apps.main.views.show',
-                kwargs={'username': username,
-                        'id_string': id_string}))
+        reverse('show_form', kwargs={
+            'username': username,
+            'id_string': id_string
+        }))
 
 
 def view_submission_list(request, username):

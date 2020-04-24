@@ -53,10 +53,14 @@ def xls_as_xlsx(xls_file):
         source_worksheet= source_workbook.sheet_by_name(wksht_nm)
         destination_worksheet= destination_workbook.create_sheet(title=wksht_nm)
 
-        for row in xrange(source_worksheet.nrows):
-            destination_worksheet.append( [source_worksheet.cell_value(row, col) for col in xrange(source_worksheet.ncols)] )
+        for row in range(source_worksheet.nrows):
+            destination_worksheet.append(
+                [source_worksheet.cell_value(row, col)
+                 for col in range(source_worksheet.ncols)]
+             )
 
     return io.BytesIO(save_virtual_workbook(destination_workbook))
+
 
 def copy_cells(source_worksheet_file, destination_worksheet_file_path, new_string_indices):
     destination_worksheet= etree.parse(destination_worksheet_file_path)

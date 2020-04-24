@@ -7,8 +7,8 @@
 
 <div class="sub-header-bar">
   <div class="container__wide">
-    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {{ xform.title }}</a> 
-    <a href="{% url "onadata.apps.viewer.views.data_view" username id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Data View" %}</a>
+    <a class="sub-header__back" href="{% url "show_form" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {{ xform.title }}</a>
+    <a href="{% url "data_view" username id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Data View" %}</a>
   </div>
 </div>
 
@@ -54,9 +54,9 @@
 <script type="text/javascript" charset="utf-8" src="{% static "js/sammy-plugins/sammy.meld-0.7.1.min.js" %}"></script>
 
 <script type="text/javascript">
-var formJSONUrl = "{% url "onadata.apps.logger.views.download_jsonform" username id_string %}";
-var mongoAPIUrl = "{% url "onadata.apps.main.views.api" username id_string %}";
-var deleteAPIUrl = "{% url "onadata.apps.main.views.delete_data" username id_string %}";
+var formJSONUrl = "{% url "download_jsonform" username id_string %}";
+var mongoAPIUrl = "{% url "api" username id_string %}";
+var deleteAPIUrl = "{% url "delete_data" username id_string %}";
 var app; // sammy app
 var questions = {};
 var languages = [];
@@ -144,7 +144,7 @@ var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
 
       // Redirect to Data View route
       this.get('#data-view/', function(context) {
-          window.location.href = '{% url "onadata.apps.viewer.views.data_view" username id_string %}';
+          window.location.href = '{% url "data_view" username id_string %}';
       });
 
   });
@@ -168,7 +168,7 @@ var canEdit = {% if can_edit %}true;{% else %}false;{% endif %}
 
 function _attachment_url(name, size)
 {
-    return '{% url "onadata.apps.viewer.views.attachment_url" %}' + size + '?media_file=' + '{{ username }}/attachments/' + name;
+    return '{% url "attachment_url" %}' + size + '?media_file=' + '{{ username }}/attachments/' + name;
 }
 
 </script>

@@ -4,12 +4,14 @@
 
 {% block additional-headers %}
 {% load i18n %}
+<!-- FIXME stats_table seems to be deprecated. Remove if useless
 <link rel="stylesheet" href="{% static "css/stats_tables.css" %}" />
+-->
 <link rel="stylesheet" href="{% static "bower_components/backgrid/lib/backgrid.min.css" %}" />
 
 <div class="sub-header-bar">
   <div class="container__wide">
-    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+    <a class="sub-header__back" href="{% url ""show_form"" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
   </div>
 </div>
 
@@ -81,7 +83,9 @@
 <script src="{% static "bower_components/backbone/backbone-min.js" %}"></script>
 <script src="{% static "bower_components/backgrid/lib/backgrid.js" %}"></script>
 <script src="{% static "js/xform.js" %}"></script>
+<!-- FIXME stats_table seems to be deprecated. Remove if useless
 <script src="{% static "js/stats_tables.js" %}"></script>
+-->
 <script type="text/javascript">
     var formUrl = "{% url "download_jsonform" xform.user.username xform.id_string %}";
     var statsUrl = "{% url "stats-detail" xform.pk %}";

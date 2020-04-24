@@ -28,9 +28,9 @@
             {% for media in media_upload %}
               <li class="{% cycle 'odd' 'even' %}">
                 <div>{{ media.data_value }}</div>
-                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
+                <a href="{% url "download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
                 {% if can_edit %}
-                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
+                <a href="{% url "download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
                 {% endif %}
               </li>
             {% endfor %}
@@ -39,7 +39,7 @@
           {% if can_edit %}
           <button class="single-project__button single-project__add-media">+ Add Document</button>
 
-          <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
+          <form action="{% url "edit_form" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
               {% csrf_token %}
               <ul class="nav nav-tabs">
                   <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>

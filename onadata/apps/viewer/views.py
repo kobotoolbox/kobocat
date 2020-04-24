@@ -137,7 +137,7 @@ def map_view(request, username, id_string, template='map.html'):
         return HttpResponseForbidden(_('Not shared.'))
     data = {'content_user': owner, 'xform': xform}
     data['profile'], created = UserProfile.objects.get_or_create(user=owner)
-    # Follow the example of onadata.apps.main.views.show
+    # Follow the example of "show_form"
     data['can_edit'] = has_edit_permission(xform, owner, request)
 
     data['form_view'] = True

@@ -2,7 +2,10 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import hashlib
-import urllib
+from urllib.request import urlopen
+
+from django.utils.http import urlencode
+
 
 DEFAULT_GRAVATAR = "https://formhub.org/static/images/formhub_avatar.png"
 GRAVATAR_ENDPOINT = "https://secure.gravatar.com/avatar/"
@@ -11,7 +14,7 @@ GRAVATAR_SIZE = str(60)
 
 def get_gravatar_img_link(user):
     url = GRAVATAR_ENDPOINT +\
-        hashlib.md5(user.email.lower().encode()).hexdigest() + "?" + urllib.urlencode({
+        hashlib.md5(user.email.lower().encode()).hexdigest() + "?" + urlencode({
             'd': DEFAULT_GRAVATAR, 's': GRAVATAR_SIZE
         })
     return url
@@ -20,5 +23,5 @@ def get_gravatar_img_link(user):
 def gravatar_exists(user):
     url = GRAVATAR_ENDPOINT +\
         hashlib.md5(user.email.lower().encode()).hexdigest() + "?" + "d=404"
-    exists = urllib.urlopen(url).getcode() != 404
+    exists = urlopen(url).getcode() != 404
     return exists

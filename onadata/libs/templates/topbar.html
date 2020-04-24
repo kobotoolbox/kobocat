@@ -16,18 +16,16 @@
             <li>&nbsp;</li>
             <li>
                 <img src='{{ profile.gravatar }}' alt='gravatar' width='30' height='30' />
-                &nbsp;
-                &nbsp;
             </li>
             <li>&nbsp;&nbsp;</li>
             <li class="lead">
-              <a href="{% url "onadata.apps.main.views.profile" content_user.username %}">{{ content_user.username }}</a>
+              <a href="{% url "user_profile" content_user.username %}">{{ content_user.username }}</a>
             </li>
             <li class="lead">
               <a href="#">/</a>
             </li>
             <li class="lead">
-              <a href="{% url "onadata.apps.main.views.show" content_user.username xform.id_string %}">{{ xform.title }}</a>
+              <a href="{% url "show" content_user.username xform.id_string %}">{{ xform.title }}</a>
             </li>
             <li><a href="#"><span id="submission_count" class="inverted" title="{% blocktrans with nb_sub=xform.submission_count %} <%= geocoded_submission_count %> submissions with geo data out of {{ nb_sub}} total.{% endblocktrans %}">{% blocktrans with nb_sub=xform.submission_count %}{{ nb_sub}} submissions{% endblocktrans %}</span></a></li>
             <li class="lead"><button class="refresh-map btn btn-small"><i class="icon icon-refresh"></i> Refresh Map Data</button></li>
@@ -60,7 +58,7 @@
           {% else %}
           <ul class="nav">
             <!-- <li class="active"><a href="#overview">Overview</a></li> -->
-            <li><a href="{% url "onadata.apps.main.views.form_gallery" %}">{% trans "Forms" %}</a></li>
+            <li><a href="{% url "forms_list" %}">{% trans "Forms" %}</a></li>
               {% if user.is_superuser or user.is_staff %}
             <li><a href="{% url "onadata.apps.main.views.members_list" %}">{% trans "People" %}</a></li>
               {% endif %}
@@ -78,7 +76,7 @@
               </a>
               <ul class="dropdown-menu">
                 <li><a href="{% url "onadata.apps.main.views.public_profile" user.username %}"><i class="icon-user"></i> {% trans "Public profile" %}</a></li>
-                <li><a href="{% url "onadata.apps.main.views.profile_settings" user.username %}"><i class="icon-cog"></i> {% trans "Settings" %}</a></li>
+                <li><a href="{% url "profile_settings" user.username %}"><i class="icon-cog"></i> {% trans "Settings" %}</a></li>
                 <li><a href="{% url "onadata.apps.main.views.activity" user.username %}"><i class="icon-eye-open"></i> {% trans "Account Activity" %}</a></li>
                 <li><a href="{% url "onadata.apps.main.views.api_token" user.username %}"><i class="icon-cog"></i> {% trans "API Token" %}</a></li>
                 <!--<li><a href="{% url "auth_password_change" %}">Change password</a></li>-->
