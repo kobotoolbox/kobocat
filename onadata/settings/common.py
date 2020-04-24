@@ -193,18 +193,13 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # Django 1.8 removes TransactionMiddleware (was deprecated in 1.6). See:
-    # https://docs.djangoproject.com/en/1.6/topics/db/transactions/#transaction-middleware
-    #'django.middleware.transaction.TransactionMiddleware',
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
     'onadata.libs.utils.middleware.UsernameInResponseHeaderMiddleware',
 )
 
-
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
-
 
 TEMPLATES = [
     {
@@ -251,7 +246,6 @@ INSTALLED_APPS = (
     'onadata.apps.sms_support',
     'onadata.libs',
     'onadata.apps.survey_report',
-    'onadata.apps.export',
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',
