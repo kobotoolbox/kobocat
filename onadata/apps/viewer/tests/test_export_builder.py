@@ -259,7 +259,7 @@ class TestExportBuilder(TestBase):
         export_builder.to_zipped_csv(temp_zip_file.name, self.data)
         temp_zip_file.seek(0)
         temp_dir = tempfile.mkdtemp()
-        zip_file = zipfile.ZipFile(temp_zip_file.name, "r")
+        zip_file = zipfile.ZipFile(temp_zip_file.name, 'r')
         zip_file.extractall(temp_dir)
         zip_file.close()
         temp_zip_file.close()

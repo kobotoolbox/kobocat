@@ -666,7 +666,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             csv_file = file_or_path
             close = False
         else:
-            csv_file = open(file_or_path, "wb")
+            csv_file = open(file_or_path, "w")
             close = True
 
         for data in datas:

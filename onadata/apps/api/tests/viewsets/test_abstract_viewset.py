@@ -159,7 +159,7 @@ class TestAbstractViewSet(TestCase):
             'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
 
     def _add_uuid_to_submission_xml(self, path, xform):
-        tmp_file = NamedTemporaryFile(delete=False)
+        tmp_file = NamedTemporaryFile(delete=False, mode='w')
         split_xml = None
 
         with open(path, 'rb') as _file:
