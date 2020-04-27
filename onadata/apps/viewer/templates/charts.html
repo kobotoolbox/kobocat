@@ -12,7 +12,7 @@
 {% block content %}
 <section id="main">
   <div class="page-header">
-      <h1>Charts <small><a href="{% url ""show_form"" xform.user.username xform.id_string %}">{{ xform.title }}</a></small></h1>
+      <h1>Charts <small><a href="{% url "show_form" xform.user.username xform.id_string %}">{{ xform.title }}</a></small></h1>
   </div>
 
 {% charts_snippet summaries %}
@@ -28,7 +28,7 @@
 {% block javascript %}
 {{ block.super }}
     <script type="text/javascript">
-      var chart_url = "{% url "onadata.apps.viewer.views.charts" xform.user.username xform.id_string %}";
+      var chart_url = "{% url "charts" xform.user.username xform.id_string %}";
       var page = {{ page }};
       $(document).ready(function () {
         moreCharts(chart_url, page);

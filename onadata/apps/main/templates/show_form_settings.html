@@ -107,7 +107,7 @@
         {% if user.is_authenticated and content_user.username != user.username and xform.xls|length > 0 and not cloned %}
             <br/><br/>
             <li>
-                <a href="" data-url="{% url "onadata.apps.main.views.clone_xlsform" xform.user.username %}" data-username="{{ xform.user.username }}" data-id="{{ xform.id_string }}" class="clonexls btn small">{% trans "Clone" %}</a>
+                <a href="" data-url="{% url "clone_xlsform" xform.user.username %}" data-username="{{ xform.user.username }}" data-id="{{ xform.id_string }}" class="clonexls btn small">{% trans "Clone" %}</a>
             </li>
         {% endif %}
         </ul>
@@ -232,17 +232,17 @@
         <p><a id="data-license_info" style="display:none" href="">{% trans "License information" %}</a></p>
 	    <div class="btn-group" style="margin-bottom: 9px">
 				{% if xform.has_instances_with_geopoints %}
-			<a class="btn btn-info" rel="tooltip" title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}">
+			<a class="btn btn-info" rel="tooltip" title="{% trans 'View Map' %}" href="{% url "map_view" content_user.username xform.id_string %}">
 				<i class="icon-map-marker icon-white"></i> {% trans "Map" %}
 			</a>
 		        {% endif %}
-            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}">
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Photos" %}" href="{% url "form_photos" content_user.username xform.id_string %}">
               <i class="icon-camera icon-white"></i> {% trans "Photos" %}
             </a>
-            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Submitted Data" %}" href="{% url "onadata.apps.viewer.views.data_view" content_user.username xform.id_string %}">
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Submitted Data" %}" href="{% url "data_view" content_user.username xform.id_string %}">
                 <i class="icon-th-list icon-white"></i> {% trans "View Data" %}
             </a>
-            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "Browse Data (One by One)" %}" href="{% url "onadata.apps.viewer.views.instance" content_user.username xform.id_string %}">
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "Browse Data (One by One)" %}" href="{% url "instance" content_user.username xform.id_string %}">
                 <i class="icon-list-alt icon-white"></i> {% trans "Browse Data" %}
             </a>
             <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Statistics" %}" href="{% url "form-stats" content_user.username xform.id_string %}">
@@ -264,7 +264,7 @@
               <div class="btn-group" style="margin-bottom: 9px">
                   {% if can_edit %}
                   <a class="btn btn-info" rel="tooltip" title="{% trans 'Webform' %}"
-                     href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">
+                     href="{% url "enter_data" content_user.username xform.id_string %}">
                       <i class="icon-edit icon-white"></i> {% trans "Enter Web Form" %}
                   </a>
                   <a data-toggle="modal" data-target="#popupmodal" class="showqr btn btn-info" href="{% url "get_qrcode" xform.user.username xform.id_string %}"><i class="icon-tablet"></i> {% trans "Mobile" %}</a>
@@ -284,7 +284,7 @@
                       <h3>{{ xform.title }} - {% trans "Preview" %}</h3>
                   </div>
                   <div class="modal-body">
-                      <iframe src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></iframe>
+                      <iframe src="{% url "enketo_preview" content_user.username xform.id_string %}"></iframe>
                   </div>
                   <div class="modal-footer"></div>
               </div>
@@ -557,7 +557,7 @@
         <div class="input">
           <!-- DELETE -->
           <div id="delete-{{ xform.id_string }}" class="modal hide fade">
-              <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
+              <form action="{% url "delete_xform" username=user.username id_string=xform.id_string %}" method="post">
               {% csrf_token %}
                   <div class="modal-header">
                       <a data-dismiss="modal" class="close">&times;</a>
@@ -581,7 +581,7 @@
         <div>
             <h3>{% trans "Sharing" %}</h3>
             {% if public_link %}
-            {% url ""show_form"" xform.uuid as form_url %}
+            {% url "show_form" xform.uuid as form_url %}
             {% blocktrans %}Sharing by link is <strong>on with URL <a href="{{ form_url }}">{{ base_url }}{{ form_url }}</a></strong>{% endblocktrans %}
             {% else %}
             {% blocktrans %}Sharing by link is <strong>off</strong>{% endblocktrans %}

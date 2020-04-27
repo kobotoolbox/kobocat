@@ -55,7 +55,7 @@
 
 <script type="text/javascript">
 var formJSONUrl = "{% url "download_jsonform" username id_string %}";
-var mongoAPIUrl = "{% url "api" username id_string %}";
+var mongoAPIUrl = "{% url "mongo_view_api" username id_string %}";
 var deleteAPIUrl = "{% url "delete_data" username id_string %}";
 var app; // sammy app
 var questions = {};

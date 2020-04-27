@@ -119,7 +119,7 @@
               Share project with other users
             </label>
             {% if public_link %}
-            {% url ""show_form"" xform.uuid as form_url %}
+            {% url "show_form" xform.uuid as form_url %}
             {% blocktrans %}Sharing by link is <strong>on with URL <a href="{{ form_url }}">{{ base_url }}{{ form_url }}</a></strong>{% endblocktrans %}
             {% else %}
             {% blocktrans %}Sharing by link is <strong>off</strong>{% endblocktrans %}
@@ -211,7 +211,7 @@
   {% if is_owner %}
   <div class="kc-hide">
     <div id="delete-form">
-        <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
+        <form action="{% url "delete_xform" username=user.username id_string=xform.id_string %}" method="post">
         {% csrf_token %}
             <div class="vex-header">
                 <h3>{% trans "Delete Confirmation" %}</h3>
@@ -274,7 +274,7 @@
           Photos
         </h2>
 
-        <a title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-gallery">
+        <a title="{% trans "View Photos" %}" href="{% url "form_photos" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-gallery">
           <i class="fa fa-eye"></i>
           <span>View gallery</span>
         </a>
@@ -316,7 +316,7 @@
           <div class="kc-hide">
             <div id="preview-vex">
                 <div class="vex-header"><h3>{{ xform.title }} - {% trans "Preview" %}</h3></div>
-                <div class="vex-kobo-body" data-iframe-src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></div>
+                <div class="vex-kobo-body" data-iframe-src="{% url "enketo_preview" content_user.username xform.id_string %}"></div>
             </div>
           </div>
           {% endif %}
@@ -326,7 +326,7 @@
             <div id="xls-update">
               <div class="vex-header"><h3>{% trans "Update XLS" %}</h3></div>
               <div id="replace-{{ xform.id_string }}">
-                  <form action="{% url "onadata.apps.main.views.update_xform" xform.user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+                  <form action="{% url "update_xform" xform.user.username xform.id_string %}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="vex-kobo-body">
                       <input type="file" name="xls_file" id="id_xls_file" />
@@ -346,7 +346,7 @@
       <div class="dashboard__gps">
         <h2 class="dashboard__group-label">GPS Points</h2>
 
-        <a title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-on-map">
+        <a title="{% trans 'View Map' %}" href="{% url "map_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-on-map">
           <i class="fa fa-map-marker"></i>
           <span>View on map</span>
         </a>
@@ -362,7 +362,7 @@
       <div class="dashboard__add-data">
         <h2 class="dashboard__group-label">Add Data</h2>
 
-        <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-enter-data" target="_blank">
+        <a href="{% url "enter_data" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-enter-data" target="_blank">
           <i class="fa fa-plus"></i>
           <span>Enter data in browser</span>
         </a>
@@ -396,7 +396,7 @@
                     <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline:
                     <p>
                       <span class="qrcode__enter-data-url">
-                        <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a>
+                        <a href="{% url "enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "enter_data" content_user.username xform.id_string %}</a>
                       </span>
                     <br/>
                     (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
@@ -490,7 +490,7 @@
         {% if user.is_authenticated and content_user.username != user.username and xform.xls|length > 0 and not cloned %}
             <br/><br/>
             <li>
-                <a href="" data-url="{% url "onadata.apps.main.views.clone_xlsform" xform.user.username %}" data-username="{{ xform.user.username }}" data-id="{{ xform.id_string }}" class="clonexls btn small">{% trans "Clone" %}</a>
+                <a href="" data-url="{% url "clone_xlsform" xform.user.username %}" data-username="{{ xform.user.username }}" data-id="{{ xform.id_string }}" class="clonexls btn small">{% trans "Clone" %}</a>
             </li>
         {% endif %}
         </ul>
@@ -603,17 +603,17 @@
         <p><a id="data-license_info" style="display:none" href="">{% trans "License information" %}</a></p>
         <div class="btn-group" style="margin-bottom: 9px">
 	   			{% if xform.has_instances_with_geopoints %}
-    		  	<a class="btn btn-info" rel="tooltip" title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}">
+    		  	<a class="btn btn-info" rel="tooltip" title="{% trans 'View Map' %}" href="{% url "map_view" content_user.username xform.id_string %}">
     				<i class="icon-map-marker icon-white"></i> {% trans "Map" %}
     			 </a>
           {% endif %}
-            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Photos" %}" href="{% url "onadata.apps.main.views.form_photos" content_user.username xform.id_string %}">
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Photos" %}" href="{% url "form_photos" content_user.username xform.id_string %}">
               <i class="icon-camera icon-white"></i> {% trans "Photos" %}
             </a>
-            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Submitted Data" %}" href="{% url "onadata.apps.viewer.views.data_view" content_user.username xform.id_string %}">
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Submitted Data" %}" href="{% url "data_view" content_user.username xform.id_string %}">
                 <i class="icon-th-list icon-white"></i> {% trans "View Data" %}
             </a>
-            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "Browse Data (One by One)" %}" href="{% url "onadata.apps.viewer.views.instance" content_user.username xform.id_string %}">
+            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "Browse Data (One by One)" %}" href="{% url "instance" content_user.username xform.id_string %}">
                 <i class="icon-list-alt icon-white"></i> {% trans "Browse Data" %}
             </a>
         </div>
