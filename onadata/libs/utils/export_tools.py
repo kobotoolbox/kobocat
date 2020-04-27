@@ -7,7 +7,7 @@ import os
 import re
 import six
 import tempfile
-from datetime import datetime, date
+from datetime import datetime, date, time, timedelta
 from zipfile import ZipFile
 
 from bson import json_util
@@ -212,14 +212,14 @@ class ExportBuilder(object):
             # SharedDate().datetime_to_julian(date_obj)
             # Copy code from v2.0.5. Could not find where SharedDate is in
             # latest version of openpyxl (and if it's useful)
-            if isinstance(date, datetime.datetime):
-                to_excel(date)
-            elif isinstance(date, datetime.date):
-                to_excel(date)
-            elif isinstance(date, datetime.time):
-                time_to_days(date)
-            elif isinstance(date, datetime.timedelta):
-                timedelta_to_days(date)
+            if isinstance(date_obj, datetime):
+                to_excel(date_obj)
+            elif isinstance(date_obj, date):
+                to_excel(date_obj)
+            elif isinstance(date_obj, time):
+                time_to_days(date_obj)
+            elif isinstance(date_obj, timedelta):
+                timedelta_to_days(date_obj)
         except ValueError:
             return date_str
         else:
@@ -530,7 +530,7 @@ class ExportBuilder(object):
                 data.get(PARENT_TABLE_NAME))
             work_sheet.append([data.get(f) for f in fields])
 
-        wb = Workbook(optimized_write=True)
+        wb = Workbook(write_only=True)
         work_sheets = {}
         # map of section_names to generated_names
         work_sheet_titles = {}
