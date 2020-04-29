@@ -12,7 +12,7 @@ Pillow
 psycopg2-binary
 pymongo
 lxml
-pyxform
+pyxform==0.15.1  # same version as KPI. issues with 1.1.0
 django-reversion<3.0.2
 xlrd
 xlwt

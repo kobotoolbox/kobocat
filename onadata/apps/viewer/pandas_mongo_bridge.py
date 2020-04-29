@@ -620,7 +620,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
                 reindexed = self._reindex(key, value, self.ordered_columns)
                 flat_dict.update(reindexed)
 
-            # if delimetr is diferent, replace within record as well
+            # if delimiter is different, replace within record as well
             if self.group_delimiter != DEFAULT_GROUP_DELIMITER:
                 flat_dict = dict((self.group_delimiter.join(k.split('/')), v)
                                  for k, v in flat_dict.items())
