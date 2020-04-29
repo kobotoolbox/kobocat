@@ -71,7 +71,7 @@ class TestExports(TestBase):
         self.assertEqual(response.status_code, 200)
         test_file_path = viewer_fixture_path('transportation.csv')
         content = self._get_response_content(response)
-        with open(test_file_path, 'r') as test_file:
+        with open(test_file_path, 'rb') as test_file:
             self.assertEqual(content, test_file.read())
 
     def test_csv_without_na_values(self):
@@ -93,7 +93,7 @@ class TestExports(TestBase):
         self.assertEqual(response.status_code, 200)
         test_file_path = viewer_fixture_path('transportation_without_na.csv')
         content = self._get_response_content(response)
-        with open(test_file_path, 'r') as test_file:
+        with open(test_file_path, 'rb') as test_file:
             self.assertEqual(content, test_file.read())
         settings.NA_REP = na_rep_restore
 
@@ -475,7 +475,7 @@ class TestExports(TestBase):
                                   "id_string": self.xform.id_string})
         response = self.client.get(csv_export_url)
         self.assertEqual(response.status_code, 200)
-        f = io.StringIO(self._get_response_content(response))
+        f = io.StringIO(self._get_response_content(response).decode())
         csv_reader = csv.reader(f)
         num_rows = len([row for row in csv_reader])
         f.close()
@@ -508,7 +508,7 @@ class TestExports(TestBase):
                                   "id_string": self.xform.id_string})
         response = self.client.get(csv_export_url)
         self.assertEqual(response.status_code, 200)
-        f = io.StringIO(self._get_response_content(response))
+        f = io.StringIO(self._get_response_content(response).decode())
         csv_reader = csv.DictReader(f)
         data = [row for row in csv_reader]
         f.close()
@@ -689,7 +689,7 @@ class TestExports(TestBase):
 
     def _get_csv_data(self, filepath):
         storage = get_storage_class()()
-        csv_file = storage.open(filepath)
+        csv_file = storage.open(filepath, mode='r')
         reader = csv.DictReader(csv_file)
         data = next(reader)
         csv_file.close()
@@ -1018,9 +1018,8 @@ class TestExports(TestBase):
             index = child[0]
             name = child[1]
             self.assertEqual(
-                filter(
-                    lambda x: x['children/name'] == name,
-                    output['children'])[0],
+                [x for x in output['children']
+                 if x['children/name'] == name][0],
                 expected_output['children'][index])
         # 2nd level
         self.assertEqual(len(output['children/cartoons']), 4)
@@ -1029,9 +1028,8 @@ class TestExports(TestBase):
             index = cartoon[0]
             name = cartoon[1]
             self.assertEqual(
-                filter(
-                    lambda x: x['children/cartoons/name'] == name,
-                    output['children/cartoons'])[0],
+                [x for x in output['children/cartoons']
+                 if x['children/cartoons/name'] == name][0],
                 expected_output['children/cartoons'][index])
         # 3rd level
         self.assertEqual(len(output['children/cartoons/characters']), 2)
@@ -1039,9 +1037,8 @@ class TestExports(TestBase):
             index = characters[0]
             name = characters[1]
             self.assertEqual(
-                filter(
-                    lambda x: x['children/cartoons/characters/name'] == name,
-                    output['children/cartoons/characters'])[0],
+                [x for x in output['children/cartoons/characters']
+                 if x['children/cartoons/characters/name'] == name][0],
                 expected_output['children/cartoons/characters'][index])
 
     def test_generate_csv_zip_export(self):

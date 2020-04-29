@@ -440,7 +440,7 @@ class ExportBuilder(object):
 
         csv_defs = {}
         for section in self.sections:
-            csv_file = NamedTemporaryFile(suffix=".csv")
+            csv_file = NamedTemporaryFile(suffix=".csv", mode='w')
             csv_writer = csv.writer(csv_file)
             csv_defs[section['name']] = {
                 'csv_file': csv_file, 'csv_writer': csv_writer}
@@ -760,7 +760,7 @@ def generate_export(export_type, extension, username, id_string,
         id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     if export_type == Export.ANALYSER_EXPORT:
         # Analyser exports should be distinguished by more than just their file extension.
-        basename= '{}_ANALYSER_{}'.format(id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
+        basename = '{}_ANALYSER_{}'.format(id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     filename = basename + "." + extension
 
     # check filename is unique
