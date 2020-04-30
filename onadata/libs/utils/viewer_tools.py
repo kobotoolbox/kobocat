@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
+import json
 import traceback
 import requests
 import zipfile
@@ -12,6 +14,7 @@ from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
 
 from onadata.libs.utils import common_tags
@@ -200,9 +203,11 @@ def enketo_url(form_url, id_string, instance_xml=None,
             })
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
+
     if req.status_code in [200, 201]:
         try:
-            response = req.json()
+            # ToDo find out why req.json() does not work
+            response = json.loads(smart_str(req.content))
         except ValueError:
             pass
         else:
@@ -214,7 +219,7 @@ def enketo_url(form_url, id_string, instance_xml=None,
                 return response['url']
     else:
         try:
-            response = req.json()
+            response = json.loads(smart_str(req.content))
         except ValueError:
             pass
         else:

@@ -21,6 +21,7 @@ from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.xform import XFORM_TITLE_LENGTH
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
+from onadata.libs.tests.utils.xml import pyxform_version_agnostic
 from onadata.libs.utils.common_tags import UUID, SUBMISSION_TIME
 from .test_base import TestBase
 
@@ -229,7 +230,8 @@ class TestProcess(TestBase):
         uuid_node.setAttribute("calculate", "''")
 
         # check content without UUID
-        self.assertEqual(response_doc.toxml(), expected_doc.toxml())
+        self.assertEqual(pyxform_version_agnostic(response_doc.toxml()),
+                         pyxform_version_agnostic(expected_doc.toxml()))
 
     def _check_csv_export(self):
         self._check_data_dictionary()

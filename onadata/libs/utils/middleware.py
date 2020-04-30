@@ -8,6 +8,7 @@ from django.template import RequestContext
 from django.template import loader
 from django.middleware.locale import LocaleMiddleware
 from django.utils.translation.trans_real import parse_accept_lang_header
+from django.utils.encoding import smart_str
 
 
 class ExceptionLoggingMiddleware(object):

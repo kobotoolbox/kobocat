@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.core.validators import ValidationError
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
@@ -10,8 +11,12 @@ from onadata.libs.serializers.fields.xform_field import XFormField
 
 
 class CloneXFormSerializer(serializers.Serializer):
+
     xform = XFormField()
     username = serializers.CharField(max_length=255)
+
+    class Meta:
+        fields = '__all__'
 
     def create(self, validated_data):
         obj = CloneXForm(**validated_data)

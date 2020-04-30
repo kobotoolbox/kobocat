@@ -58,7 +58,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = view(request)
         self.assertTrue(response.has_header('WWW-Authenticate'))
         self.assertTrue(
-            response['WWW-Authenticate'].startswith('Digest nonce='))
+            response['WWW-Authenticate'].startswith('Digest realm="DJANGO", qop="auth", nonce='))
         request = self.factory.get('/')
         request.META.update(auth(request.META, response))
         request.session = self.client.session
@@ -131,8 +131,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         request = self.factory.post('/', data=data)
         response = self.view(request)
         self.assertEqual(response.status_code, 400)
-
-        data['uid'] = urlsafe_base64_encode(force_bytes(self.user.pk))
+        data['uid'] = urlsafe_base64_encode(force_bytes(self.user.pk)).decode()
         # with uid, should be successful
         request = self.factory.post('/', data=data)
         response = self.view(request)

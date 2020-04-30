@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from rest_framework import serializers
 from rest_framework import exceptions
 
@@ -9,11 +10,13 @@ from onadata.apps.logger.models.instance import Instance
 
 class NoteSerializer(serializers.ModelSerializer):
 
+    # ToDo Verify why calling this here?
     serializers.ModelSerializer()
     instance = serializers.PrimaryKeyRelatedField(queryset=Instance.objects.all())
 
     class Meta:
         model = Note
+        fields = '__all__'
 
     def save(self, user=None):
         # This used to be in note_viewset

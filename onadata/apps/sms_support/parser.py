@@ -13,6 +13,9 @@ from django.utils.translation import ugettext as _
 from onadata.apps.logger.models import XForm
 from onadata.apps.sms_support.tools import (
     SMS_API_ERROR,
+    SMS_PARSING_ERROR,
+    SMS_SUBMISSION_REFUSED,
+    sms_media_to_file,
     generate_instance,
     DEFAULT_SEPARATOR,
     NA_VALUE,
@@ -35,7 +38,7 @@ class SMSCastingError(ValueError):
     def __init__(self, message, question=None):
         if question:
             message = _("%(question)s: %(message)s") % {'question': question,
-                                                         'message': message}
+                                                        'message': message}
         super(SMSCastingError, self).__init__(message)
 
 
@@ -65,7 +68,9 @@ def parse_sms_text(xform, identity, text):
         groups.update({group_id: [s.strip() for s in group_text.split(None)]})
 
     def cast_sms_value(value, question, medias=[]):
-        ''' Check data type of value and return cleaned version '''
+        """
+        Check data type of value and return cleaned version
+        """
 
         xlsf_type = question.get('type')
         xlsf_name = question.get('name')
@@ -88,10 +93,11 @@ def parse_sms_text(xform, identity, text):
                                       xlsf_name)
 
         def media_value(value, medias):
-            ''' handle media values
-
-                extract name and base64 data.
-                fills the media holder with (name, data) tuple '''
+            """
+            Handle media values.
+            Extract name and base64 data.
+            Fills the media holder with (name, data) tuple
+            """
             try:
                 filename, b64content = value.split(';', 1)
                 medias.append((filename,
@@ -126,13 +132,13 @@ def parse_sms_text(xform, identity, text):
         elif xlsf_type == 'geopoint':
             err_msg = _("Incorrect geopoint coordinates.")
             geodata = [s.strip() for s in value.split()]
-            if len(geodata) < 2 and len(geodata) > 4:
+            if len(geodata) < 2 or len(geodata) > 4:
                 raise SMSCastingError(err_msg, xlsf_name)
             try:
                 # check that latitude and longitude are floats
                 lat, lon = [float(v) for v in geodata[:2]]
                 # and within sphere boundaries
-                if lat < -90 or lat > 90 or lon < -180 and lon > 180:
+                if (lat < -90 or lat > 90 or lon < -180) and lon > 180:
                     raise SMSCastingError(err_msg, xlsf_name)
                 if len(geodata) == 4:
                     # check that altitude and accuracy are integers
@@ -163,7 +169,7 @@ def parse_sms_text(xform, identity, text):
                               % {'type': xlsf_type}, xlsf_name)
 
     def get_meta_value(xlsf_type, identity):
-        ''' XLSForm Meta field value '''
+        """ XLSForm Meta field value """
         if xlsf_type in ('deviceid', 'subscriberid', 'imei'):
             return NA_VALUE
         elif xlsf_type in ('start', 'end'):
@@ -254,9 +260,10 @@ def parse_sms_text(xform, identity, text):
     return survey_answers, medias, notes
 
 
-def process_incoming_smses(username, incomings,
-                           id_string=None):
-    ''' Process Incoming (identity, text[, id_string]) SMS '''
+def process_incoming_smses(username, incomings, id_string=None):
+    """
+    Process Incoming (identity, text[, id_string]) SMS
+    """
 
     xforms = []
     medias = []

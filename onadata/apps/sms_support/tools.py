@@ -74,14 +74,16 @@ def sms_media_to_file(file_object, name):
 
 
 def generate_instance(username, xml_file, media_files, uuid=None):
-    ''' Process an XForm submission as if done via HTTP
+    """
+    Process an XForm submission as if done via HTTP
 
-        :param IO xml_file: file-like object containing XML XForm
-        :param string username: username of the Form's owner
-        :param list media_files: a list of UploadedFile objects
-        :param string uuid: an optionnal uuid for the instance.
+    :param IO xml_file: file-like object containing XML XForm
+    :param string username: username of the Form's owner
+    :param list media_files: a list of UploadedFile objects
+    :param string uuid: an optionnal uuid for the instance.
 
-        :returns a (status, message) tuple. '''
+    :returns a (status, message) tuple.
+    """
 
     try:
         instance = create_instance(

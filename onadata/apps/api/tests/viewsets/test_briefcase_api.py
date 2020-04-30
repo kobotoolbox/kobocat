@@ -6,6 +6,7 @@ import codecs
 
 from django.core.urlresolvers import reverse
 from django.core.files.storage import get_storage_class
+from django.utils.encoding import smart_str
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
 
@@ -197,13 +198,13 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
-        instance = Instance.objects.get(uuid=instanceId)
-        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
-                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
+        instance_id = '5b2cc313-fc09-437e-8149-fcd32f695d41'
+        instance = Instance.objects.get(uuid=instance_id)
+        form_id = '%(formId)s[@version=null and @uiVersion=null]/' \
+                  '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
-                     'instanceId': instanceId}
-        params = {'formId': formId}
+                     'instanceId': instance_id}
+        params = {'formId': form_id}
         auth = DigestAuth(self.login_username, self.login_password)
         request = self.factory.get(
             self._download_submission_url, data=params)
@@ -211,18 +212,17 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self.assertEqual(response.status_code, 401)
         request.META.update(auth(request.META, response))
         response = view(request, username=self.user.username)
-        text = "uuid:%s" % instanceId
         download_submission_path = os.path.join(
             self.main_directory, 'fixtures', 'transportation',
             'view', 'downloadSubmission.xml')
-        with codecs.open(download_submission_path, encoding='utf-8') as f:
+        with open(download_submission_path, mode='r') as f:
             text = f.read()
             text = text.replace('{{submissionDate}}',
                                 instance.date_created.isoformat())
             text = text.replace('{{xform_uuid}}',
                                 self.xform.uuid)
-            self.assertContains(response, instanceId, status_code=200)
-            self.assertMultiLineEqual(response.content, text)
+            self.assertContains(response, instance_id, status_code=200)
+            self.assertMultiLineEqual(smart_str(response.content), text)
 
     def test_view_download_submission_other_user(self):
         view = BriefcaseApi.as_view({'get': 'retrieve'})
@@ -338,8 +338,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
 
             self.assertEqual(
                 response.data,
-                {'message': 'Form with this id or SMS-keyword already exists.'
-                 }
+                {'message': 'Form with this id or SMS-keyword already exists.'}
             )
 
     def test_upload_head_request(self):

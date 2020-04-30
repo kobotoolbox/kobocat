@@ -69,10 +69,10 @@ def submit_csv(username, xform, csv_file):
     :param str username: the subission user
     :param onadata.apps.logger.models.XForm xfrom: The submission's XForm.
     :param (str or file): A CSV formatted file with submission rows.
-    :return: If sucessful, a dict with import summary else dict with error str.
+    :return: If successful, a dict with import summary else dict with error str.
     :rtype: Dict
     """
-    if isinstance(csv_file, (str, unicode)):
+    if isinstance(csv_file, str):
         csv_file = io.StringIO(csv_file)
     elif csv_file is None or not hasattr(csv_file, 'read'):
         return {'error': ('Invalid param type for `csv_file`. '
@@ -91,7 +91,8 @@ def submit_csv(username, xform, csv_file):
         submitted_by = row.get('_submitted_by')
         submission_date = row.get('_submission_time', submission_time)
 
-        for key in row.keys():  # seems faster than a comprehension
+        row_iter = dict(row)
+        for key in row_iter:  # seems faster than a comprehension
             # remove metadata (keys starting with '_')
             if key.startswith('_'):
                 del row[key]

@@ -1,13 +1,12 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import copy
 import six
 
 from django.conf import settings
 from django.forms import ValidationError as FormValidationError
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.core.validators import ValidationError
 from registration.models import RegistrationProfile
 from rest_framework import serializers
 
@@ -40,10 +39,11 @@ def _get_first_last_names(name, limit=30):
 
 
 class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
+
     username = serializers.CharField(source='user.username')
 
     # Added this field so it's required in the API in a clean way
-    # and triggers validatino
+    # and triggers validation
     name = serializers.CharField(required=True)
 
     email = serializers.CharField(source='user.email')
@@ -169,6 +169,7 @@ class UserProfileSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserProfileWithTokenSerializer(UserProfileSerializer):
+
     username = serializers.CharField(source='user.username')
     email = serializers.CharField(source='user.email')
     website = serializers.CharField(source='home_page', required=False)
@@ -188,7 +189,6 @@ class UserProfileWithTokenSerializer(UserProfileSerializer):
         extra_kwargs = {
             "url": {'lookup_field': 'user'}
         }
-
 
     def get_api_token(self, object):
         return object.user.auth_token.key

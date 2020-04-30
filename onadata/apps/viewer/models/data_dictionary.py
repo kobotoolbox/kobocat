@@ -6,6 +6,7 @@ import re
 
 from django.db import models
 from django.db.models.signals import post_save
+from django.utils.encoding import smart_str
 from django.utils.six import text_type
 from guardian.shortcuts import assign_perm, get_perms_for_model
 from pyxform import SurveyElementBuilder
@@ -133,7 +134,7 @@ class DataDictionary(XForm):
             calculate_node.setAttribute("calculate", "'%s'" % self.uuid)
             model_node.appendChild(calculate_node)
 
-        self.xml = doc.toprettyxml(indent="  ", encoding='utf-8').decode()
+        self.xml = smart_str(doc.toprettyxml(indent="  ", encoding='utf-8'))
         # hack
         # http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-\
         # and-silly-whitespace/

@@ -32,7 +32,7 @@ class TestXForm(TestBase):
         )
         self._publish_xls_file_and_set_xform(xls_file_path)
 
-        self.assertTrue(isinstance(self.xform.xml, unicode))
+        self.assertTrue(isinstance(self.xform.xml, str))
 
         # change title
         self.xform.title = 'Random Title'

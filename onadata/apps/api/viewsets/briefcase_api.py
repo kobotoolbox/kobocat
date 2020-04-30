@@ -65,7 +65,7 @@ def _parse_int(num):
         pass
 
 
-class DoXmlFormUpload():
+class DoXmlFormUpload:
 
     def __init__(self, xml_file, user):
         self.xml_file = xml_file

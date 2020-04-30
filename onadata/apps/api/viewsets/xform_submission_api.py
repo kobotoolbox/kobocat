@@ -7,7 +7,7 @@ import io
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
-from django.utils.six import string_types
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
 
 from rest_framework import permissions
@@ -45,7 +45,7 @@ def dict_lists2strings(d):
     :param d: The dict to convert.
     :returns: The converted dict."""
     for k, v in d.items():
-        if isinstance(v, list) and all([isinstance(e, string_types) for e in v]):
+        if isinstance(v, list) and all([isinstance(e, str) for e in v]):
             d[k] = ' '.join(v)
         elif isinstance(v, dict):
             d[k] = dict_lists2strings(v)
@@ -76,7 +76,6 @@ def create_instance_from_json(username, request):
     xml_string = dict2xform(submission_joined, dict_form.get('id'))
 
     xml_file = io.StringIO(xml_string)
-
     return safe_create_instance(username, xml_file, [], None, request)
 
 
@@ -208,15 +207,15 @@ Here is some example JSON, it would replace `[the JSON]` above:
         if not error:
             error_msg = _("Unable to create submission.")
             status_code = status.HTTP_400_BAD_REQUEST
-        elif isinstance(error, string_types):
+        elif isinstance(error, str):
             error_msg = error
             status_code = status.HTTP_400_BAD_REQUEST
         elif not is_json_request:
             return error
         else:
-            error_msg = xml_error_re.search(error.content).groups()[0]
+            error_msg = xml_error_re.search(smart_str(error.content)).groups()[0]
             status_code = error.status_code
 
-        return Response({'error': error_msg},
+        return Response({'error': smart_str(error_msg)},
                         headers=self.get_openrosa_headers(request),
                         status=status_code)

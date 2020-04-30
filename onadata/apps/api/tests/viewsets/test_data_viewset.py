@@ -66,7 +66,7 @@ class TestDataViewSet(TestBase):
         data = _data_list(formid)
         self.assertEqual(response.data, data)
 
-        # redo the request since it's been consummed
+        # redo the request since it's been consumed
         request = self.factory.get('/', **self.extra)
         response = view(request, pk=formid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -75,13 +75,16 @@ class TestDataViewSet(TestBase):
 
         dataid = self.xform.instances.all().order_by('id')[0].pk
         data = _data_instance(dataid)
-        self.assertDictContainsSubset(data, sorted(response.data)[0])
+        response_first_element = sorted(response.data, key=lambda x: x['_id'])[0]
+        self.assertEqual(dict(response_first_element, **data),
+                         response_first_element)
 
         view = DataViewSet.as_view({'get': 'retrieve'})
         response = view(request, pk=formid, dataid=dataid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsInstance(response.data, dict)
-        self.assertDictContainsSubset(data, response.data)
+        self.assertEqual(dict(response.data, **data),
+                         response.data)
 
     def test_data_anon(self):
         self._make_submissions()
@@ -100,7 +103,9 @@ class TestDataViewSet(TestBase):
         self.assertTrue(self.xform.instances.count())
         dataid = self.xform.instances.all().order_by('id')[0].pk
         data = _data_instance(dataid)
-        self.assertDictContainsSubset(data, sorted(response.data)[0])
+        response_first_element = sorted(response.data, key=lambda x: x['_id'])[0]
+        self.assertEqual(dict(response_first_element, **data),
+                         response_first_element)
 
         data = {
             '_xform_id_string': 'transportation_2011_07_25',
@@ -113,7 +118,8 @@ class TestDataViewSet(TestBase):
         response = view(request, pk=formid, dataid=dataid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsInstance(response.data, dict)
-        self.assertDictContainsSubset(data, response.data)
+        self.assertEqual(dict(response.data, **data),
+                         response.data)
 
     def test_data_bad_formid(self):
         self._make_submissions()
@@ -243,8 +249,9 @@ class TestDataViewSet(TestBase):
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # should be both bob's and alice's form
-        self.assertEqual(sorted(response.data),
-                         sorted([bobs_data, alice_data]))
+        sorted_response_data = sorted(response.data, key=lambda x: x['id'])
+        self.assertEqual(sorted_response_data,
+                         [bobs_data, alice_data])
 
         # apply filter, see only bob's forms
         request = self.factory.get('/', data={'owner': 'bob'}, **self.extra)
@@ -308,7 +315,9 @@ class TestDataViewSet(TestBase):
         self.assertTrue(self.xform.instances.count())
         dataid = self.xform.instances.all().order_by('id')[0].pk
         data = _data_instance(dataid)
-        self.assertDictContainsSubset(data, sorted(response.data)[0])
+        response_first_element = sorted(response.data, key=lambda x: x['_id'])[0]
+        self.assertEqual(dict(response_first_element, **data),
+                         response_first_element)
 
         # access to a public data as other user
         self._create_user_and_login('alice', 'alice')
@@ -322,7 +331,9 @@ class TestDataViewSet(TestBase):
         self.assertTrue(self.xform.instances.count())
         dataid = self.xform.instances.all().order_by('id')[0].pk
         data = _data_instance(dataid)
-        self.assertDictContainsSubset(data, sorted(response.data)[0])
+        response_first_element = sorted(response.data, key=lambda x: x['_id'])[0]
+        self.assertEqual(dict(response_first_element, **data),
+                         response_first_element)
 
     def test_data_w_attachment(self):
         self._submit_transport_instance_w_attachment()
@@ -358,7 +369,9 @@ class TestDataViewSet(TestBase):
             '_status': 'submitted_via_web',
             '_id': dataid
         }
-        self.assertDictContainsSubset(data, sorted(response.data)[0])
+        response_first_element = sorted(response.data, key=lambda x: x['_id'])[0]
+        self.assertEqual(dict(response_first_element, **data),
+                         response_first_element)
 
         data = {
             '_xform_id_string': 'transportation_2011_07_25',
@@ -366,11 +379,13 @@ class TestDataViewSet(TestBase):
             'none',
             '_submitted_by': 'bob',
         }
+
         view = DataViewSet.as_view({'get': 'retrieve'})
         response = view(request, pk=formid, dataid=dataid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsInstance(response.data, dict)
-        self.assertDictContainsSubset(data, response.data)
+        self.assertEqual(dict(response.data, **data),
+                         response.data)
 
     def test_delete_submission(self):
         self._make_submissions()

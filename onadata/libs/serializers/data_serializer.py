@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import json
 
 from django.utils.translation import ugettext as _
@@ -12,6 +13,7 @@ from onadata.apps.api.mongo_helper import MongoHelper
 
 
 class DataSerializer(serializers.HyperlinkedModelSerializer):
+
     url = serializers.HyperlinkedIdentityField(
         view_name='data-list', lookup_field='pk')
 
@@ -22,6 +24,10 @@ class DataSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DataListSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     def to_representation(self, obj):
         request = self.context.get('request')
 
@@ -70,6 +76,10 @@ class DataListSerializer(serializers.Serializer):
 
 
 class DataInstanceSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
             return super(DataInstanceSerializer, self).to_representation(obj)
@@ -94,6 +104,10 @@ class DataInstanceSerializer(serializers.Serializer):
 
 
 class SubmissionSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
             return super(SubmissionSerializer, self).to_representation(obj)

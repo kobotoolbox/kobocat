@@ -13,6 +13,7 @@ from onadata.libs.utils.decorators import check_obj
 
 
 class XFormSerializer(serializers.HyperlinkedModelSerializer):
+
     formid = serializers.ReadOnlyField(source='id')
     metadata = serializers.SerializerMethodField('get_xform_metadata')
     owner = serializers.HyperlinkedRelatedField(view_name='user-detail',
@@ -31,6 +32,28 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     hash = serializers.SerializerMethodField()
     has_kpi_hooks = serializers.BooleanField()
 
+    class Meta:
+        model = XForm
+
+        read_only_fields = (
+            'json',
+            'xml',
+            'date_created',
+            'date_modified',
+            'encrypted',
+            'last_submission_time'
+        )
+
+        exclude = (
+            'json',
+            'xml',
+            'xls',
+            'user',
+            'has_start_time',
+            'shared',
+            'shared_data'
+        )
+
     @check_obj
     def get_hash(self, obj):
         return "md5:%s" % obj.hash
@@ -47,14 +70,6 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             })
         attrs['shared'] = shared is True or shared == 'True'
         return attrs
-
-    class Meta:
-        model = XForm
-        read_only_fields = (
-            'json', 'xml', 'date_created', 'date_modified', 'encrypted',
-            'last_submission_time')
-        exclude = ('json', 'xml', 'xls', 'user',
-                   'has_start_time', 'shared', 'shared_data')
 
     # Again, this is to match unit tests
     @property
@@ -76,6 +91,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class XFormListSerializer(serializers.Serializer):
+
     formID = serializers.ReadOnlyField(source='id_string')
     name = serializers.ReadOnlyField(source='title')
     majorMinorVersion = serializers.SerializerMethodField('get_version')
@@ -84,6 +100,20 @@ class XFormListSerializer(serializers.Serializer):
     descriptionText = serializers.ReadOnlyField(source='description')
     downloadUrl = serializers.SerializerMethodField('get_url')
     manifestUrl = serializers.SerializerMethodField('get_manifest_url')
+
+    class Meta:
+        fields = '__all__'
+
+        read_only_fields = (
+            'formID',
+            'name',
+            'majorMinorVersion',
+            'version',
+            'hash',
+            'descriptionText',
+            'downloadUrl',
+            'manifestUrl',
+        )
 
     def get_version(self, obj):
         return None
@@ -108,9 +138,19 @@ class XFormListSerializer(serializers.Serializer):
 
 
 class XFormManifestSerializer(serializers.Serializer):
+
     filename = serializers.ReadOnlyField(source='data_value')
     hash = serializers.SerializerMethodField()
     downloadUrl = serializers.SerializerMethodField('get_url')
+
+    class Meta:
+        fields = '__all__'
+
+        read_only_fields = (
+            'filename',
+            'hash',
+            'downloadUrl',
+        )
 
     @check_obj
     def get_url(self, obj):

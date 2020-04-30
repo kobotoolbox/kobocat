@@ -27,7 +27,7 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.utils.encoding import DjangoUnicodeDecodeError
+from django.utils.encoding import DjangoUnicodeDecodeError, smart_str
 from django.utils.translation import ugettext as _
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
@@ -299,7 +299,7 @@ def create_instance(username, xml_file, media_files,
     if username:
         username = username.lower()
 
-    xml = xml_file.read().decode()
+    xml = smart_str(xml_file.read())
     xml_hash = Instance.get_hash(xml)
     xform = get_xform_from_submission(xml, username, uuid)
     check_submission_permissions(request, xform)
@@ -519,7 +519,7 @@ def publish_xls_form(xls_file, user, id_string=None):
 
 
 def publish_xml_form(xml_file, user, id_string=None):
-    xml = xml_file.read()
+    xml = smart_str(xml_file.read())
     survey = create_survey_element_from_xml(xml)
     form_json = survey.to_json()
     if id_string:

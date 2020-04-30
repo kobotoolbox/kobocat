@@ -1,7 +1,6 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import  # - Tests failed when imported
+from __future__ import unicode_literals, print_function, division, absolute_import
 
-import json
 import os
 import re
 from datetime import datetime
@@ -12,18 +11,18 @@ import requests
 from django.conf import settings
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from httmock import urlmatch, HTTMock, all_requests
+from httmock import HTTMock, all_requests
 from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.logger.models import XForm
-from onadata.apps.main.models import MetaData
 from onadata.libs.permissions import (
     CAN_VIEW_XFORM
 )
 from onadata.libs.serializers.xform_serializer import XFormSerializer
+from onadata.libs.tests.utils.xml import pyxform_version_agnostic
 
 
 @all_requests
@@ -146,8 +145,10 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # should be both bob's and alice's form
-        self.assertEqual(sorted(response.data),
-                         sorted([bobs_form_data, self.form_data]))
+
+        sorted_response_data = sorted(response.data, key=lambda x: x['formid'])
+        self.assertEqual(sorted_response_data,
+                         [bobs_form_data, self.form_data])
 
         # apply filter, see only bob's forms
         request = self.factory.get('/', data={'owner': 'bob'}, **self.extra)
@@ -199,7 +200,8 @@ class TestXFormViewSet(TestAbstractViewSet):
         # test for supported formats
         response = view(request, pk=formid, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertDictContainsSubset(data, response.data)
+        self.assertEqual(dict(response.data, **data),
+                         response.data)
         response = view(request, pk=formid, format='xml')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_doc = minidom.parseString(response.data)
@@ -228,7 +230,8 @@ class TestXFormViewSet(TestAbstractViewSet):
         uuid_node.setAttribute("calculate", "''")
 
         # check content without UUID
-        self.assertEqual(response_doc.toxml(), expected_doc.toxml())
+        self.assertEqual(pyxform_version_agnostic(response_doc.toxml()),
+                         pyxform_version_agnostic(expected_doc.toxml()))
 
     def test_form_tags(self):
         self.publish_xls_form()
@@ -330,7 +333,8 @@ class TestXFormViewSet(TestAbstractViewSet):
                 'url':
                 'http://testserver/api/v1/forms/%s' % xform.pk
             })
-            self.assertDictContainsSubset(data, response.data)
+            self.assertEqual(dict(response.data, **data),
+                             response.data)
             self.assertTrue(xform.user.pk == self.user.pk)
 
     def test_publish_invalid_xls_form(self):

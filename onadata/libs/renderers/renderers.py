@@ -4,7 +4,6 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import io
 
 from django.utils.xmlutils import SimplerXMLGenerator
-from django.utils import six
 from django.utils.encoding import smart_text
 from rest_framework.negotiation import DefaultContentNegotiation
 from rest_framework.renderers import BaseRenderer
@@ -100,7 +99,7 @@ class XFormListRenderer(BaseRenderer):
         """
         if data is None:
             return ''
-        elif isinstance(data, six.string_types):
+        elif isinstance(data, str):
             return data
 
         stream = io.StringIO()
@@ -123,7 +122,7 @@ class XFormListRenderer(BaseRenderer):
                 xml.endElement(self.element_node)
 
         elif isinstance(data, dict):
-            for key, value in six.items(data):
+            for key, value in data.items():
                 xml.startElement(key, {})
                 self._to_xml(xml, value)
                 xml.endElement(key)

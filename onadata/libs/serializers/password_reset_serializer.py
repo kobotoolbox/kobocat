@@ -29,7 +29,7 @@ def get_password_reset_email(user, reset_url,
         'site_name': site_name,
         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
         'username': user.username,
-        'encoded_username': urlsafe_base64_encode(user.username),
+        'encoded_username': urlsafe_base64_encode(force_bytes(user.username)),
         'token': token_generator.make_token(user),
         'protocol': result.scheme if result.scheme != '' else 'http',
     }
@@ -95,6 +95,10 @@ class PasswordReset(object):
 
 
 class PasswordResetSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     email = serializers.EmailField(label=_("Email"), max_length=254)
     reset_url = serializers.URLField(label=_("Reset URL"), max_length=254)
 
@@ -114,6 +118,10 @@ class PasswordResetSerializer(serializers.Serializer):
 
 
 class PasswordResetChangeSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     uid = serializers.CharField(max_length=50)
     new_password = serializers.CharField(min_length=4, max_length=128)
     token = serializers.CharField(max_length=128)
