@@ -20,9 +20,13 @@ def save_kpi_hook_service(sender, instance, **kwargs):
     if instance.has_kpi_hooks:
         # Only register the service if it hasn't been created yet.
         if kpi_hook_service is None:
+            # For retro-compatibility, if `asset_uid` is null, fallback on
+            # `id_string`
+            asset_uid = instance.kpi_asset_uid if instance.kpi_asset_uid \
+                else instance.id_string
             kpi_hook_service = RestService(
                 service_url=settings.KPI_HOOK_ENDPOINT_PATTERN.format(
-                    asset_uid=instance.id_string),
+                    asset_uid=asset_uid),
                 xform=instance,
                 name=SERVICE_KPI_HOOK[0]
             )

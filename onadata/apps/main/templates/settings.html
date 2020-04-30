@@ -6,6 +6,8 @@
   <div class="page-header">
     <h1>{%  trans "Edit User Profile" %}</h1>
   </div>
+  {% comment %}
+  Passwords should *only* be changed from KPI now!
   <div class="row">
     <div class="span6">
       <a class="btn" href="{% url "auth_password_change" %}">{%  trans "change password" %}</a>
@@ -13,6 +15,7 @@
       <br/>
     </div>
   </div>
+  {% endcomment %}
 
   <div class="row">
     <div class="span6">

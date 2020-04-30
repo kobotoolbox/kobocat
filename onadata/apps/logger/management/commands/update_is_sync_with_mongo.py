@@ -28,17 +28,17 @@ class Command(BaseCommand):
         offset = 0
         while stop is not True:
             limit = offset + batchsize
-            instances_ids = Instance.objects.values_list("id", flat=True).order_by("id")[offset:limit]
-            if instances_ids:
-                instances_ids = [int(instance_id) for instance_id in instances_ids]
-                query = {"_id": {"$in": instances_ids}}
+            instance_ids = Instance.objects.values_list("id", flat=True).order_by("id")[offset:limit]
+            if instance_ids:
+                instance_ids = [int(instance_id) for instance_id in instance_ids]
+                query = {"_id": {"$in": instance_ids}}
                 cursor = xform_instances.find(query, { "_id": 1 })
                 mongo_ids = list(record.get("_id") for record in cursor)
-                not_synced_ids = set(instances_ids).difference(mongo_ids)
+                not_synced_ids = set(instance_ids).difference(mongo_ids)
 
                 self.stdout.write(_("Updating instances from #{} to #{}\n").format(
-                    instances_ids[0],
-                    instances_ids[-1]))
+                    instance_ids[0],
+                    instance_ids[-1]))
 
                 if not_synced_ids:
                     Instance.objects.filter(id__in=not_synced_ids).update(is_synced_with_mongo=False)

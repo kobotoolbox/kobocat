@@ -91,7 +91,7 @@ if CSRF_COOKIE_DOMAIN:
     SESSION_COOKIE_DOMAIN = CSRF_COOKIE_DOMAIN
     SESSION_COOKIE_NAME = 'kobonaut'
 
-SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
+SESSION_SERIALIZER ='django.contrib.sessions.serializers.JSONSerializer'
 
 # for debugging
 # print "KOBOFORM_URL=%s" % KOBOFORM_URL
