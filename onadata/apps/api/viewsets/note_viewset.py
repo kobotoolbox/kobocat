@@ -1,10 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, absolute_import
 
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from guardian.models import UserObjectPermission
-from guardian.shortcuts import assign_perm
+from django.db.models import Q
+from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -65,29 +63,16 @@ A `GET` request will return the list of notes applied to a data point.
     permission_classes = [NoteObjectPermissions]
 
     def get_queryset(self):
-        # Allows users to see only notes of instances they're allowed to see
-        if self.request.user.is_anonymous():
-            user_id = settings.ANONYMOUS_USER_ID
-        else:
-            user_id = self.request.user.pk
+        viewable_xforms = get_objects_for_user(self.request.user,
+                                               CAN_VIEW_XFORM,
+                                               XForm,
+                                               accept_global_perms=False)
 
-        xform_content_type = ContentType.objects.get(app_label='logger',
-                                                     model='xform')
-        user_xform_ids = [
-            int(id_) for id_ in UserObjectPermission.objects.filter(
-                content_type=xform_content_type,
-                permission__codename=CAN_VIEW_XFORM,
-                user_id=user_id).values_list('object_pk', flat=True).distinct()
-        ]
+        viewable_notes = Note.objects.filter(
+            Q(instance__xform=viewable_xforms) | Q(instance__xform__shared_data=True)
+        )
 
-        anonymous_xform_ids = [
-            int(id_) for id_ in XForm.objects.filter(shared_data=True)
-            .values_list('pk', flat=True).distinct()
-        ]
-
-        xform_ids = set(anonymous_xform_ids + user_xform_ids)
-
-        return Note.objects.filter(instance__xform_id__in=xform_ids).all()
+        return viewable_notes
 
     # This used to be post_save. Part of it is here, permissions validation
     # has been moved to the note serializer
