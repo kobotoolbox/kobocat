@@ -1,6 +1,9 @@
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (
+    DjangoObjectPermissions,
+    IsAuthenticated,
+    SAFE_METHODS
+)
 
 from onadata.libs.permissions import CAN_ADD_XFORM_TO_PROFILE
 from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VALIDATE_XFORM
@@ -30,8 +33,10 @@ class XFormPermissions(DjangoObjectPermissions):
     authenticated_users_only = False
 
     def __init__(self, *args, **kwargs):
+
         # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
         # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
+        self.perms_map = DjangoObjectPermissions.perms_map.copy()
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['HEAD'] = ['%(app_label)s.view_%(model_name)s']
@@ -93,6 +98,7 @@ class XFormDataPermissions(XFormPermissions):
         super(XFormDataPermissions, self).__init__(*args, **kwargs)
         # Those who can edit submissions can also delete them, following the
         # behavior of `onadata.apps.main.views.delete_data`
+        self.perms_map = XFormPermissions.perms_map.copy()
         self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
 
 
@@ -191,6 +197,41 @@ class AttachmentObjectPermissions(DjangoObjectPermissions):
             request, view, obj.instance.xform)
 
 
+class NoteObjectPermissions(DjangoObjectPermissions):
+
+    authenticated_users_only = False
+
+    def __init__(self, *args, **kwargs):
+        self.perms_map = DjangoObjectPermissions.perms_map.copy()
+        self.perms_map['GET'] = ['%(app_label)s.view_xform']
+        self.perms_map['OPTIONS'] = ['%(app_label)s.view_xform']
+        self.perms_map['HEAD'] = ['%(app_label)s.view_xform']
+        self.perms_map['PATCH'] = ['%(app_label)s.change_xform']
+        self.perms_map['POST'] = ['%(app_label)s.change_xform']
+        self.perms_map['DELETE'] = ['%(app_label)s.change_xform']
+
+        return super(NoteObjectPermissions, self).__init__(*args, **kwargs)
+
+    def has_permission(self, request, view):
+        # Data will be filtered in `NoteViewSet`
+        if request.method in SAFE_METHODS and view.action in ['list', 'retrieve']:
+            return True
+
+        return super(NoteObjectPermissions, self).has_permission(request, view)
+
+    def has_object_permission(self, request, view, obj):
+
+        xform = obj.instance.xform
+
+        # Allow anonymous users to access shared data
+        if request.method in SAFE_METHODS and view.action == 'retrieve':
+            if xform.shared_data:
+                return True
+
+        return super(NoteObjectPermissions, self).has_object_permission(
+            request, view, xform)
+
+
 class ConnectViewsetPermissions(IsAuthenticated):
 
     def has_permission(self, request, view):
@@ -199,5 +240,6 @@ class ConnectViewsetPermissions(IsAuthenticated):
 
         return super(ConnectViewsetPermissions, self)\
             .has_permission(request, view)
+
 
 __permissions__ = [DjangoObjectPermissions, IsAuthenticated]

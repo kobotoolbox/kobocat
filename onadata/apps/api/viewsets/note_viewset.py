@@ -1,17 +1,19 @@
-from django.utils.translation import ugettext as _
-from guardian.shortcuts import assign_perm
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import
 
+from django.db.models import Q
+from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from onadata.apps.api import permissions
-from onadata.libs.mixins.view_permission_mixin import ViewPermissionMixin
+from onadata.apps.api.permissions import NoteObjectPermissions
+from onadata.apps.logger.models import Note, XForm
+from onadata.libs.permissions import CAN_VIEW_XFORM
 from onadata.libs.serializers.note_serializer import NoteSerializer
-from onadata.apps.logger.models import Note
 
 
-class NoteViewSet(ViewPermissionMixin, ModelViewSet):
+class NoteViewSet(ModelViewSet):
     """## Add Notes to a submission
 
 A `POST` payload of parameters:
@@ -57,12 +59,22 @@ A `GET` request will return the list of notes applied to a data point.
   >
   >        HTTP 200 OK
 """
-    queryset = Note.objects.all()
     serializer_class = NoteSerializer
-    permission_classes = [permissions.ViewDjangoObjectPermissions,
-                          permissions.IsAuthenticated, ]
+    permission_classes = [NoteObjectPermissions]
 
-    #u This used to be post_save. Part of it is here, permissions validation
+    def get_queryset(self):
+        viewable_xforms = get_objects_for_user(self.request.user,
+                                               CAN_VIEW_XFORM,
+                                               XForm,
+                                               accept_global_perms=False)
+
+        viewable_notes = Note.objects.filter(
+            Q(instance__xform=viewable_xforms) | Q(instance__xform__shared_data=True)
+        )
+
+        return viewable_notes
+
+    # This used to be post_save. Part of it is here, permissions validation
     # has been moved to the note serializer
     def perform_create(self, serializer):
         obj = serializer.save(user=self.request.user)
