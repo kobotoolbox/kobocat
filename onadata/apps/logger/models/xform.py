@@ -96,6 +96,7 @@ class XForm(BaseModel):
     tags = TaggableManager()
 
     has_kpi_hooks = LazyDefaultBooleanField(default=False)
+    kpi_asset_uid = models.CharField(max_length=32, null=True)
 
     class Meta:
         app_label = 'logger'

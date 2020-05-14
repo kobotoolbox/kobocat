@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 from __future__ import unicode_literals
 
 import os
 import re
 
+from django.utils.six.moves.urllib.parse import unquote_plus
 from django.core.exceptions import ImproperlyConfigured
 
 
@@ -33,11 +34,16 @@ class RedisHelper(object):
                     url_variable)
             )
 
+        if match.group('password') is None:
+            password = None
+        else:
+            password = unquote_plus(match.group('password'))
+
         redis_connection_dict = {
             'host': match.group('host'),
             'port': match.group('port'),
             'db': match.group('index') or 0,
-            'password': match.group('password')
+            'password': password
         }
         return redis_connection_dict
 
