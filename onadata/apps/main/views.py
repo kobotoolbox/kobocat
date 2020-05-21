@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
+# coding: utf-8
+from __future__ import absolute_import, unicode_literals
 
 import json
 import os
@@ -30,6 +30,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
 from guardian.shortcuts import assign_perm, remove_perm, get_users_with_perms
 from rest_framework.authtoken.models import Token
+from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
@@ -341,6 +342,7 @@ def dashboard(request):
     set_profile_data(data, content_user)
 
     return render(request, "dashboard.html", data)
+
 
 def redirect_to_public_link(request, uuid):
     xform = get_object_or_404(XForm, uuid=uuid)
@@ -741,6 +743,11 @@ def edit(request, username, id_string):
 
         elif request.POST.get('media_url'):
             uri = request.POST.get('media_url')
+            try:
+                SSRFProtect.validate(uri)
+            except SSRFProtectException:
+                return HttpResponseForbidden(_(u'URL {uri} is forbidden.').format(
+                    uri=uri))
             MetaData.media_add_uri(xform, uri)
         elif request.FILES.get('media'):
             audit = {
@@ -797,6 +804,13 @@ def edit(request, username, id_string):
                 and request.FILES.get("xls_template"):
             template_upload_name = request.POST.get("template_upload_name")
             external_url = request.POST.get("external_url")
+
+            try:
+                SSRFProtect.validate(external_url)
+            except SSRFProtectException:
+                return HttpResponseForbidden(_(u'URL {url} is forbidden.').format(
+                    url=external_url))
+
             xls_template = request.FILES.get("xls_template")
 
             result = upload_template_for_external_export(external_url,

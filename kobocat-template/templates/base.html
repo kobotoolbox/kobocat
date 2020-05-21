@@ -11,6 +11,8 @@
     <meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}" />
     {% endif %}
 
+    {% if csrf_token %}<meta name="csrf-token" content="{{csrf_token}}">{% endif %}
+
     <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
     <!--[if lt IE 9]>
       <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -90,14 +92,14 @@
     {% block javascript %}
 
     <!-- Le javascript -->
-  <script type="text/javascript" src="{% url "django.views.i18n.javascript_catalog" %}"></script>
+    <script type="text/javascript" src="{% url "django.views.i18n.javascript_catalog" %}"></script>
     <script src="{% static "js/jquery.min.js" %}"></script>
     <script src="{% static "js/jquery-migrate.min.js" %}"></script>
     <script src="{% static "js/jquery.tablesorter.min.js" %}"></script>
     <script src="{% static "bootstrap/js/bootstrap.js" %}"></script>
     <script src="{% static "bootstrap/js/bootstrapx-clickover.js" %}"></script>
     <script src="{% static "bootstrap/js/bootstrapx-clickover-btns.js" %}"></script>
-    <script src="{% static "js/application.js?v=201307251039" %}"></script>
+    <script src="{% static "js/application.js?v=202003111451" %}"></script>
     <script src="{% static "js/vex.combined.min.js" %}"></script>
     <script>vex.defaultOptions.className = 'vex-theme-kobo';</script>
     <script src="{% static "js/footable.min.js" %}"></script>
