@@ -77,8 +77,8 @@ class TestNoteViewSet(TestBase):
         request = self.factory.get('/', **extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-
         self.assertEqual(response.data, [])
+
         # Other user 'lilly' should not have access to bob's instance notes
         view = NoteViewSet.as_view({
             'get': 'retrieve'
@@ -86,6 +86,38 @@ class TestNoteViewSet(TestBase):
         request = self.factory.get('/', **extra)
         response = view(request, pk=self.pk)
         self.assertEqual(response.status_code, 404)
+
+        # Share publicly XForm
+        self.xform.shared = True
+        self.xform.shared_data = True
+        self.xform.save()
+
+        # Since project is public, other user 'lilly' should have access
+        # to bob's instance notes
+        # Detail endpoint
+        request = self.factory.get('/', **extra)
+        response = view(request, pk=self.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.get('note'), note['note'])
+
+        # List endpoint
+        request = self.factory.get('/', **extra)
+        response = self.view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+
+        # Anonymous user should also have access to bob's instance notes
+        # Detail endpoint
+        request = self.factory.get('/')
+        response = view(request, pk=self.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.get('note'), note['note'])
+
+        # But Anonymous user cannot still list notes
+        # List endpoint
+        request = self.factory.get('/')
+        response = self.view(request)
+        self.assertEqual(response.status_code, 401)
 
     def test_delete_note(self):
         self._add_notes_to_data_point()

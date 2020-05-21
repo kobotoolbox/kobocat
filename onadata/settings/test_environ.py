@@ -85,13 +85,12 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 #MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
 
-CSRF_COOKIE_DOMAIN = os.environ.get('CSRF_COOKIE_DOMAIN', None)
-
-if CSRF_COOKIE_DOMAIN:
-    SESSION_COOKIE_DOMAIN = CSRF_COOKIE_DOMAIN
+# Domain must not exclude KPI when sharing sessions
+if os.environ.get('SESSION_COOKIE_DOMAIN'):
+    SESSION_COOKIE_DOMAIN = os.environ['SESSION_COOKIE_DOMAIN']
     SESSION_COOKIE_NAME = 'kobonaut'
 
-SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
+SESSION_SERIALIZER ='django.contrib.sessions.serializers.JSONSerializer'
 
 # for debugging
 # print "KOBOFORM_URL=%s" % KOBOFORM_URL

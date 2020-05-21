@@ -188,6 +188,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Django 1.8 removes TransactionMiddleware (was deprecated in 1.6). See:
     # https://docs.djangoproject.com/en/1.6/topics/db/transactions/#transaction-middleware
@@ -556,10 +557,20 @@ DEFAULT_VALIDATION_STATUSES = [
     },
 ]
 
-# Make Django use NginX $host. Useful when running with ./manage.py runserver_plus
+# Make Django use NGINX $host. Useful when running with ./manage.py runserver_plus
 # It avoids adding the debugger webserver port (i.e. `:8000`) at the end of urls.
 if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
     USE_X_FORWARDED_HOST = True
 
 SESSION_ENGINE = "redis_sessions.session"
 SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
+
+# "Although the setting offers little practical benefit, it's sometimes
+# required by security auditors."
+# -- https://docs.djangoproject.com/en/2.2/ref/settings/#csrf-cookie-httponly
+CSRF_COOKIE_HTTPONLY = True
+# SESSION_COOKIE_HTTPONLY is more useful, but it defaults to True.
+
+if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
