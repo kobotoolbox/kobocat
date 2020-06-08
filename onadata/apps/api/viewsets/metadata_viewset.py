@@ -55,6 +55,9 @@ class MetaDataViewSet(viewsets.ModelViewSet):
             ....
         ]
 
+    Filtering by `data_type` is possible, e.g.
+    `/api/v1/metadata?data_type=media` returns only media files.
+
     ## Get list of metadata for a specific form
 
     The form endpoint, `/api/v1/forms/formid`, contains a `metadata` field
@@ -62,7 +65,7 @@ class MetaDataViewSet(viewsets.ModelViewSet):
     parameter `xform` with the `formid` as the value.
 
     <pre class="prettyprint">
-    GET /api/v1/metdata?<code>xform=formid</code></pre>
+    GET /api/v1/metadata?<code>xform=formid</code></pre>
 
         HTTP 200 OK
 
