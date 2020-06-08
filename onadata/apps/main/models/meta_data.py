@@ -27,15 +27,25 @@ def is_valid_url(uri):
 
 
 def upload_to(instance, filename):
+
+    xform_unique_id = (
+        instance.xform.uuid
+        or instance.xform.id_string
+        or '__pk-{}'.format(instance.xform.pk)
+    )
+
     if instance.data_type == 'media':
         return os.path.join(
             instance.xform.user.username,
-            'formid-media',
+            'form-media',
+            xform_unique_id,
             filename
         )
+
     return os.path.join(
         instance.xform.user.username,
         'docs',
+        xform_unique_id,
         filename
     )
 
