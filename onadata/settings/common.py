@@ -584,3 +584,11 @@ if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
 PASSWORD_HASHERS = (
     'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations',
 ) + PASSWORD_HASHERS
+
+
+# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
+# This variable is available only in Django 1.10+. Only there for next upgrade
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
