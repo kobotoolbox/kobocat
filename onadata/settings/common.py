@@ -15,6 +15,7 @@ import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
 
+from django.conf.global_settings import PASSWORD_HASHERS
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
@@ -574,3 +575,12 @@ CSRF_COOKIE_HTTPONLY = True
 if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+
+# KPI running Django 2.2 inserts password hashes into our database, calculated
+# using 150,000 iterations. Django 1.8 uses only 20,000 iterations by default;
+# increase this to match 2.2. See
+# https://github.com/kobotoolbox/kobocat/issues/612
+PASSWORD_HASHERS = (
+    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations',
+) + PASSWORD_HASHERS
