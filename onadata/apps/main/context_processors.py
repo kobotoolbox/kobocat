@@ -23,6 +23,7 @@ def site_name(request):
         site_name = site.name
     return {'SITE_NAME': site_name}
 
+
 def base_url(request):
     """
     Return a BASE_URL template context for the current request.
@@ -31,5 +32,11 @@ def base_url(request):
         scheme = 'https://'
     else:
         scheme = 'http://'
-        
-    return {'BASE_URL': scheme + request.get_host(),}
+
+    return {'BASE_URL': scheme + request.get_host(), }
+
+
+def kobocat_root_uri_prefix(request):
+    # settings.KOBOCAT_ROOT_URI_PREFIX will have trailing and leading slashes, so we fall back to a
+    # single (leading) slash when it isn't set
+    return {'KOBOCAT_ROOT_URI_PREFIX': getattr(settings, 'KOBOCAT_ROOT_URI_PREFIX', '/')}
