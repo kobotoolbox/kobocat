@@ -23,24 +23,32 @@ class ViewDjangoObjectPermissions(DjangoObjectPermissions):
     }
 
 
-class DjangoObjectPermissionsAllowAnon(DjangoObjectPermissions):
-    authenticated_users_only = False
-
-
-class XFormPermissions(DjangoObjectPermissions):
-
+class ObjectPermissionsWithViewRestricted(DjangoObjectPermissions):
+    """
+    The default `perms_map` does not include GET, OPTIONS, or HEAD, meaning
+    anyone can view objects. We override this here to check for `view_…`
+    permissions before allowing objects to be seen. Refer to
+    https://www.django-rest-framework.org/api-guide/permissions/#djangoobjectpermissions
+    """
     def __init__(self, *args, **kwargs):
-
-        self._allowed_actions_for_anonymous = ['retrieve']
-        # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
-        # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
-        self.perms_map = DjangoObjectPermissions.perms_map.copy()
+        super(ObjectPermissionsWithViewRestricted, self).__init__(
+            *args, **kwargs
+        )
+        # Do NOT mutate `perms_map` from the parent class! Doing so will affect
+        # *every* instance of `DjangoObjectPermissions` and all its subclasses
+        self.perms_map = self.perms_map.copy()
         self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_%(model_name)s']
         self.perms_map['HEAD'] = ['%(app_label)s.view_%(model_name)s']
-        self.perms_map['PATCH'] = ['%(app_label)s.change_%(model_name)s']
 
-        return super(XFormPermissions, self).__init__(*args, **kwargs)
+        # `PATCH` should already be set properly by DRF, but it used to be
+        # explicitly assigned here as well. Double-check that it's right
+        assert self.perms_map['PATCH'] == ['%(app_label)s.change_%(model_name)s']
+
+    authenticated_users_only = False
+
+
+class XFormPermissions(ObjectPermissionsWithViewRestricted):
 
     def has_permission(self, request, view):
         # Allow anonymous users to access shared data
@@ -67,7 +75,7 @@ class XFormDataPermissions(XFormPermissions):
         self.perms_map = XFormPermissions.perms_map.copy()
         # Those who can edit submissions can also delete them, following the
         # behavior of `onadata.apps.main.views.delete_data`
-        self.perms_map = XFormPermissions.perms_map.copy()
+        self.perms_map = self.perms_map.copy()
         self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
         self._allowed_actions_for_anonymous = ['retrieve', 'list']
 
@@ -138,11 +146,11 @@ class MetaDataObjectPermissions(HasXFormObjectPermissionMixin,
         # view.model = XForm
         # It was already a hack for some permission workaround
         # (https://github.com/kobotoolbox/kobocat/commit/106c0cbef2ecec9448df1baab7333391972730f8)
-        # It doesn't work with DRF 3 because the model class is retrived
+        # It doesn't work with DRF 3 because the model class is retrieved
         # using get_queryset. We should replace this hack by something
         # cleaner, but that would need to rework the entire permissions system
         # so instead, we are keeping the spirit of the original hack
-        # by temporarly patching get_queryset.
+        # by temporarily patching get_queryset.
 
         # save all get_queryset to restore it later
         old_get_qs = view.get_queryset
@@ -186,7 +194,7 @@ class NoteObjectPermissions(DjangoObjectPermissions):
     authenticated_users_only = False
 
     def __init__(self, *args, **kwargs):
-        self.perms_map = DjangoObjectPermissions.perms_map.copy()
+        self.perms_map = self.perms_map.copy()
         self.perms_map['GET'] = ['%(app_label)s.view_xform']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_xform']
         self.perms_map['HEAD'] = ['%(app_label)s.view_xform']

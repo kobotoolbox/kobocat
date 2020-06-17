@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from onadata.apps.api.permissions import UserProfilePermissions
+from onadata.apps.api.permissions import ObjectPermissionsWithViewRestricted
 from onadata.libs.serializers.user_serializer import UserSerializer
 
 
@@ -55,7 +55,7 @@ This endpoint allows you to list and retrieve user's first and last names.
 """
     queryset = User.objects.exclude(pk=settings.ANONYMOUS_USER_ID)
     serializer_class = UserSerializer
-    permission_classes = [UserProfilePermissions]
+    permission_classes = [ObjectPermissionsWithViewRestricted]
 
     # This is NOT DRF lookup_field. DRF lookup_field is only located on
     # serializers and is deprecated and replaced by Meta.extra_kwargs['url']['lookup field']
