@@ -16,8 +16,8 @@ def generate_attachment_filename(instance, filename):
     return os.path.join(
         xform.user.username,
         'attachments',
-        xform.uuid or 'form',
-        instance.uuid or 'instance',
+        xform.uuid or xform.id_string or '__pk-{}'.format(xform.pk),
+        instance.uuid or '__pk-{}'.format(instance.pk),
         os.path.split(filename)[1])
 
 
