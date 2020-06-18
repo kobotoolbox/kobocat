@@ -59,14 +59,10 @@ class ObjectPermissionsWithViewRestricted(DjangoObjectPermissions):
 
 class XFormPermissions(ObjectPermissionsWithViewRestricted):
 
-    def __init__(self, *args, **kwargs):
-        super(XFormPermissions, self).__init__(*args, **kwargs)
-        self._allowed_actions_for_anonymous = ['retrieve']
-
     def has_permission(self, request, view):
         # Allow anonymous users to access shared data
         if request.method in SAFE_METHODS and \
-                view.action in self._allowed_actions_for_anonymous:
+                view.action and view.action == 'retrieve':
             return True
 
         return super(XFormPermissions, self).has_permission(request, view)
@@ -74,14 +70,14 @@ class XFormPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
         if request.method in SAFE_METHODS and view.action == 'retrieve':
-            if obj.shared_data:
+            if obj.shared:
                 return True
 
         return super(XFormPermissions, self).has_object_permission(
             request, view, obj)
 
 
-class XFormDataPermissions(XFormPermissions):
+class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
 
     def __init__(self, *args, **kwargs):
         super(XFormDataPermissions, self).__init__(*args, **kwargs)
@@ -89,13 +85,25 @@ class XFormDataPermissions(XFormPermissions):
         # behavior of `onadata.apps.main.views.delete_data`
         self.perms_map = self.perms_map.copy()
         self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
-        self._allowed_actions_for_anonymous = ['retrieve', 'list']
+
+    def has_permission(self, request, view):
+        lookup_field = view.lookup_field
+        lookup = view.kwargs.get(lookup_field)
+        # Allow anonymous users to access access shared data
+        allowed_anonymous_action = ['retrieve']
+        if lookup:
+            # We need to grand access to anonymous on list endpoint too when
+            # a form pk is specified. e.g. `/api/v1/data/{pk}.json
+            allowed_anonymous_action.append('list')
+        if request.method in SAFE_METHODS and \
+                view.action in allowed_anonymous_action:
+            return True
+        return super(XFormDataPermissions, self).has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
-        if request.method in SAFE_METHODS and view.action == 'retrieve':
-            # pk = view.kwargs.get('pk')
-            # xform = get_object_or_404(XForm, pk=pk)
+        if request.method in SAFE_METHODS and \
+                view.action in ['retrieve', 'list']:
             if obj.shared_data:
                 return True
 
