@@ -59,6 +59,10 @@ class ObjectPermissionsWithViewRestricted(DjangoObjectPermissions):
 
 class XFormPermissions(ObjectPermissionsWithViewRestricted):
 
+    def __init__(self, *args, **kwargs):
+        super(XFormPermissions, self).__init__(*args, **kwargs)
+        self._allowed_actions_for_anonymous = ['retrieve']
+
     def has_permission(self, request, view):
         # Allow anonymous users to access shared data
         if request.method in SAFE_METHODS and \
@@ -81,7 +85,6 @@ class XFormDataPermissions(XFormPermissions):
 
     def __init__(self, *args, **kwargs):
         super(XFormDataPermissions, self).__init__(*args, **kwargs)
-        self.perms_map = XFormPermissions.perms_map.copy()
         # Those who can edit submissions can also delete them, following the
         # behavior of `onadata.apps.main.views.delete_data`
         self.perms_map = self.perms_map.copy()
@@ -109,7 +112,7 @@ class XFormDataPermissions(XFormPermissions):
             request, view, obj)
 
 
-class UserProfilePermissions(DjangoObjectPermissions):
+class UserProfilePermissions(ObjectPermissionsWithViewRestricted):
 
     authenticated_users_only = True
 

@@ -19,7 +19,7 @@ class TestUserViewSet(TestAbstractViewSet):
             ('url', u'http://testserver/api/v1/users/bob')
         ])
 
-    def test_user_get(self):
+    def test_user_cannot_access_others(self):
         """Test authenticated user can access user info"""
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         self._create_user_profile(alice_data)
@@ -34,13 +34,12 @@ class TestUserViewSet(TestAbstractViewSet):
         # user with username bob
         view = UserViewSet.as_view({'get': 'retrieve'})
         response = view(request, username='bob')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, self.data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # user with username alice
         view = UserViewSet.as_view({'get': 'retrieve'})
         response = view(request, username='alice')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_user_anon(self):
         """Test anonymous user cannot access user info"""
