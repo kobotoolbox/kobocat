@@ -55,8 +55,7 @@ class TestAbstractViewSet(TestCase):
     def publish_xls_form(self, publish_data={}, merge=True, public=False):
         if merge:
             data = {
-                'owner': 'http://testserver/api/v1/users/%s'
-                         % self.user.username,
+                'owner': self.user.username,
                 'public': False,
                 'public_data': False,
                 'description': 'transportation_2011_07_25',

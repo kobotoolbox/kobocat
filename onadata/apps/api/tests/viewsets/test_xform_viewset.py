@@ -306,7 +306,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             'post': 'create'
         })
         data = {
-            'owner': 'http://testserver/api/v1/users/bob',
+            'owner': 'bob',
             'public': False,
             'public_data': False,
             'description': 'transportation_2011_07_25',
@@ -459,7 +459,6 @@ class TestXFormViewSet(TestAbstractViewSet):
     def test_xform_serializer_none(self):
         data = {
             'title': '',
-            'owner': None,
             'public': False,
             'public_data': False,
             'require_auth': False,

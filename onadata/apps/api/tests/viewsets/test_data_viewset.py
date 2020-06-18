@@ -171,7 +171,7 @@ class TestDataViewSet(TestBase):
         view = DataViewSet.as_view({'get': 'list'})
         request = self.factory.get('/')
         response = view(request)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_add_form_tag_propagates_to_data_tags(self):
         """Test that when a tag is applied on an xform,
@@ -297,6 +297,7 @@ class TestDataViewSet(TestBase):
 
         # data not found for anonymous access to private data
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.xform.shared = True
         self.xform.shared_data = True
         self.xform.save()
 
