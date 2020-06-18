@@ -13,10 +13,7 @@ from onadata.libs.utils.decorators import check_obj
 class XFormSerializer(serializers.HyperlinkedModelSerializer):
     formid = serializers.ReadOnlyField(source='id')
     metadata = serializers.SerializerMethodField('get_xform_metadata')
-    owner = serializers.HyperlinkedRelatedField(view_name='user-detail',
-                                                source='user',
-                                                lookup_field='username',
-                                                queryset=User.objects.all())
+    owner = serializers.ReadOnlyField(source='user.username')
     public = BooleanField(source='shared')
     public_data = BooleanField(source='shared_data')
     require_auth = BooleanField()

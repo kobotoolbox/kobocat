@@ -112,19 +112,6 @@ class XFormDataPermissions(XFormPermissions):
             request, view, obj)
 
 
-class UserProfilePermissions(ObjectPermissionsWithViewRestricted):
-
-    authenticated_users_only = True
-
-    def has_permission(self, request, view):
-
-        if view.action == 'list':
-            return request.user.is_superuser
-
-        return \
-            super(UserProfilePermissions, self).has_permission(request, view)
-
-
 class HasXFormObjectPermissionMixin(object):
     """Use XForm permissions for Attachment objects"""
     def has_permission(self, request, view):
