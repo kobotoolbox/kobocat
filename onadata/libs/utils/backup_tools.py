@@ -75,7 +75,7 @@ def create_zip_backup(zip_output_file, user, xform=None):
             file_index += 1
         # create the instance xml
         with open(full_xml_path, 'wb') as f:
-            f.write(instance.xml)
+            f.write(instance.xml.encode())
         done += 1
         sys.stdout.write("\r%.2f %% done" % (
             float(done)/float(num_instances) * 100))
