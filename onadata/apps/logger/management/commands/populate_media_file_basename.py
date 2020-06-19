@@ -23,7 +23,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--batchsize',
-            type='int',
+            type=int,
             default=1000,
             help=ugettext_lazy("Number of records to process per query"))
 
