@@ -567,9 +567,9 @@ if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
 # using 150,000 iterations. Django 1.8 uses only 20,000 iterations by default;
 # increase this to match 2.2. See
 # https://github.com/kobotoolbox/kobocat/issues/612
-PASSWORD_HASHERS = (
-    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations',
-) + PASSWORD_HASHERS
+PASSWORD_HASHERS = [
+    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations'
+] + PASSWORD_HASHERS
 
 
 # The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
