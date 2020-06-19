@@ -25,7 +25,7 @@ class TestAttachment(TestBase):
         self.instance = Instance.objects.all()[0]
         self.attachment = Attachment.objects.create(
             instance=self.instance,
-            media_file=File(open(media_file), media_file))
+            media_file=File(open(media_file, 'rb'), media_file))
 
     def test_mimetype(self):
         self.assertEqual(self.attachment.mimetype, 'image/jpeg')

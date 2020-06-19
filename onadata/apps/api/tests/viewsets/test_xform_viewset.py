@@ -330,8 +330,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             xform = self.user.xforms.get(uuid=response.data.get('uuid'))
             data.update({
-                'url':
-                'http://testserver/api/v1/forms/%s' % xform.pk
+                'url': f'http://testserver/api/v1/forms/{xform.pk}'
             })
             self.assertEqual(dict(response.data, **data),
                              response.data)
