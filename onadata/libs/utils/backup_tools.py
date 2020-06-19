@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-import codecs
+
 from datetime import datetime
 import errno
 import os
@@ -74,7 +74,7 @@ def create_zip_backup(zip_output_file, user, xform=None):
                 full_path, "%s-%d.xml" % (date_time_str, file_index))
             file_index += 1
         # create the instance xml
-        with codecs.open(full_xml_path, "wb", "utf-8") as f:
+        with open(full_xml_path, 'wb') as f:
             f.write(instance.xml)
         done += 1
         sys.stdout.write("\r%.2f %% done" % (

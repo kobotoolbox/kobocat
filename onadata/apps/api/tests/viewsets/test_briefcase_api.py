@@ -2,7 +2,6 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os
-import codecs
 
 from django.core.urlresolvers import reverse
 from django.core.files.storage import get_storage_class
@@ -69,7 +68,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self.assertEqual(instances.count(), NUM_INSTANCES)
 
         last_index = instances[instances.count() - 1].pk
-        with codecs.open(submission_list_path, 'rb', encoding='utf-8') as f:
+        with open(submission_list_path, 'rb') as f:
             expected_submission_list = f.read()
             expected_submission_list = \
                 expected_submission_list.replace(
@@ -99,7 +98,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self.assertEqual(instances.count(), NUM_INSTANCES - 1)
 
         last_index = instances[instances.count() - 1].pk
-        with codecs.open(submission_list_path, 'rb', encoding='utf-8') as f:
+        with open(submission_list_path, 'r') as f:
             expected_submission_list = f.read()
             expected_submission_list = \
                 expected_submission_list.replace(
@@ -185,7 +184,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             submission_list_path = os.path.join(
                 self.main_directory, 'fixtures', 'transportation',
                 'view', filename)
-            with codecs.open(submission_list_path, encoding='utf-8') as f:
+            with open(submission_list_path, 'r') as f:
                 expected_submission_list = f.read()
                 last_expected_submission_list = expected_submission_list = \
                     expected_submission_list.replace(
@@ -258,7 +257,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self._create_user_profile(alice_data)
         count = XForm.objects.count()
 
-        with codecs.open(self.form_def_path, encoding='utf-8') as f:
+        with open(self.form_def_path, 'rb') as f:
             params = {'form_def_file': f, 'dataFile': ''}
             auth = DigestAuth('alice', 'bobbob')
             request = self.factory.post(self._form_upload_url, data=params)
@@ -275,7 +274,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             self.main_directory, 'fixtures', 'transportation',
             'Transportation Form.xml')
         count = XForm.objects.count()
-        with codecs.open(form_def_path, encoding='utf-8') as f:
+        with open(form_def_path, 'rb') as f:
             params = {'form_def_file': f, 'dataFile': ''}
             auth = DigestAuth(self.login_username, self.login_password)
             request = self.factory.post(self._form_upload_url, data=params)
@@ -297,7 +296,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         view = BriefcaseApi.as_view({'post': 'create'})
         count = XForm.objects.count()
 
-        with codecs.open(self.form_def_path, encoding='utf-8') as f:
+        with open(self.form_def_path, 'rb') as f:
             params = {'form_def_file': f, 'dataFile': ''}
             auth = auth or DigestAuth(self.login_username, self.login_password)
             request = self.factory.post(self._form_upload_url, data=params)
@@ -320,7 +319,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         view = BriefcaseApi.as_view({'post': 'create'})
         self._publish_xml_form()
 
-        with codecs.open(self.form_def_path, encoding='utf-8') as f:
+        with open(self.form_def_path, 'rb') as f:
             params = {'form_def_file': f, 'dataFile': ''}
             auth = DigestAuth(self.login_username, self.login_password)
             request = self.factory.post(self._form_upload_url, data=params)
@@ -367,7 +366,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             self.main_directory, 'fixtures', 'transportation',
             'view', 'submission.xml')
         count = Instance.objects.count()
-        with codecs.open(submission_path, encoding='utf-8') as f:
+        with open(submission_path, 'rb') as f:
             post_data = {'xml_submission_file': f}
             request = self.factory.post(self._submission_list_url, post_data)
             response = view(request)
