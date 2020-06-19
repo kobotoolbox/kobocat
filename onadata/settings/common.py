@@ -18,8 +18,9 @@ import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
 
-from django.utils.six import string_types
+from django.conf.global_settings import PASSWORD_HASHERS
 from django.core.exceptions import SuspiciousOperation
+from django.utils.six import string_types
 from pymongo import MongoClient
 
 from onadata.libs.utils.redis_helper import RedisHelper
@@ -560,3 +561,20 @@ CSRF_COOKIE_HTTPONLY = True
 if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+
+# KPI running Django 2.2 inserts password hashes into our database, calculated
+# using 150,000 iterations. Django 1.8 uses only 20,000 iterations by default;
+# increase this to match 2.2. See
+# https://github.com/kobotoolbox/kobocat/issues/612
+PASSWORD_HASHERS = (
+    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations',
+) + PASSWORD_HASHERS
+
+
+# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
+# This variable is available only in Django 1.10+. Only there for next upgrade
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
