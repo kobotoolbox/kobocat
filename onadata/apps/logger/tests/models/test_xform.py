@@ -39,10 +39,6 @@ class TestXForm(TestBase):
 
         self.assertNotIn(self.xform.title, self.xform.xml)
 
-        # convert xml to str
-        self.xform.xml = self.xform.xml.encode('utf-8')
-        self.assertTrue(isinstance(self.xform.xml, str))
-
         # set title in xform xml
         self.xform._set_title()
         self.assertIn(self.xform.title, self.xform.xml)

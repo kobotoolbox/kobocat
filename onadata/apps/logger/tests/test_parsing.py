@@ -187,4 +187,5 @@ class TestXFormInstanceParser(TestBase):
             self.assertEqual(2, len(dict_['#document']['form']['question_group']))
             with open(json_file) as jfile:
                 import json
-                self.assertEqual(jfile.read(), json.dumps(dict_))
+                jfile_content = jfile.read()
+                self.assertEqual(jfile_content.strip(), json.dumps(dict_).strip())
