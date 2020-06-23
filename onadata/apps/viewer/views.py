@@ -683,6 +683,8 @@ def attachment_url(request, size='medium'):
     # It means duplicated would be only for the same user who uploaded two files
     # with same name at the same second.
     if media_file:
+        # Strip out garbage (cache buster?) added by Galleria.js
+        media_file = media_file.split('?')[0]
         mtch = re.search(r'^([^/]+)/attachments/([^/]+)$', media_file)
         if mtch:
             # in cases where the media_file url created by instance.html's
