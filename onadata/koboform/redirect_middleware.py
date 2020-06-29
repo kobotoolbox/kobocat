@@ -1,9 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from onadata import koboform
+from django.utils.deprecation import MiddlewareMixin
 
+from onadata import koboform
 
 # Always redirect to user profile,
 # regardless of koboform setting
@@ -35,7 +37,9 @@ REDIRECT_IF_NOT_LOGGED_IN = [
 #   /accounts/logout/    => kform/accounts/logout
 #   /accounts/register/  => kform/accounts/register
 
-class ConditionalRedirects(object):
+
+class ConditionalRedirects(MiddlewareMixin):
+
     def process_view(self, request, view, args, kwargs):
         view_name = view.__name__
         is_logged_in = request.user.is_authenticated

@@ -61,7 +61,7 @@ BROKER_BACKEND = 'memory'
 ENKETO_API_TOKEN = 'abc'
 
 if PRINT_EXCEPTION and DEBUG:
-    MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
+    MIDDLEWARE.append('onadata.libs.utils.middleware.ExceptionLoggingMiddleware')
 
 # include the kobocat-template directory
 TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
@@ -92,7 +92,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'onadata.koboform.context_processors.koboform_integration',
 ) + TEMPLATE_CONTEXT_PROCESSORS
 
-# MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
+# MIDDLEWARE.insert(0, 'onadata.koboform.redirect_middleware.ConditionalRedirects')
 
 # Domain must not exclude KPI when sharing sessions
 if os.environ.get('SESSION_COOKIE_DOMAIN'):

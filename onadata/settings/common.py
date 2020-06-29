@@ -181,7 +181,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'onadata.apps.main.context_processors.base_url'
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -197,7 +197,7 @@ MIDDLEWARE_CLASSES = (
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
     'onadata.libs.utils.middleware.UsernameInResponseHeaderMiddleware',
-)
+]
 
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True

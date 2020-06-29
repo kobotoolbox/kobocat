@@ -15,8 +15,7 @@ DATABASES = {
     }
 }
 
-### MONGO ###
-
+# ## MONGO ###
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'localhost'),
     'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
@@ -51,7 +50,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 #############
 
 if PRINT_EXCEPTION and DEBUG:
-    MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
+    MIDDLEWARE.append('onadata.libs.utils.middleware.ExceptionLoggingMiddleware')
 
 if len(sys.argv) >= 2 and (sys.argv[1] == "test" or sys.argv[1] == "test_all"):
     # This trick works only when we run tests from the command line.

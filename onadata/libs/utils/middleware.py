@@ -7,17 +7,17 @@ from django.http import HttpResponseNotAllowed
 from django.template import RequestContext
 from django.template import loader
 from django.middleware.locale import LocaleMiddleware
+from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation.trans_real import parse_accept_lang_header
-from django.utils.encoding import smart_str
 
 
-class ExceptionLoggingMiddleware(object):
+class ExceptionLoggingMiddleware(MiddlewareMixin):
 
     def process_exception(self, request, exception):
         print(traceback.format_exc())
 
 
-class HTTPResponseNotAllowedMiddleware(object):
+class HTTPResponseNotAllowedMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if isinstance(response, HttpResponseNotAllowed):
@@ -48,7 +48,7 @@ class LocaleMiddlewareWithTweaks(LocaleMiddleware):
         super(LocaleMiddlewareWithTweaks, self).process_request(request)
 
 
-class SqlLogging:
+class SqlLogging(MiddlewareMixin):
     def process_response(self, request, response):
         from sys import stdout
         if stdout.isatty():
@@ -59,7 +59,7 @@ class SqlLogging:
         return response
 
 
-class BrokenClientMiddleware(object):
+class BrokenClientMiddleware(MiddlewareMixin):
     """
     ODK Collect sends HTTP-violating localized date strings, e.g.
     'mar., 25 ao\xfbt 2015 07:11:56 GMT+00:00', which wreak havoc on oauthlib.
@@ -74,7 +74,7 @@ class BrokenClientMiddleware(object):
                 del request.META['HTTP_DATE']
 
 
-class UsernameInResponseHeaderMiddleware(object):
+class UsernameInResponseHeaderMiddleware(MiddlewareMixin):
     """
     Record the authenticated user (if any) in the `X-KoBoNaUt` HTTP header
     """
