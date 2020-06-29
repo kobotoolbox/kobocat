@@ -37,7 +37,7 @@ class TestExport(TestBase):
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
         with open(os.path.join(
-                self.fixture_dir, 'tutorial_w_repeats.csv')) as f1:
+                self.fixture_dir, 'tutorial_w_repeats.csv'), 'rb') as f1:
             with storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
@@ -66,7 +66,7 @@ class TestExport(TestBase):
         self.assertTrue(storage.exists(export.filepath))
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
-        with open(os.path.join(self.fixture_dir, 'export.csv')) as f1:
+        with open(os.path.join(self.fixture_dir, 'export.csv'), 'rb') as f1:
             with storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
@@ -89,7 +89,7 @@ class TestExport(TestBase):
         self.assertEqual(ext, '.csv')
         with open(os.path.join(
                 os.path.dirname(__file__), 'fixtures', 'userone',
-                'userone_with_dot_name_fields.csv')) as f1:
+                'userone_with_dot_name_fields.csv'), 'rb') as f1:
             with storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
