@@ -67,14 +67,6 @@
                     <a href="{% url "data_view" xform.user.username xform.id_string %}" data-original-title="{% trans 'View Submitted Data' %}" rel="tooltip">
                         <i class="icon-list icon-large inactive"></i>
                     </a>
-                    <!-- FIXME `stats_table` does not exist. Remove it ?
-                    <a href="{# url "onadata.apps.viewer.views.stats_tables" xform.user.username xform.id_string #}" data-original-title="{% trans 'View Table Maker' %}" rel="tooltip">
-                        <i class="icon-book icon-large inactive"></i>
-                    </a>
-                    -->
-                    <a href="{% url "form-stats" xform.user.username xform.id_string %}" data-original-title="{% trans 'View Statistics' %}" rel="tooltip">
-                    <i class="icon-bar-chart icon-large inactive"></i>
-                    </a>
                 {% else %}
                     <span><i class="icon-camera icon-large inactive"></i></span>
                     <span><i class="icon-list icon-large inactive"></i></span>

@@ -245,9 +245,6 @@
             <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "Browse Data (One by One)" %}" href="{% url "instance" content_user.username xform.id_string %}">
                 <i class="icon-list-alt icon-white"></i> {% trans "Browse Data" %}
             </a>
-            <a class="btn btn-info" btn-info  rel="tooltip" title="{% trans "View Statistics" %}" href="{% url "form-stats" content_user.username xform.id_string %}">
-                <i class="icon-bar-chart icon-white"></i> {% trans "Statistics" %}
-            </a>
         </div>
         {% else %}
             {% if can_edit %}
