@@ -1,11 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import base64
 import os
 import re
 import socket
-from io import StringIO, BytesIO
+from io import BytesIO
 from urllib.request import urlopen
 from urllib.error import URLError
 from tempfile import NamedTemporaryFile
@@ -23,6 +22,7 @@ from rest_framework.test import APIRequestFactory
 from onadata.apps.logger.models import XForm, Instance, Attachment
 from onadata.apps.logger.views import submission
 from onadata.apps.main.models import UserProfile
+from onadata.libs.utils.string import base64_encodestring
 
 
 class TestBase(TestCase):
@@ -269,7 +269,7 @@ class TestBase(TestCase):
     def _set_auth_headers(self, username, password):
         return {
             'HTTP_AUTHORIZATION':
-                'Basic ' + base64.b64encode('%s:%s' % (username, password)),
+                'Basic ' + base64_encodestring('%s:%s' % (username, password)),
         }
 
     def _get_authenticated_client(

@@ -3,7 +3,8 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 import io
 from elaphe import barcode
-from base64 import b64encode
+
+from onadata.libs.utils.string import base64_encodestring
 
 
 def generate_qrcode(message, stream=None,
@@ -19,7 +20,7 @@ def generate_qrcode(message, stream=None,
 
     img.save(stream, format)
 
-    datauri = "data:image/png;base64,%s" % b64encode(stream.getvalue())
+    datauri = "data:image/png;base64,%s" % base64_encodestring(stream.getvalue())
     stream.close()
 
     return datauri
