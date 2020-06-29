@@ -211,7 +211,7 @@
   {% if is_owner %}
   <div class="kc-hide">
     <div id="delete-form">
-        <form action="{% url "delete_xform" username=user.username id_string=xform.id_string %}" method="post">
+        <form action="{% url "delete_xform" username=content_user.username id_string=xform.id_string %}" method="post">
         {% csrf_token %}
             <div class="vex-header">
                 <h3>{% trans "Delete Confirmation" %}</h3>

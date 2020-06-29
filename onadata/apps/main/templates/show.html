@@ -487,7 +487,7 @@
         <div class="input">
           <!-- DELETE -->
           <div id="delete-{{ xform.id_string }}" class="modal hide fade">
-              <form action="{% url "delete_xform" username=user.username id_string=xform.id_string %}" method="post">
+              <form action="{% url "delete_xform" username=content_user.username id_string=xform.id_string %}" method="post">
               {% csrf_token %}
                   <div class="modal-header">
                       <a data-dismiss="modal" class="close">&times;</a>
