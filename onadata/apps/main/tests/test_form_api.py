@@ -63,8 +63,7 @@ class TestFormAPI(TestBase):
     def test_handle_bad_json(self):
         response = self.client.get(self.api_url, {'query': 'bad'})
         self.assertEqual(response.status_code, 400)
-        print(response.content.decode())
-        self.assertEqual(True, 'JSON' in response.content.decode())
+        self.assertEqual(True, 'Expecting value:' in response.content.decode())
 
     def test_api_jsonp(self):
         # query string
@@ -133,8 +132,8 @@ class TestFormAPI(TestBase):
         encoded = MongoHelper.encode(field)
         self.assertEqual(encoded, (
             "%(dollar)ssection1%(dot)sgroup01%(dot)squestion1" % {
-                "dollar": base64_encodestring('$'),
-                "dot": base64_encodestring('.')}))
+                "dollar": base64_encodestring('$').strip(),
+                "dot": base64_encodestring('.').strip()}))
         decoded = MongoHelper.decode(encoded)
         self.assertEqual(field, decoded)
 
