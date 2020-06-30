@@ -419,6 +419,7 @@ def download_xlsform(request, username, id_string):
 
         return HttpResponseRedirect("/%s" % username)
 
+
 def download_jsonform(request, username, id_string):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, user__username__iexact=username,
