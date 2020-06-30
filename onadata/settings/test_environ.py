@@ -63,36 +63,13 @@ ENKETO_API_TOKEN = 'abc'
 if PRINT_EXCEPTION and DEBUG:
     MIDDLEWARE.append('onadata.libs.utils.middleware.ExceptionLoggingMiddleware')
 
-# include the kobocat-template directory
-TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
-    'KOBOCAT_TEMPLATES_PATH',
-    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
-)
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'APP_DIRS': True,
-        'DIRS': [
-            os.path.join(ONADATA_DIR, 'libs/templates'),
-            TEMPLATE_OVERRIDE_ROOT_DIR
-        ]
-    }
-]
-
-STATICFILES_DIRS += (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),)
-
 KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
 KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
 KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
 # KOBOFORM_LOGIN_AUTOREDIRECT=True
 KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'onadata.koboform.context_processors.koboform_integration',
-) + TEMPLATE_CONTEXT_PROCESSORS
-
-# MIDDLEWARE.insert(0, 'onadata.koboform.redirect_middleware.ConditionalRedirects')
+TEMPLATES[0]['OPTIONS']['context_processors'].append('onadata.koboform.context_processors.koboform_integration')
 
 # Domain must not exclude KPI when sharing sessions
 if os.environ.get('SESSION_COOKIE_DOMAIN'):

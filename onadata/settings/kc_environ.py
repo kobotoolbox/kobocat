@@ -99,14 +99,6 @@ if PRINT_EXCEPTION and DEBUG:
 if TESTING_MODE:
     MONGO_DB.instances.drop()
 
-# include the kobocat-template directory
-TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
-    'KOBOCAT_TEMPLATES_PATH',
-    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
-)
-TEMPLATE_DIRS = (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
-STATICFILES_DIRS += (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
-
 KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
 KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
 KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")

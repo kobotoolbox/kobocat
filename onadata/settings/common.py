@@ -145,41 +145,13 @@ LOGIN_REDIRECT_URL = '/login_redirect/'
 # Examples: "http://foo.com/static/admin/", "/static/admin/".
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
-# Additional locations of static files
-STATICFILES_DIRS = (
-    # Put strings here, like "/home/html/static" or "C:/www/django/static".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
-
 # List of finder classes that know how to find static files in
 # various locations.
-STATICFILES_FINDERS = (
+STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
-)
-
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    # 'django.template.loaders.eggs.Loader',
-)
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.i18n',
-    'django.core.context_processors.media',
-    'django.core.context_processors.static',
-    'django.core.context_processors.tz',
-    'django.core.context_processors.request',
-    'django.contrib.messages.context_processors.messages',
-    'readonly.context_processors.readonly',
-    'onadata.apps.main.context_processors.google_analytics',
-    'onadata.apps.main.context_processors.site_name',
-    'onadata.apps.main.context_processors.base_url'
-)
+]
 
 MIDDLEWARE = [
     'reversion.middleware.RevisionMiddleware',
@@ -202,15 +174,56 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
 
+# include the kobocat-template directory
+TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
+    'KOBOCAT_TEMPLATES_PATH',
+    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
+)
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'APP_DIRS': True,
+        'APP_DIRS': False,
         'DIRS': [
+            os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
             os.path.join(ONADATA_DIR, 'libs/templates')
-        ]
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.template.context_processors.request',
+                'django.contrib.messages.context_processors.messages',
+                'readonly.context_processors.readonly',
+                'onadata.apps.main.context_processors.google_analytics',
+                'onadata.apps.main.context_processors.site_name',
+                'onadata.apps.main.context_processors.base_url'
+            ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
+        },
     }
 ]
+
+DIRS = [
+    os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
+    os.path.join(ONADATA_DIR, 'libs/templates'),
+]
+
+# Additional locations of static files
+STATICFILES_DIRS = [
+    # Put strings here, like "/home/html/static" or "C:/www/django/static".
+    # Always use forward slashes, even on Windows.
+    # Don't forget to use absolute paths, not relative paths.
+    os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static')
+]
+
 
 # needed by guardian
 ANONYMOUS_USER_ID = -1
