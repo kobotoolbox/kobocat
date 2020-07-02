@@ -21,9 +21,8 @@ class HTTPResponseNotAllowedMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if isinstance(response, HttpResponseNotAllowed):
-            context = RequestContext(request)
             response.content = loader.render_to_string(
-                "405.html", context_instance=context)
+                "405.html", request=request)
 
         return response
 
