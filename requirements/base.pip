@@ -85,4 +85,8 @@ django-redis-sessions==0.6.1
 redis==3.2.0
 
 # redis-based throttling, using jnm fork for python 2 support
--e git+https://github.com/jnm/python-throttle@8b47d6b3d418ee3098c8aa9d93d899d1bf526abf#egg=python_throttle
+-e git+https://github.com/jnm/python-throttle@af11865e7816f8cf7bd788619d67ebf39cfff55f#egg=python_throttle
+
+# admin settings stored in redis, currently used only for throttling
+# Django 1.8 support was removed in 2.4.0; use the latest version before that
+django-constance==2.3.1

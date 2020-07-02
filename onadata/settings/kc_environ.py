@@ -5,6 +5,7 @@ import os
 
 from celery.signals import after_setup_logger
 from limiter import FixedWindowLimiter
+import constance
 import dj_database_url
 
 from onadata.settings.common import *
@@ -301,12 +302,31 @@ if _submission_limiter_redis_url:
     _submission_limiter_redis_config = RedisHelper.config(
         'REDIS_SUBMISSION_LIMITER_URL'
     )
+    INSTALLED_APPS = INSTALLED_APPS + ('constance',)
+    CONSTANCE_REDIS_CONNECTION = _submission_limiter_redis_config
+    CONSTANCE_CONFIG = {
+        # TODO
+        # 'SUBMISSION_LIMITER_ENABLED': (
+        #     False,
+        #     'When `True`, submissions per user are throttled',
+        #     bool,
+        # ),
+        'SUBMISSION_LIMITER_THRESHOLD': (
+            200,
+            'How many submissions to allow per user per interval',
+            int,
+        ),
+        'SUBMISSION_LIMITER_INTERVAL': (
+            15 * 60,
+            'The length of the interval in seconds',
+            int,
+        ),
+    }
     SUBMISSION_LIMITER = FixedWindowLimiter(
-        # TODO: read from environment
-        threshold=200,  # maximum of 200 submissions
-        interval=15 * 60,  # every 15 minutes
+        threshold=lambda: constance.config.SUBMISSION_LIMITER_THRESHOLD,
+        interval=lambda: constance.config.SUBMISSION_LIMITER_INTERVAL,
         redis_config=_submission_limiter_redis_config,
-        name_space="submission_limiter",
+        name_space="submissions-by-user_",
     )
 else:
     SUBMISSION_LIMITER = None
