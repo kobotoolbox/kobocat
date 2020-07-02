@@ -185,6 +185,27 @@ Here is some example JSON, it would replace `[the JSON]` above:
             return Response(status=status.HTTP_204_NO_CONTENT,
                             headers=self.get_openrosa_headers(request),
                             template_name=self.template_name)
+        else:
+            # TODO: handle throttling for anonymous submissions, possibly by
+            # looking at the form uuid (if finding the form owner would tax the
+            # database too much)
+            limiter = getattr(settings, 'SUBMISSION_LIMITER', None)
+            print username, limiter
+            if limiter and limiter.exceeded(username):
+                return Response(
+                    {
+                        'message': _(  # why does `error_response()` use `error`?
+                            'Submission rate limit exceeded. Please try again later.'
+                        )
+                    },
+                    # status=status.HTTP_429_TOO_MANY_REQUESTS,
+                    # In Enketo at least, returning 429 causes "Unknown
+                    # submission problem on data server. (429)" to appear in
+                    # the UI instead of the message we sent. Just use 400 for
+                    # now.
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
 
         is_json_request = is_json(request)
 

@@ -5,6 +5,7 @@ import os
 import re
 
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.six.moves.urllib.parse import unquote_plus
 
 
 class RedisHelper(object):
@@ -16,24 +17,29 @@ class RedisHelper(object):
     """
 
     @staticmethod
-    def config(default=None):
+    def config(env_var, default=None):
         """
         :return: dict
         """
 
         try:
-            redis_connection_url = os.getenv("REDIS_SESSION_URL", default)
+            redis_connection_url = os.getenv(env_var, default)
             match = re.match(r"redis://(:(?P<password>[^@]*)@)?(?P<host>[^:]+):(?P<port>\d+)(/(?P<index>\d+))?",
                              redis_connection_url)
             if not match:
                 # FIXME
                 raise Exception()
 
+            if match.group('password') is None:
+                password = None
+            else:
+                password = unquote_plus(match.group('password'))
+
             redis_connection_dict = {
                 "host": match.group("host"),
                 "port": match.group("port"),
                 "db": match.group("index") or 0,
-                "password": match.group("password"),
+                "password": password,
             }
             return redis_connection_dict
 
@@ -52,7 +58,7 @@ class RedisSessionHelper(RedisHelper):
     @classmethod
     def config(cls, default=None):
         redis_connection_dict = super(RedisSessionHelper, cls).config(
-            default=default, env_var='REDIS_SESSION_URL'
+            env_var='REDIS_SESSION_URL', default=default
         )
         redis_connection_dict['prefix'] = os.getenv(
             'REDIS_SESSION_PREFIX', 'session'

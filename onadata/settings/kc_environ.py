@@ -4,9 +4,11 @@ import logging
 import os
 
 from celery.signals import after_setup_logger
+from limiter import FixedWindowLimiter
 import dj_database_url
 
 from onadata.settings.common import *
+from onadata.libs.utils.redis_helper import RedisHelper
 
 
 def celery_logger_setup_handler(logger, **kwargs):
@@ -293,3 +295,18 @@ if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
     }
 
 ###### END ISSUE 242 FIX ######
+
+_submission_limiter_redis_url = os.environ.get('REDIS_SUBMISSION_LIMITER_URL')
+if _submission_limiter_redis_url:
+    _submission_limiter_redis_config = RedisHelper.config(
+        'REDIS_SUBMISSION_LIMITER_URL'
+    )
+    SUBMISSION_LIMITER = FixedWindowLimiter(
+        # TODO: read from environment
+        threshold=200,  # maximum of 200 submissions
+        interval=15 * 60,  # every 15 minutes
+        redis_config=_submission_limiter_redis_config,
+        name_space="submission_limiter",
+    )
+else:
+    SUBMISSION_LIMITER = None
