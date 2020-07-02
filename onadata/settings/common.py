@@ -18,7 +18,7 @@ import sys  # nopep8, used by included files
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
-from onadata.libs.utils.redis_helper import RedisHelper
+from onadata.libs.utils.redis_helper import RedisSessionHelper
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
@@ -562,4 +562,4 @@ if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
     USE_X_FORWARDED_HOST = True
 
 SESSION_ENGINE = "redis_sessions.session"
-SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
+SESSION_REDIS = RedisSessionHelper.config(default="redis://redis_cache:6380/2")
