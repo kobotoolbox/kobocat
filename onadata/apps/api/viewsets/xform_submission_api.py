@@ -1,3 +1,4 @@
+import os
 import re
 import StringIO
 
@@ -26,6 +27,7 @@ from onadata.libs.mixins.openrosa_headers_mixin import OpenRosaHeadersMixin
 from onadata.libs.renderers.renderers import TemplateXMLRenderer
 from onadata.libs.serializers.data_serializer import SubmissionSerializer
 from onadata.libs.utils.logger_tools import dict2xform, safe_create_instance
+from onadata.auth import QedRemoteUserAuth
 
 
 # 10,000,000 bytes
@@ -148,11 +150,19 @@ Here is some example JSON, it would replace `[the JSON]` above:
         # first class that successfully authenticates, so
         # HttpsOnlyBasicAuthentication will be ignored even if included by
         # DEFAULT_AUTHENTICATION_CLASSES.
-        authentication_classes = [
-            DigestAuthentication,
-            BasicAuthentication,
-            TokenAuthentication
-        ]
+        if os.getenv("USE_REMOTE_AUTH", "False"):
+            authentication_classes = [
+                QedRemoteUserAuth,
+                DigestAuthentication,
+                BasicAuthentication,
+                TokenAuthentication
+            ]
+        else:
+            authentication_classes = [
+                DigestAuthentication,
+                BasicAuthentication,
+                TokenAuthentication
+            ]
         # Do not use `SessionAuthentication`, which implicitly requires CSRF prevention
         # (which in turn requires that the CSRF token be submitted as a cookie and in the
         # body of any "unsafe" requests).
