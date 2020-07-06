@@ -42,3 +42,4 @@ To compile MO files and update live translations
     $ django-admin.py compilemessages ;
     $ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin.py compilemessages && cd - ; done
     
+dockerhub kick #1
