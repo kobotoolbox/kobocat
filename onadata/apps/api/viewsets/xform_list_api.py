@@ -1,3 +1,5 @@
+import os
+
 import pytz
 
 from datetime import datetime
@@ -22,6 +24,7 @@ from onadata.libs.renderers.renderers import XFormListRenderer
 from onadata.libs.renderers.renderers import XFormManifestRenderer
 from onadata.libs.serializers.xform_serializer import XFormListSerializer
 from onadata.libs.serializers.xform_serializer import XFormManifestSerializer
+from onadata.auth import QedRemoteUserAuth
 
 
 # 10,000,000 bytes
@@ -41,9 +44,15 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         super(XFormListApi, self).__init__(*args, **kwargs)
         # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
         # previously hard-coded authentication classes are included first
-        authentication_classes = [
-            DigestAuthentication,
-        ]
+        if os.getenv("USE_REMOTE_AUTH", "False"):
+            authentication_classes = [
+                QedRemoteUserAuth,
+                DigestAuthentication,
+            ]
+        else:
+            authentication_classes = [
+                DigestAuthentication,
+            ]
         self.authentication_classes = authentication_classes + [
             auth_class for auth_class in self.authentication_classes
                 if not auth_class in authentication_classes

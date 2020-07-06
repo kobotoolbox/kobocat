@@ -18,6 +18,11 @@ import sys  # nopep8, used by included files
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
+
+def conditional_list(cl):
+    return [k for k, v in cl if v]
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
 PROJECT_ROOT = os.path.abspath(os.path.join(ONADATA_DIR, '..'))
@@ -30,7 +35,6 @@ ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
 MANAGERS = ADMINS
-
 
 DEFAULT_FROM_EMAIL = 'noreply@ona.io'
 SHARE_PROJECT_SUBJECT = '{} Ona Project has been shared with you.'
@@ -81,7 +85,6 @@ STATIC_URL = '/static/'
 ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
 KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kc.kobotoolbox.org')
 
-
 ENKETO_URL = ENKETO_URL.rstrip('/')
 ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
 ENKETO_VERSION = os.environ.get('ENKETO_VERSION', 'Legacy').lower()
@@ -93,16 +96,17 @@ ENKETO_API_ENDPOINT_INSTANCE = '/instance'
 ENKETO_API_ENDPOINT_INSTANCE_IFRAME = '/instance/iframe'
 # Computed settings.
 if ENKETO_VERSION == 'express':
-    ENKETO_API_ROOT= '/api/v2'
-    ENKETO_OFFLINE_SURVEYS= os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
-    ENKETO_API_ENDPOINT_PREVIEW= '/preview'
-    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
-            else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
+    ENKETO_API_ROOT = '/api/v2'
+    ENKETO_OFFLINE_SURVEYS = os.environ.get('ENKETO_OFFLINE_SURVEYS',
+                                            'True').lower() == 'true'
+    ENKETO_API_ENDPOINT_PREVIEW = '/preview'
+    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
+        else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 else:
-    ENKETO_API_ROOT= '/api_v1'
+    ENKETO_API_ROOT = '/api_v1'
     ENKETO_API_ENDPOINT_PREVIEW = '/webform/preview'
     ENKETO_OFFLINE_SURVEYS = False
-    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_ONLINE_SURVEYS
+    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
 ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
 ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
@@ -193,18 +197,24 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+)
+
+if os.getenv("USE_REMOTE_AUTH", "False") == "True":
+    MIDDLEWARE_CLASSES += (
+        'onadata.auth.QedAuthMiddleware',
+    )
+
+MIDDLEWARE_CLASSES += (
     'django.contrib.messages.middleware.MessageMiddleware',
     # Django 1.8 removes TransactionMiddleware (was deprecated in 1.6). See:
     # https://docs.djangoproject.com/en/1.6/topics/db/transactions/#transaction-middleware
-    #'django.middleware.transaction.TransactionMiddleware',
+    # 'django.middleware.transaction.TransactionMiddleware',
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
 )
 
-
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
-
 
 TEMPLATE_DIRS = (
     os.path.join(ONADATA_DIR, 'libs/templates'),
@@ -267,20 +277,22 @@ REST_FRAMEWORK = {
     # Use hyperlinked styles by default.
     # Only used if the `serializer_class` attribute is not set on a view.
     'DEFAULT_MODEL_SERIALIZER_CLASS':
-    'rest_framework.serializers.HyperlinkedModelSerializer',
+        'rest_framework.serializers.HyperlinkedModelSerializer',
 
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'onadata.libs.authentication.DigestAuthentication',
-        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-        'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
-    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': conditional_list([
+        ('onadata.libs.authentication.DigestAuthentication', True),
+        ('oauth2_provider.ext.rest_framework.OAuth2Authentication', True),
+        ('rest_framework.authentication.SessionAuthentication', True),
+        ('rest_framework.authentication.TokenAuthentication', True),
+        ('onadata.libs.authentication.HttpsOnlyBasicAuthentication', True),
+        ('onadata.settings.auth.QedRemoteUserAuth',
+         os.getenv("USE_REMOTE_AUTH", "False") == "True"),
+    ]),
     'DEFAULT_RENDERER_CLASSES': (
         # Keep JSONRenderer at the top "in order to send JSON responses to
         # clients that do not specify an Accept header." See
@@ -296,9 +308,9 @@ REST_FRAMEWORK = {
 }
 
 SWAGGER_SETTINGS = {
-    "exclude_namespaces": [],    # List URL namespaces to ignore
+    "exclude_namespaces": [],  # List URL namespaces to ignore
     "api_version": '1.0',  # Specify your API's version (optional)
-    "enabled_methods": [         # Methods to enable in UI
+    "enabled_methods": [  # Methods to enable in UI
         'get',
         'post',
         'put',
@@ -322,7 +334,7 @@ AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 
 # case insensitive usernames -- DISABLED for KoBoForm compatibility
 AUTHENTICATION_BACKENDS = (
-    #'onadata.apps.main.backends.ModelBackend',
+    # 'onadata.apps.main.backends.ModelBackend',
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
@@ -477,7 +489,8 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "fanout_patterns": True,
     "fanout_prefix": True,
     # http://docs.celeryproject.org/en/latest/getting-started/brokers/redis.html#redis-visibility-timeout
-    "visibility_timeout": 120 * (10 ** REST_SERVICE_MAX_RETRIES)  # Longest ETA for RestService
+    "visibility_timeout": 120 * (10 ** REST_SERVICE_MAX_RETRIES)
+    # Longest ETA for RestService
 }
 
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
@@ -537,8 +550,8 @@ except ImportError:
 if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
     # site templates overrides
     TEMPLATE_DIRS = (
-        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
-    ) + TEMPLATE_DIRS
+                        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
+                    ) + TEMPLATE_DIRS
     # site static files path
     STATICFILES_DIRS += (
         os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
