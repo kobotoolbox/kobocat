@@ -290,7 +290,7 @@ REST_FRAMEWORK = {
         ('rest_framework.authentication.SessionAuthentication', True),
         ('rest_framework.authentication.TokenAuthentication', True),
         ('onadata.libs.authentication.HttpsOnlyBasicAuthentication', True),
-        ('onadata.settings.auth.QedRemoteUserAuth',
+        ('onadata.auth.QedRemoteUserAuth',
          os.getenv("USE_REMOTE_AUTH", "False") == "True"),
     ]),
     'DEFAULT_RENDERER_CLASSES': (
@@ -336,6 +336,7 @@ AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 AUTHENTICATION_BACKENDS = (
     # 'onadata.apps.main.backends.ModelBackend',
     'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.RemoteUserBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
 
