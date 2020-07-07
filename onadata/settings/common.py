@@ -336,6 +336,7 @@ AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 AUTHENTICATION_BACKENDS = (
     # 'onadata.apps.main.backends.ModelBackend',
     'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.RemoteUserBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
 
