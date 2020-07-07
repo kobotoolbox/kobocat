@@ -290,7 +290,7 @@ REST_FRAMEWORK = {
         ('rest_framework.authentication.SessionAuthentication', True),
         ('rest_framework.authentication.TokenAuthentication', True),
         ('onadata.libs.authentication.HttpsOnlyBasicAuthentication', True),
-        ('onadata.settings.auth.QedRemoteUserAuth',
+        ('onadata.auth.QedRemoteUserAuth',
          os.getenv("USE_REMOTE_AUTH", "False") == "True"),
     ]),
     'DEFAULT_RENDERER_CLASSES': (
