@@ -651,17 +651,9 @@ def update_mongo_for_xform(xform, only_update_missing=True):
         else:
             done += 1
 
-        # if 1000 records are done, flush mongo
-        if (done > 0 and done % 1000) == 0:
-            sys.stdout.write(
-                'Updated %d records, flushing MongoDB...\n' % done)
-            settings.MONGO_CONNECTION.admin.command({'fsync': 1})
-
         progress = "\r%.2f %% done..." % ((float(done) / float(total)) * 100)
         sys.stdout.write(progress)
         sys.stdout.flush()
-    # flush mongo again when done
-    settings.MONGO_CONNECTION.admin.command({'fsync': 1})
     sys.stdout.write(
         "\nUpdated %s\n------------------------------------------\n"
         % xform.id_string)
