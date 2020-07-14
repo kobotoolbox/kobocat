@@ -59,7 +59,7 @@ MULTIPLE_SELECT_BIND_TYPE = "select"
 GEOPOINT_BIND_TYPE = "geopoint"
 
 
-def encode_if_str(row, key, encode_dates=False):
+def to_str(row, key, encode_dates=False):
     val = row.get(key)
 
     if encode_dates and isinstance(val, datetime):
@@ -67,6 +67,12 @@ def encode_if_str(row, key, encode_dates=False):
 
     if encode_dates and isinstance(val, date):
         return val.strftime('%Y-%m-%d')
+
+    if isinstance(val, bytes):
+        return val.decode()
+
+    if not isinstance(val, str):
+        return str(val)
 
     return val
 
@@ -433,7 +439,7 @@ class ExportBuilder(object):
     def to_zipped_csv(self, path, data, *args):
         def write_row(row, csv_writer, fields):
             csv_writer.writerow(
-                [encode_if_str(row, field) for field in fields])
+                [to_str(row, field) for field in fields])
 
         csv_defs = {}
         for section in self.sections:
@@ -624,8 +630,8 @@ class ExportBuilder(object):
 
     def to_zipped_sav(self, path, data, *args):
         def write_row(row, csv_writer, fields):
-            sav_writer.writerow(
-                [encode_if_str(row, field, True) for field in fields])
+            stringified_row = [to_str(row, field, True) for field in fields]
+            sav_writer.writerow(stringified_row)
 
         sav_defs = {}
 
@@ -696,7 +702,7 @@ class ExportBuilder(object):
 
         for section_name, sav_def in sav_defs.items():
             sav_def['sav_writer'].closeSavFile(
-                sav_def['sav_writer'].fh, mode='wb')
+                sav_def['sav_writer'].fh, mode=b'wb')
 
         # write zipfile
         with ZipFile(path, 'w') as zip_file:
