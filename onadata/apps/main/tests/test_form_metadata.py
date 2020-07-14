@@ -245,10 +245,10 @@ class TestFormMetadata(TestBase):
             self.this_directory, 'fixtures', 'transportation', name)
         m = MetaData.objects.create(
             data_type='media', xform=self.xform, data_value=name,
-            data_file=File(open(media_file), name),
+            data_file=File(open(media_file, 'rb'), name),
             data_file_type='image/png')
-        f = open(media_file)
-        md5_hash = hashlib.md5(f.read().encode()).hexdigest()
+        f = open(media_file, 'rb')
+        md5_hash = hashlib.md5(f.read()).hexdigest()
         media_hash = f'md5:{md5_hash}'
         f.close()
         meta_hash = m.hash
