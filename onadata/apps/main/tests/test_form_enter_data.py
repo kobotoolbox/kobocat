@@ -14,7 +14,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import URLValidator
 from django.test import RequestFactory
 from django.utils.six import string_types
-from httmock import urlmatch, HTTMock
+from httmock import all_requests, HTTMock
 from nose import SkipTest
 
 from onadata.apps.logger.views import enter_data
@@ -24,7 +24,7 @@ from onadata.libs.utils.viewer_tools import enketo_url
 from .test_base import TestBase
 
 
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
+@all_requests
 def enketo_mock(url, request):
     response = requests.Response()
     response.status_code = 201
@@ -32,7 +32,7 @@ def enketo_mock(url, request):
     return response
 
 
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
+@all_requests
 def enketo_error_mock(url, request):
     response = requests.Response()
     response.status_code = 400
