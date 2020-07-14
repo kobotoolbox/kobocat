@@ -305,7 +305,7 @@ class TestFormShow(TestBase):
         """
         Test that a non owner cannot replace a shared xls form
         """
-        xform_update_url = reverse(update_xform, kwargs={
+        xform_update_url = reverse('update_xform', kwargs={
             'username': self.user.username,
             'id_string': self.xform.id_string
         })
@@ -315,8 +315,8 @@ class TestFormShow(TestBase):
         self._create_user_and_login('peter', 'peter')
         response = self.client.post(xform_update_url)
         # since we are logged in, we'll be re-directed to our profile page
-        self.assertRedirects(response, self.base_url,
-                             status_code=302, target_status_code=302)
+        self.assertTrue(response.status_code == 302)
+        self.assertTrue(response.url, self.base_url)
 
     def test_replace_xform(self):
         xform_update_url = reverse(update_xform, kwargs={

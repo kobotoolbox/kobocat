@@ -65,11 +65,11 @@ class TestBriefcaseAPI(TestBase):
         self.assertEqual(instances.count(), NUM_INSTANCES)
 
         last_index = instances[instances.count() - 1].pk
-        with open(submission_list_path, 'r') as f:
-            expected_submission_list = f.read()
+        with open(submission_list_path, 'rb') as f:
+            expected_submission_list = f.read().decode()
             expected_submission_list = \
                 expected_submission_list.replace(
-                    '{{resumptionCursor}}', '%s' % last_index)
+                    '{{resumptionCursor}}', str(last_index))
             self.assertEqual(response.content.decode(), expected_submission_list)
 
     def test_view_submission_list_w_deleted_submission(self):

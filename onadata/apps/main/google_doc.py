@@ -138,7 +138,7 @@ class GoogleDoc(object):
                 # hack: cause we started with h3 in google docs
                 level=int(l.pop(0)) - 2,
                 id=l.pop(0),
-                title=l.pop(0).decode('utf8'),
+                title=l.pop(0),
                 content=l.pop(0),
                 )
             section['id'] = slugify(section['title'])

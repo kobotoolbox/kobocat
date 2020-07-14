@@ -19,7 +19,7 @@ class TestGoogleDocsExport(TestBase):
         self._create_user_and_login()
 
     @patch('gdata.docs.client.DocsClient')
-    @patch('urllib2.urlopen')
+    @patch('onadata.libs.utils.google.urlopen')
     def test_google_docs_export(self, mock_urlopen, mock_docs_client):
         mock_urlopen.return_value.read.return_value = '{"access_token": "ABC"}'
         mock_xls_doc = Mock()

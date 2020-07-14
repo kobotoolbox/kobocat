@@ -92,10 +92,10 @@ class TestBase(TestCase):
     def _publish_xls_file(self, path):
         if not path.startswith(f'/{self.user.username}/'):
             path = os.path.join(self.this_directory, path)
-
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            return self.client.post(f'/{self.user.username}/', data=post_data)
+            response = self.client.post(f'/{self.user.username}/', data=post_data)
+            return response
 
     def _publish_xlsx_file(self):
         path = os.path.join(self.this_directory, 'fixtures', 'exp.xlsx')
