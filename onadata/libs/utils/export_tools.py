@@ -62,14 +62,11 @@ GEOPOINT_BIND_TYPE = "geopoint"
 def encode_if_str(row, key, encode_dates=False):
     val = row.get(key)
 
-    if isinstance(val, six.string_types):
-        return val.encode('utf-8')
-
     if encode_dates and isinstance(val, datetime):
-        return val.strftime('%Y-%m-%dT%H:%M:%S%z').encode('utf-8')
+        return val.strftime('%Y-%m-%dT%H:%M:%S%z')
 
     if encode_dates and isinstance(val, date):
-        return val.strftime('%Y-%m-%d').encode('utf-8')
+        return val.strftime('%Y-%m-%d')
 
     return val
 
@@ -450,7 +447,7 @@ class ExportBuilder(object):
             fields = [element['title'] for element in section['elements']]\
                 + self.EXTRA_FIELDS
             csv_defs[section['name']]['csv_writer'].writerow(
-                [f.encode('utf-8') for f in fields])
+                [f for f in fields])
 
         index = 1
         indices = {}

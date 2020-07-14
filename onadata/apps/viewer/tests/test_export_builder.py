@@ -277,13 +277,12 @@ class TestExportBuilder(TestBase):
         # check that each file exists
         self.assertTrue(
             os.path.exists(
-                os.path.join(temp_dir, "{0}.csv".format(survey.name))))
+                os.path.join(temp_dir, f'{survey.name}.csv')))
         with open(
                 os.path.join(
-                    temp_dir, "{0}.csv".format(survey.name))) as csv_file:
+                    temp_dir, f'{survey.name}.csv')) as csv_file:
             reader = csv.reader(csv_file)
             rows = [r for r in reader]
-
             # open comparison file
             with open(_logger_fixture_path(
                     'csvs', 'childrens_survey.csv')) as fixture_csv:
