@@ -474,7 +474,7 @@ class TestProcess(TestBase):
         self._publish_transportation_form()
         src = os.path.join(self.this_directory, "fixtures",
                            "transportation", "screenshot.png")
-        uf = UploadedFile(file=open(src), content_type='image/png')
+        uf = UploadedFile(file=open(src, 'rb'), content_type='image/png')
         count = MetaData.objects.count()
         MetaData.media_upload(self.xform, uf)
         # assert successful insert of new metadata record
@@ -542,8 +542,7 @@ class TestProcess(TestBase):
             ',text,whatsyourname,"What is your name?"',
             'choices,,',
             'settings,,', ',id_string', ',identity'])
-        url = reverse('onadata.apps.main.views.profile',
-                      kwargs={'username': self.user.username})
+        url = reverse('user_profile', kwargs={'username': self.user.username})
         num_xforms = XForm.objects.count()
         params = {
             'text_xls_form': csv_text

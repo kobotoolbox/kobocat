@@ -176,7 +176,7 @@ urlpatterns = [
     url(r'^(?P<username>[^/]+)/settings',
         profile_settings, name='profile_settings'),
     url(r'^(?P<username>[^/]+)/cloneform$',
-        clone_xlsform, name=clone_xlsform),
+        clone_xlsform, name='clone_xlsform'),
     url(r'^(?P<username>[^/]+)/activity$',
         activity, name='activity'),
     url(r'^(?P<username>[^/]+)/activity/api$',

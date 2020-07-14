@@ -56,7 +56,7 @@ class ConditionalRedirects(MiddlewareMixin):
 
         if view_name in DISABLED_VIEWS:
             if is_logged_in:
-                redirect_to = reverse('onadata.apps.main.views.profile', kwargs={'username': request.user.username})
+                redirect_to = reverse('user_profile', kwargs={'username': request.user.username})
             else:
                 if koboform.active and koboform.autoredirect:
                     redirect_to = koboform.login_url(next_kobocat_url=request.path)

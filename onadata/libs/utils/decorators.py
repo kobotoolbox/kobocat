@@ -29,8 +29,7 @@ def is_owner(view_func):
             if request.user.username == kwargs['username']:
                 return view_func(request, *args, **kwargs)
             protocol = "https" if request.is_secure() else "http"
-            return HttpResponseRedirect("%s://%s" % (protocol,
-                                                     request.get_host()))
+            return HttpResponseRedirect(f'{protocol}://{request.get_host()}')
         path = request.build_absolute_uri()
         login_url = request.build_absolute_uri(settings.LOGIN_URL)
         # If the login url is the same scheme and net location then just
