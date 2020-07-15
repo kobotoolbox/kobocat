@@ -66,7 +66,7 @@ def submit_csv(username, xform, csv_file):
     and converts those to xml submissions and finally submits them by calling
     :py:func:`onadata.libs.utils.logger_tools.safe_create_instance`
 
-    :param str username: the subission user
+    :param str username: the submission user
     :param onadata.apps.logger.models.XForm xfrom: The submission's XForm.
     :param (str or file): A CSV formatted file with submission rows.
     :return: If successful, a dict with import summary else dict with error str.
@@ -114,8 +114,8 @@ def submit_csv(username, xform, csv_file):
         row_uuid = row.get('meta').get('instanceID')
         rollback_uuids.append(row_uuid.replace('uuid:', ''))
 
-        xml_file = io.StringIO(dict2xmlsubmission(row, xform, row_uuid,
-                                      submission_date))
+        xml_file = io.StringIO(
+            dict2xmlsubmission(row, xform, row_uuid, submission_date))
 
         try:
             error, instance = safe_create_instance(username, xml_file, [],

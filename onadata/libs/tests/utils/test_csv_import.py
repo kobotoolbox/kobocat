@@ -2,7 +2,7 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os
-from io import StringIO
+from io import StringIO, BytesIO
 
 from django.conf import settings
 from onadata.libs.utils import csv_import
@@ -17,8 +17,8 @@ class CSVImportTestCase(TestBase):
         super(CSVImportTestCase, self).setUp()
         self.fixtures_dir = os.path.join(settings.ONADATA_DIR,
                                          'libs', 'tests', 'fixtures')
-        self.good_csv = open(os.path.join(self.fixtures_dir, 'good.csv'))
-        self.bad_csv = open(os.path.join(self.fixtures_dir, 'bad.csv'))
+        self.good_csv = open(os.path.join(self.fixtures_dir, 'good.csv'), 'rb')
+        self.bad_csv = open(os.path.join(self.fixtures_dir, 'bad.csv'), 'rb')
         xls_file_path = os.path.join(self.fixtures_dir, 'tutorial.xls')
         self._publish_xls_file(xls_file_path)
         self.xform = XForm.objects.get()
@@ -53,11 +53,11 @@ class CSVImportTestCase(TestBase):
         self.assertEqual(Instance.objects.count(),
                          9, 'submit_csv edits #1 test Failed!')
 
-        edit_csv = open(os.path.join(self.fixtures_dir, 'edit.csv'))
-        edit_csv_str = edit_csv.read()
+        edit_csv = open(os.path.join(self.fixtures_dir, 'edit.csv'), 'rb')
+        edit_csv_str = edit_csv.read().decode()
 
-        edit_csv = StringIO(edit_csv_str.format(
-            *[x.get('uuid') for x in Instance.objects.values('uuid')]))
+        edit_csv = BytesIO(edit_csv_str.format(
+            *[x.get('uuid') for x in Instance.objects.values('uuid')]).encode())
 
         count = Instance.objects.count()
         csv_import.submit_csv(self.user.username, self.xform, edit_csv)

@@ -59,8 +59,11 @@ MULTIPLE_SELECT_BIND_TYPE = "select"
 GEOPOINT_BIND_TYPE = "geopoint"
 
 
-def to_str(row, key, encode_dates=False):
+def to_str(row, key, encode_dates=False, empty_on_none=True):
     val = row.get(key)
+
+    if empty_on_none and val is None:
+        return ''
 
     if encode_dates and isinstance(val, datetime):
         return val.strftime('%Y-%m-%dT%H:%M:%S%z')
@@ -630,7 +633,7 @@ class ExportBuilder(object):
 
     def to_zipped_sav(self, path, data, *args):
         def write_row(row, csv_writer, fields):
-            stringified_row = [to_str(row, field, True) for field in fields]
+            stringified_row = [to_str(row, field, True, False) for field in fields]
             sav_writer.writerow(stringified_row)
 
         sav_defs = {}

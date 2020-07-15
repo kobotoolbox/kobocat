@@ -3,8 +3,6 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import os
 import unittest
 
-from django.utils.encoding import smart_str
-
 from onadata.libs.utils.qrcode import generate_qrcode
 
 url = "https://hmh2a.enketo.formhub.org"
@@ -15,5 +13,7 @@ class TestGenerateQrCode(unittest.TestCase):
         path = os.path.join(os.path.dirname(__file__), "fixtures",
                             "qrcode.txt")
         with open(path, 'rb') as f:
-            qrcode = smart_str(f.read())
-            self.assertEqual(generate_qrcode(url), qrcode.strip())
+            qrcode = f.read().decode()
+
+        generate_qrcode(url)
+        self.assertEqual(generate_qrcode(url), qrcode.strip())

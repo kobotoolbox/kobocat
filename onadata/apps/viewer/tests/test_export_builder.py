@@ -680,8 +680,8 @@ class TestExportBuilder(TestBase):
                 ]
             }
         childrens_section = export_builder.section_by_name('children')
-        match = filter(lambda x: expected_section['elements'][0]['xpath']
-                       == x['xpath'], childrens_section['elements'])[0]
+        match = [x for x in childrens_section['elements']
+                 if x['xpath'] == expected_section['elements'][0]['xpath']][0]
         self.assertEqual(
             expected_section['elements'][0]['title'], match['title'])
 
@@ -701,17 +701,15 @@ class TestExportBuilder(TestBase):
                 ]
             }
         main_section = export_builder.section_by_name('childrens_survey')
-        match = filter(
-            lambda x: (expected_section['elements'][0]['xpath']
-                       == x['xpath']), main_section['elements'])[0]
+        match = [x for x in main_section['elements'] if x['xpath'] == expected_section['elements'][0]['xpath']][0]
         self.assertEqual(
             expected_section['elements'][0]['title'], match['title'])
 
-    def test_to_xls_export_works(self):
+    def test_to_xlsx_export_works(self):
         survey = self._create_childrens_survey()
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
-        xls_file = NamedTemporaryFile(suffix='.xls')
+        xls_file = NamedTemporaryFile(suffix='.xlsx')
         filename = xls_file.name
         export_builder.to_xls_export(filename, self.data)
         xls_file.seek(0)
@@ -770,12 +768,12 @@ class TestExportBuilder(TestBase):
 
         xls_file.close()
 
-    def test_to_xls_export_respects_custom_field_delimiter(self):
+    def test_to_xlsx_export_respects_custom_field_delimiter(self):
         survey = self._create_childrens_survey()
         export_builder = ExportBuilder()
         export_builder.GROUP_DELIMITER = ExportBuilder.GROUP_DELIMITER_DOT
         export_builder.set_survey(survey)
-        xls_file = NamedTemporaryFile(suffix='.xls')
+        xls_file = NamedTemporaryFile(suffix='.xlsx')
         filename = xls_file.name
         export_builder.to_xls_export(filename, self.data)
         xls_file.seek(0)
@@ -823,7 +821,7 @@ class TestExportBuilder(TestBase):
             'childrens_survey_with_a_very_long_name.xls'))
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
-        xls_file = NamedTemporaryFile(suffix='.xls')
+        xls_file = NamedTemporaryFile(suffix='.xlsx')
         filename = xls_file.name
         export_builder.to_xls_export(filename, self.data)
         xls_file.seek(0)
@@ -850,15 +848,14 @@ class TestExportBuilder(TestBase):
 
         # get the children's sheet
         ws1 = wb.get_sheet_by_name('childrens_survey_with_a_very_l1')
-
         # parent_table is in cell K2
-        parent_table_name = ws1.cell('K2').value
+        parent_table_name = ws1.cell(row=2, column=11).value
         expected_parent_table_name = 'childrens_survey_with_a_very_lo'
         self.assertEqual(parent_table_name, expected_parent_table_name)
 
         # get cartoons sheet
         ws2 = wb.get_sheet_by_name('childrens_survey_with_a_very_l2')
-        parent_table_name = ws2.cell('G2').value
+        parent_table_name = ws2.cell(row=2, column=7).value
         expected_parent_table_name = 'childrens_survey_with_a_very_l1'
         self.assertEqual(parent_table_name, expected_parent_table_name)
         xls_file.close()
