@@ -416,7 +416,7 @@ class TestExportBuilder(TestBase):
         temp_xls_file.seek(0)
         # check that values for red\u2019s and blue\u2019s are set to true
         wb = load_workbook(temp_xls_file.name)
-        children_sheet = wb.get_sheet_by_name("children.info")
+        children_sheet = wb['children.info']
         data = dict([(r[0].value, r[1].value) for r in children_sheet.columns])
         self.assertTrue(data['children.info/fav_colors/red\u2019s'])
         self.assertTrue(data['children.info/fav_colors/blue\u2019s'])
@@ -722,7 +722,7 @@ class TestExportBuilder(TestBase):
         self.assertEqual(wb.get_sheet_names(), expected_sheet_names)
 
         # check header columns
-        main_sheet = wb.get_sheet_by_name('childrens_survey')
+        main_sheet = wb[childrens_survey]
         expected_column_headers = [
             'name', 'age', 'geo/geolocation', 'geo/_geolocation_latitude',
             'geo/_geolocation_longitude', 'geo/_geolocation_altitude',
@@ -734,7 +734,7 @@ class TestExportBuilder(TestBase):
         self.assertEqual(sorted(column_headers),
                          sorted(expected_column_headers))
 
-        childrens_sheet = wb.get_sheet_by_name('children')
+        childrens_sheet = wb[children]
         expected_column_headers = [
             'children/name', 'children/age', 'children/fav_colors',
             'children/fav_colors/red', 'children/fav_colors/blue',
@@ -747,7 +747,7 @@ class TestExportBuilder(TestBase):
         self.assertEqual(sorted(column_headers),
                          sorted(expected_column_headers))
 
-        cartoons_sheet = wb.get_sheet_by_name('children_cartoons')
+        cartoons_sheet = wb[children_cartoons]
         expected_column_headers = [
             'children/cartoons/name', 'children/cartoons/why', '_id',
             '_uuid', '_submission_time', '_index', '_parent_index',
@@ -756,7 +756,7 @@ class TestExportBuilder(TestBase):
         self.assertEqual(sorted(column_headers),
                          sorted(expected_column_headers))
 
-        characters_sheet = wb.get_sheet_by_name('children_cartoons_characters')
+        characters_sheet = wb[children_cartoons_characters]
         expected_column_headers = [
             'children/cartoons/characters/name',
             'children/cartoons/characters/good_or_evil', '_id', '_uuid',
@@ -780,7 +780,7 @@ class TestExportBuilder(TestBase):
         wb = load_workbook(filename)
 
         # check header columns
-        main_sheet = wb.get_sheet_by_name('childrens_survey')
+        main_sheet = wb[childrens_survey]
         expected_column_headers = [
             'name', 'age', 'geo.geolocation', 'geo._geolocation_latitude',
             'geo._geolocation_longitude', 'geo._geolocation_altitude',
@@ -847,14 +847,14 @@ class TestExportBuilder(TestBase):
         wb = load_workbook(filename)
 
         # get the children's sheet
-        ws1 = wb.get_sheet_by_name('childrens_survey_with_a_very_l1')
+        ws1 = wb[childrens_survey_with_a_very_l1]
         # parent_table is in cell K2
         parent_table_name = ws1.cell(row=2, column=11).value
         expected_parent_table_name = 'childrens_survey_with_a_very_lo'
         self.assertEqual(parent_table_name, expected_parent_table_name)
 
         # get cartoons sheet
-        ws2 = wb.get_sheet_by_name('childrens_survey_with_a_very_l2')
+        ws2 = wb[childrens_survey_with_a_very_l2]
         parent_table_name = ws2.cell(row=2, column=7).value
         expected_parent_table_name = 'childrens_survey_with_a_very_l1'
         self.assertEqual(parent_table_name, expected_parent_table_name)

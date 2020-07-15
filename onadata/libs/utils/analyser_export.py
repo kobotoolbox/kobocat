@@ -45,10 +45,10 @@ def xls_as_xlsx(xls_file):
     # Create the destination workbook, deleting and auto-generated worksheets.
     destination_workbook = openpyxl.Workbook() # TODO: Would like to figure out how to make appends work with a "write_only" workbook.
     for wksht_nm in destination_workbook.get_sheet_names():
-        worksheet= destination_workbook.get_sheet_by_name(wksht_nm)
+        worksheet = destination_workbook[wksht_nm]
         destination_workbook.remove_sheet(worksheet)
 
-    worksheet_names= ['survey', 'choices']
+    worksheet_name = ['survey', 'choices']
     for wksht_nm in source_workbook.sheet_names():
         source_worksheet= source_workbook.sheet_by_name(wksht_nm)
         destination_worksheet= destination_workbook.create_sheet(title=wksht_nm)
