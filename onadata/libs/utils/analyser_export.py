@@ -50,8 +50,8 @@ def xls_as_xlsx(xls_file):
 
     worksheet_name = ['survey', 'choices']
     for wksht_nm in source_workbook.sheet_names():
-        source_worksheet= source_workbook.sheet_by_name(wksht_nm)
-        destination_worksheet= destination_workbook.create_sheet(title=wksht_nm)
+        source_worksheet = source_workbook.sheet_by_name(wksht_nm)
+        destination_worksheet = destination_workbook.create_sheet(title=wksht_nm)
 
         for row in range(source_worksheet.nrows):
             destination_worksheet.append(

@@ -68,7 +68,7 @@ class Export(models.Model):
     # max no. of export files a user can keep
     MAX_EXPORTS = 10
 
-    xform = models.ForeignKey(XForm)
+    xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=255, null=True, blank=True)
     # need to save an the filedir since when an xform is deleted, it cascades

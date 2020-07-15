@@ -25,13 +25,13 @@ class Migration(migrations.Migration):
                 ('data_file', models.FileField(null=True, upload_to=onadata.apps.main.models.meta_data.upload_to, blank=True)),
                 ('data_file_type', models.CharField(max_length=255, null=True, blank=True)),
                 ('file_hash', models.CharField(max_length=50, null=True, blank=True)),
-                ('xform', models.ForeignKey(to='logger.XForm')),
+                ('xform', models.ForeignKey(to='logger.XForm', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
             name='TokenStorageModel',
             fields=[
-                ('id', models.ForeignKey(related_name='google_id', primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
+                ('id', models.ForeignKey(related_name='google_id', primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
                 ('token', models.TextField()),
             ],
         ),
@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
                 ('phonenumber', models.CharField(max_length=30, blank=True)),
                 ('num_of_submissions', models.IntegerField(default=0)),
                 ('metadata', jsonfield.fields.JSONField(default={}, blank=True)),
-                ('created_by', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True)),
+                ('created_by', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)),
                 ('user', models.OneToOneField(related_name='profile', to=settings.AUTH_USER_MODEL)),
             ],
             options={

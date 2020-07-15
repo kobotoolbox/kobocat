@@ -124,9 +124,9 @@ class Instance(models.Model):
     xml = models.TextField()
     xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,
                                 default=DEFAULT_XML_HASH)
-    user = models.ForeignKey(User, related_name='instances', null=True)
-    xform = models.ForeignKey(XForm, null=True, related_name='instances')
-    survey_type = models.ForeignKey(SurveyType)
+    user = models.ForeignKey(User, related_name='instances', null=True, on_delete=models.CASCADE)
+    xform = models.ForeignKey(XForm, null=True, related_name='instances', on_delete=models.CASCADE)
+    survey_type = models.ForeignKey(SurveyType, on_delete=models.CASCADE)
 
     # shows when we first received this instance
     date_created = models.DateTimeField(auto_now_add=True)
@@ -427,7 +427,7 @@ class InstanceHistory(models.Model):
         app_label = 'logger'
 
     xform_instance = models.ForeignKey(
-        Instance, related_name='submission_history')
+        Instance, related_name='submission_history', on_delete=models.CASCADE)
     xml = models.TextField()
     # old instance id
     uuid = models.CharField(max_length=249, default='')

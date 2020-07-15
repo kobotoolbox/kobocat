@@ -122,7 +122,7 @@ def media_resources(media_list, download=False):
 
 
 class MetaData(models.Model):
-    xform = models.ForeignKey(XForm)
+    xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     data_type = models.CharField(max_length=255)
     data_value = models.CharField(max_length=255)
     data_file = models.FileField(upload_to=upload_to, blank=True, null=True)

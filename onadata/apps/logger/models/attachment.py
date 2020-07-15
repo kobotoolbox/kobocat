@@ -33,7 +33,7 @@ def hash_attachment_contents(contents):
 
 
 class Attachment(models.Model):
-    instance = models.ForeignKey(Instance, related_name="attachments")
+    instance = models.ForeignKey(Instance, related_name="attachments", on_delete=models.CASCADE)
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
     media_file_basename = models.CharField(
         max_length=260, null=True, blank=True, db_index=True)

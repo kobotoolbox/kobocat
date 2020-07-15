@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('userprofile_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='main.UserProfile')),
                 ('is_organization', models.BooleanField(default=True)),
-                ('creator', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('creator', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
             options={
                 'permissions': (('can_add_xform', 'Can add/upload an xform to organization'), ('view_organizationprofile', 'Can view organization profile')),
@@ -39,8 +39,8 @@ class Migration(migrations.Migration):
                 ('shared', models.BooleanField(default=False)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(related_name='project_creator', to=settings.AUTH_USER_MODEL)),
-                ('organization', models.ForeignKey(related_name='project_organization', to=settings.AUTH_USER_MODEL)),
+                ('created_by', models.ForeignKey(related_name='project_creator', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('organization', models.ForeignKey(related_name='project_organization', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
                 ('tags', taggit.managers.TaggableManager(to='taggit.Tag', through='taggit.TaggedItem', help_text='A comma-separated list of tags.', verbose_name='Tags')),
                 ('user_stars', models.ManyToManyField(to=settings.AUTH_USER_MODEL)),
             ],
@@ -52,9 +52,9 @@ class Migration(migrations.Migration):
             name='ProjectXForm',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('project', models.ForeignKey(to='api.Project')),
-                ('xform', models.ForeignKey(to='logger.XForm')),
+                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('project', models.ForeignKey(to='api.Project', on_delete=models.CASCADE)),
+                ('xform', models.ForeignKey(to='logger.XForm', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
                 ('date_created', models.DateTimeField(auto_now_add=True, null=True)),
                 ('date_modified', models.DateTimeField(auto_now=True, null=True)),
                 ('created_by', models.ForeignKey(related_name='team_creator', blank=True, to=settings.AUTH_USER_MODEL, null=True)),
-                ('organization', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('organization', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
                 ('projects', models.ManyToManyField(to='api.Project')),
             ],
             options={
