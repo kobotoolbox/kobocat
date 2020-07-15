@@ -703,8 +703,8 @@ def mongo_sync_status(remongo=False, update_all=False, user=None, xform=None):
         user = xform.user
         instance_count = Instance.objects.filter(xform=xform).count()
         userform_id = "%s_%s" % (user.username, xform.id_string)
-        mongo_count = mongo_instances.find(
-            {common_tags.USERFORM_ID: userform_id}).count()
+        mongo_count = mongo_instances.count_documents(
+            {common_tags.USERFORM_ID: userform_id})
 
         if instance_count != mongo_count or update_all:
             line = "user: %s, id_string: %s\nInstance count: %d\t"\

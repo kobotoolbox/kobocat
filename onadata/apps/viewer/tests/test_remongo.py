@@ -40,7 +40,7 @@ class TestRemongo(TestBase):
         c = Command()
         c.handle(batchsize=3)
         # mongo db should now have 5 records
-        count = settings.MONGO_DB.instances.count()
+        count = settings.MONGO_DB.instances.count_documents(filter={})
         self.assertEqual(count, 4)
 
     def test_remongo_with_username_id_string(self):
@@ -66,7 +66,7 @@ class TestRemongo(TestBase):
         c.handle(batchsize=3, username=self.user.username,
                  id_string=self.xform.id_string)
         # mongo db should now have 2 records
-        count = settings.MONGO_DB.instances.count()
+        count = settings.MONGO_DB.instances.count_documents(filter={})
         self.assertEqual(count, 1)
 
     def test_indexes_exist(self):
@@ -96,32 +96,32 @@ class TestRemongo(TestBase):
     def test_sync_mongo_with_all_option_deletes_existing_records(self):
         self._publish_transportation_form()
         userform_id = "%s_%s" % (self.user.username, self.xform.id_string)
-        initial_mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        initial_mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         for i in range(len(self.surveys)):
             self._submit_transport_instance(i)
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         # check our mongo count
         self.assertEqual(mongo_count, initial_mongo_count + len(self.surveys))
         # add dummy instance
         settings.MONGO_DB.instances.save(
             {"_id": 12345, "_userform_id": userform_id})
         # make sure the dummy is returned as part of the forms mongo instances
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         self.assertEqual(mongo_count,
                          initial_mongo_count + len(self.surveys) + 1)
         # call sync_mongo WITHOUT the all option
         call_command("sync_mongo", remongo=True)
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         self.assertEqual(mongo_count,
                          initial_mongo_count + len(self.surveys) + 1)
         # call sync_mongo WITH the all option
         call_command("sync_mongo", remongo=True, update_all=True)
         # check that we are back to just the submitted set
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         self.assertEqual(mongo_count,
                          initial_mongo_count + len(self.surveys))
