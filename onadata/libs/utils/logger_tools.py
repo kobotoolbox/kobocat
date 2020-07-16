@@ -749,7 +749,7 @@ def remove_xform(xform):
     query = {
         ParsedInstance.USERFORM_ID: f'{xform.user.username}_{xform.id_string}'
     }
-    xform_instances.delete_many(query, j=True)
+    xform_instances.delete_many(query)
 
     # delete xform, and all related models
     xform.delete()
