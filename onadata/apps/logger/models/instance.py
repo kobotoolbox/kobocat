@@ -146,7 +146,6 @@ class Instance(models.Model):
 
     # store an geographic objects associated with this instance
     geom = models.GeometryCollectionField(null=True)
-    objects = models.GeoManager()
 
     tags = TaggableManager()
 
