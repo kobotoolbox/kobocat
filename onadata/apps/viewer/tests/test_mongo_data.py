@@ -36,7 +36,7 @@ class TestMongoData(TestBase):
                           self.instances.find_one())
 
     def test_mongo_find(self):
-        self.assertNotEquals([self.pi.to_dict()], list(self.instances.find()))
+        self.assertNotEqual([self.pi.to_dict()], list(self.instances.find()))
         self.assertEqual([self.pi.to_dict_for_mongo()],
                           list(self.instances.find()))
 
