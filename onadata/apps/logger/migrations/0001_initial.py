@@ -127,7 +127,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='survey_type',
-            field=models.ForeignKey(to='logger.SurveyType'),
+            field=models.ForeignKey(to='logger.SurveyType', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='instance',
@@ -137,7 +137,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='user',
-            field=models.ForeignKey(related_name='instances', to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='instances', to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='instance',

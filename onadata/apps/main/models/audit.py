@@ -22,7 +22,7 @@ class AuditLog(object):
         self.data = data
 
     def save(self):
-        return audit.save(self.data)
+        return audit.insert_one(self.data)
 
     @classmethod
     def query_mongo(cls, username, query=None, fields=None, sort=None, start=0,
@@ -53,15 +53,17 @@ class AuditLog(object):
                     query[cls.CREATED_ON] = {"$gte": start_time,
                                              "$lte": end_time}
 
-        # TODO: current mongo (2.0.4 of this writing)
-        # cant mix including and excluding fields in a single query
+        if count:
+            return [{"count": audit.count_documents(query)}]
+
         fields_to_select = None
+        # TODO: current mongo (3.4 of this writing)
+        # cant mix including and excluding fields in a single query
         if type(fields) == list and len(fields) > 0:
             fields_to_select = dict([(MongoHelper.encode(field), 1)
                                      for field in fields])
+
         cursor = audit.find(query, fields_to_select)
-        if count:
-            return [{"count": cursor.count()}]
 
         cursor.skip(max(start, 0)).limit(limit)
         if type(sort) == dict and len(sort) == 1:

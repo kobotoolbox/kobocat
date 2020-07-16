@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                 ('end_time', models.DateTimeField(null=True)),
                 ('lat', models.FloatField(null=True)),
                 ('lng', models.FloatField(null=True)),
-                ('instance', models.OneToOneField(related_name='parsed_instance', to='logger.Instance')),
+                ('instance', models.OneToOneField(related_name='parsed_instance', to='logger.Instance', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(

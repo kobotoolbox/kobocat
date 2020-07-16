@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                 ('num_of_submissions', models.IntegerField(default=0)),
                 ('metadata', jsonfield.fields.JSONField(default={}, blank=True)),
                 ('created_by', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)),
-                ('user', models.OneToOneField(related_name='profile', to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(related_name='profile', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
             options={
                 'permissions': (('can_add_xform', 'Can add/upload an xform to user profile'), ('view_profile', 'Can view user profile')),

@@ -20,7 +20,7 @@ from onadata.apps.main.signals import set_api_permissions
 @python_2_unicode_compatible
 class UserProfile(models.Model):
     # This field is required.
-    user = models.OneToOneField(User, related_name='profile')
+    user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
 
     # Other fields here
     name = models.CharField(max_length=255, blank=True)
