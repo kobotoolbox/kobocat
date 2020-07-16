@@ -719,7 +719,7 @@ class TestExportBuilder(TestBase):
         expected_sheet_names = ['childrens_survey', 'children',
                                 'children_cartoons',
                                 'children_cartoons_characters']
-        self.assertEqual(wb.get_sheet_names(), expected_sheet_names)
+        self.assertEqual(wb.sheetnames, expected_sheet_names)
 
         # check header columns
         main_sheet = wb['childrens_survey']
@@ -832,7 +832,7 @@ class TestExportBuilder(TestBase):
                                 'childrens_survey_with_a_very_l1',
                                 'childrens_survey_with_a_very_l2',
                                 'childrens_survey_with_a_very_l3']
-        self.assertEqual(wb.get_sheet_names(), expected_sheet_names)
+        self.assertEqual(wb.sheetnames, expected_sheet_names)
         xls_file.close()
 
     def test_child_record_parent_table_is_updated_when_sheet_is_renamed(self):
