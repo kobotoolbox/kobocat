@@ -5,7 +5,7 @@ import re
 from django.utils.six.moves.urllib.parse import unquote_plus
 
 
-class RedisHelper(object):
+class RedisHelper:
     """
     Redis's helper.
 

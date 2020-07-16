@@ -44,7 +44,7 @@ class TreeNode(list):
         return child
 
 
-class GoogleDoc(object):
+class GoogleDoc:
     """
     This class provides a structure for dealing with a Google
     Document. Most use cases will initialize a GoogleDoc by passing a

@@ -2,7 +2,7 @@
 from onadata.apps.logger.models.xform import XForm
 
 
-class AnonymousUserPublicFormsMixin(object):
+class AnonymousUserPublicFormsMixin:
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(shared=True)

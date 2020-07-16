@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
 
-class MultiLookupMixin(object):
+class MultiLookupMixin:
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
         filter_kwargs = {}

@@ -82,7 +82,7 @@ def question_types_to_exclude(_type):
     return _type in QUESTION_TYPES_TO_EXCLUDE
 
 
-class DictOrganizer(object):
+class DictOrganizer:
 
     def set_dict_iterator(self, dict_iterator):
         self._dict_iterator = dict_iterator
@@ -185,7 +185,7 @@ def dict_to_joined_export(data, index, indices, name):
     return output
 
 
-class ExportBuilder(object):
+class ExportBuilder:
     IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION,
                        DELETEDAT]
     # fields we export but are not within the form's structure

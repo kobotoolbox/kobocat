@@ -11,7 +11,7 @@ audit = settings.MONGO_DB.auditlog
 DEFAULT_LIMIT = 1000
 
 
-class AuditLog(object):
+class AuditLog:
     ACCOUNT = "account"
     DEFAULT_BATCHSIZE = 1000
     CREATED_ON = "created_on"
