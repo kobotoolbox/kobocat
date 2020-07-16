@@ -3,7 +3,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import get_object_or_404
 
 
-class XFormIdStringLookupMixin(object):
+class XFormIdStringLookupMixin:
     lookup_id_string = 'id_string'
 
     def get_object(self):

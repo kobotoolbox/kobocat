@@ -51,7 +51,7 @@ def get_user_from_uid(uid):
     return user
 
 
-class PasswordResetChange(object):
+class PasswordResetChange:
     def __init__(self, uid, new_password, token):
         self.uid = uid
         self.new_password = new_password
@@ -64,7 +64,7 @@ class PasswordResetChange(object):
             user.save()
 
 
-class PasswordReset(object):
+class PasswordReset:
     def __init__(self, email, reset_url):
         self.email = email
         self.reset_url = reset_url

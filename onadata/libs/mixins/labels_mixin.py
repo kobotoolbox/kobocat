@@ -81,7 +81,7 @@ def process_label_request(request, label, instance):
     return Response(data, status=http_status)
 
 
-class LabelsMixin(object):
+class LabelsMixin:
     @action(detail=True, methods=['GET', 'POST', 'DELETE'], extra_lookup_fields=['label', ])
     def labels(self, request, format='json', **kwargs):
         xform = self.get_object()

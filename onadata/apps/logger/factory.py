@@ -74,7 +74,7 @@ def _load_simple_survey_object():
     return survey
 
 
-class XFormManagerFactory(object):
+class XFormManagerFactory:
 
     def create_registration_xform(self):
         """

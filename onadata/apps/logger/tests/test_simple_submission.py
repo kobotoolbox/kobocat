@@ -10,7 +10,7 @@ from onadata.libs.utils.logger_tools import (
 )
 
 
-class TempFileProxy(object):
+class TempFileProxy:
     """
     create_instance will be looking for a file object,
     with "read" and "close" methods.
