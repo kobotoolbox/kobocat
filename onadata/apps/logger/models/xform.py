@@ -18,7 +18,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils import timezone
-from django.utils.encoding import smart_text, python_2_unicode_compatible
+from django.utils.encoding import smart_text
 
 from django.utils.translation import ugettext_lazy, ugettext as _
 from guardian.shortcuts import (
@@ -50,7 +50,6 @@ def upload_to(instance, filename):
         os.path.split(filename)[1])
 
 
-@python_2_unicode_compatible
 class XForm(BaseModel):
     CLONED_SUFFIX = '_cloned'
     MAX_ID_LENGTH = 100

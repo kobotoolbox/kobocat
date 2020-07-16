@@ -2,14 +2,12 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy
 
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.restservice import SERVICE_CHOICES
 
 
-@python_2_unicode_compatible
 class RestService(models.Model):
 
     class Meta:

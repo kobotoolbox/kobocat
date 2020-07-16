@@ -7,7 +7,6 @@ from tempfile import NamedTemporaryFile
 from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models.signals import post_delete
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext as _
 
 from onadata.apps.logger.models import XForm
@@ -20,7 +19,6 @@ def export_delete_callback(sender, **kwargs):
         storage.delete(export.filepath)
 
 
-@python_2_unicode_compatible
 class Export(models.Model):
     class ExportTypeError(Exception):
         def __str__(self):
