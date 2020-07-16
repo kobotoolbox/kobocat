@@ -106,8 +106,9 @@ class TestFormAPIDelete(TestBase):
         instance = Instance.objects.get(id=instance.id)
         self.assertTrue(isinstance(instance.deleted_at, datetime))
         # check mongo record was marked as deleted
-        cursor = settings.MONGO_DB.instances.find(
-            {common_tags.ID: instance.id})
-        self.assertEqual(cursor.count(), 1)
+        instances = settings.MONGO_DB.instances
+        query = {common_tags.ID: instance.id}
+        cursor = settings.MONGO_DB.instances.find(query)
+        self.assertEqual(instances.count_documents(query), 1)
         record = next(cursor)
         self.assertIsNotNone(record[common_tags.DELETEDAT])

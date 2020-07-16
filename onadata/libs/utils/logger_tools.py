@@ -637,7 +637,7 @@ def update_mongo_for_xform(xform, only_update_missing=True):
         instance_ids = instance_ids.difference(mongo_ids)
     else:
         # clear mongo records
-        mongo_instances.remove({common_tags.USERFORM_ID: userform_id})
+        mongo_instances.delete_many({common_tags.USERFORM_ID: userform_id})
     # get instances
     sys.stdout.write(
         "Total no of instances to update: %d\n" % len(instance_ids))
@@ -747,9 +747,9 @@ def remove_xform(xform):
 
     # delete instances from mongo db
     query = {
-        ParsedInstance.USERFORM_ID:
-        "%s_%s" % (xform.user.username, xform.id_string)}
-    xform_instances.remove(query, j=True)
+        ParsedInstance.USERFORM_ID: f'{xform.user.username}_{xform.id_string}'
+    }
+    xform_instances.delete_many(query, j=True)
 
     # delete xform, and all related models
     xform.delete()

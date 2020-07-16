@@ -58,10 +58,9 @@ def datetime_from_str(text):
 def update_mongo_instance(record):
     # since our dict always has an id, save will always result in an upsert op
     # - so we dont need to worry whether its an edit or not
-    # http://api.mongodb.org/python/current/api/pymongo/collection.html#pymong\
-    # o.collection.Collection.save
+    # https://api.mongodb.com/python/current/api/pymongo/collection.html#pymongo.collection.Collection.replace_one
     try:
-        xform_instances.save(record)
+        xform_instances.replace_one({'_id': record['_id']}, record, upsert=True)
         return True
     except Exception as e:
         logging.getLogger().error("update_mongo_instance - {}".format(str(e)), exc_info=True)
@@ -75,7 +74,7 @@ class ParsedInstance(models.Model):
     DEFAULT_LIMIT = 30000
     DEFAULT_BATCHSIZE = 1000
 
-    instance = models.OneToOneField(Instance, related_name="parsed_instance")
+    instance = models.OneToOneField(Instance, related_name="parsed_instance", on_delete=models.CASCADE)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     # TODO: decide if decimal field is better than float field.
@@ -97,10 +96,12 @@ class ParsedInstance(models.Model):
     def query_mongo(cls, username, id_string, query, fields, sort, start=0,
                     limit=DEFAULT_LIMIT, count=False, hide_deleted=True):
 
-        cursor = cls._get_mongo_cursor(query, fields, hide_deleted, username, id_string)
+        query = cls._get_mongo_cursor_query(query, hide_deleted, username, id_string)
 
         if count:
-            return [{"count": cursor.count()}]
+            return [{"count": xform_instances.count_documents(query)}]
+
+        cursor = cls._get_mongo_cursor(query, fields)
 
         if isinstance(sort, string_types):
             sort = json.loads(sort, object_hook=json_util.object_hook)
@@ -148,10 +149,11 @@ class ParsedInstance(models.Model):
             cls, query, fields, sort, start=0, limit=DEFAULT_LIMIT,
             count=False, hide_deleted=True):
 
-        cursor = cls._get_mongo_cursor(query, fields, hide_deleted)
-
+        query = cls._get_mongo_cursor_query(query, hide_deleted)
         if count:
-            return [{"count": cursor.count()}]
+            return [{"count": xform_instances.count_documents(query)}]
+
+        cursor = cls._get_mongo_cursor(query, fields)
 
         if isinstance(sort, string_types):
             sort = json.loads(sort, object_hook=json_util.object_hook)
@@ -169,15 +171,15 @@ class ParsedInstance(models.Model):
     @apply_form_field_names
     def query_mongo_no_paging(cls, query, fields, count=False, hide_deleted=True):
 
-        cursor = cls._get_mongo_cursor(query, fields, hide_deleted)
+        query = cls._get_mongo_cursor_query(query, hide_deleted)
 
         if count:
-            return [{"count": cursor.count()}]
-        else:
-            return cursor
+            return [{"count": xform_instances.count_documents(query)}]
+
+        return cls._get_mongo_cursor(query, fields)
 
     @classmethod
-    def _get_mongo_cursor(cls, query, fields, hide_deleted, username=None, id_string=None):
+    def _get_mongo_cursor(cls, query, fields):
         """
         Returns a Mongo cursor based on the query.
 
@@ -189,6 +191,31 @@ class ParsedInstance(models.Model):
         :return: pymongo Cursor
         """
         fields_to_select = {cls.USERFORM_ID: 0}
+
+        # fields must be a string array i.e. '["name", "age"]'
+        if isinstance(fields, string_types):
+            fields = json.loads(fields, object_hook=json_util.object_hook)
+        fields = fields if fields else []
+
+        # TODO: current mongo (3.4 of this writing)
+        # cannot mix including and excluding fields in a single query
+        if type(fields) == list and len(fields) > 0:
+            fields_to_select = dict(
+                [(MongoHelper.encode(field), 1) for field in fields])
+
+        return xform_instances.find(query, fields_to_select)
+
+    @classmethod
+    def _get_mongo_cursor_query(cls, query, hide_deleted, username=None, id_string=None):
+        """
+        Returns the query to get a Mongo cursor.
+
+        :param query: JSON string
+        :param hide_deleted: boolean
+        :param username: string
+        :param id_string: string
+        :return: dict
+        """
         # TODO: give more detailed error messages to 3rd parties
         # using the API when json.loads fails
         if isinstance(query, string_types):
@@ -207,18 +234,7 @@ class ParsedInstance(models.Model):
             # join existing query with deleted_at_query on an $and
             query = {"$and": [query, {"_deleted_at": None}]}
 
-        # fields must be a string array i.e. '["name", "age"]'
-        if isinstance(fields, string_types):
-            fields = json.loads(fields, object_hook=json_util.object_hook)
-        fields = fields if fields else []
-
-        # TODO: current mongo (3.4 of this writing)
-        # cannot mix including and excluding fields in a single query
-        if type(fields) == list and len(fields) > 0:
-            fields_to_select = dict(
-                [(MongoHelper.encode(field), 1) for field in fields])
-
-        return xform_instances.find(query, fields_to_select)
+        return query
 
     @classmethod
     def _get_paginated_and_sorted_cursor(cls, cursor, start, limit, sort):
@@ -403,7 +419,7 @@ def _get_attachments_from_instance(instance):
 
 def _remove_from_mongo(sender, **kwargs):
     instance_id = kwargs.get('instance').instance.id
-    xform_instances.remove(instance_id)
+    xform_instances.delete_one({'_id': instance_id})
 
 
 pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)

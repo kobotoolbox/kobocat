@@ -52,7 +52,7 @@ class TestAttachment(TestBase):
                 thumbnail = '%s-%s.jpg' % (filename, size)
                 self.assertTrue(
                     default_storage.exists(thumbnail))
-                created_times[size] = default_storage.modified_time(thumbnail)
+                created_times[size] = default_storage.get_modified_time(thumbnail)
         # replace or regenerate thumbnails if they exist
         call_command("create_image_thumbnails", force=True)
         for attachment in Attachment.objects.filter(instance=self.instance):
@@ -62,5 +62,5 @@ class TestAttachment(TestBase):
                 self.assertTrue(
                     default_storage.exists(thumbnail))
                 self.assertTrue(
-                    default_storage.modified_time(thumbnail) > created_times[size])
+                    default_storage.get_modified_time(thumbnail) > created_times[size])
                 default_storage.delete(thumbnail)

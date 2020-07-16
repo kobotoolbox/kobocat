@@ -17,8 +17,8 @@ class TestMongoData(TestBase):
     def setUp(self):
         TestBase.setUp(self)
         self.instances = settings.MONGO_DB.instances
-        self.instances.remove()
-        self.assertEqual(list(self.instances.find()), [])
+        self.instances.delete_many({})
+        self.assertEqual(self.instances.count_documents({}), 0)
         xls_path = os.path.join(self.this_directory, 'fixtures',
                                 'transportation', 'mongo',
                                 'transportation_with_dirty_mongo_ids.xls')

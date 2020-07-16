@@ -105,7 +105,7 @@ class TestRemongo(TestBase):
         # check our mongo count
         self.assertEqual(mongo_count, initial_mongo_count + len(self.surveys))
         # add dummy instance
-        settings.MONGO_DB.instances.save(
+        settings.MONGO_DB.instances.insert_one(
             {"_id": 12345, "_userform_id": userform_id})
         # make sure the dummy is returned as part of the forms mongo instances
         mongo_count = settings.MONGO_DB.instances.count_documents(
