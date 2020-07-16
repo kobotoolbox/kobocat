@@ -117,7 +117,7 @@ class TestAbstractViewSet(TestCase):
         # are never considered.
         if user.is_anonymous:
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
-        user.user_permissions = Permission.objects.all()
+        user.user_permissions.set(Permission.objects.all())
         if save:
             user.save()
 
