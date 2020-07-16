@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import gdata.client
 import gdata.docs.data
 import gdata.docs.client

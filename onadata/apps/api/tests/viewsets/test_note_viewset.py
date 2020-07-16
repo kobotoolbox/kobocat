@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.test import RequestFactory
 
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet

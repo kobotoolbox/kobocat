@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.shortcuts import get_object_or_404
 from django.utils import six
 from rest_framework import filters

@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from onadata.apps.sms_support.tools import SMS_SUBMISSION_REFUSED
 
 from .test_base_sms import TestBaseSMS

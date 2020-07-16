@@ -1,7 +1,5 @@
 # vim: ai ts=4 sts=4 et sw=4 nu
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import copy
 import io
 import mimetypes

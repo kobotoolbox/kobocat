@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 nu
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 """ SMS Support Automatic Documentation (Web View)
 
     Provides the get_autodoc_for(xform) function.

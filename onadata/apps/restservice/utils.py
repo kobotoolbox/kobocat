@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from onadata.apps.restservice.models import RestService
 from onadata.apps.restservice.tasks import service_definition_task
 

@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.models import MetaData

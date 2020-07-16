@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 from rest_framework import serializers
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.libs.utils.decorators import check_obj

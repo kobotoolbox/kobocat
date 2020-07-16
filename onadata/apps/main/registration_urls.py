@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.conf.urls import url, include
 from django.views.generic import TemplateView
 from registration.backends.default.views import ActivationView
