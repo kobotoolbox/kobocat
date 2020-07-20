@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.views import delete_data
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance

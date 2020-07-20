@@ -7,7 +7,7 @@ import os
 import re
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf import settings
 from django_digest.test import Client as DigestClient
 from django.core.files.uploadedfile import UploadedFile

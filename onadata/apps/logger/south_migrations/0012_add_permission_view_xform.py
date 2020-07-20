@@ -21,7 +21,7 @@ class Migration(DataMigration):
             ct = ContentType.objects.get(model='xform', app_label='odk_logger')
             Permission.objects.get(content_type=ct, codename='can_view').delete()
             # add new permission label
-            perm, created = Permission.objects.get_or_create(content_type=ct, codename='view_xform', name='Can view associated data')
+            perm, created = Permission.objects.get_or_create(content_type=ct, codename='view_xform', name='Can view associated data!')
         except (ContentType.DoesNotExist, Permission.DoesNotExist):
             pass
 

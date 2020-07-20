@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 
 from onadata import koboform

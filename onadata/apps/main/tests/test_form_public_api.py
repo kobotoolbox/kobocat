@@ -1,7 +1,7 @@
 # coding: utf-8
 import json
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.views import public_api
 from .test_base import TestBase

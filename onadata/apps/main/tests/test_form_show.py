@@ -3,7 +3,7 @@ import os
 from unittest import skip
 
 from django.core.files.base import ContentFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.views import show, form_photos, update_xform, profile,\
     enketo_preview

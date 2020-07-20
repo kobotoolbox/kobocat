@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.views import clone_xlsform
 from onadata.apps.logger.models import XForm

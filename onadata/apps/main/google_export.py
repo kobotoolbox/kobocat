@@ -5,7 +5,7 @@ import gdata.docs.client
 import gdata.gauth
 from gdata.spreadsheets import client
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 

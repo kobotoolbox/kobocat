@@ -9,7 +9,7 @@ from time import sleep
 
 from django.conf import settings
 from django.core.files.storage import get_storage_class, FileSystemStorage
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from xlrd import open_workbook
 

@@ -14,7 +14,7 @@ from django.contrib.sites.models import Site
 from django.contrib import messages
 from django.core.files.storage import get_storage_class
 from django.core.files import File
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden,

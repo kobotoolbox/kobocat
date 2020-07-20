@@ -1,5 +1,5 @@
 # coding: utf-8
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from mock import Mock, patch
 
 from onadata.apps.main.google_export import refresh_access_token

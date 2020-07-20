@@ -1,7 +1,7 @@
 # coding: utf-8
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from guardian.shortcuts import assign_perm, remove_perm
 
 from onadata.apps.main.tests.test_base import TestBase

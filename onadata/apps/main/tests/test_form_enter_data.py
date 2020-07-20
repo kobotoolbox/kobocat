@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import requests
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.validators import URLValidator
 from django.test import RequestFactory
 from django.utils.six import string_types

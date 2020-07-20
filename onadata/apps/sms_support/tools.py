@@ -176,7 +176,7 @@ def check_form_sms_compatibility(form, json_survey=None):
 
     def prep_return(msg, comp=None):
 
-        from django.core.urlresolvers import reverse
+        from django.urls import reverse
 
         error = 'alert-info'
         warning = 'alert-info'

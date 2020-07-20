@@ -1,19 +1,19 @@
 # coding: utf-8
-from django.conf.urls import url
+from django.urls import re_path
 from rest_framework import routers
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework.views import APIView
 
+from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
+from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
-from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
-from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
-from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
+from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 
 
 class MultiLookupRouter(routers.DefaultRouter):
@@ -317,7 +317,7 @@ Example using curl:
         ret = []
 
         if self.include_root_view:
-            root_url = url(r'^$', self.get_api_root_view(),
+            root_url = re_path(r'^$', self.get_api_root_view(),
                            name=self.root_view_name)
             ret.append(root_url)
         for prefix, viewset, basename in self.registry:
@@ -343,7 +343,7 @@ Example using curl:
                     )
                     view = viewset.as_view(mapping, **route.initkwargs)
                     name = route.name.format(basename=basename)
-                    ret.append(url(regex, view, name=name))
+                    ret.append(re_path(regex, view, name=name))
         if self.include_format_suffixes:
             ret = format_suffix_patterns(ret, allowed=['[a-z0-9]+'])
         return ret

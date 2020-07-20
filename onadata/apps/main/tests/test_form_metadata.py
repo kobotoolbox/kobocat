@@ -5,7 +5,7 @@ import unittest
 
 from django.core.files.base import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.views import show, edit, download_metadata,\

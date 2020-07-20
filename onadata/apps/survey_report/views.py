@@ -9,7 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseForbidden, Http404, QueryDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
 
