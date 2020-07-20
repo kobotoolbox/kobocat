@@ -52,7 +52,6 @@ class TestBase(TestCase):
         # are never considered.
         if user.is_anonymous:
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
-        ùprint('ICITTE')
         user.user_permissions.set(Permission.objects.all())
         if save:
             user.save()
@@ -144,7 +143,7 @@ class TestBase(TestCase):
             os.path.join(self.this_directory, 'fixtures',
                          'transportation', 'instances', s, media_file))
         self.attachment = Attachment.objects.all().reverse()[0]
-        self.attachment_media_file = self.attachment.media_file
+        self.attachment_media_file = str(self.attachment.media_file)
 
     def _publish_transportation_form_and_submit_instance(self):
         self._publish_transportation_form()
