@@ -650,10 +650,6 @@ def data_view(request, username, id_string):
 def attachment_url(request, size='medium'):
     media_file = request.GET.get('media_file')
 
-    import pdb
-    pdb.set_trace()
-
-    # TODO: how to make sure we have the right media file,
     # this assumes duplicates are the same file.
     #
     # Django seems to already handle that. It appends datetime to the filename.
