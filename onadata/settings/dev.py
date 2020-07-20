@@ -8,4 +8,4 @@ LOGGING['handlers']['console'] = {
     'formatter': 'verbose'
 }
 
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+#sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
