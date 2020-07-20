@@ -106,9 +106,9 @@ KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
 KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
 
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'onadata.koboform.context_processors.koboform_integration',
-) + TEMPLATE_CONTEXT_PROCESSORS
+#TEMPLATE_CONTEXT_PROCESSORS = (
+#    'onadata.koboform.context_processors.koboform_integration',
+#) + TEMPLATE_CONTEXT_PROCESSORS
 
 MIDDLEWARE.insert(0, 'onadata.koboform.redirect_middleware.ConditionalRedirects')
 
