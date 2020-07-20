@@ -616,7 +616,12 @@ def google_xls_export(request, username, id_string):
             'id_string': xform.id_string,
         }, audit, request)
 
-    return HttpResponseRedirect(url)
+    # Django2 does not support bytestring anymore.
+    # https://docs.djangoproject.com/en/2.0/releases/2.0/#removed-support-for-bytestrings-in-some-places
+    # In `TestGoogleDocsExport.test_google_docs_export()`, an error is raised if `
+    # `url` is not casted to str()`
+    # See. https://stackoverflow.com/questions/50956160/mock-function-gives-typeerror-in-django2
+    return HttpResponseRedirect(str(url))
 
 
 def data_view(request, username, id_string):
@@ -644,6 +649,10 @@ def data_view(request, username, id_string):
 
 def attachment_url(request, size='medium'):
     media_file = request.GET.get('media_file')
+
+    import pdb
+    pdb.set_trace()
+
     # TODO: how to make sure we have the right media file,
     # this assumes duplicates are the same file.
     #
