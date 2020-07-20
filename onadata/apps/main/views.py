@@ -24,7 +24,6 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponseServerError
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
-from django.utils.six.moves.urllib.parse import quote_plus
 from django.template import loader, RequestContext
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
@@ -1100,14 +1099,9 @@ def form_photos(request, username, id_string):
                 continue
 
             data = {}
-
-            for i in ['small', 'medium', 'large', 'original']:
-                url = reverse(attachment_url, kwargs={'size': i})
-                url = '%s?media_file=%s' % (
-                    url,
-                    quote_plus(attachment.media_file.name),
-                )
-                data[i] = url
+            data['original'] = attachment.secure_url()
+            for suffix in settings.THUMB_CONF.keys():
+                data[suffix] = attachment.secure_url(suffix)
 
             image_urls.append(data)
 
