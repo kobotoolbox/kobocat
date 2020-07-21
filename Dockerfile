@@ -1,65 +1,109 @@
-FROM kobotoolbox/kobocat_base:latest
+FROM nikolaik/python-nodejs:python3.8-nodejs10
 
-ENV KOBOCAT_SRC_DIR=/srv/src/kobocat \
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+ENV VIRTUAL_ENV=/opt/venv
+
+
+ENV KOBOCAT_LOGS_DIR=/srv/logs \
+    DJANGO_SETTINGS_MODULE=kobo.settings.prod \
+    # The mountpoint of a volume shared with the `nginx` container. Static files will
+    #   be copied there.
+    NGINX_STATIC_DIR=/srv/static \
+    KOBOCAT_SRC_DIR=/srv/src/kobocat \
     BACKUPS_DIR=/srv/backups \
-    KOBOCAT_LOGS_DIR=/srv/logs
+    TMP_PATH=/srv/tmp \
+    INIT_PATH=/srv/init
 
-# Install post-base-image `apt` additions from `apt_requirements.txt`, if modified.
-COPY ./apt_requirements.txt "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt"
-RUN if ! diff "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt" "${KOBOCAT_TMP_DIR}/base_apt_requirements.txt"; then \
-        apt-get update && \
-        apt-get install -y $(cat "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt") && \
-        apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    ; fi
+# Install Dockerize.
+ENV DOCKERIZE_VERSION v0.6.1
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz -P /tmp \
+    && tar -C /usr/local/bin -xzvf /tmp/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && rm /tmp/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
-# Version 8 of pip doesn't really seem to upgrade packages when switching from
-# PyPI to editable Git
-RUN pip install --upgrade 'pip>=10,<11'
+##########################################
+# Create build directories               #
+##########################################
 
-# Install post-base-image `pip` additions/upgrades from `requirements/base.pip`, if modified.
-COPY ./requirements/ "${KOBOCAT_TMP_DIR}/current_requirements/"
-# FIXME: Replace this with the much simpler command `pip-sync ${KOBOCAT_TMP_DIR}/current_requirements/base.pip`.
-RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" "${KOBOCAT_TMP_DIR}/base_requirements/base.pip"; then \
-        pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" \
-    ; fi
+RUN mkdir -p "${NGINX_STATIC_DIR}" && \
+    mkdir -p "${KOBOCAT_SRC_DIR}" && \
+    mkdir -p "${TMP_PATH}" && \
+    mkdir -p "${BACKUPS_DIR}" && \
+    mkdir -p "${INIT_PATH}"
 
-# Install post-base-image `pip` additions/upgrades from `requirements/s3.pip`, if modified.
-RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" "${KOBOCAT_TMP_DIR}/base_requirements/s3.pip"; then \
-        pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" \
-    ; fi
+##########################################
+# Install `apt` packages.                #
+##########################################
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 
-# Uninstall `pip` packages installed in the base image from `requirements/uninstall.pip`, if present.
-# FIXME: Replace this with the much simpler `pip-sync` command equivalent.
-RUN if [ -e "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" ]; then \
-        pip uninstall --yes -r "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" \
-    ; fi
+RUN apt -qq update && \
+    apt -qq -y install \
+        gdal-bin \
+        libproj-dev \
+        gettext \
+        postgresql-client \
+        locales \
+        runit-init \
+        rsync \
+        vim && \
+    apt clean && \
+        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Wipe out the base image's `kobocat` dir (**including migration files**) and copy over this directory in its current state.
-RUN rm -rf "${KOBOCAT_SRC_DIR}"
+###########################
+# Install locales         #
+###########################
+
+RUN echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen
+RUN locale-gen && dpkg-reconfigure locales -f noninteractive
+
+###########################
+# Copy KoBoCAT directory  #
+###########################
+
 COPY . "${KOBOCAT_SRC_DIR}"
+
+###########################
+# Install `pip` packages. #
+###########################
+
+RUN virtualenv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install  --quiet --upgrade pip && \
+    pip install  --quiet pip-tools
+COPY ./dependencies/pip/prod.txt /srv/tmp/pip_dependencies.txt
+RUN pip-sync /srv/tmp/pip_dependencies.txt 1>/dev/null && \
+    rm -rf ~/.cache/pip
+
+##########################################
+# Persist the log and email directories. #
+##########################################
+
+RUN mkdir -p "${KOBOCAT_LOGS_DIR}/" "${KOBOCAT_SRC_DIR}/emails" && \
+    chown -R "${UWSGI_USER}" "${KOBOCAT_SRC_DIR}/emails/" && \
+    chown -R "${UWSGI_USER}" "${KOBOCAT_LOGS_DIR}"
+
+#################################################
+# Handle runtime tasks and create main process. #
+#################################################
+
+# Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
+RUN echo "export PATH=${PATH}" >> /etc/profile
+RUN echo 'source /etc/profile' >> /root/.bashrc
 
 # Prepare for execution.
 RUN mkdir -p /etc/service/uwsgi && \
+    # Remove getty* services
+    rm -rf /etc/runit/runsvdir/default/getty-tty* && \
     cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
     mkdir -p /etc/service/celery && \
     ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" /etc/service/celery/run && \
     mkdir -p /etc/service/celery_beat && \
     ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash" /etc/service/celery_beat/run && \
-    cp "${KOBOCAT_SRC_DIR}/docker/init.bash" /etc/my_init.d/10_init_kobocat.bash && \
-    cp "${KOBOCAT_SRC_DIR}/docker/sync_static.sh" /etc/my_init.d/11_sync_static.bash && \
-    mkdir -p "${KOBOCAT_SRC_DIR}/emails/" && \
-    chown -R "${UWSGI_USER}" "${KOBOCAT_SRC_DIR}/emails/" && \
-    mkdir -p "${BACKUPS_DIR}" && \
-    mkdir -p "${KOBOCAT_LOGS_DIR}" && \
-    chown -R "${UWSGI_USER}" "${KOBOCAT_LOGS_DIR}"
-
-RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
-    chmod 600 /root/.pgpass
-
-# Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
-RUN echo 'source /etc/profile' >> /root/.bashrc
-
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
 EXPOSE 8000
+
+CMD ["/bin/bash", "-c", "exec ${KOBOCAT_SRC_DIR}/docker/init.bash"]

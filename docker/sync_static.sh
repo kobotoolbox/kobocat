@@ -3,9 +3,6 @@ set -e
 
 source /etc/profile
 
-oldpwd=$(pwd)
-cd "${KOBOCAT_SRC_DIR}"
-
 mkdir -p "${KOBOCAT_SRC_DIR}/onadata/static"
 
 echo "Collecting static files..."
@@ -26,7 +23,5 @@ echo "%	chown -R \"${UWSGI_USER}\" \"${KOBOCAT_SRC_DIR}\""
 echo '%%%%%%%%%%%%%%%%%%%%%%'
 
 echo "Syncing to nginx folder..."
-rsync -aq ${KOBOCAT_SRC_DIR}/onadata/static/* /srv/static/
+rsync -aq --delete --chown=www-data "${KPI_SRC_DIR}/onadata/static/" "${NGINX_STATIC_DIR}/"
 echo "Done"
-
-cd $oldpwd

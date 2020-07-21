@@ -1,0 +1,92 @@
+# File for use with `pip-compile`; see https://github.com/nvie/pip-tools
+# https://github.com/bndr/pipreqs is a handy utility, too.
+
+# More up-to-date version of django-digest than PyPI seems to have.
+# Also, python-digest is an unlisted dependency thereof.
+-e git+https://github.com/dimagi/python-digest@5c94bb74516b977b60180ee832765c0695ff2b56#egg=python_digest
+-e git+https://github.com/dimagi/django-digest@52ba7edeb326efd97d5670273bb6fa8b0539e501#egg=django_digest
+
+# formpack exports
+git+https://github.com/kobotoolbox/formpack.git@52f77e3519fd1079ce3451f9a5c7c27002e9f3f0#egg=formpack
+
+# captcha
+-e git+https://github.com/dresiu/recaptcha-client-1.0.6-py3@48078f8131e2f3c2054d2099ef48cfe9a5745d0c#egg=recaptcha-client
+
+# spss
+https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#egg=savreaderwriter
+
+# ssrf
+-e git+https://github.com/kobotoolbox/ssrf-protect@755efe16694273ce66060a51e04f973dc034ca4e#egg=ssrf_protect
+
+# Regular PyPI packages
+pytz
+Django>=2,<3
+dj-database-url
+django-registration-redux
+django-templated-email
+dpath
+gdata-python3
+httplib2
+modilabs-python-utils
+Pillow
+psycopg2-binary
+pymongo
+lxml
+pyxform==0.15.1  # same version as KPI. issues with 1.1.0
+django-reversion<3.0.2
+xlrd
+xlwt
+openpyxl
+celery>=4.0,<5.0
+celery[redis]
+amqp
+django-nose
+raven
+# new export code relies on
+pandas>=0.12.0
+elaphe3
+
+django-pure-pagination
+path.py
+
+# sms support
+dict2xml
+
+# api support
+djangorestframework
+djangorestframework-csv
+djangorestframework-jsonp
+djangorestframework-xml
+
+# cors
+django-cors-headers
+Markdown
+django-filter
+
+# tagging
+django-taggit
+
+# JSON data type support
+jsonfield
+django-db-readonly
+
+transifex-client
+
+# Shell Plus
+django-extensions
+
+# redis-sessions
+django-redis-sessions
+redis
+
+# Compatibility Django 2.2
+django-guardian
+django-timezone-field
+django-celery-beat
+django-oauth-toolkit
+
+# Added packages
+simplejson
+djangorestframework-guardian
+
+django-storages

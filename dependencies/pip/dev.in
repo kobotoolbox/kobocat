@@ -1,0 +1,13 @@
+-r requirements.in
+
+ipdb
+ipython
+shell_command
+Werkzeug
+sqlparse
+pytest
+pytest-django
+pytest-env
+mongomock
+mock
+httmock
