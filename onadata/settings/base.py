@@ -22,6 +22,7 @@ from django.utils.six import string_types
 from pymongo import MongoClient
 
 from onadata.libs.utils.redis_helper import RedisHelper
+from pyxform.xform2json import logger
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
@@ -401,7 +402,7 @@ LOGGING = {
             'class': 'onadata.libs.utils.log.AuditLogHandler',
             'formatter': 'verbose',
             'model': 'onadata.apps.main.models.audit.AuditLog'
-        },
+        }
     },
     'loggers': {
         'django.request': {
@@ -586,3 +587,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
 # The maximum size (in bytes) that an upload will be before it gets streamed to the file system
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# Monkey Patch PyXForm. @ToDo remove after upgrading to v1.1.0
+logger.removeHandler(logging.NullHandler)
+logger.addHandler(logging.NullHandler())
