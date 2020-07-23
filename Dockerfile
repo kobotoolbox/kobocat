@@ -19,7 +19,7 @@ ENV LC_ALL=en_US.UTF-8
 
 ENV VIRTUAL_ENV=/opt/venv \
     KOBOCAT_LOGS_DIR=/srv/logs \
-    DJANGO_SETTINGS_MODULE=onadata.settings.kc_environ \
+    DJANGO_SETTINGS_MODULE=onadata.settings.prod \
     # The mountpoint of a volume shared with the `nginx` container. Static files will
     # be copied there.
     NGINX_STATIC_DIR=/srv/static \
