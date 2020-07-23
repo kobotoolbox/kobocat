@@ -157,8 +157,6 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'onadata.libs.utils.middleware.LocaleMiddlewareWithTweaks',
-    # BrokenClientMiddleware must come before AuthenticationMiddleware
-    'onadata.libs.utils.middleware.BrokenClientMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
