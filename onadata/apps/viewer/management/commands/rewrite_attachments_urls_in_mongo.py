@@ -70,7 +70,6 @@ class Command(BaseCommand):
                     sys.stdout.write(progress)
                     sys.stdout.flush()
 
-                settings.MONGO_CONNECTION.admin.command({'fsync': 1})
                 cursor = self.__get_data()
             else:
                 stop = True
