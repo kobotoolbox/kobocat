@@ -50,6 +50,6 @@ else
     fi
 
     echo "Running KoBoCAT container with \`runserver_plus\` debugging application server."
-    UWSGI_COMMAND="python manage.py runserver_plus 0:8000"
+    UWSGI_COMMAND="python manage.py runserver_plus 0:8001"
 fi
 exec ${UWSGI_COMMAND}

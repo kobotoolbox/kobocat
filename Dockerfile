@@ -44,6 +44,7 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
     mkdir -p ${BACKUPS_DIR} && \
     mkdir -p ${CELERY_PID_DIR} && \
     mkdir -p ${SERVICES_DIR}/uwsgi && \
+    mkdir -p ${SERVICES_DIR}/uwsgi_wrong_port_warning && \
     mkdir -p ${SERVICES_DIR}/celery && \
     mkdir -p ${SERVICES_DIR}/celery_beat && \
     mkdir -p ${KOBOCAT_LOGS_DIR}/ && \
@@ -105,9 +106,10 @@ RUN echo "export PATH=${PATH}" >> /etc/profile && \
 RUN rm -rf /etc/runit/runsvdir/default/getty-tty*
 
 # Create symlinks for runsv services
-RUN ln -s ${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash ${SERVICES_DIR}/uwsgi/run && \
-    ln -s ${KOBOCAT_SRC_DIR}/docker/run_celery.bash ${SERVICES_DIR}/celery/run && \
-    ln -s ${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash ${SERVICES_DIR}/celery_beat/run
+RUN ln -s "${KOBOCAT_SRC_DIR}/docker/run_uwsgi_wrong_port_warning.bash" "${SERVICES_DIR}/uwsgi_wrong_port_warning/run" && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" "${SERVICES_DIR}/uwsgi/run" && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" "${SERVICES_DIR}/celery/run" && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash" "${SERVICES_DIR}/celery_beat/run"
 
 # Add/Restore `UWSGI_USER`'s permissions
 RUN chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
@@ -120,7 +122,8 @@ RUN chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
-EXPOSE 8000
+# TODO: Remove port 8000, say, at the start of 2021 (see kobotoolbox/kobo-docker#301 and wrong port warning above)
+EXPOSE 8001 8000
 
 # Run container with `UWSGI_USER`
 USER $UWSGI_USER
