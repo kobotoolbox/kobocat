@@ -1,5 +1,5 @@
 # coding: utf-8
-from .kc_environ import *
+from .prod import *
 
 
 LOGGING['handlers']['console'] = {

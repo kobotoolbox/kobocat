@@ -3,7 +3,7 @@ import dj_database_url
 from django.utils.six.moves.urllib.parse import quote_plus
 from mongomock import MongoClient as MockMongoClient
 
-from onadata.settings.common import *
+from onadata.settings.base import *
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
@@ -82,7 +82,7 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # print "SECRET_KEY=%s" % SECRET_KEY
 # print "CSRF_COOKIE_DOMAIN=%s " % CSRF_COOKIE_DOMAIN
 
-# MongoDB - moved here from common.py
+# MongoDB - moved here from base.py
 if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
     MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
         format(

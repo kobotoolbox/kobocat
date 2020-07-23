@@ -7,7 +7,7 @@ import dj_database_url
 from celery.signals import after_setup_logger
 from django.utils.six.moves.urllib.parse import quote_plus
 
-from onadata.settings.common import *
+from onadata.settings.base import *
 
 
 def celery_logger_setup_handler(logger, **kwargs):
@@ -124,7 +124,7 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # print "SECRET_KEY=%s" % SECRET_KEY
 # print "CSRF_COOKIE_DOMAIN=%s " % CSRF_COOKIE_DOMAIN
 
-# MongoDB - moved here from common.py
+# MongoDB - moved here from base.py
 if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
     MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
         format(

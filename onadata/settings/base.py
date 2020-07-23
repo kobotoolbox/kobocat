@@ -317,7 +317,7 @@ SWAGGER_SETTINGS = {
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = (
-    'dev.ona.io',
+    'http://kc.kobo.local',
 )
 
 USE_THOUSAND_SEPARATOR = True
