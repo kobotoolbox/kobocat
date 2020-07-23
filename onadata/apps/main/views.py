@@ -1061,11 +1061,9 @@ def form_photos(request, username, id_string):
                 continue
 
             data = {}
-
-            for i in ['small', 'medium', 'large', 'original']:
-                url = reverse(attachment_url, kwargs={'size': i})
-                url = '%s?media_file=%s' % (url, attachment.media_file.name)
-                data[i] = url
+            data['original'] = attachment.secure_url()
+            for suffix in settings.THUMB_CONF.keys():
+                data[suffix] = attachment.secure_url(suffix)
 
             image_urls.append(data)
 
