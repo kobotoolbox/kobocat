@@ -52,9 +52,6 @@ class Command(BaseCommand):
                 else:
                     print("\033[91m[ERROR] Could not parse instance {}\033[0m".format(pi.instance.uuid))
 
-                if (i % 1000) == 0:
-                    print 'Updated %d records, flushing MongoDB...' % i
-                    settings.MONGO_CONNECTION.admin.command({'fsync': 1})
             start = start + batchsize
             end = min(record_count, start + batchsize)
         # add indexes after writing so the writing operation above is not

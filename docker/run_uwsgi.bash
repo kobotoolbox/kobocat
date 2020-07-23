@@ -18,5 +18,5 @@ else
     echo 'Running `kobocat` container with `runserver_plus` debugging application server.'
     cd "${KOBOCAT_SRC_DIR}"
     pip install werkzeug==0.16.0 ipython
-    exec python manage.py runserver_plus 0:8000
+    exec python manage.py runserver_plus 0:8001
 fi
