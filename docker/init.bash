@@ -5,8 +5,6 @@ source /etc/profile
 
 echo 'KoBoCAT intializing...'
 
-echo "WHO AM I INIT?: $(whoami)"
-
 cd "${KOBOCAT_SRC_DIR}"
 
 if [[ -z $DATABASE_URL ]]; then
@@ -28,4 +26,4 @@ rm -rf ${CELERY_PID_DIR}/*.pid
 
 echo 'KoBoCAT initialization complete.'
 
-exec /usr/bin/runsvdir /etc/service
+exec /usr/bin/runsvdir "${SERVICES_DIR}"

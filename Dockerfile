@@ -28,7 +28,7 @@ ENV VIRTUAL_ENV=/opt/venv \
     TMP_DIR=/srv/tmp \
     UWSGI_USER=kobo \
     UWSGI_GROUP=kobo \
-    SERVICES_DIR=/etc/runit/runsvdir/default \
+    SERVICES_DIR=/srv/services \
     CELERY_PID_DIR=/var/run/celery
 
 # Install Dockerize
@@ -43,9 +43,9 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
     mkdir -p ${TMP_DIR} && \
     mkdir -p ${BACKUPS_DIR} && \
     mkdir -p ${CELERY_PID_DIR} && \
-    mkdir -p ${SERVICES_DIR}/uwsgi/supervise && \
-    mkdir -p ${SERVICES_DIR}/celery/supervise && \
-    mkdir -p ${SERVICES_DIR}/celery_beat/supervise && \
+    mkdir -p ${SERVICES_DIR}/uwsgi && \
+    mkdir -p ${SERVICES_DIR}/celery && \
+    mkdir -p ${SERVICES_DIR}/celery_beat && \
     mkdir -p ${KOBOCAT_LOGS_DIR}/ && \
     mkdir -p ${KOBOCAT_SRC_DIR}/emails
 
@@ -58,6 +58,7 @@ RUN apt-get -qq update && \
         libproj-dev \
         gettext \
         postgresql-client \
+        openjdk-11-jre \
         locales \
         runit-init \
         rsync \
@@ -100,8 +101,8 @@ RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
 RUN echo "export PATH=${PATH}" >> /etc/profile && \
     echo 'source /etc/profile' >> /root/.bashrc
 
-# Remove getty* services to avoid errors at start-up
-RUN rm -rf ${SERVICES_DIR}/getty-tty*
+# Remove getty* services to avoid errors of absent tty at sv start-up
+RUN rm -rf /etc/runit/runsvdir/default/getty-tty*
 
 # Create symlinks for runsv services
 RUN ln -s ${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash ${SERVICES_DIR}/uwsgi/run && \
@@ -109,9 +110,9 @@ RUN ln -s ${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash ${SERVICES_DIR}/uwsgi/run && 
     ln -s ${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash ${SERVICES_DIR}/celery_beat/run
 
 # Add/Restore `UWSGI_USER`'s permissions
-RUN chown -R ${UWSGI_USER} ${SERVICES_DIR} && \
-    chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
+RUN chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
     chmod g+w ${CELERY_PID_DIR} && \
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${SERVICES_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_SRC_DIR}/emails/ && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_LOGS_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${TMP_DIR} && \
