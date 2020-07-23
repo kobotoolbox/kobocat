@@ -187,9 +187,7 @@ if (os.getenv("RAVEN_DSN") or "") != "":
     except ImportError:
         print('Please install Raven to enable Sentry logging.')
     else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'raven.contrib.django.raven_compat',
-        )
+        INSTALLED_APPS.append('raven.contrib.django.raven_compat')
         RAVEN_CONFIG = {
             'dsn': os.environ['RAVEN_DSN'],
         }

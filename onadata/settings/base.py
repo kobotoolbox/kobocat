@@ -223,7 +223,7 @@ STATICFILES_DIRS = [
 # needed by guardian
 ANONYMOUS_USER_ID = -1
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.contenttypes',
     # Always put `contenttypes` before `auth`; see
     # https://code.djangoproject.com/ticket/10827
@@ -258,7 +258,7 @@ INSTALLED_APPS = (
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',
-)
+]
 
 OAUTH2_PROVIDER = {
     # this is the list of available scopes
@@ -525,7 +525,7 @@ try:
     from django.db import migrations
 except ImportError:
     # Native migrations unavailable; use South instead
-    INSTALLED_APPS += ('south',)
+    INSTALLED_APPS.append['south']
 
 SOUTH_MIGRATION_MODULES = {
     'taggit': 'taggit.south_migrations',
