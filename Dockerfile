@@ -93,7 +93,21 @@ RUN echo "export PATH=${PATH}" >> /etc/profile
 RUN echo 'source /etc/profile' >> /root/.bashrc
 
 # Prepare for execution.
-RUN mkdir -p /etc/service/uwsgi && \
+RUN mkdir -p /etc/service/uwsgi_wrong_port_warning && \
+    cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi_wrong_port_warning.bash" /etc/service/uwsgi_wrong_port_warning/run && \
+    mkdir -p /etc/service/uwsgi && \
+    cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
+    mkdir -p /etc/service/celery && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" /etc/service/celery/run && \
+    mkdir -p /etc/service/celery_beat && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash" /etc/service/celery_beat/run && \
+    cp "${KOBOCAT_SRC_DIR}/docker/init.bash" /etc/my_init.d/10_init_kobocat.bash && \
+    cp "${KOBOCAT_SRC_DIR}/docker/sync_static.sh" /etc/my_init.d/11_sync_static.bash && \
+    mkdir -p "${KOBOCAT_SRC_DIR}/emails/" && \
+
+RUN mkdir -p /etc/service/uwsgi_wrong_port_warning && \
+    cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi_wrong_port_warning.bash" /etc/service/uwsgi_wrong_port_warning/run && \
+    mkdir -p /etc/service/uwsgi && \
     # Remove getty* services
     rm -rf /etc/runit/runsvdir/default/getty-tty* && \
     cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
@@ -104,6 +118,7 @@ RUN mkdir -p /etc/service/uwsgi && \
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
-EXPOSE 8000
+# TODO: Remove port 8000, say, at the start of 2021 (see kobotoolbox/kobo-docker#301 and wrong port warning above)
+EXPOSE 8001 8000
 
 CMD ["/bin/bash", "-c", "exec ${KOBOCAT_SRC_DIR}/docker/init.bash"]

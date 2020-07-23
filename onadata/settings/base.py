@@ -571,6 +571,9 @@ if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
+# Limit sessions to 1 week (the default is 2 weeks)
+SESSION_COOKIE_AGE = 604800
+
 
 # KPI running Django 2.2 inserts password hashes into our database, calculated
 # using 150,000 iterations. Django 1.8 uses only 20,000 iterations by default;
