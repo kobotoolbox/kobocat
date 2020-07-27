@@ -125,9 +125,14 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self._publish_xml_form()
         self._make_submissions()
         # alice cannot view bob's submissionList
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request = self.factory.get(
             self._submission_list_url,
             data={'formId': self.xform.id_string})
@@ -236,9 +241,14 @@ class TestBriefcaseAPI(TestAbstractViewSet):
                      'instanceId': instanceId}
         params = {'formId': formId}
         # alice cannot view bob's downloadSubmission
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         url = self._download_submission_url  # aliasing long name
         request = self.factory.get(url, data=params)
         response = view(request, username=self.user.username)
@@ -254,13 +264,18 @@ class TestBriefcaseAPI(TestAbstractViewSet):
     def test_publish_xml_form_other_user(self):
         view = BriefcaseApi.as_view({'post': 'create'})
         # deno cannot publish form to bob's account
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
         count = XForm.objects.count()
 
         with codecs.open(self.form_def_path, encoding='utf-8') as f:
             params = {'form_def_file': f, 'dataFile': ''}
-            auth = DigestAuth('alice', 'bobbob')
+            auth = DigestAuth('alice', 'alicealice')
             request = self.factory.post(self._form_upload_url, data=params)
             response = view(request, username=self.user.username)
             self.assertEqual(response.status_code, 401)
