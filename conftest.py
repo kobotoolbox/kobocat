@@ -8,13 +8,15 @@ from django.conf import settings
 from onadata.libs.utils.storage import delete_user_storage, user_storage_exists
 
 TEST_USERNAMES = [
-    'bob',
-    'deno'
-    'lilly',
     'alice',
+    'auser',
+    'bob',
+    'carl',
+    'deno'
+    'harry',
     'jo',
+    'lilly',
     'peter',
-    'carl'
 ]
 
 
