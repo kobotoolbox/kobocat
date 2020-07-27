@@ -19,6 +19,11 @@ TEST_USERNAMES = [
     'peter',
 ]
 
+try:
+    INTERRUPTED = pytest.ExitCode.INTERRUPTED  # pytest 5
+except AttributeError:
+    INTERRUPTED = 2
+
 
 def stderr_prompt(message):
     sys.stderr.write(message)
@@ -26,8 +31,24 @@ def stderr_prompt(message):
     return raw_input().strip()
 
 
+def toggle_capturing(capture_manager, stop):
+    if stop:
+        capture_manager.suspend_global_capture()
+        capture_manager.stop_global_capturing()
+    else:
+        capture_manager.start_global_capturing()
+        capture_manager.resume_global_capture()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup(request):
+    # We need to disable global capturing in case `-s` is not passed to `pytest`
+    # by the users to force print the safeguard messages about data loss.
+    capture_manager = request.config.pluginmanager.getplugin("capturemanager")
+    is_global_capturing = capture_manager.is_globally_capturing()
+
+    if is_global_capturing:
+        toggle_capturing(capture_manager, stop=True)
 
     for username in TEST_USERNAMES:
         if user_storage_exists(username):
@@ -39,7 +60,9 @@ def setup(request):
                 'cancel: '.format(username)
             )
             if response.lower() != 'yes':
-                sys.exit(1)
+                if is_global_capturing:
+                    toggle_capturing(capture_manager, stop=False)
+                pytest.exit('User interrupted tests', INTERRUPTED)
 
     if 'instances' in settings.MONGO_DB.collection_names():
         response = stderr_prompt(
@@ -51,7 +74,12 @@ def setup(request):
         if response.lower() == 'yes':
             settings.MONGO_DB.instances.drop()
         else:
-            sys.exit(1)
+            if is_global_capturing:
+                toggle_capturing(capture_manager, stop=False)
+            pytest.exit('User interrupted tests', INTERRUPTED)
+
+    if is_global_capturing:
+        toggle_capturing(capture_manager, stop=False)
 
     request.addfinalizer(_tear_down)
 
