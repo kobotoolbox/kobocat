@@ -23,3 +23,7 @@ def delete_user_storage(username):
         _recursive_delete(username)
 
 
+def user_storage_exists(username):
+
+    storage = get_storage_class()()
+    return storage.exists(username)
