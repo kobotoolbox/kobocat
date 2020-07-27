@@ -151,12 +151,6 @@ class TestFormShow(TestBase):
         }))
         self.assertEqual(response.status_code, 200)
 
-    def test_show_private_if_shared_but_not_data(self):
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.url)
-        self.assertContains(response, 'PRIVATE')
-
     def test_show_link_if_shared_and_data(self):
         self.xform.shared = True
         self.xform.shared_data = True
@@ -217,10 +211,6 @@ class TestFormShow(TestBase):
         response = self.client.get(show_url)
         self.assertContains(response, map_url)
 
-    def test_user_sees_edit_btn(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'edit</a>')
-
     def test_user_sees_settings(self):
         response = self.client.get(self.url)
         self.assertContains(response, 'Settings')
@@ -237,10 +227,6 @@ class TestFormShow(TestBase):
         response = self.anon.get(self.url)
         self.assertNotContains(response, 'PUBLIC</a>')
         self.assertNotContains(response, 'PRIVATE</a>')
-
-    def test_show_add_sourc_doc_if_owner(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'Source document:')
 
     def test_show_add_supporting_docs_if_owner(self):
         response = self.client.get(self.url)
