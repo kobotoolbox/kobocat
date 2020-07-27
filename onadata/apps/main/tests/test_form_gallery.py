@@ -29,15 +29,6 @@ class TestFormGallery(TestBase):
             self.url, {'id_string': self.xform.id_string, 'username': 'bob'})
         self.assertEqual(count + 1, XForm.objects.count())
 
-    @unittest.skip('Fails under Django 1.6')
-    def test_clone_with_username_and_id_string_in_uppercase(self):
-        self._create_user_and_login('alice', 'alice')
-        count = XForm.objects.count()
-        self.client.post(
-            self.url, {'id_string': self.xform.id_string.upper(),
-                       'username': 'bob'.upper()})
-        self.assertEqual(count + 1, XForm.objects.count())
-
     def test_cannot_publish_id_string_starting_with_number(self):
         xls_path = os.path.join(self.this_directory, "fixtures",
                                 "transportation",
