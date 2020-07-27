@@ -102,10 +102,11 @@ class TestAbstractViewSet(TestCase):
         }
 
     def _add_permissions_to_user(self, user, save=True):
-        # Gives `user` unrestricted model-level access to everything listed in
-        # `auth_permission`.  Without this, actions
-        # on individual instances are immediately denied and object-level permissions
-        # are never considered.
+        """
+        Gives `user` unrestricted model-level access to everything listed in
+        `auth_permission`.  Without this, actions on individual instances are
+        immediately denied and object-level permissions are never considered.
+        """
         if user.is_anonymous():
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
         user.user_permissions = Permission.objects.all()
