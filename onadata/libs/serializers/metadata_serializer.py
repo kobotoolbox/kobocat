@@ -9,7 +9,6 @@ from onadata.apps.logger.models import XForm
 METADATA_TYPES = (
     ('data_license', _(u"Data License")),
     ('form_license', _(u"Form License")),
-    ('mapbox_layer', _(u"Mapbox Layer")),
     ('media', _(u"Media")),
     ('public_link', _(u"Public Link")),
     ('source', _(u"Source")),

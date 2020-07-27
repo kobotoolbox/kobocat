@@ -61,11 +61,6 @@ class TestMetaDataViewSet(TestAbstractViewSet):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response['Content-Type'], 'image/png')
 
-    def test_add_mapbox_layer(self):
-        data_type = 'mapbox_layer'
-        data_value = 'test_mapbox_layer||http://0.0.0.0:8080||attribution'
-        self._add_form_metadata(self.xform, data_type, data_value)
-
     def test_delete_metadata(self):
         for data_type in ['supporting_doc', 'media', 'source']:
             count = MetaData.objects.count()

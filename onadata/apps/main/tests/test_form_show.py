@@ -250,10 +250,6 @@ class TestFormShow(TestBase):
         response = self.client.get(self.url)
         self.assertContains(response, 'Media Upload')
 
-    def test_show_add_mapbox_layer_if_owner(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'JSONP url:')
-
     def test_hide_add_supporting_docs_if_not_owner(self):
         self.xform.shared = True
         self.xform.save()

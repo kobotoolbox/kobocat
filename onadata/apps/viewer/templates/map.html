@@ -17,11 +17,6 @@
 
 <body>
   {% include "topbar.html" %}
-  {% if mapbox_layer %}
-  <script type="text/javascript">
-    var customMapBoxTileLayer = {label: '{{mapbox_layer.map_name}}', url: '{{mapbox_layer.link}}'};
-  </script>
-  {% endif %}
   <div id="progress-modal" class="modal hide fade" data-backdrop="static">
       <div class="progress progress-info progress-striped">
           <div class="bar" style="width: 1%"></div>
