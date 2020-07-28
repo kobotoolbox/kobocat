@@ -42,7 +42,6 @@ from onadata.libs.utils.common_tags import (
     TAGS,
     NOTES
 )
-from onadata.libs.exceptions import J2XException
 from .analyser_export import generate_analyser
 
 

@@ -56,11 +56,6 @@ $(document).ready(function() {
     setMapHeight();
 });
 </script>
-{% if mapbox_layer %}
-<script type="text/javascript">
-	var customMapBoxTileLayer = {label: '{{mapbox_layer.map_name}}', url: '{{mapbox_layer.link}}'};
-</script>
-{% endif %}
 <script type="text/javascript" src="{{STATIC_URL}}js/lightmodal.js?ts=20130730"></script>
 <script src="{{STATIC_URL}}js/map_embed.js" type="text/javascript"></script>
 {% endblock %}

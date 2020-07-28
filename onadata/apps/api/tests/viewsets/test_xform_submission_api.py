@@ -94,7 +94,12 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                                  'http://testserver/submission')
 
     def test_post_submission_uuid_other_user_username_not_provided(self):
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
         s = self.surveys[0]
         media_file = "1335783522563.jpg"
@@ -118,7 +123,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
-                auth = DigestAuth('alice', 'bobbob')
+                auth = DigestAuth('alice', 'alicealice')
                 request.META.update(auth(request.META, response))
                 response = self.view(request)
                 self.assertEqual(response.status_code, 403)
@@ -251,7 +256,12 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         self.user.profile.require_auth = True
         self.user.profile.save()
 
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
 
         count = Attachment.objects.count()
@@ -278,7 +288,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
-                auth = DigestAuth('alice', 'bobbob')
+                auth = DigestAuth('alice', 'alicealice')
                 request.META.update(auth(request.META, response))
                 response = self.view(request, username=self.user.username)
                 self.assertContains(
@@ -290,7 +300,12 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         self.user.profile.require_auth = True
         self.user.profile.save()
 
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         assign_perm(CAN_ADD_SUBMISSIONS, alice_profile.user, self.xform)
@@ -319,7 +334,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 # consumed
                 sf.seek(0)
                 request = self.factory.post('/submission', data)
-                auth = DigestAuth('alice', 'bobbob')
+                auth = DigestAuth('alice', 'alicealice')
                 request.META.update(auth(request.META, response))
                 response = self.view(request, username=self.user.username)
                 self.assertContains(response, 'Successful submission',
