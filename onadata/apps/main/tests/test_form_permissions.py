@@ -111,7 +111,7 @@ class TestFormPermissions(TestBase):
         response = alice.get(self.show_url)
         self.assertEqual(response.status_code, 302)
         response = alice.get(self.show_normal_url)
-        self.assertContains(response, 'Submissions:')
+        self.assertContains(response, 'View data in table')
 
     def test_add_edit_to_user(self):
         user = self._create_user('alice', 'alice')

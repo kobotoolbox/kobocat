@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import os
 import shutil
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import FileSystemStorage, get_storage_class
 
 
 def delete_user_storage(username):
@@ -17,10 +17,14 @@ def delete_user_storage(username):
         for directory in directories:
             _recursive_delete(os.path.join(path, directory))
 
-    if storage.__class__.__name__ == 'FileSystemStorage':
+    if isinstance(storage, FileSystemStorage):
         if storage.exists(username):
             shutil.rmtree(storage.path(username))
     else:
         _recursive_delete(username)
 
 
+def user_storage_exists(username):
+
+    storage = get_storage_class()()
+    return storage.exists(username)

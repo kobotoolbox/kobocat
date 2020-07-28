@@ -245,15 +245,6 @@ class MediaForm(forms.Form):
                                         allowed .png .jpg .mp3 .3gp .wav')
 
 
-class MapboxLayerForm(forms.Form):
-    map_name = forms.CharField(widget=forms.TextInput(), required=True,
-                               max_length=255)
-    attribution = forms.CharField(widget=forms.TextInput(), required=False,
-                                  max_length=255)
-    link = forms.URLField(label=ugettext_lazy('JSONP url'),
-                          required=True)
-
-
 class QuickConverterFile(forms.Form):
     xls_file = forms.FileField(
         label=ugettext_lazy('XLS File'), required=False)
