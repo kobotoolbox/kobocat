@@ -1,23 +1,17 @@
 # coding: utf-8
-import uuid
-
 from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, HttpResponseForbidden, Http404, QueryDict
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
-
+from django.http import HttpResponse, HttpResponseForbidden, Http404, QueryDict
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.translation import ugettext as _
+from formpack import FormPack
 from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
-
-from path import tempdir
+from tempfile import NamedTemporaryFile
 
 from onadata.libs.utils.user_auth import has_permission
-
-from formpack import FormPack
 
 
 def readable_xform_required(func):
@@ -27,6 +21,7 @@ def readable_xform_required(func):
         if not has_permission(xform, owner, request):
             return HttpResponseForbidden(_('Not shared.'))
         return func(request, username, id_string, *args, **kwargs)
+
     return _wrapper
 
 
@@ -50,7 +45,6 @@ def build_formpack(username, id_string):
 
 
 def build_export_context(request, username, id_string):
-
     hierarchy_in_labels = request.REQUEST.get(
         'hierarchy_in_labels', ''
     ).lower() in ('true', 'on')
@@ -100,7 +94,6 @@ def build_export_filename(export, extension):
 
 @readable_xform_required
 def export_menu(request, username, id_string):
-
     req = request.REQUEST
     export_type = req.get('type', None)
     if export_type:
@@ -122,7 +115,6 @@ def export_menu(request, username, id_string):
 
 @readable_xform_required
 def autoreport_menu(request, username, id_string):
-
     user, xform, form_pack = build_formpack(username, id_string)
 
     # exclude fields in repeat group
@@ -140,14 +132,13 @@ def autoreport_menu(request, username, id_string):
 
 @readable_xform_required
 def xlsx_export(request, username, id_string):
-
     export = build_export_context(request, username, id_string)['export']
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
 
-    with tempdir() as d:
-        tempfile = d / str(uuid.uuid4())
-        export.to_xlsx(tempfile, data)
-        xlsx = tempfile.bytes()
+    with NamedTemporaryFile() as temp_file:
+        export.to_xlsx(temp_file.name, data)
+        temp_file.file.seek(0)
+        xlsx = temp_file.read()
 
     name = build_export_filename(export, 'xlsx')
     ct = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -158,7 +149,6 @@ def xlsx_export(request, username, id_string):
 
 @readable_xform_required
 def csv_export(request, username, id_string):
-
     export = build_export_context(request, username, id_string)['export']
     data = [("v1", get_instances_for_user_and_form(username, id_string))]
 
@@ -174,7 +164,6 @@ def csv_export(request, username, id_string):
 
 @readable_xform_required
 def html_export(request, username, id_string):
-
     limit = int(request.REQUEST.get('limit', 100))
 
     cursor = get_instances_for_user_and_form(username, id_string)
@@ -219,7 +208,6 @@ def html_export(request, username, id_string):
 
 @readable_xform_required
 def auto_report(request, username, id_string):
-
     user, xform, formpack = build_formpack(username, id_string)
     report = formpack.autoreport()
 
@@ -259,7 +247,6 @@ def auto_report(request, username, id_string):
     ctx['stats'] = report.get_stats(data, page.object_list, lang, split_by)
 
     if split_by:
-
         return render(request, 'survey_report/auto_report_split_by.html', ctx)
 
     return render(request, 'survey_report/auto_report.html', ctx)
@@ -267,7 +254,6 @@ def auto_report(request, username, id_string):
 
 @readable_xform_required
 def view_one_submission(request, username, id_string, submission):
-
     submission = int(submission)
     instances = get_instances_for_user_and_form(username, id_string, submission)
     instances = list(instances)
