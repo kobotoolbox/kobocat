@@ -9,7 +9,7 @@ from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs.mixins.object_lookup_mixin import ObjectLookupMixin
 from onadata.libs.serializers.user_profile_serializer import (
     UserProfileWithTokenSerializer)
-from onadata.settings.common import DEFAULT_SESSION_EXPIRY_TIME
+from onadata.settings.base import DEFAULT_SESSION_EXPIRY_TIME
 
 
 class ConnectViewSet(ObjectLookupMixin, viewsets.GenericViewSet):
