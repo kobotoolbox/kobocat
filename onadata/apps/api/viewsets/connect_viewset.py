@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from rest_framework import viewsets
 from rest_framework.response import Response
 
@@ -46,7 +44,7 @@ class ConnectViewSet(ObjectLookupMixin, viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         """ Returns authenticated user profile"""
 
-        if request and not request.user.is_anonymous():
+        if request and not request.user.is_anonymous:
             session = getattr(request, "session")
             if not session.session_key:
                 # login user to create session token
