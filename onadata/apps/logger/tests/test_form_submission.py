@@ -255,12 +255,12 @@ class TestFormSubmission(TestBase):
         self._make_submission(xml_submission_file_path)
         self.assertEqual(self.response.status_code, 201)
         self.assertEqual(Instance.objects.count(), pre_count + 1)
-        inst = Instance.objects.last()
+        inst = Instance.objects.order_by('pk').last()
         self._make_submission(duplicate_xml_submission_file_path)
         self.assertEqual(self.response.status_code, 201)
         self.assertEqual(Instance.objects.count(), pre_count + 2)
         # this is exactly the same instance
-        another_inst = Instance.objects.last()
+        another_inst = Instance.objects.order_by('pk').last()
         self.assertNotEqual(inst.xml, another_inst.xml)
 
     def test_edited_submission(self):

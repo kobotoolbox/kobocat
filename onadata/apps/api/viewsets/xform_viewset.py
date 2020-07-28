@@ -22,7 +22,7 @@ from onadata.apps.api.permissions import XFormPermissions
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.viewer.models.export import Export
 from onadata.libs import filters
-from onadata.libs.exceptions import NoRecordsFoundError, J2XException
+from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
 from onadata.libs.mixins.labels_mixin import LabelsMixin
@@ -121,9 +121,6 @@ def _generate_new_export(request, xform, query, export_type):
             }, audit, request)
     except NoRecordsFoundError:
         raise Http404(_("No records found to export"))
-    except J2XException as e:
-        # j2x exception
-        return {'error': str(e)}
     else:
         return export
 
