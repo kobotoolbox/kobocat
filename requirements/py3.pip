@@ -39,7 +39,6 @@ elaphe3
 # formpack exports
 git+https://github.com/kobotoolbox/formpack.git@a08b7626507c2ceff35b816f1e1e0845c85cce26#egg=formpack
 django-pure-pagination
-path.py
 
 # sms support
 dict2xml
