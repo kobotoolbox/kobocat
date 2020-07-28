@@ -34,7 +34,7 @@ from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
 from onadata.apps.main.forms import UserProfileForm, FormLicenseForm, \
     DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
-    QuickConverter, SourceForm, PermissionForm, MediaForm, MapboxLayerForm, \
+    QuickConverter, SourceForm, PermissionForm, MediaForm, \
     ActivateSMSSupportFom
 from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.apps.sms_support.autodoc import get_autodoc_for
@@ -373,7 +373,6 @@ def set_xform_owner_data(data, xform, request, username, id_string):
     data['doc_form'] = SupportDocForm()
     data['source_form'] = SourceForm()
     data['media_form'] = MediaForm()
-    data['mapbox_layer_form'] = MapboxLayerForm()
     users_with_perms = []
 
     for perm in get_users_with_perms(xform, attach_perms=True).items():
@@ -419,7 +418,6 @@ def show(request, username=None, id_string=None, uuid=None):
     data['data_license'] = MetaData.data_license(xform).data_value
     data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
-    data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
@@ -459,7 +457,6 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['data_license'] = MetaData.data_license(xform).data_value
     data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
-    data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
@@ -749,19 +746,6 @@ def edit(request, username, id_string):
                 }, audit, request)
             for aFile in request.FILES.getlist("media"):
                 MetaData.media_upload(xform, aFile)
-        elif request.POST.get('map_name'):
-            mapbox_layer = MapboxLayerForm(request.POST)
-            if mapbox_layer.is_valid():
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_UPDATED, request.user, owner,
-                    _("Map layer added to '%(id_string)s'.") %
-                    {
-                        'id_string': xform.id_string
-                    }, audit, request)
-                MetaData.mapbox_layer_upload(xform, mapbox_layer.cleaned_data)
         elif request.FILES.get('doc'):
             audit = {
                 'xform': xform.id_string

@@ -50,23 +50,19 @@ class TestAbstractViewSet(TestCase):
         self._add_permissions_to_user(AnonymousUser())
         self.maxDiff = None
 
-    def publish_xls_form(self, publish_data={}, merge=True, public=False):
-        if merge:
-            data = {
-                'owner': self.user.username,
-                'public': False,
-                'public_data': False,
-                'description': 'transportation_2011_07_25',
-                'downloadable': True,
-                'allows_sms': False,
-                'encrypted': False,
-                'sms_id_string': 'transportation_2011_07_25',
-                'id_string': 'transportation_2011_07_25',
-                'title': 'transportation_2011_07_25',
-            }
-            data.update(publish_data)
-        else:
-            data = publish_data
+    def publish_xls_form(self):
+        data = {
+            'owner': self.user.username,
+            'public': False,
+            'public_data': False,
+            'description': u'transportation_2011_07_25',
+            'downloadable': True,
+            'allows_sms': False,
+            'encrypted': False,
+            'sms_id_string': u'transportation_2011_07_25',
+            'id_string': u'transportation_2011_07_25',
+            'title': u'transportation_2011_07_25',
+        }
 
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
@@ -82,10 +78,6 @@ class TestAbstractViewSet(TestCase):
             data.update({
                 'url': f'http://testserver/api/v1/forms/{self.xform.pk}'
             })
-
-            # Input was a private so change to public if project public
-            if public:
-                data['shared_data'] = data['shared'] = True
 
             self.assertEqual(dict(response.data, **data), response.data)
             self.form_data = response.data
@@ -109,10 +101,11 @@ class TestAbstractViewSet(TestCase):
         }
 
     def _add_permissions_to_user(self, user, save=True):
-        # Gives `user` unrestricted model-level access to everything listed in
-        # `auth_permission`.  Without this, actions
-        # on individual instances are immediately denied and object-level permissions
-        # are never considered.
+        """
+        Gives `user` unrestricted model-level access to everything listed in
+        `auth_permission`.  Without this, actions on individual instances are
+        immediately denied and object-level permissions are never considered.
+        """
         if user.is_anonymous:
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
         user.user_permissions.set(Permission.objects.all())

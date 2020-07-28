@@ -51,9 +51,9 @@ djangorestframework-jsonp
 djangorestframework-xml
 
 # cors
-django-cors-headers
+#django-cors-headers
 Markdown
-django-filter
+#django-filter
 
 # captcha
 # recaptcha-client==1.0.6
@@ -94,6 +94,9 @@ django-timezone-field==3.0
 django-celery-beat==1.6.0
 django-oauth-toolkit==1.1.1
 jsonfield==2.1.1
+django-render-block==0.6
+django-cors-headers==3.0.0
+django-filter==2.2.0
 
 # Added packages
 simplejson

@@ -81,7 +81,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         # Allow anonymous users to access access shared data
         allowed_anonymous_action = ['retrieve']
         if lookup:
-            # We need to grand access to anonymous on list endpoint too when
+            # We need to grant access to anonymous on list endpoint too when
             # a form pk is specified. e.g. `/api/v1/data/{pk}.json
             allowed_anonymous_action.append('list')
         if request.method in SAFE_METHODS and \
