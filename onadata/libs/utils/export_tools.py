@@ -42,7 +42,6 @@ from onadata.libs.utils.common_tags import (
     TAGS,
     NOTES
 )
-from onadata.libs.exceptions import J2XException
 from .analyser_export import generate_analyser
 
 
@@ -610,7 +609,7 @@ class ExportBuilder:
             xls_data.file.seek(0)
 
             # Generate the analyser file.
-            analyser_io= generate_analyser(xlsform_io, xls_data)
+            analyser_io = generate_analyser(xlsform_io, xls_data)
 
         # Write the generated analyser file to the specified path
         #   ...which itself points to a temp file.

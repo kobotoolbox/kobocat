@@ -159,7 +159,6 @@ def map_view(request, username, id_string, template='map.html'):
     data['delete_data_url'] = reverse('delete_data',
                                       kwargs={"username": username,
                                               "id_string": id_string})
-    data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
     audit = {
         "xform": xform.id_string
     }
