@@ -108,14 +108,19 @@ class TestXFormListApi(TestAbstractViewSet):
     def test_get_xform_list_other_user_with_no_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         self.assertFalse(
             alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -133,7 +138,12 @@ class TestXFormListApi(TestAbstractViewSet):
     def test_get_xform_list_other_user_with_readonly_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         assign_perm(CAN_VIEW_XFORM, alice_profile.user, self.xform)
@@ -141,7 +151,7 @@ class TestXFormListApi(TestAbstractViewSet):
             alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -159,7 +169,12 @@ class TestXFormListApi(TestAbstractViewSet):
     def test_get_xform_list_other_user_with_dataentry_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         assign_perm(CAN_ADD_SUBMISSIONS, alice_profile.user, self.xform)
@@ -167,7 +182,7 @@ class TestXFormListApi(TestAbstractViewSet):
             alice_profile.user.has_perms([CAN_ADD_SUBMISSIONS], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)

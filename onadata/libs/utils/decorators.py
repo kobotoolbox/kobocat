@@ -62,7 +62,7 @@ def apply_form_field_names(func):
             return record
 
         cursor = func(*args, **kwargs)
-        # Compare Class name instead of type by tests use MockMongo
+        # Compare by class name instead of type because tests use MockMongo
         if cursor.__class__.__name__ == 'Cursor' and 'id_string' in kwargs and \
                 'username' in kwargs:
             username = kwargs.get('username')

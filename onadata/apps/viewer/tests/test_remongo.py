@@ -6,27 +6,11 @@ from django.conf import settings
 from django.core.management import call_command
 from django_digest.test import DigestAuth
 from django.utils.six import string_types
-from mock import patch
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.viewer.management.commands.remongo import Command
 from onadata.libs.utils.common_tags import USERFORM_ID
-
-
-def monkey_patched_command(self, command, **unused_kwargs):
-    """
-    Allow to pass command `fsync` to MockMongoClient.
-    """
-    if command != {'fsync': 1}:
-        if isinstance(command, string_types):
-            command = {command: 1}
-        if 'ping' in command:
-            return {'ok': 1.}
-        # TODO(pascal): Differentiate NotImplementedError for valid commands
-        # and OperationFailure if the command is not valid.
-        raise NotImplementedError(
-            'command is a valid Database method but is not implemented in Mongomock yet')
 
 
 class TestRemongo(TestBase):
@@ -92,7 +76,6 @@ class TestRemongo(TestBase):
                 break
         self.assertTrue(all_indexes_found)
 
-    @patch('mongomock.database.Database.command', new=monkey_patched_command)
     def test_sync_mongo_with_all_option_deletes_existing_records(self):
         self._publish_transportation_form()
         userform_id = "%s_%s" % (self.user.username, self.xform.id_string)

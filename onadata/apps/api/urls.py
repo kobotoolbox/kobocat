@@ -7,6 +7,7 @@ from rest_framework.reverse import reverse
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework.views import APIView
 
+from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
 from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
@@ -161,6 +162,9 @@ class MultiLookupRouter(routers.DefaultRouter):
 * [/api/v1/media](/api/v1/media) - List, Retrieve media attachments
 * [/api/v1/metadata](/api/v1/metadata) - List, Retrieve form metadata
 * [/api/v1/submissions](/api/v1/submissions) - Submit XForms to a form
+
+### Users and Organizations
+* [/api/v1/user](/api/v1/user) - Return authenticated user profile info
 
 ## Status Codes
 
@@ -370,6 +374,7 @@ class MultiLookupRouterWithPatchList(MultiLookupRouter):
 
 
 router = MultiLookupRouter(trailing_slash=False)
+router.register(r'user', ConnectViewSet)
 router.register(r'forms', XFormViewSet)
 router.register(r'notes', NoteViewSet, basename='notes')
 router.register(r'metadata', MetaDataViewSet, basename='metadata')

@@ -22,13 +22,12 @@ DATABASES = {
 DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
 SPATIALITE_LIBRARY_PATH = os.environ.get('SPATIALITE_LIBRARY_PATH', 'mod_spatialite')
 
-MONGO_DATABASE = {
-    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
-    'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
-    'NAME': os.environ.get('KOBOCAT_TEST_MONGO_NAME', 'formhub_test'),
-    'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
-    'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
-}
+
+MONGO_CONNECTION_URL = 'mongodb://fakehost/formhub_test'
+MONGO_CONNECTION = MockMongoClient(
+    MONGO_CONNECTION_URL, j=True, tz_aware=True)
+MONGO_DB = MONGO_CONNECTION['formhub_test']
+
 
 CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
@@ -55,7 +54,6 @@ if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
     LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
 MEDIA_ROOT = '/tmp/test_media/'
-MONGO_DATABASE['NAME'] = "formhub_test"
 CELERY_TASK_ALWAYS_EAGER = True
 BROKER_BACKEND = 'memory'
 ENKETO_API_TOKEN = 'abc'
@@ -82,24 +80,6 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # print "KOBOFORM_URL=%s" % KOBOFORM_URL
 # print "SECRET_KEY=%s" % SECRET_KEY
 # print "CSRF_COOKIE_DOMAIN=%s " % CSRF_COOKIE_DOMAIN
-
-# MongoDB - moved here from common.py
-if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
-    MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
-        format(
-            user=MONGO_DATABASE['USER'],
-            password=quote_plus(MONGO_DATABASE['PASSWORD']),
-            host=MONGO_DATABASE['HOST'],
-            port=MONGO_DATABASE['PORT'],
-            db_name=MONGO_DATABASE['NAME']
-        )
-else:
-    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
-
-MONGO_CONNECTION = MockMongoClient(
-    MONGO_CONNECTION_URL, j=True, tz_aware=True)
-MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
-
 
 # BEGIN external service integration codes
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')

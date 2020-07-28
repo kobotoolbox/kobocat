@@ -138,26 +138,6 @@ Accept: image/png </pre>
 
     Example:
 
-            curl -X POST -d "{"data_type": "mapbox_layer", "data_value": \
-"example||https://api.tiles.mapbox.com/v3/examples.map-0l53fhk2.json||example\
- attribution", "xform": 320}" https://example.com/api/v1/metadata \
--H "Content-Type: appliction/json"
-
-            HTTP 201 CREATED
-
-            {
-            "id": 7119,
-            "xform": 320,
-            "data_value": "example||https://api.tiles.mapbox.com/v3/examples\
-.map-0l53fhk2.json||example attribution",
-            "data_type": "mapbox_layer",
-            "data_file": null,
-            "data_file_type": null,
-            "url": "https://example.com/api/v1/metadata/7119.json"
-            }
-
-    Media upload example:
-
             curl -X POST -F 'data_type=media' -F 'data_value=demo.jpg' \
 -F 'xform=320' -F "data_file=@folder.jpg" https://example.com/api/v1/metadata.json
 
