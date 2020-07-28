@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 import dj_database_url
-from django.utils.six.moves.urllib.parse import quote_plus
+
 from mongomock import MongoClient as MockMongoClient
 
 from onadata.settings.common import *
