@@ -180,8 +180,6 @@ urlpatterns = patterns(
         'onadata.apps.viewer.views.export_download'),
     url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
 
-    url(r'^(?P<username>\w+)/reports/', include('onadata.apps.survey_report.urls')),
-
     # odk data urls
     url(r"^submission$",
         XFormSubmissionApi.as_view({'post': 'create', 'head': 'create'}),
@@ -231,26 +229,26 @@ urlpatterns = patterns(
         'onadata.apps.logger.views.toggle_downloadable'),
 
     # SMS support
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_submission/(?P<s'
-        'ervice>[a-z]+)/?$',
-        'onadata.apps.sms_support.providers.import_submission_for_form',
-        name='sms_submission_form_api'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_submission$',
-        'onadata.apps.sms_support.views.import_submission_for_form',
-        name='sms_submission_form'),
-    url(r"^(?P<username>[^/]+)/sms_submission/(?P<service>[a-z]+)/?$",
-        'onadata.apps.sms_support.providers.import_submission',
-        name='sms_submission_api'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_multiple_submiss'
-        'ions$',
-        'onadata.apps.sms_support.views.import_multiple_submissions_for_form',
-        name='sms_submissions_form'),
-    url(r"^(?P<username>[^/]+)/sms_multiple_submissions$",
-        'onadata.apps.sms_support.views.import_multiple_submissions',
-        name='sms_submissions'),
-    url(r"^(?P<username>[^/]+)/sms_submission$",
-        'onadata.apps.sms_support.views.import_submission',
-        name='sms_submission'),
+    # url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_submission/(?P<s'
+    #     'ervice>[a-z]+)/?$',
+    #     'onadata.apps.sms_support.providers.import_submission_for_form',
+    #     name='sms_submission_form_api'),
+    # url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_submission$',
+    #     'onadata.apps.sms_support.views.import_submission_for_form',
+    #     name='sms_submission_form'),
+    # url(r"^(?P<username>[^/]+)/sms_submission/(?P<service>[a-z]+)/?$",
+    #     'onadata.apps.sms_support.providers.import_submission',
+    #     name='sms_submission_api'),
+    # url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/sms_multiple_submiss'
+    #     'ions$',
+    #     'onadata.apps.sms_support.views.import_multiple_submissions_for_form',
+    #     name='sms_submissions_form'),
+    # url(r"^(?P<username>[^/]+)/sms_multiple_submissions$",
+    #     'onadata.apps.sms_support.views.import_multiple_submissions',
+    #     name='sms_submissions'),
+    # url(r"^(?P<username>[^/]+)/sms_submission$",
+    #     'onadata.apps.sms_support.views.import_submission',
+    #     name='sms_submission'),
 
     # static media
     # Media are now served by NginX.

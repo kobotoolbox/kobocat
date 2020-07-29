@@ -57,9 +57,7 @@ class TestAbstractViewSet(TestCase):
             'public_data': False,
             'description': u'transportation_2011_07_25',
             'downloadable': True,
-            'allows_sms': False,
             'encrypted': False,
-            'sms_id_string': u'transportation_2011_07_25',
             'id_string': u'transportation_2011_07_25',
             'title': u'transportation_2011_07_25',
         }

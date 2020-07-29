@@ -311,9 +311,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             'public_data': False,
             'description': u'transportation_2011_07_25',
             'downloadable': True,
-            'allows_sms': False,
             'encrypted': False,
-            'sms_id_string': u'transportation_2011_07_25',
             'id_string': u'transportation_2011_07_25',
             'title': u'transportation_2011_07_25',
         }
@@ -464,7 +462,6 @@ class TestXFormViewSet(TestAbstractViewSet):
             'require_auth': False,
             'description': u'',
             'downloadable': False,
-            'allows_sms': False,
             'uuid': u'',
             'instances_with_geopoints': False,
             'num_of_submissions': 0,

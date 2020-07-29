@@ -36,18 +36,12 @@ from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
 from onadata.apps.main.forms import UserProfileForm, FormLicenseForm, \
     DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
-    QuickConverter, SourceForm, PermissionForm, MediaForm, \
-    ActivateSMSSupportFom
+    QuickConverter, SourceForm, PermissionForm, MediaForm
 from onadata.apps.main.models import AuditLog, UserProfile, MetaData
-from onadata.apps.sms_support.autodoc import get_autodoc_for
-from onadata.apps.sms_support.providers import providers_doc
-from onadata.apps.sms_support.tools import check_form_sms_compatibility, \
-    is_sms_related
 from onadata.apps.viewer.models.data_dictionary import DataDictionary, \
     upload_to
 from onadata.apps.viewer.models.parsed_instance import \
     DATETIME_FORMAT, ParsedInstance
-from onadata.apps.viewer.views import attachment_url
 from onadata.libs.utils.decorators import is_owner
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
@@ -132,17 +126,7 @@ def clone_xlsform(request, username):
                     reverse(profile, kwargs={'username': to_username})}
             }
     form_result = publish_form(set_form)
-    if form_result['type'] == 'alert-success':
-        # comment the following condition (and else)
-        # when we want to enable sms check for all.
-        # until then, it checks if form barely related to sms
-        if is_sms_related(form_result.get('form_o')):
-            form_result_sms = check_form_sms_compatibility(form_result)
-            message_list = [form_result, form_result_sms]
-        else:
-            message = form_result
-    else:
-        message = form_result
+    message = form_result
 
     context = RequestContext(request, {
         'message': message, 'message_list': message_list})
@@ -199,17 +183,7 @@ def profile(request, username):
             # https://stackoverflow.com/a/23326971/1141214
             form_result = publish_form(set_form)
 
-        if form_result['type'] == 'alert-success':
-            # comment the following condition (and else)
-            # when we want to enable sms check for all.
-            # until then, it checks if form barely related to sms
-            if is_sms_related(form_result.get('form_o')):
-                form_result_sms = check_form_sms_compatibility(form_result)
-                data['message_list'] = [form_result, form_result_sms]
-            else:
-                data['message'] = form_result
-        else:
-            data['message'] = form_result
+        data['message'] = form_result
 
     # profile view...
     # for the same user -> dashboard
@@ -352,20 +326,6 @@ def redirect_to_public_link(request, uuid):
 
 
 def set_xform_owner_data(data, xform, request, username, id_string):
-    data['sms_support_form'] = ActivateSMSSupportFom(
-        initial={'enable_sms_support': xform.allows_sms,
-                 'sms_id_string': xform.sms_id_string})
-    if not xform.allows_sms:
-        data['sms_compatible'] = check_form_sms_compatibility(
-            None, json_survey=json.loads(xform.json))
-    else:
-        url_root = request.build_absolute_uri('/')[:-1]
-        data['sms_providers_doc'] = providers_doc(
-            url_root=url_root,
-            username=username,
-            id_string=id_string)
-        data['url_root'] = url_root
-
     data['form_license_form'] = FormLicenseForm(
         initial={'value': data['form_license']})
     data['data_license_form'] = DataLicenseForm(
@@ -422,9 +382,6 @@ def show(request, username=None, id_string=None, uuid=None):
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
 
-    if xform.allows_sms:
-        data['sms_support_doc'] = get_autodoc_for(xform)
-
     return render(request, "show.html", data)
 
 
@@ -460,9 +417,6 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
-
-    if xform.allows_sms:
-        data['sms_support_doc'] = get_autodoc_for(xform)
 
     return render(request, "show_form_settings.html", data)
 
@@ -689,43 +643,6 @@ def edit(request, username, id_string):
                 }, audit, request)
             MetaData.source(xform, request.POST.get('source'),
                             request.FILES.get('source'))
-        elif request.POST.get('enable_sms_support_trigger') is not None:
-            sms_support_form = ActivateSMSSupportFom(request.POST)
-            if sms_support_form.is_valid():
-                audit = {
-                    'xform': xform.id_string
-                }
-                enabled = \
-                    sms_support_form.cleaned_data.get('enable_sms_support')
-                if enabled:
-                    audit_action = Actions.SMS_SUPPORT_ACTIVATED
-                    audit_message = _(u"SMS Support Activated on")
-                else:
-                    audit_action = Actions.SMS_SUPPORT_DEACTIVATED
-                    audit_message = _(u"SMS Support Deactivated on")
-                audit_log(
-                    audit_action, request.user, owner,
-                    audit_message
-                    % {'id_string': xform.id_string}, audit, request)
-                # stored previous states to be able to rollback form status
-                # in case we can't save.
-                pe = xform.allows_sms
-                pid = xform.sms_id_string
-                xform.allows_sms = enabled
-                xform.sms_id_string = \
-                    sms_support_form.cleaned_data.get('sms_id_string')
-                compat = check_form_sms_compatibility(None,
-                                                      json.loads(xform.json))
-                if compat['type'] == 'alert-error':
-                    xform.allows_sms = False
-                    xform.sms_id_string = pid
-                try:
-                    xform.save()
-                except IntegrityError:
-                    # unfortunately, there's no feedback mechanism here
-                    xform.allows_sms = pe
-                    xform.sms_id_string = pid
-
         elif request.POST.get('media_url'):
             uri = request.POST.get('media_url')
             try:
