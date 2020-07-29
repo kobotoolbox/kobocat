@@ -216,10 +216,6 @@
         <h2 class="dashboard__group-label">
           Submissions ({{ xform.submission_count|intcomma }})
         </h2>
-        <a title="{% trans "View Submitted Data" %}" href="{% url "formpack_html_export" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view">
-          <i class="fa fa-table"></i>
-          <span>View data in table</span>
-        </a>
         <a class="dashboard__button dashboard__button-download-data">
           <i class="fa fa-download"></i>
           <span>Download data</span>
@@ -263,21 +259,6 @@
             {% endif %}
 
           </div>
-          <a class="dashboard__formbutton dashboard__formbutton-download">
-            <i class="fa fa-download"></i>
-          </a>
-          <div class="dashboard__form-drop hidden">
-            <a href="{% url "download_xlsform" content_user.username xform.id_string %}" class="download__form-drop-button">XLS</a>
-            <a href="{% url "download_xform" content_user.username xform.id_string %}" class="download__form-drop-button">XML</a>
-          </div>
-
-          {% if can_edit or xform.shared %}
-          <!-- trigger preview vex window and the previewModalActivate function which loads the enketo iframe -->
-          <a title="{% trans 'Preview Form' %}" class="dashboard__formbutton dashboard__formbutton-preview">
-            <i class="fa fa-eye"></i><span>Preview</span>
-          </a>
-          {% endif %}
-
         </div>
       </div>
     </div>
@@ -297,22 +278,6 @@
         </a>
      </div>
      {% endif %}
-
-      {% if can_edit %}
-      <div class="dashboard__add-data">
-        <h2 class="dashboard__group-label">Add Data</h2>
-
-        <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-enter-data" target="_blank">
-          <i class="fa fa-plus"></i>
-          <span>Enter data in browser</span>
-        </a>
-        <a data-href="{% url "get_qrcode" xform.user.username xform.id_string %}" class="dashboard__button dashboard__button-twoline dashboard__button-how-to-collect js-showqr">
-          <i class="fa fa-mobile"></i>
-          <span>How to collect data on mobile device?</span>
-        </a>
-
-      </div>
-      {% endif %}
 
     </div>
 
@@ -340,34 +305,9 @@
 
 <script type="text/javascript">
 
-$('.dashboard__formbutton-preview').click(function previewModalActivate(){
-  var prevWrap = $('#preview-vex .vex-kobo-body');
-  if (prevWrap.data('iframeSrc') && prevWrap.children('iframe').length === 0) {
-    $('<iframe>', {src: prevWrap.data('iframeSrc')}).appendTo(prevWrap);
-  } else {
-    console.error('iframeSrc not set for prevWrap');
-  }
-
-  vex.open({
-    content: $('#preview-vex').clone(),
-    contentClassName: 'vex-content vex-content-large',
-  });
-
-});
-
-
 $(document).ready(function() {
 
     $('.btn').tooltip();
-
-    // SMS documentation switcher
-    $('#sms_support_api').change(function() {
-      $('.sms_support_api_doc').each(function (){
-        $(this).toggle(false);
-      });
-      var selected = $(this).val();
-      $('#sms_support_api_doc_' + selected).toggle(true);
-    });
 
     // Typeahead, fetch usernames for permission assign
     $('#autocomplete').typeahead(
@@ -461,11 +401,6 @@ $(document).ready(function() {
 
       $(document).on("click", ".dashboard__button-download-data", function () {
         $('.dashboard__download__drop').toggleClass('hidden');
-        $(this).toggleClass('active');
-      });
-
-      $(document).on("click", ".dashboard__formbutton-download", function () {
-        $('.dashboard__form-drop').toggleClass('hidden');
         $(this).toggleClass('active');
       });
 
