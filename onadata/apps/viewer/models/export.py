@@ -28,7 +28,6 @@ class Export(models.Model):
     CSV_EXPORT = 'csv'
     KML_EXPORT = 'kml'
     ZIP_EXPORT = 'zip'
-    CSV_ZIP_EXPORT = 'csv_zip'
     ANALYSER_EXPORT = 'analyser'
 
     EXPORT_MIMES = {
@@ -36,7 +35,6 @@ class Export(models.Model):
         'xlsx': 'vnd.openxmlformats',
         'csv': 'csv',
         'zip': 'zip',
-        'csv_zip': 'zip',
         'kml': 'vnd.google-earth.kml+xml'
     }
 
@@ -45,7 +43,6 @@ class Export(models.Model):
         (CSV_EXPORT, 'CSV'),
         (ZIP_EXPORT, 'ZIP'),
         (KML_EXPORT, 'kml'),
-        (CSV_ZIP_EXPORT, 'CSV ZIP'),
         (ANALYSER_EXPORT, 'Analyser')
     ]
 
