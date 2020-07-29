@@ -14,12 +14,9 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseForbidden
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-
-from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
 
 from path import tempdir
 
@@ -91,20 +88,6 @@ def build_export_filename(export, extension):
 
 
 @readable_xform_required
-def export_menu(request, username, id_string):
-
-    form_pack = build_formpack(username, id_string)
-
-    context = {
-        'languages': form_pack.available_translations,
-        'username': username,
-        'id_string': id_string
-    }
-
-    return render(request, 'export/export_menu.html', context)
-
-
-@readable_xform_required
 def xlsx_export(request, username, id_string):
 
     export = build_export(request, username, id_string)
@@ -136,34 +119,4 @@ def csv_export(request, username, id_string):
         response.write(line + "\n")
 
     return response
-
-
-@readable_xform_required
-def html_export(request, username, id_string):
-
-    limit = request.REQUEST.get('limit', 100)
-
-    cursor = get_instances_for_user_and_form(username, id_string)
-    paginator = Paginator(cursor, limit, request=request)
-
-    try:
-        page = paginator.page(request.REQUEST.get('page', 1))
-    except (EmptyPage, PageNotAnInteger):
-        try:
-            page = paginator.page(1)
-        except (EmptyPage, PageNotAnInteger):
-            page = None
-
-    context = {
-        'page': page,
-        'table': []
-    }
-
-    if page:
-        data = [("v1", page.object_list)]
-        export = build_export(request, username, id_string)
-        context['table'] = mark_safe("\n".join(export.to_html(data)))
-        context['title'] = id_string
-
-    return render(request, 'export/export_html.html', context)
 
