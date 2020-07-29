@@ -46,7 +46,6 @@ EXPORT_EXT = {
     'xlsx': Export.XLS_EXPORT,
     'csv': Export.CSV_EXPORT,
     'csvzip': Export.CSV_ZIP_EXPORT,
-    'savzip': Export.SAV_ZIP_EXPORT,
 }
 
 
@@ -67,7 +66,7 @@ def _get_extension_from_export_type(export_type):
 
     if export_type == Export.XLS_EXPORT:
         extension = 'xlsx'
-    elif export_type in [Export.CSV_ZIP_EXPORT, Export.SAV_ZIP_EXPORT]:
+    elif export_type in [Export.CSV_ZIP_EXPORT]:
         extension = 'zip'
 
     return extension

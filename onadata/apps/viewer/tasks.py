@@ -36,8 +36,7 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
     }
     if export_type in [Export.XLS_EXPORT,
                        Export.CSV_EXPORT,
-                       Export.CSV_ZIP_EXPORT,
-                       Export.SAV_ZIP_EXPORT]:
+                       Export.CSV_ZIP_EXPORT]:
         if options and "group_delimiter" in options:
             arguments["group_delimiter"] = options["group_delimiter"]
         if options and "split_select_multiples" in options:
@@ -55,9 +54,6 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
                 (), arguments, countdown=10)
         elif export_type == Export.CSV_ZIP_EXPORT:
             result = create_csv_zip_export.apply_async(
-                (), arguments, countdown=10)
-        elif export_type == Export.SAV_ZIP_EXPORT:
-            result = create_sav_zip_export.apply_async(
                 (), arguments, countdown=10)
         else:
             raise Export.ExportTypeError
@@ -276,36 +272,6 @@ def create_csv_zip_export(username, id_string, export_id, query=None,
             'id_string': id_string
         }
         report_exception("CSV ZIP Export Exception: Export ID - "
-                         "%(export_id)s, /%(username)s/%(id_string)s"
-                         % details, e, sys.exc_info())
-        raise
-    else:
-        return gen_export.id
-
-
-@task()
-def create_sav_zip_export(username, id_string, export_id, query=None,
-                          group_delimiter='/', split_select_multiples=True,
-                          binary_select_multiples=False):
-    export = Export.objects.get(id=export_id)
-    try:
-        # though export is not available when for has 0 submissions, we
-        # catch this since it potentially stops celery
-        gen_export = generate_export(
-            Export.SAV_ZIP_EXPORT, 'zip', username, id_string, export_id,
-            query, group_delimiter, split_select_multiples,
-            binary_select_multiples
-        )
-    except (Exception, NoRecordsFoundError) as e:
-        export.internal_status = Export.FAILED
-        export.save()
-        # mail admins
-        details = {
-            'export_id': export_id,
-            'username': username,
-            'id_string': id_string
-        }
-        report_exception("SAV ZIP Export Exception: Export ID - "
                          "%(export_id)s, /%(username)s/%(id_string)s"
                          % details, e, sys.exc_info())
         raise
