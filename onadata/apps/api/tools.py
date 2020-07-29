@@ -218,24 +218,27 @@ def get_media_file_response(metadata):
         return HttpResponseRedirect(metadata.data_value)
 
 
-def get_view_name(view_cls, suffix=None):
-    ''' Override Django REST framework's name for the base API class '''
+def get_view_name(view_obj):
+    """
+    Override Django REST framework's name for the base API class
+    """
     # The base API class should inherit directly from APIView. We can't use
     # issubclass() because ViewSets also inherit (indirectly) from APIView.
     try:
-        if inspect.getmro(view_cls)[1] is rest_framework_views.APIView:
-            return 'KoBo Api' # awkward capitalization for consistency
+        if inspect.getmro(view_obj.__class__)[1] is rest_framework_views.APIView:
+            return 'KoBo Api'  # awkward capitalization for consistency
     except KeyError:
         pass
-    return rest_framework_views.get_view_name(view_cls, suffix)
+    return rest_framework_views.get_view_name(view_obj)
 
 
-def get_view_description(view_cls, html=False):
-    ''' Replace example.com in Django REST framework's default API description
-    with the domain name of the current site '''
+def get_view_description(view_obj, html=False):
+    """
+    Replace example.com in Django REST framework's default API description
+    with the domain name of the current site
+    """
     domain = Site.objects.get_current().domain
-    description = rest_framework_views.get_view_description(view_cls,
-        html)
+    description = rest_framework_views.get_view_description(view_obj, html)
     # description might not be a plain string: e.g. it could be a SafeText
     # to prevent further HTML escaping
     original_type = type(description)
