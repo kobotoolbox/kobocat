@@ -34,8 +34,9 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
         'export_id': export.id,
         'query': query,
     }
-    if export_type in [Export.XLS_EXPORT, Export.GDOC_EXPORT,
-                       Export.CSV_EXPORT, Export.CSV_ZIP_EXPORT,
+    if export_type in [Export.XLS_EXPORT,
+                       Export.CSV_EXPORT,
+                       Export.CSV_ZIP_EXPORT,
                        Export.SAV_ZIP_EXPORT]:
         if options and "group_delimiter" in options:
             arguments["group_delimiter"] = options["group_delimiter"]
@@ -47,7 +48,7 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
                 options["binary_select_multiples"]
 
         # start async export
-        if export_type in [Export.XLS_EXPORT, Export.GDOC_EXPORT]:
+        if export_type == Export.XLS_EXPORT:
             result = create_xls_export.apply_async((), arguments, countdown=10)
         elif export_type == Export.CSV_EXPORT:
             result = create_csv_export.apply_async(

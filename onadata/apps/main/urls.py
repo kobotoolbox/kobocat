@@ -32,14 +32,6 @@ urlpatterns = patterns(
     # oath2_provider
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
-    # google urls
-    url(r'^gauthtest/$',
-        'onadata.apps.main.google_export.google_oauth2_request',
-        name='google-auth'),
-    url(r'^gwelcome/$',
-        'onadata.apps.main.google_export.google_auth_return',
-        name='google-auth-welcome'),
-
     # main website views
     url(r'^$', 'onadata.apps.main.views.home'),
     url(r'^tutorial/$', 'onadata.apps.main.views.tutorial', name='tutorial'),
@@ -147,8 +139,6 @@ urlpatterns = patterns(
         kwargs={'export_type': 'sav_zip'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
         'onadata.apps.viewer.views.kml_export'),
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/gdocs$",
-        'onadata.apps.viewer.views.google_xls_export'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/map_embed",
         'onadata.apps.viewer.views.map_embed_view'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/map",
