@@ -351,7 +351,7 @@ a.dashboard__formbutton-refresh {
 
 .dashboard__download__drop {
   position: absolute;
-  right: 22px;
+  left: 0;
   bottom: -150px;
   width: 124px;
   border: 1px solid #E7E8E9;

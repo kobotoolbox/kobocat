@@ -28,7 +28,6 @@ class Export(models.Model):
     CSV_EXPORT = 'csv'
     KML_EXPORT = 'kml'
     ZIP_EXPORT = 'zip'
-    ANALYSER_EXPORT = 'analyser'
 
     EXPORT_MIMES = {
         'xls': 'vnd.ms-excel',
@@ -42,8 +41,7 @@ class Export(models.Model):
         (XLS_EXPORT, 'Excel'),
         (CSV_EXPORT, 'CSV'),
         (ZIP_EXPORT, 'ZIP'),
-        (KML_EXPORT, 'kml'),
-        (ANALYSER_EXPORT, 'Analyser')
+        (KML_EXPORT, 'kml')
     ]
 
     EXPORT_TYPE_DICT = dict(export_type for export_type in EXPORT_TYPES)
