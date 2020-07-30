@@ -527,123 +527,7 @@ def edit(request, username, id_string):
 
     if username == request.user.username or\
             request.user.has_perm('logger.change_xform', xform):
-        if request.POST.get('description'):
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("Description for '%(id_string)s' updated from "
-                    "'%(old_description)s' to '%(new_description)s'.") %
-                {
-                    'id_string': xform.id_string,
-                    'old_description': xform.description,
-                    'new_description': request.POST['description']
-                }, audit, request)
-            xform.description = request.POST['description']
-        elif request.POST.get('title'):
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("Title for '%(id_string)s' updated from "
-                    "'%(old_title)s' to '%(new_title)s'.") %
-                {
-                    'id_string': xform.id_string,
-                    'old_title': xform.title,
-                    'new_title': request.POST.get('title')
-                }, audit, request)
-            xform.title = request.POST['title']
-        elif request.POST.get('toggle_shared'):
-            if request.POST['toggle_shared'] == 'data':
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_UPDATED, request.user, owner,
-                    _("Data sharing updated for '%(id_string)s' from "
-                        "'%(old_shared)s' to '%(new_shared)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'old_shared': _("shared")
-                        if xform.shared_data else _("not shared"),
-                        'new_shared': _("shared")
-                        if not xform.shared_data else _("not shared")
-                    }, audit, request)
-                xform.shared_data = not xform.shared_data
-            elif request.POST['toggle_shared'] == 'form':
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_UPDATED, request.user, owner,
-                    _("Form sharing for '%(id_string)s' updated "
-                        "from '%(old_shared)s' to '%(new_shared)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'old_shared': _("shared")
-                        if xform.shared else _("not shared"),
-                        'new_shared': _("shared")
-                        if not xform.shared else _("not shared")
-                    }, audit, request)
-                xform.shared = not xform.shared
-            elif request.POST['toggle_shared'] == 'active':
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_UPDATED, request.user, owner,
-                    _("Active status for '%(id_string)s' updated from "
-                        "'%(old_shared)s' to '%(new_shared)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'old_shared': _("shared")
-                        if xform.downloadable else _("not shared"),
-                        'new_shared': _("shared")
-                        if not xform.downloadable else _("not shared")
-                    }, audit, request)
-                xform.downloadable = not xform.downloadable
-        elif request.POST.get('form-license'):
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("Form License for '%(id_string)s' updated to "
-                    "'%(form_license)s'.") %
-                {
-                    'id_string': xform.id_string,
-                    'form_license': request.POST['form-license'],
-                }, audit, request)
-            MetaData.form_license(xform, request.POST['form-license'])
-        elif request.POST.get('data-license'):
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("Data license for '%(id_string)s' updated to "
-                    "'%(data_license)s'.") %
-                {
-                    'id_string': xform.id_string,
-                    'data_license': request.POST['data-license'],
-                }, audit, request)
-            MetaData.data_license(xform, request.POST['data-license'])
-        elif request.POST.get('source') or request.FILES.get('source'):
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("Source for '%(id_string)s' updated to '%(source)s'.") %
-                {
-                    'id_string': xform.id_string,
-                    'source': request.POST.get('source'),
-                }, audit, request)
-            MetaData.source(xform, request.POST.get('source'),
-                            request.FILES.get('source'))
-        elif request.POST.get('media_url'):
+        if request.POST.get('media_url'):
             uri = request.POST.get('media_url')
             try:
                 SSRFProtect.validate(uri)
@@ -663,17 +547,6 @@ def edit(request, username, id_string):
                 }, audit, request)
             for aFile in request.FILES.getlist("media"):
                 MetaData.media_upload(xform, aFile)
-        elif request.FILES.get('doc'):
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("Supporting document added to '%(id_string)s'.") %
-                {
-                    'id_string': xform.id_string
-                }, audit, request)
-            MetaData.supporting_docs(xform, request.FILES.get('doc'))
 
         xform.update()
 
