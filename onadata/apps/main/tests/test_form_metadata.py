@@ -52,6 +52,7 @@ class TestFormMetadata(TestBase):
                 'data_id': self.doc.id})
         return name
 
+    @unittest.skip('Feature has been removed')
     def test_adds_supporting_doc_on_submit(self):
         count = len(MetaData.objects.filter(xform=self.xform,
                     data_type='supporting_doc'))
@@ -66,27 +67,7 @@ class TestFormMetadata(TestBase):
         self.assertEquals(count + 1, len(MetaData.objects.filter(
             xform=self.xform, data_type='media')))
 
-    def test_shows_supporting_doc_after_submit(self):
-        name = self._add_metadata()
-        response = self.client.get(self.url)
-        self.assertContains(response, name)
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, name)
-
-    @unittest.skip('Is based on changed template')
-    def test_shows_supporting_media_after_submit(self):
-        name = self._add_metadata(data_type='media')
-        response = self.client.get(self.url)
-        self.assertContains(response, name)
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, name)
-
+    @unittest.skip('Feature has been removed')
     def test_download_supporting_doc(self):
         self._add_metadata()
         response = self.client.get(self.doc_url)
@@ -94,6 +75,7 @@ class TestFormMetadata(TestBase):
         fileName, ext = os.path.splitext(response['Content-Disposition'])
         self.assertEqual(ext, '.xls')
 
+    @unittest.skip('Feature has been removed')
     def test_no_download_supporting_doc_for_anon(self):
         self._add_metadata()
         response = self.anon.get(self.doc_url)
@@ -106,6 +88,7 @@ class TestFormMetadata(TestBase):
         fileName, ext = os.path.splitext(response['Content-Disposition'])
         self.assertEqual(ext, '.png')
 
+    @unittest.skip('Feature has been removed')
     def test_shared_download_supporting_doc_for_anon(self):
         self._add_metadata()
         self.xform.shared = True
@@ -120,6 +103,7 @@ class TestFormMetadata(TestBase):
         response = self.anon.get(self.doc_url)
         self.assertEqual(response.status_code, 200)
 
+    @unittest.skip('Feature has been removed')
     def test_delete_supporting_doc(self):
         count = MetaData.objects.filter(xform=self.xform,
                                         data_type='supporting_doc').count()
@@ -152,6 +136,7 @@ class TestFormMetadata(TestBase):
             xform=self.xform, data_type='media').count(), count + 1)
         self.assertEqual(response.status_code, 403)
 
+    @unittest.skip('Removed feature from HTML template')
     def test_user_source_edit_updates(self):
         desc = 'Snooky'
         response = self.client.post(self.edit_url, {'source': desc},
@@ -159,14 +144,17 @@ class TestFormMetadata(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(MetaData.source(self.xform).data_value, desc)
 
+    @unittest.skip('Feature has been removed')
     def test_upload_source_file(self):
         self._add_metadata('source')
         self.assertNotEqual(MetaData.source(self.xform).data_file, None)
 
+    @unittest.skip('Feature has been removed')
     def test_upload_source_file_set_value_to_name(self):
         name = self._add_metadata('source')
         self.assertEqual(MetaData.source(self.xform).data_value, name)
 
+    @unittest.skip('Feature has been removed')
     def test_upload_source_file_keep_name(self):
         desc = 'Snooky'
         response = self.client.post(self.edit_url, {'source': desc},

@@ -5,7 +5,7 @@ from django.core.files.base import ContentFile
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.views import show, form_photos, update_xform, profile,\
-    enketo_preview
+    enketo_preview, show_form_settings
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.views import download_xlsform, download_jsonform,\
     download_xform, delete_xform
@@ -228,19 +228,13 @@ class TestFormShow(TestBase):
         self.assertNotContains(response, 'PUBLIC</a>')
         self.assertNotContains(response, 'PRIVATE</a>')
 
-    def test_show_add_supporting_docs_if_owner(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'Supporting document:')
-
     def test_show_add_supporting_media_if_owner(self):
-        response = self.client.get(self.url)
+        url = reverse(show_form_settings, kwargs={
+            'username': self.user.username,
+            'id_string': self.xform.id_string
+        })
+        response = self.client.get(url)
         self.assertContains(response, 'Media Upload')
-
-    def test_hide_add_supporting_docs_if_not_owner(self):
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.url)
-        self.assertNotContains(response, 'Upload')
 
     def test_load_photo_page(self):
         response = self.client.get(reverse(form_photos, kwargs={

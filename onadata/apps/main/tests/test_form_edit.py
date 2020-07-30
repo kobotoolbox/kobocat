@@ -1,3 +1,4 @@
+import unittest
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.models import MetaData
@@ -8,7 +9,11 @@ from test_base import TestBase
 
 
 class TestFormEdit(TestBase):
-
+    """
+    (almost) every option of form edit has been removed from KoBoCAT, except
+    media files.
+    @ToDo remove skipped (obsolete) tests (or whole class)
+    """
     def setUp(self):
         TestBase.setUp(self)
         self._create_user_and_login()
@@ -39,6 +44,7 @@ class TestFormEdit(TestBase):
         self.assertNotEqual(
             XForm.objects.get(pk=self.xform.pk).description, desc)
 
+    @unittest.skip('Feature has been removed')
     def test_user_description_edit_updates(self):
         desc = 'Snooky'
         response = self.client.post(self.edit_url, {'description': desc},
@@ -46,6 +52,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(XForm.objects.get(pk=self.xform.pk).description, desc)
 
+    @unittest.skip('Feature has been removed')
     def test_user_title_edit_updates(self):
         desc = 'Snooky'
         response = self.client.post(self.edit_url, {'title': desc},
@@ -53,6 +60,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(XForm.objects.get(pk=self.xform.pk).title, desc)
 
+    @unittest.skip('Feature has been removed')
     def test_user_form_license_edit_updates(self):
         desc = 'Snooky'
         response = self.client.post(self.edit_url, {'form-license': desc},
@@ -60,6 +68,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(MetaData.form_license(self.xform).data_value, desc)
 
+    @unittest.skip('Feature has been removed')
     def test_user_data_license_edit_updates(self):
         desc = 'Snooky'
         response = self.client.post(self.edit_url, {'data-license': desc},
@@ -67,6 +76,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(MetaData.data_license(self.xform).data_value, desc)
 
+    @unittest.skip('Feature has been removed')
     def test_user_toggle_data_privacy(self):
         self.assertEqual(self.xform.shared, False)
         response = self.client.post(self.edit_url, {'toggle_shared': 'data'},
@@ -74,6 +84,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(XForm.objects.get(pk=self.xform.pk).shared_data, True)
 
+    @unittest.skip('Feature has been removed')
     def test_user_toggle_data_privacy_off(self):
         self.xform.shared_data = True
         self.xform.save()
@@ -83,6 +94,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(
             XForm.objects.get(pk=self.xform.pk).shared_data, False)
 
+    @unittest.skip('Feature has been removed')
     def test_user_toggle_form_privacy(self):
         self.assertEqual(self.xform.shared, False)
         response = self.client.post(self.edit_url, {'toggle_shared': 'form'},
@@ -90,6 +102,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(XForm.objects.get(pk=self.xform.pk).shared, True)
 
+    @unittest.skip('Feature has been removed')
     def test_user_toggle_form_privacy_off(self):
         self.xform.shared = True
         self.xform.save()
@@ -98,6 +111,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(XForm.objects.get(pk=self.xform.pk).shared, False)
 
+    @unittest.skip('Feature has been removed')
     def test_user_toggle_form_downloadable(self):
         self.xform.downloadable = False
         self.xform.save()
@@ -108,6 +122,7 @@ class TestFormEdit(TestBase):
         self.assertEqual(
             XForm.objects.get(pk=self.xform.pk).downloadable, True)
 
+    @unittest.skip('Feature has been removed')
     def test_user_toggle_form_downloadable_off(self):
         self.xform.downloadable = True
         self.xform.save()

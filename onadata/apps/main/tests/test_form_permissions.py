@@ -109,7 +109,7 @@ class TestFormPermissions(TestBase):
         response = alice.get(self.show_url)
         self.assertEqual(response.status_code, 302)
         response = alice.get(self.show_normal_url)
-        self.assertContains(response, 'View data in table')
+        self.assertContains(response, 'Download data')
 
     def test_add_edit_to_user(self):
         user = self._create_user('alice', 'alice')
@@ -213,6 +213,7 @@ class TestFormPermissions(TestBase):
         self.assertNotEqual(response['Location'],
                             '%s%s' % (self.base_url, self.show_normal_url))
 
+    @unittest.skip('Feature has been removed')
     def test_show_list_of_users_shared_with(self):
         new_username = 'alice'
         user = self._create_user(new_username, 'alice')
