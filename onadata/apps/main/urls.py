@@ -97,10 +97,6 @@ urlpatterns = patterns(
         'onadata.apps.main.views.set_perm'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/photos',
         'onadata.apps.main.views.form_photos'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/doc/(?P<data_id>\d+)'
-        '', 'onadata.apps.main.views.download_metadata'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delete-doc/(?P<data_'
-        'id>\d+)', 'onadata.apps.main.views.delete_metadata'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/(?P<dat'
         'a_id>\d+)', 'onadata.apps.main.views.download_media_data'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/update$',
