@@ -29,6 +29,7 @@ class TestFormMetadata(TestBase):
 
     def _add_metadata(self):
         name = 'screenshot.png'
+        data_type = 'media'
         path = os.path.join(self.this_directory, "fixtures",
                             "transportation", name)
         with open(path) as doc_file:
@@ -36,7 +37,7 @@ class TestFormMetadata(TestBase):
             self.post_data[data_type] = doc_file
             self.client.post(self.edit_url, self.post_data)
 
-        self.doc = MetaData.objects.filter(data_type='media').reverse()[0]
+        self.doc = MetaData.objects.filter(data_type=data_type).reverse()[0]
         self.doc_url = reverse(download_media_data, kwargs={
             'username': self.user.username,
             'id_string': self.xform.id_string,
@@ -47,19 +48,19 @@ class TestFormMetadata(TestBase):
     def test_adds_supporting_media_on_submit(self):
         count = len(MetaData.objects.filter(xform=self.xform,
                     data_type='media'))
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         self.assertEquals(count + 1, len(MetaData.objects.filter(
             xform=self.xform, data_type='media')))
 
     def test_download_supporting_media(self):
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         response = self.client.get(self.doc_url)
         self.assertEqual(response.status_code, 200)
         fileName, ext = os.path.splitext(response['Content-Disposition'])
         self.assertEqual(ext, '.png')
 
     def test_shared_download_supporting_media_for_anon(self):
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         self.xform.shared = True
         self.xform.save()
         response = self.anon.get(self.doc_url)
@@ -68,14 +69,14 @@ class TestFormMetadata(TestBase):
     def test_delete_supporting_media(self):
         count = MetaData.objects.filter(
             xform=self.xform, data_type='media').count()
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         self.assertEqual(MetaData.objects.filter(
             xform=self.xform, data_type='media').count(), count + 1)
         response = self.client.get(self.doc_url + '?del=true')
         self.assertEqual(MetaData.objects.filter(
             xform=self.xform, data_type='media').count(), count)
         self.assertEqual(response.status_code, 302)
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         response = self.anon.get(self.doc_url + '?del=true')
         self.assertEqual(MetaData.objects.filter(
             xform=self.xform, data_type='media').count(), count + 1)
