@@ -35,7 +35,7 @@ class TestFormMetadata(TestBase):
             self.post_data = {}
             self.post_data[data_type] = doc_file
             self.client.post(self.edit_url, self.post_data)
-            
+
         self.doc = MetaData.objects.filter(data_type='media').reverse()[0]
         self.doc_url = reverse(download_media_data, kwargs={
             'username': self.user.username,

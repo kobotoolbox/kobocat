@@ -254,37 +254,6 @@ def members_list(request):
     return render(request, template, {'template': template, 'users': users})
 
 
-@login_required
-def profile_settings(request, username):
-    content_user = check_and_set_user(request, username)
-    profile, created = UserProfile.objects.get_or_create(user=content_user)
-    if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=profile)
-        if form.is_valid():
-            # get user
-            # user.email = cleaned_email
-            '''
-            The email field has been removed from the profile form.
-            form.instance.user.email = form.cleaned_data['email']
-            form.instance.user.save()
-            '''
-            form.save()
-            # todo: add string rep. of settings to see what changed
-            audit = {}
-            audit_log(
-                Actions.PROFILE_SETTINGS_UPDATED, request.user, content_user,
-                _("Profile settings updated."), audit, request)
-            return HttpResponseRedirect(reverse(
-                public_profile, kwargs={'username': request.user.username}
-            ))
-    else:
-        form = UserProfileForm(
-            instance=profile, initial={"email": content_user.email})
-
-    return render(request, "settings.html",
-                  {'content_user': content_user, 'form': form})
-
-
 @require_GET
 def public_profile(request, username):
     content_user = check_and_set_user(request, username)

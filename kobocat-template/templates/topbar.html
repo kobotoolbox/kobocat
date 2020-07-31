@@ -38,13 +38,6 @@
       </a>
     </li>
     
-    <li class="top-level-menu__item {% if 'settings' in request.path %} is-active {% endif %}">
-      <a href="/{{ user.username }}/settings">
-        <i class="header-bar__page-icon fa fa-fw fa-cog"></i>
-        {% trans "Settings" %}
-      </a>
-    </li>
-
     <li class="top-level-menu__item">
       <a href="{% url "auth_logout" %}">
         <i class="header-bar__page-icon  fa  fa-fw  fa-sign-out"></i>
@@ -107,7 +100,6 @@
               </a>
               <ul class="dropdown-menu">
                 <li><a href="{% url "onadata.apps.main.views.public_profile" user.username %}"><i class="icon-user"></i> {% trans "Public profile" %}</a></li>
-                <li><a href="{% url "onadata.apps.main.views.profile_settings" user.username %}"><i class="icon-cog"></i> {% trans "Settings" %}</a></li>
                 <li><a href="{% url "onadata.apps.main.views.activity" user.username %}"><i class="icon-eye-open"></i> {% trans "Account Activity" %}</a></li>
                 <li><a href="{% url "onadata.apps.main.views.api_token" user.username %}"><i class="icon-cog"></i> {% trans "API Token" %}</a></li>
                 <!--<li><a href="{% url "auth_password_change" %}">Change password</a></li>-->
