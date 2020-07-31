@@ -21,11 +21,6 @@
          {% if profile.name %}
             <span class='pipe'>&nbsp;|&nbsp;</span><span class='name'>{{ profile.name }}</span>
           {% endif %}
-          {% if is_owner %}
-            <span class='right'>
-            <a href="{% url "onadata.apps.main.views.profile_settings" content_user.username %}" class="btn btn-small">{% trans "Edit Your Profile" %}</a>
-            </span>
-          {% endif %}
        </h1>
      </div>
      <em>{{ profile.description }}</em>

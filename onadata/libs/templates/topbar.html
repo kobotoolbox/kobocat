@@ -78,7 +78,6 @@
               </a>
               <ul class="dropdown-menu">
                 <li><a href="{% url "onadata.apps.main.views.public_profile" user.username %}"><i class="icon-user"></i> {% trans "Public profile" %}</a></li>
-                <li><a href="{% url "onadata.apps.main.views.profile_settings" user.username %}"><i class="icon-cog"></i> {% trans "Settings" %}</a></li>
                 <li><a href="{% url "onadata.apps.main.views.activity" user.username %}"><i class="icon-eye-open"></i> {% trans "Account Activity" %}</a></li>
                 <li><a href="{% url "onadata.apps.main.views.api_token" user.username %}"><i class="icon-cog"></i> {% trans "API Token" %}</a></li>
                 <!--<li><a href="{% url "auth_password_change" %}">Change password</a></li>-->

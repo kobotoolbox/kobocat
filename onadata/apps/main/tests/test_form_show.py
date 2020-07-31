@@ -211,10 +211,6 @@ class TestFormShow(TestBase):
         response = self.client.get(show_url)
         self.assertContains(response, map_url)
 
-    def test_user_sees_settings(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'Settings')
-
     def test_anon_no_edit_btn(self):
         self.xform.shared = True
         self.xform.save()
