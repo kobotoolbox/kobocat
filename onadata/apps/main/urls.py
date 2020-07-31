@@ -70,11 +70,6 @@ urlpatterns = patterns(
         name='public_profile'),
     url(r'^(?P<username>[^/]+)/cloneform$',
         'onadata.apps.main.views.clone_xlsform'),
-    url(r'^(?P<username>[^/]+)/activity$',
-        'onadata.apps.main.views.activity'),
-    url(r'^(?P<username>[^/]+)/activity/api$',
-        'onadata.apps.main.views.activity_api'),
-    url(r'^activity/fields$', 'onadata.apps.main.views.activity_fields'),
     url(r'^(?P<username>[^/]+)/api-token$',
         'onadata.apps.main.views.api_token'),
 
