@@ -8,14 +8,8 @@ from onadata import koboform
 DISABLED_VIEWS = [
         'home',
         'form_gallery',
-        'faq',
-        'support',
-        'resources',
-        'syntax',
         'members_list',
         'about_us',
-        'getting_started',
-        'xls2xform',
         'public_profile',
     ]
 
@@ -32,6 +26,7 @@ REDIRECT_IF_NOT_LOGGED_IN = [
 #   /accounts/login/     => kform/accounts/login
 #   /accounts/logout/    => kform/accounts/logout
 #   /accounts/register/  => kform/accounts/register
+
 
 class ConditionalRedirects(object):
     def process_view(self, request, view, args, kwargs):
