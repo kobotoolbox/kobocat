@@ -39,7 +39,10 @@ RUN rm -rf "${KOBOCAT_SRC_DIR}"
 COPY . "${KOBOCAT_SRC_DIR}"
 
 # Prepare for execution.
-RUN mkdir -p /etc/service/uwsgi && \
+# TODO: Remove the wrong port warning and related files, say, at the start of 2021 (see kobotoolbox/kobo-docker#301)
+RUN mkdir -p /etc/service/uwsgi_wrong_port_warning && \
+    cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi_wrong_port_warning.bash" /etc/service/uwsgi_wrong_port_warning/run && \
+    mkdir -p /etc/service/uwsgi && \
     cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
     mkdir -p /etc/service/celery && \
     ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" /etc/service/celery/run && \
@@ -62,4 +65,5 @@ RUN echo 'source /etc/profile' >> /root/.bashrc
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
-EXPOSE 8000
+# TODO: Remove port 8000, say, at the start of 2021 (see kobotoolbox/kobo-docker#301 and wrong port warning above)
+EXPOSE 8001 8000
