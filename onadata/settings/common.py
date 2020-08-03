@@ -501,6 +501,7 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'video/mp4',
     'video/quicktime',
     'video/ogg',
+    'video/webm',
     'audio/wav',
     'audio/x-m4a',
     'audio/mp3',
