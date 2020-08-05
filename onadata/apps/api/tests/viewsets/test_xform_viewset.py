@@ -506,3 +506,24 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = view(request, pk=self.xform.id)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIsNotNone(response.data.get('error'))
+
+    def test_cannot_publish_id_string_starting_with_number(self):
+        data = {
+            'owner': self.user.username,
+            'public': False,
+            'public_data': False,
+            'description': '2011_07_25_transportation',
+            'downloadable': True,
+            'encrypted': False,
+            'id_string': '2011_07_25_transportation',
+            'title': '2011_07_25_transportation',
+        }
+
+        xls_path = os.path.join(settings.ONADATA_DIR, 'apps', 'main', 'tests',
+                                'fixtures', 'transportation',
+                                'transportation.id_starts_with_num.xls')
+        count = XForm.objects.count()
+        response = self.publish_xls_form(xls_path, data, assert_=False)
+        self.assertTrue('Names must begin with a letter' in response.content)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(XForm.objects.count(), count)
