@@ -7,10 +7,6 @@ from onadata import koboform
 # regardless of koboform setting
 DISABLED_VIEWS = [
         'home',
-        'form_gallery',
-        'members_list',
-        'about_us',
-        'public_profile',
     ]
 
 # if user not logged in:

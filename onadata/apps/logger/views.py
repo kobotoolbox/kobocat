@@ -418,6 +418,7 @@ def download_xlsform(request, username, id_string):
 
         return HttpResponseRedirect("/%s" % username)
 
+
 def download_jsonform(request, username, id_string):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, user__username__iexact=username,
@@ -440,25 +441,6 @@ def download_jsonform(request, username, id_string):
         add_cors_headers(response)
         response.content = xform.json
     return response
-
-
-@is_owner
-@require_POST
-def delete_xform(request, username, id_string):
-    xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__exact=id_string)
-
-    # delete xform and submissions
-    remove_xform(xform)
-
-    audit = {}
-    audit_log(
-        Actions.FORM_DELETED, request.user, xform.user,
-        _("Deleted form '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-    return HttpResponseRedirect('/')
 
 
 @is_owner

@@ -3,18 +3,14 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import os
-from datetime import datetime
 
-from bson import json_util
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.core.files.storage import default_storage
 from django.core.files.storage import get_storage_class
 from django.core.urlresolvers import reverse
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
@@ -23,41 +19,29 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponseServerError
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
-from django.template import loader, RequestContext
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
-from django.views.decorators.http import require_http_methods
-from guardian.shortcuts import assign_perm, remove_perm, get_users_with_perms
+from guardian.shortcuts import get_users_with_perms
 from rest_framework.authtoken.models import Token
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
-from onadata.apps.main.forms import UserProfileForm, FormLicenseForm, \
+from onadata.apps.main.forms import FormLicenseForm, \
     DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
     QuickConverter, SourceForm, PermissionForm, MediaForm
 from onadata.apps.main.models import AuditLog, UserProfile, MetaData
-from onadata.apps.viewer.models.data_dictionary import DataDictionary, \
-    upload_to
-from onadata.apps.viewer.models.parsed_instance import \
-    DATETIME_FORMAT, ParsedInstance
-from onadata.libs.utils.decorators import is_owner
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
     publish_form
-from onadata.libs.utils.qrcode import generate_qrcode
 from onadata.libs.utils.user_auth import (
-    add_cors_headers,
-    check_and_set_user,
     check_and_set_user_and_form,
     get_xform_and_perms,
     has_edit_permission,
     has_permission,
-    helper_auth_helper,
     set_profile_data
 )
-from onadata.libs.utils.viewer_tools import enketo_url
 
 
 def home(request):
@@ -72,75 +56,6 @@ def home(request):
 def login_redirect(request):
     return HttpResponseRedirect(reverse(profile,
                                 kwargs={'username': request.user.username}))
-
-
-@require_POST
-@login_required
-def clone_xlsform(request, username):
-    """
-    Copy a public/Shared form to a users list of forms.
-    Eliminates the need to download Excel File and upload again.
-    """
-    to_username = request.user.username
-    message = {'type': None, 'text': '....'}
-    message_list = []
-
-    def set_form():
-        form_owner = request.POST.get('username')
-        id_string = request.POST.get('id_string')
-        xform = XForm.objects.get(user__username__iexact=form_owner,
-                                  id_string__exact=id_string)
-        if len(id_string) > 0 and id_string[0].isdigit():
-            id_string = '_' + id_string
-        path = xform.xls.name
-        if default_storage.exists(path):
-            xls_file = upload_to(None, '%s%s.xls' % (
-                                 id_string, XForm.CLONED_SUFFIX), to_username)
-            xls_data = default_storage.open(path)
-            xls_file = default_storage.save(xls_file, xls_data)
-            survey = DataDictionary.objects.create(
-                user=request.user,
-                xls=xls_file
-            ).survey
-            # log to cloner's account
-            audit = {}
-            audit_log(
-                Actions.FORM_CLONED, request.user, request.user,
-                _("Cloned form '%(id_string)s'.") %
-                {
-                    'id_string': survey.id_string,
-                }, audit, request)
-            clone_form_url = reverse(
-                show, kwargs={
-                    'username': to_username,
-                    'id_string': xform.id_string + XForm.CLONED_SUFFIX})
-            return {
-                'type': 'alert-success',
-                'text': _(u'Successfully cloned to %(form_url)s into your '
-                          u'%(profile_url)s') %
-                {'form_url': u'<a href="%(url)s">%(id_string)s</a> ' % {
-                 'id_string': survey.id_string,
-                 'url': clone_form_url
-                 },
-                    'profile_url': u'<a href="%s">profile</a>.' %
-                    reverse(profile, kwargs={'username': to_username})}
-            }
-    form_result = publish_form(set_form)
-    message = form_result
-
-    context = RequestContext(request, {
-        'message': message, 'message_list': message_list})
-
-    if request.is_ajax():
-        res = loader.render_to_string(
-            'message.html',
-            context_instance=context
-        ).replace("'", r"\'").replace('\n', '')
-
-        return HttpResponse(
-            "$('#mfeedback').html('%s').show();" % res)
-    else:
-        return HttpResponse(message['text'])
 
 
 def profile(request, username):
@@ -243,44 +158,6 @@ def profile(request, username):
     set_profile_data(data, content_user)
 
     return render(request, "profile.html", data)
-
-
-def members_list(request):
-    if not request.user.is_staff and not request.user.is_superuser:
-        return HttpResponseForbidden(_(u'Forbidden.'))
-    users = User.objects.all()
-    template = 'people.html'
-
-    return render(request, template, {'template': template, 'users': users})
-
-
-@require_GET
-def public_profile(request, username):
-    content_user = check_and_set_user(request, username)
-    if isinstance(content_user, HttpResponseRedirect):
-        return content_user
-    data = {}
-    set_profile_data(data, content_user)
-    data['is_owner'] = request.user == content_user
-    audit = {}
-    audit_log(
-        Actions.PUBLIC_PROFILE_ACCESSED, request.user, content_user,
-        _("Public profile accessed."), audit, request)
-
-    return render(request, "profile.html", data)
-
-
-@login_required
-def dashboard(request):
-    content_user = request.user
-    data = {
-        'form': QuickConverter(),
-        'content_user': content_user,
-        'url': request.build_absolute_uri("/%s" % request.user.username)
-    }
-    set_profile_data(data, content_user)
-
-    return render(request, "dashboard.html", data)
 
 
 def redirect_to_public_link(request, uuid):
@@ -403,91 +280,6 @@ def api_token(request, username=None):
     return HttpResponseForbidden(_(u'Permission denied.'))
 
 
-@require_http_methods(["GET", "OPTIONS"])
-def api(request, username=None, id_string=None):
-    """
-    Returns all results as JSON.  If a parameter string is passed,
-    it takes the 'query' parameter, converts this string to a dictionary, an
-    that is then used as a MongoDB query string.
-
-    NOTE: only a specific set of operators are allow, currently $or and $and.
-    Please send a request if you'd like another operator to be enabled.
-
-    NOTE: Your query must be valid JSON, double check it here,
-    http://json.parser.online.fr/
-
-    E.g. api?query='{"last_name": "Smith"}'
-    """
-    if request.method == "OPTIONS":
-        response = HttpResponse()
-        add_cors_headers(response)
-
-        return response
-    helper_auth_helper(request)
-    helper_auth_helper(request)
-    xform, owner = check_and_set_user_and_form(username, id_string, request)
-
-    if not xform:
-        return HttpResponseForbidden(_(u'Not shared.'))
-
-    try:
-        args = {
-            'username': username,
-            'id_string': id_string,
-            'query': request.GET.get('query'),
-            'fields': request.GET.get('fields'),
-            'sort': request.GET.get('sort')
-        }
-        if 'start' in request.GET:
-            args["start"] = int(request.GET.get('start'))
-        if 'limit' in request.GET:
-            args["limit"] = int(request.GET.get('limit'))
-        if 'count' in request.GET:
-            args["count"] = True if int(request.GET.get('count')) > 0\
-                else False
-        cursor = ParsedInstance.query_mongo(**args)
-    except ValueError as e:
-        return HttpResponseBadRequest(e.__str__())
-
-    records = list(record for record in cursor)
-    response_text = json_util.dumps(records)
-
-    if 'callback' in request.GET and request.GET.get('callback') != '':
-        callback = request.GET.get('callback')
-        response_text = ("%s(%s)" % (callback, response_text))
-
-    response = HttpResponse(response_text, content_type='application/json')
-    add_cors_headers(response)
-
-    return response
-
-
-@require_GET
-def public_api(request, username, id_string):
-    """
-    Returns public information about the form as JSON
-    """
-
-    xform = get_object_or_404(XForm,
-                              user__username__iexact=username,
-                              id_string__exact=id_string)
-
-    _DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-    exports = {'username': xform.user.username,
-               'id_string': xform.id_string,
-               'shared': xform.shared,
-               'shared_data': xform.shared_data,
-               'downloadable': xform.downloadable,
-               'title': xform.title,
-               'date_created': xform.date_created.strftime(_DATETIME_FORMAT),
-               'date_modified': xform.date_modified.strftime(_DATETIME_FORMAT),
-               'uuid': xform.uuid,
-               }
-    response_text = json.dumps(exports)
-
-    return HttpResponse(response_text, content_type='application/json')
-
-
 @login_required
 def edit(request, username, id_string):
     xform = XForm.objects.get(user__username__iexact=username,
@@ -533,98 +325,10 @@ def edit(request, username, id_string):
     return HttpResponseForbidden(_(u'Update failed.'))
 
 
-def getting_started(request):
-    template = 'getting_started.html'
-
-    return render(request, 'base.html', {'template': template})
-
-
-def support(request):
-    template = 'support.html'
-
-    return render(request, 'base.html', {'template': template})
-
-
-def faq(request):
-    template = 'faq.html'
-
-    return render(request, 'base.html', {'template': template})
-
-
-def xls2xform(request):
-    template = 'xls2xform.html'
-
-    return render(request, 'base.html', {'template': template})
-
-
-def tutorial(request):
-    template = 'tutorial.html'
-    username = request.user.username if request.user.username else \
-        'your-user-name'
-    url = request.build_absolute_uri("/%s" % username)
-
-    return render(request, 'base.html', {'template': template, 'url': url})
-
-
-def resources(request):
-    if 'fr' in request.LANGUAGE_CODE.lower():
-        deck_id = 'a351f6b0a3730130c98b12e3c5740641'
-    else:
-        deck_id = '1a33a070416b01307b8022000a1de118'
-
-    return render(request, 'resources.html', {'deck_id': deck_id})
-
-
-def about_us(request):
-    a_flatpage = '/about-us/'
-    username = request.user.username if request.user.username else \
-        'your-user-name'
-    url = request.build_absolute_uri("/%s" % username)
-
-    return render(request, 'base.html', {'a_flatpage': a_flatpage, 'url': url})
-
-
 def privacy(request):
     template = 'privacy.html'
 
     return render(request, 'base.html', {'template': template})
-
-
-def tos(request):
-    template = 'tos.html'
-
-    return render(request, 'base.html', {'template': template})
-
-
-def syntax(request):
-    template = 'syntax.html'
-
-    return render(request, 'base.html', {'template': template})
-
-
-def form_gallery(request):
-    """
-    Return a list of urls for all the shared xls files. This could be
-    made a lot prettier.
-    """
-    data = {}
-    if request.user.is_authenticated():
-        data['loggedin_user'] = request.user
-    data['shared_forms'] = XForm.objects.filter(shared=True)
-    # build list of shared forms with cloned suffix
-    id_strings_with_cloned_suffix = [
-        x.id_string + XForm.CLONED_SUFFIX for x in data['shared_forms']
-    ]
-    # build list of id_strings for forms this user has cloned
-    data['cloned'] = [
-        x.id_string.split(XForm.CLONED_SUFFIX)[0]
-        for x in XForm.objects.filter(
-            user__username__iexact=request.user.username,
-            id_string__in=id_strings_with_cloned_suffix
-        )
-    ]
-
-    return render(request, 'form_gallery.html', data)
 
 
 def download_media_data(request, username, id_string, data_id):
@@ -739,137 +443,6 @@ def form_photos(request, username, id_string):
 
 
 @require_POST
-def set_perm(request, username, id_string):
-    xform = get_object_or_404(XForm,
-                              user__username__iexact=username,
-                              id_string__exact=id_string)
-    owner = xform.user
-    if username != request.user.username\
-            and not has_permission(xform, username, request):
-        return HttpResponseForbidden(_(u'Permission denied.'))
-
-    try:
-        perm_type = request.POST['perm_type']
-        for_user = request.POST['for_user']
-    except KeyError:
-        return HttpResponseBadRequest()
-
-    if perm_type in ['edit', 'view', 'report', 'validate', 'remove']:
-        try:
-            user = User.objects.get(username=for_user)
-        except User.DoesNotExist:
-            messages.add_message(
-                request, messages.INFO,
-                _(u"Wrong username <b>%s</b>." % for_user),
-                extra_tags='alert-error')
-        else:
-            if perm_type == 'edit' and\
-                    not user.has_perm('change_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("Edit permissions on '%(id_string)s' assigned to "
-                        "'%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('change_xform', user, xform)
-            elif perm_type == 'view' and\
-                    not user.has_perm('view_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("View permissions on '%(id_string)s' "
-                        "assigned to '%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('view_xform', user, xform)
-            elif perm_type == 'report' and\
-                    not user.has_perm('report_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("Report permissions on '%(id_string)s' "
-                        "assigned to '%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('report_xform', user, xform)
-            elif perm_type == 'validate' and\
-                    not user.has_perm('validate_xform', xform):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("Validate permissions on '%(id_string)s' assigned to "
-                        "'%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm('validate_xform', user, xform)
-            elif perm_type == 'remove':
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("All permissions on '%(id_string)s' "
-                        "removed from '%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                remove_perm('change_xform', user, xform)
-                remove_perm('view_xform', user, xform)
-                remove_perm('report_xform', user, xform)
-                remove_perm('validate_xform', user, xform)
-    elif perm_type == 'link':
-        current = MetaData.public_link(xform)
-        if for_user == 'all':
-            MetaData.public_link(xform, True)
-        elif for_user == 'none':
-            MetaData.public_link(xform, False)
-        elif for_user == 'toggle':
-            MetaData.public_link(xform, not current)
-        audit = {
-            'xform': xform.id_string
-        }
-        audit_log(
-            Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-            _("Public link on '%(id_string)s' %(action)s.") %
-            {
-                'id_string': xform.id_string,
-                'action': "created"
-                if for_user == "all" or
-                (for_user == "toggle" and not current) else "removed"
-            }, audit, request)
-
-    if request.is_ajax():
-        return HttpResponse(
-            json.dumps(
-                {'status': 'success'}), content_type='application/json')
-    if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip(): 
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])               
-
-    return HttpResponseRedirect(reverse(show, kwargs={
-        'username': username,
-        'id_string': id_string
-    }))
-
-
-@require_POST
 @login_required
 def delete_data(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
@@ -901,79 +474,6 @@ def delete_data(request, username=None, id_string=None):
         response_text = ("%s(%s)" % (callback, response_text))
 
     return HttpResponse(response_text, content_type='application/json')
-
-
-@require_POST
-@is_owner
-def update_xform(request, username, id_string):
-    xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__exact=id_string)
-    owner = xform.user
-
-    def set_form():
-        form = QuickConverter(request.POST, request.FILES)
-        survey = form.publish(request.user, id_string).survey
-        enketo_webform_url = reverse(
-            enter_data,
-            kwargs={'username': username, 'id_string': survey.id_string}
-        )
-        audit = {
-            'xform': xform.id_string
-        }
-        audit_log(
-            Actions.FORM_XLS_UPDATED, request.user, owner,
-            _("XLS for '%(id_string)s' updated.") %
-            {
-                'id_string': xform.id_string,
-            }, audit, request)
-        return {
-            'type': 'alert-success',
-            'text': _(u'Successfully published %(form_id)s.'
-                      u' <a href="%(form_url)s">Enter Web Form</a>'
-                      u' or <a href="#preview-modal" data-toggle="modal">'
-                      u'Preview Web Form</a>')
-                    % {'form_id': survey.id_string,
-                       'form_url': enketo_webform_url}
-        }
-    message = publish_form(set_form)
-    messages.add_message(
-        request, messages.INFO, message['text'], extra_tags=message['type'])
-
-    return HttpResponseRedirect(reverse(show, kwargs={
-        'username': username,
-        'id_string': id_string
-    }))
-
-
-def qrcode(request, username, id_string):
-    try:
-        formhub_url = "http://%s/" % request.get_host()
-    except:
-        formhub_url = "http://formhub.org/"
-    formhub_url = formhub_url + username
-
-    if settings.TESTING_MODE:
-        formhub_url = "https://{}/{}".format(settings.TEST_HTTP_HOST,
-                                             settings.TEST_USERNAME)
-
-    results = _(u"Unexpected Error occured: No QRCODE generated")
-    status = 200
-    try:
-        url = enketo_url(formhub_url, id_string)
-    except Exception as e:
-        error_msg = _(u"Error Generating QRCODE: %s" % e)
-        results = """<div class="alert alert-error">%s</div>""" % error_msg
-        status = 400
-    else:
-        if url:
-            image = generate_qrcode(url)
-            results = """<img class="qrcode" src="%s" alt="%s" />
-                    </br><a href="%s" target="_blank">%s</a>""" \
-                % (image, url, url, url)
-        else:
-            status = 400
-
-    return HttpResponse(results, content_type='text/html', status=status)
 
 
 def enketo_preview(request, username, id_string):
