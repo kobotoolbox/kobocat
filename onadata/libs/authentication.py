@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from django_digest import HttpDigestAuthenticator
 from rest_framework.authentication import (
@@ -35,7 +36,8 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
         # authenticators
         user_auth = super(HttpsOnlyBasicAuthentication, self).authenticate(
             request)
-        if user_auth is not None and not request.is_secure():
+        if settings.TESTING_MODE is False and \
+                user_auth is not None and not request.is_secure():
             # Scold the user if they provided correct credentials for basic
             # auth but didn't use HTTPS
             raise AuthenticationFailed(_(
