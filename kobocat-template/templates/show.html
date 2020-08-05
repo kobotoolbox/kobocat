@@ -74,12 +74,6 @@
       {% if xform.has_instances_with_geopoints %}
       <div class="dashboard__gps">
         <h2 class="dashboard__group-label">GPS Points</h2>
-
-        <a title="{% trans 'View Map' %}" href="{% url "onadata.apps.viewer.views.map_view" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-on-map">
-          <i class="fa fa-map-marker"></i>
-          <span>View on map</span>
-        </a>
-
         <a href="{% url "onadata.apps.viewer.views.export_list" content_user.username xform.id_string 'kml'%}" class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
           <i class="fa fa-download"></i>
           <span>Download GPS points</span>

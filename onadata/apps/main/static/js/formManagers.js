@@ -252,7 +252,7 @@ FormResponseManager.prototype.loadResponseData = function(params, start, limit, 
     }
     $.getJSON(thisFormResponseMngr.url, countParams)
         .success(function(data){
-            totalCount = data[0].count;
+            totalCount = data.count;
             // show the modal
             if($progressElm.length > 0)
             {
