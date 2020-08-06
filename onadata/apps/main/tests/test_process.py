@@ -159,7 +159,7 @@ class TestProcess(TestBase):
         pre_count = XForm.objects.count()
         self.response = TestBase._publish_xls_file(self, xls_path)
         # make sure publishing the survey worked
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, 201)
         if XForm.objects.count() != pre_count + 1:
             # print file location
             print '\nPublish Failure for file: %s' % xls_path

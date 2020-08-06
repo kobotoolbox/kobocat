@@ -63,43 +63,6 @@ def profile(request, username):
     form = QuickConverter()
     data = {'form': form}
 
-    # xlsform submission...
-    if request.method == 'POST' and request.user.is_authenticated():
-        def set_form():
-            form = QuickConverter(request.POST, request.FILES)
-            survey = form.publish(request.user).survey
-            audit = {}
-            audit_log(
-                Actions.FORM_PUBLISHED, request.user, content_user,
-                _("Published form '%(id_string)s'.") %
-                {
-                    'id_string': survey.id_string,
-                }, audit, request)
-            enketo_webform_url = reverse(
-                enter_data,
-                kwargs={'username': username, 'id_string': survey.id_string}
-            )
-            return {
-                'type': 'alert-success',
-                'preview_url': reverse(enketo_preview, kwargs={
-                    'username': username,
-                    'id_string': survey.id_string
-                }),
-                'text': _(u'Successfully published %(form_id)s.'
-                          u' <a href="%(form_url)s">Enter Web Form</a>'
-                          u' or <a href="#preview-modal" data-toggle="modal">'
-                          u'Preview Web Form</a>')
-                % {'form_id': survey.id_string,
-                    'form_url': enketo_webform_url},
-                'form_o': survey
-            }
-        with transaction.atomic():
-            # publish_form must be wrapped into `transaction.atomic` because of
-            # https://stackoverflow.com/a/23326971/1141214
-            form_result = publish_form(set_form)
-
-        data['message'] = form_result
-
     # profile view...
     # for the same user -> dashboard
     if content_user == request.user:

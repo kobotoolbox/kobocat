@@ -27,7 +27,7 @@ class TestXFormInstanceParser(TestBase):
             "../fixtures/new_repeats/new_repeats.xls"
         )
         self._publish_xls_file_and_set_xform(xls_file_path)
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, 201)
 
         # submit an instance
         xml_submission_file_path = os.path.join(
@@ -159,7 +159,7 @@ class TestXFormInstanceParser(TestBase):
             "../fixtures/new_repeats/new_repeats.xls"
         )
         self._publish_xls_file_and_set_xform(xls_file_path)
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, 201)
 
         # submit an instance
         xml_submission_file_path = os.path.join(

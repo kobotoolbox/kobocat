@@ -181,7 +181,7 @@ class TestFormShow(TestBase):
         response = self._publish_xls_file(
             os.path.join(
                 os.path.dirname(__file__), "fixtures", "gps", "gps.xls"))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.xform = XForm.objects.latest('date_created')
 
         show_url = reverse(show, kwargs={
