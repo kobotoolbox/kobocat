@@ -81,37 +81,6 @@ class TestProcess(TestBase):
     def test_publish_xlsx_file(self):
         self._publish_xlsx_file()
 
-    def test_google_url_upload(self):
-        if self._internet_on(url="http://google.com"):
-            xls_url = "https://docs.google.com/spreadsheet/pub?"\
-                "key=0AvhZpT7ZLAWmdDhISGhqSjBOSl9XdXd5SHZHUUE2RFE&output=xls"
-            pre_count = XForm.objects.count()
-            response = self.client.post('/%s/' % self.user.username,
-                                        {'xls_url': xls_url})
-            # make sure publishing the survey worked
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(XForm.objects.count(), pre_count + 1)
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_url_upload(self):
-        if self._internet_on(url="http://google.com"):
-            xls_url = 'https://ona.io/examples/forms/tutorial/form.xls'
-            pre_count = XForm.objects.count()
-            response = self.client.post('/%s/' % self.user.username,
-                                        {'xls_url': xls_url})
-            # make sure publishing the survey worked
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(XForm.objects.count(), pre_count + 1)
-
-    def test_bad_url_upload(self):
-        xls_url = 'formhuborg/pld/forms/transportation_2011_07_25/form.xls'
-        pre_count = XForm.objects.count()
-        response = self.client.post('/%s/' % self.user.username,
-                                    {'xls_url': xls_url})
-        # make sure publishing the survey worked
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(XForm.objects.count(), pre_count)
-
     # This method tests a large number of xls files.
     # create a directory /main/test/fixtures/online_xls
     # containing the files you would like to test.
@@ -132,25 +101,6 @@ class TestProcess(TestBase):
                             self.xform = None
                 print 'finished sub-folder %s' % root
             self.assertEqual(success, True)
-
-    def test_url_upload_non_dot_xls_path(self):
-        if self._internet_on():
-            xls_url = 'http://formhub.org/formhub_u/forms/tutorial/form.xls'
-            pre_count = XForm.objects.count()
-            response = self.client.post('/%s/' % self.user.username,
-                                        {'xls_url': xls_url})
-            # make sure publishing the survey worked
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(XForm.objects.count(), pre_count + 1)
-
-    def test_not_logged_in_cannot_upload(self):
-        path = os.path.join(self.this_directory, "fixtures", "transportation",
-                            "transportation.xls")
-        if not path.startswith('/%s/' % self.user.username):
-            path = os.path.join(self.this_directory, path)
-        with open(path) as xls_file:
-            post_data = {'xls_file': xls_file}
-            return self.client.post('/%s/' % self.user.username, post_data)
 
     def _publish_file(self, xls_path, strict=True):
         """
@@ -461,7 +411,7 @@ class TestProcess(TestBase):
             'form_with_unicode_in_relevant_column.xlsx')
         response = TestBase._publish_xls_file(self, path)
         # make sure we get a 200 response
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_metadata_file_hash(self):
         self._publish_transportation_form()
@@ -528,21 +478,6 @@ class TestProcess(TestBase):
         calculate_bind_node = calculate_bind_nodes[0]
         self.assertEqual(
             calculate_bind_node.getAttribute("calculate"), "'%s'" % xform.uuid)
-
-    def test_csv_publishing(self):
-        csv_text = '\n'.join([
-            'survey,,', ',type,name,label',
-            ',text,whatsyourname,"What is your name?"',
-            'choices,,',
-            'settings,,', ',id_string', ',identity'])
-        url = reverse('onadata.apps.main.views.profile',
-                      kwargs={'username': self.user.username})
-        num_xforms = XForm.objects.count()
-        params = {
-            'text_xls_form': csv_text
-        }
-        self.response = self.client.post(url, params)
-        self.assertEqual(XForm.objects.count(), num_xforms + 1)
 
     def test_truncate_xform_title_to_255(self):
         self._publish_transportation_form()

@@ -155,7 +155,7 @@ def show(request, username=None, id_string=None, uuid=None):
     data['media_upload'] = MetaData.media_upload(xform)
 
     if is_owner:
-        set_xform_owner_data(data, xform, request, username, id_string)
+        data['media_form'] = MediaForm()
 
     return render(request, "show.html", data)
 
