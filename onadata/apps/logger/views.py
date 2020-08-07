@@ -443,22 +443,22 @@ def download_jsonform(request, username, id_string):
     return response
 
 
-@is_owner
-def toggle_downloadable(request, username, id_string):
-    xform = XForm.objects.get(user__username__iexact=username,
-                              id_string__exact=id_string)
-    xform.downloadable = not xform.downloadable
-    xform.save()
-    audit = {}
-    audit_log(
-        Actions.FORM_UPDATED, request.user, xform.user,
-        _("Made form '%(id_string)s' %(downloadable)s.") %
-        {
-            'id_string': xform.id_string,
-            'downloadable':
-            _("downloadable") if xform.downloadable else _("un-downloadable")
-        }, audit, request)
-    return HttpResponseRedirect("/%s" % username)
+# @is_owner
+# def toggle_downloadable(request, username, id_string):
+#     xform = XForm.objects.get(user__username__iexact=username,
+#                               id_string__exact=id_string)
+#     xform.downloadable = not xform.downloadable
+#     xform.save()
+#     audit = {}
+#     audit_log(
+#         Actions.FORM_UPDATED, request.user, xform.user,
+#         _("Made form '%(id_string)s' %(downloadable)s.") %
+#         {
+#             'id_string': xform.id_string,
+#             'downloadable':
+#             _("downloadable") if xform.downloadable else _("un-downloadable")
+#         }, audit, request)
+#     return HttpResponseRedirect("/%s" % username)
 
 
 def enter_data(request, username, id_string):

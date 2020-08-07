@@ -94,9 +94,6 @@ urlpatterns = patterns(
         'onadata.apps.viewer.views.kml_export'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/enter-data",
         'onadata.apps.logger.views.enter_data', name='enter_data'),
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/thank_you_submission",
-        'onadata.apps.viewer.views.thank_you_submission',
-        name='thank_you_submission'),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/edit-data/(?P<data_id>"
         "\d+)$", 'onadata.apps.logger.views.edit_data', name='edit_data'),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
@@ -155,8 +152,6 @@ urlpatterns = patterns(
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/form\.json",
         'onadata.apps.logger.views.download_jsonform',
         name="download_jsonform"),
-    url(r"^(?P<username>\w+)/(?P<id_string>[^/]+)/toggle_downloadable/$",
-        'onadata.apps.logger.views.toggle_downloadable'),
 
     url(r'^favicon\.ico',
         RedirectView.as_view(url='/static/images/favicon.ico')),

@@ -24,8 +24,6 @@ from django.views.decorators.http import require_POST
 from rest_framework.settings import api_settings
 
 from onadata.apps.logger.models import XForm, Attachment
-from onadata.apps.logger.views import download_jsonform
-from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.tasks import create_async_export
@@ -40,8 +38,8 @@ from onadata.libs.utils.image_tools import image_url
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
     disposition_ext_and_date
-from onadata.libs.utils.user_auth import has_permission, get_xform_and_perms, \
-    helper_auth_helper, has_edit_permission
+from onadata.libs.utils.user_auth import has_permission, \
+    helper_auth_helper
 from onadata.libs.utils.viewer_tools import export_def_from_filename
 
 media_file_logger = logging.getLogger('media_files')
@@ -122,10 +120,6 @@ def average(values):
     if len(values):
         return sum(values, 0.0) / len(values)
     return None
-
-
-def thank_you_submission(request, username, id_string):
-    return HttpResponse("Thank You")
 
 
 def data_export(request, username, id_string, export_type):
@@ -514,29 +508,3 @@ def attachment_url(request, size='medium'):
             return response
 
     return HttpResponseNotFound(_(u'Error: Attachment not found'))
-
-
-def instance(request, username, id_string):
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
-        username, id_string, request)
-    # no access
-    if not (xform.shared_data or can_view or
-            request.session.get('public_link') == xform.uuid):
-        return HttpResponseForbidden(_(u'Not shared.'))
-
-    audit = {
-        "xform": xform.id_string,
-    }
-    audit_log(
-        Actions.FORM_DATA_VIEWED, request.user, xform.user,
-        _("Requested instance view for '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-
-    return render(request, 'instance.html', {
-        'username': username,
-        'id_string': id_string,
-        'xform': xform,
-        'can_edit': can_edit
-    })
