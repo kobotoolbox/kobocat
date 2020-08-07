@@ -15,6 +15,7 @@ from django.conf import settings
 from recaptcha.client import captcha
 from registration.forms import RegistrationFormUniqueEmail
 from registration.models import RegistrationProfile
+from rest_framework.serializers import ValidationError
 
 from pyxform.xls2json_backends import csv_to_dict
 
@@ -22,62 +23,6 @@ from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import upload_to
 from onadata.libs.utils.country_field import COUNTRIES
 from onadata.libs.utils.logger_tools import publish_xls_form
-
-FORM_LICENSES_CHOICES = (
-    ('No License', ugettext_lazy('No License')),
-    ('https://creativecommons.org/licenses/by/3.0/',
-     ugettext_lazy('Attribution CC BY')),
-    ('https://creativecommons.org/licenses/by-sa/3.0/',
-     ugettext_lazy('Attribution-ShareAlike CC BY-SA')),
-)
-
-DATA_LICENSES_CHOICES = (
-    ('No License', ugettext_lazy('No License')),
-    ('http://opendatacommons.org/licenses/pddl/summary/',
-     ugettext_lazy('PDDL')),
-    ('http://opendatacommons.org/licenses/by/summary/',
-     ugettext_lazy('ODC-BY')),
-    ('http://opendatacommons.org/licenses/odbl/summary/',
-     ugettext_lazy('ODBL')),
-)
-
-PERM_CHOICES = (
-    ('view', ugettext_lazy('Can view')),
-    ('edit', ugettext_lazy('Can edit')),
-    ('report', ugettext_lazy('Can submit to')),
-    ('validate', ugettext_lazy('Can validate')),
-    ('remove', ugettext_lazy('Remove permissions')),
-)
-
-
-class DataLicenseForm(forms.Form):
-    value = forms.ChoiceField(choices=DATA_LICENSES_CHOICES,
-                              widget=forms.Select(
-                                  attrs={'disabled': 'disabled',
-                                         'id': 'data-license'}))
-
-
-class FormLicenseForm(forms.Form):
-    value = forms.ChoiceField(choices=FORM_LICENSES_CHOICES,
-                              widget=forms.Select(
-                                  attrs={'disabled': 'disabled',
-                                         'id': 'form-license'}))
-
-
-class PermissionForm(forms.Form):
-    for_user = forms.CharField(
-        widget=forms.TextInput(
-            attrs={
-                'id': 'autocomplete',
-                'data-provide': 'typeahead',
-                'autocomplete': 'off'
-            })
-    )
-    perm_type = forms.ChoiceField(choices=PERM_CHOICES, widget=forms.Select())
-
-    def __init__(self, username):
-        self.username = username
-        super(PermissionForm, self).__init__()
 
 
 class UserProfileForm(ModelForm):
@@ -221,16 +166,6 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
         return self.validate_username(self.cleaned_data['username'])
 
 
-class SourceForm(forms.Form):
-    source = forms.FileField(label=ugettext_lazy(u"Source document"),
-                             required=True)
-
-
-class SupportDocForm(forms.Form):
-    doc = forms.FileField(label=ugettext_lazy(u"Supporting document"),
-                          required=True)
-
-
 class MediaForm(forms.Form):
     media = forms.FileField(label=ugettext_lazy(u"Media upload"),
                             required=True)
@@ -242,76 +177,14 @@ class MediaForm(forms.Form):
                                         allowed .png .jpg .mp3 .3gp .wav')
 
 
-class QuickConverterFile(forms.Form):
+class QuickConverterForm(forms.Form):
+
     xls_file = forms.FileField(
-        label=ugettext_lazy(u'XLS File'), required=False)
-
-
-class QuickConverterURL(forms.Form):
-    xls_url = forms.URLField(label=ugettext_lazy('XLS URL'),
-                             required=False)
-
-
-class QuickConverterDropboxURL(forms.Form):
-    dropbox_xls_url = forms.URLField(
-        label=ugettext_lazy('XLS URL'), required=False)
-
-
-class QuickConverterTextXlsForm(forms.Form):
-    text_xls_form = forms.CharField(
-        label=ugettext_lazy('XLSForm Representation'), required=False)
-
-
-class QuickConverter(QuickConverterFile, QuickConverterURL,
-                     QuickConverterDropboxURL, QuickConverterTextXlsForm):
-    validate = URLValidator()
+        label=ugettext_lazy(u'XLS File'), required=True)
 
     def publish(self, user, id_string=None):
         if self.is_valid():
-            # If a text (csv) representation of the xlsform is present,
-            # this will save the file and pass it instead of the 'xls_file'
-            # field.
-            if 'text_xls_form' in self.cleaned_data\
-               and self.cleaned_data['text_xls_form'].strip():
-                csv_data = self.cleaned_data['text_xls_form']
-                # "Note that any text-based field - such as CharField or
-                # EmailField - always cleans the input into a Unicode string"
-                # (https://docs.djangoproject.com/en/1.8/ref/forms/api/#django.forms.Form.cleaned_data).
-                csv_data = csv_data.encode('utf-8')
-                # requires that csv forms have a settings with an id_string or
-                # form_id
-                _sheets = csv_to_dict(StringIO(csv_data))
-                try:
-                    _settings = _sheets['settings'][0]
-                    if 'id_string' in _settings:
-                        _name = '%s.csv' % _settings['id_string']
-                    else:
-                        _name = '%s.csv' % _settings['form_id']
-                except (KeyError, IndexError) as e:
-                    raise ValueError('CSV XLSForms must have a settings sheet'
-                                     ' and id_string or form_id')
+            cleaned_xls_file = self.cleaned_data['xls_file']
 
-                cleaned_xls_file = \
-                    default_storage.save(
-                        upload_to(None, _name, user.username),
-                        ContentFile(csv_data))
-            else:
-                cleaned_xls_file = self.cleaned_data['xls_file']
-
-            if not cleaned_xls_file:
-                cleaned_url = self.cleaned_data['xls_url']
-                if cleaned_url.strip() == u'':
-                    cleaned_url = self.cleaned_data['dropbox_xls_url']
-                cleaned_xls_file = urlparse(cleaned_url)
-                cleaned_xls_file = \
-                    '_'.join(cleaned_xls_file.path.split('/')[-2:])
-                if cleaned_xls_file[-4:] != '.xls':
-                    cleaned_xls_file += '.xls'
-                cleaned_xls_file = \
-                    upload_to(None, cleaned_xls_file, user.username)
-                self.validate(cleaned_url)
-                xls_data = ContentFile(urllib2.urlopen(cleaned_url).read())
-                cleaned_xls_file = \
-                    default_storage.save(cleaned_xls_file, xls_data)
             # publish the xls
             return publish_xls_form(cleaned_xls_file, user, id_string)

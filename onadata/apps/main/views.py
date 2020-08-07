@@ -28,9 +28,7 @@ from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
-from onadata.apps.main.forms import FormLicenseForm, \
-    DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
-    QuickConverter, SourceForm, PermissionForm, MediaForm
+from onadata.apps.main.forms import QuickConverterForm, MediaForm
 from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
@@ -60,7 +58,7 @@ def login_redirect(request):
 
 def profile(request, username):
     content_user = get_object_or_404(User, username__iexact=username)
-    form = QuickConverter()
+    form = QuickConverterForm()
     data = {'form': form}
 
     # profile view...
@@ -68,8 +66,6 @@ def profile(request, username):
     if content_user == request.user:
         show_dashboard = True
         all_forms = content_user.xforms.count()
-        form = QuickConverterFile()
-        form_url = QuickConverterURL()
 
         request_url = request.build_absolute_uri(
             "/%s" % request.user.username)
@@ -111,7 +107,6 @@ def profile(request, username):
             'all_forms': all_forms,
             'show_dashboard': show_dashboard,
             'form': form,
-            'form_url': form_url,
             'url': url,
             'user_xforms': user_xforms,
             'xforms_list': xforms_list,
@@ -132,31 +127,6 @@ def redirect_to_public_link(request, uuid):
         'username': xform.user.username,
         'id_string': xform.id_string
     }))
-
-
-def set_xform_owner_data(data, xform, request, username, id_string):
-    data['form_license_form'] = FormLicenseForm(
-        initial={'value': data['form_license']})
-    data['data_license_form'] = DataLicenseForm(
-        initial={'value': data['data_license']})
-    data['doc_form'] = SupportDocForm()
-    data['source_form'] = SourceForm()
-    data['media_form'] = MediaForm()
-    users_with_perms = []
-
-    for perm in get_users_with_perms(xform, attach_perms=True).items():
-        has_perm = []
-        if 'change_xform' in perm[1]:
-            has_perm.append(_(u"Can Edit"))
-        if 'view_xform' in perm[1]:
-            has_perm.append(_(u"Can View"))
-        if 'report_xform' in perm[1]:
-            has_perm.append(_(u"Can submit to"))
-        if 'validate_xform' in perm[1]:
-            has_perm.append(_(u"Can Validate"))
-        users_with_perms.append((perm[0], u" | ".join(has_perm)))
-    data['users_with_perms'] = users_with_perms
-    data['permission_form'] = PermissionForm(username)
 
 
 @require_GET
@@ -182,10 +152,6 @@ def show(request, username=None, id_string=None, uuid=None):
     data['xform'] = xform
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
-    data['source'] = MetaData.source(xform)
-    data['form_license'] = MetaData.form_license(xform).data_value
-    data['data_license'] = MetaData.data_license(xform).data_value
-    data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
 
     if is_owner:
@@ -219,13 +185,10 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
     data['source'] = MetaData.source(xform)
-    data['form_license'] = MetaData.form_license(xform).data_value
-    data['data_license'] = MetaData.data_license(xform).data_value
-    data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
 
     if is_owner:
-        set_xform_owner_data(data, xform, request, username, id_string)
+        data['media_form'] = MediaForm()
 
     return render(request, "show_form_settings.html", data)
 
@@ -286,12 +249,6 @@ def edit(request, username, id_string):
             }))
 
     return HttpResponseForbidden(_(u'Update failed.'))
-
-
-def privacy(request):
-    template = 'privacy.html'
-
-    return render(request, 'base.html', {'template': template})
 
 
 def download_media_data(request, username, id_string, data_id):
