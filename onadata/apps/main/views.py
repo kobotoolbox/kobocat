@@ -22,17 +22,14 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
-from guardian.shortcuts import get_users_with_perms
 from rest_framework.authtoken.models import Token
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import Instance, XForm
-from onadata.apps.logger.views import enter_data
 from onadata.apps.main.forms import QuickConverterForm, MediaForm
 from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
-    publish_form
+from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
     check_and_set_user_and_form,
     get_xform_and_perms,

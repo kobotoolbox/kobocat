@@ -92,10 +92,6 @@ urlpatterns = patterns(
         kwargs={'export_type': 'xls'}),
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
         'onadata.apps.viewer.views.kml_export'),
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/enter-data",
-        'onadata.apps.logger.views.enter_data', name='enter_data'),
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/edit-data/(?P<data_id>"
-        "\d+)$", 'onadata.apps.logger.views.edit_data', name='edit_data'),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
         "/new$", 'onadata.apps.viewer.views.create_export'),
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
