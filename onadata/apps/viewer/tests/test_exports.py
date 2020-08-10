@@ -1044,19 +1044,6 @@ class TestExports(TestBase):
                     output['children/cartoons/characters'])[0],
                 expected_output['children/cartoons/characters'][index])
 
-    def test_generate_csv_zip_export(self):
-        # publish xls form
-        self._publish_transportation_form_and_submit_instance()
-        # create export db object
-        export = generate_export(
-            Export.CSV_ZIP_EXPORT, "zip", self.user.username,
-            self.xform.id_string, group_delimiter='/',
-            split_select_multiples=True)
-        storage = get_storage_class()()
-        self.assertTrue(storage.exists(export.filepath))
-        path, ext = os.path.splitext(export.filename)
-        self.assertEqual(ext, '.zip')
-
     def test_dict_to_joined_export_notes(self):
         submission = {
             "_id": 579828,

@@ -45,8 +45,6 @@ EXPORT_EXT = {
     'xls': Export.XLS_EXPORT,
     'xlsx': Export.XLS_EXPORT,
     'csv': Export.CSV_EXPORT,
-    'csvzip': Export.CSV_ZIP_EXPORT,
-    'savzip': Export.SAV_ZIP_EXPORT,
 }
 
 
@@ -67,8 +65,6 @@ def _get_extension_from_export_type(export_type):
 
     if export_type == Export.XLS_EXPORT:
         extension = 'xlsx'
-    elif export_type in [Export.CSV_ZIP_EXPORT, Export.SAV_ZIP_EXPORT]:
-        extension = 'zip'
 
     return extension
 
@@ -237,7 +233,6 @@ published using the `owner` parameter, which specifies the username to the
 account.
 
 - `xls_file`: the xlsform file.
-- `xls_url`: the url to an xlsform
 - `owner`: username to the target account (Optional)
 
 <pre class="prettyprint">
@@ -247,11 +242,6 @@ account.
 >       curl -X POST -F xls_file=@/path/to/form.xls \
 https://example.com/api/v1/forms
 >
-> OR post an xlsform url
->
->       curl -X POST -d \
-"xls_url=https://example.com/ukanga/forms/tutorial/form.xls" \
-https://example.com/api/v1/forms
 
 > Response
 >
@@ -260,9 +250,7 @@ https://example.com/api/v1/forms
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
 >           "description": "",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -317,9 +305,7 @@ https://example.com/api/v1/forms
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
 >           "description": "",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -353,9 +339,7 @@ https://example.com/api/v1/forms/28058
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
 >           "description": "Le description",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -370,7 +354,7 @@ https://example.com/api/v1/forms/28058
 
 You may overwrite the form's contents while preserving its submitted data,
 `id_string` and all other attributes, by sending a `PATCH` that includes
-`xls_file` or `text_xls_form`. Use with caution, as this may compromise the
+`xls_file`. Use with caution, as this may compromise the
 methodology of your study!
 
 <pre class="prettyprint">
@@ -673,9 +657,8 @@ data (instance/submission per row)
         if isinstance(survey, XForm):
             xform = XForm.objects.get(pk=survey.pk)
             # The XForm has been created, but `publish_xlsform` relies on
-            # `onadata.apps.main.forms.QuickConverter`, which uses standard
-            # Django forms and only recognizes the `xls_file`, `xls_url`,
-            # `dropbox_xls_url`, and `text_xls_form` fields.
+            # `onadata.apps.main.forms.QuickConverterForm`, which uses standard
+            # Django forms and only recognizes the `xls_file` fields.
             # Use the DRF serializer to update the XForm with values for other
             # fields.
             serializer = XFormSerializer(

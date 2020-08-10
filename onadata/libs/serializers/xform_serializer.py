@@ -51,7 +51,9 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             'json', 'xml', 'date_created', 'date_modified', 'encrypted',
             'last_submission_time')
         exclude = ('json', 'xml', 'xls', 'user',
-                   'has_start_time', 'shared', 'shared_data')
+                   'has_start_time', 'shared', 'shared_data',
+                   'allows_sms',
+                   'sms_id_string')
 
     # Again, this is to match unit tests
     @property
@@ -70,6 +72,12 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
                                       many=True, context=self.context).data
 
         return []
+
+    def get_allows_sms(self, obj):
+        return False
+
+    def get_sms_id_string(self, obj):
+        return obj.id_string
 
 
 class XFormListSerializer(serializers.Serializer):

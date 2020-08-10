@@ -64,10 +64,10 @@ class XForm(BaseModel):
     shared = models.BooleanField(default=False)
     shared_data = models.BooleanField(default=False)
     downloadable = models.BooleanField(default=True)
-    allows_sms = models.BooleanField(default=False)
     encrypted = models.BooleanField(default=False)
 
     # the following fields are filled in automatically
+    allows_sms = models.BooleanField(default=False)
     sms_id_string = models.SlugField(
         editable=False,
         verbose_name=ugettext_lazy("SMS ID"),
@@ -199,15 +199,12 @@ class XForm(BaseModel):
             raise XLSFormError(_('In strict mode, the XForm ID must be a '
                                'valid slug and contain no spaces.'))
 
-        if not self.sms_id_string:
-            try:
-                # try to guess the form's wanted sms_id_string
-                # from it's json rep (from XLSForm)
-                # otherwise, use id_string to ensure uniqueness
-                self.sms_id_string = json.loads(self.json).get('sms_keyword',
-                                                               self.id_string)
-            except:
-                self.sms_id_string = self.id_string
+        # `sms_id_string` and `allows_sms` are deprecated fields.
+        # We keep them to avoid altering `logger_xform` which can be really big
+        # to avoid a long downtime during a migration.
+        if not self.pk or not self.sms_id_string:
+            self.sms_id_string = self.id_string
+            self.allows_sms = False
 
         super(XForm, self).save(*args, **kwargs)
 
