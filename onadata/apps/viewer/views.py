@@ -222,7 +222,7 @@ def add_submission_with(request, username, id_string):
 
 
 def thank_you_submission(request, username, id_string):
-    return HttpResponse("Thank Yo")
+    return HttpResponse("Thank You")
 
 
 def data_export(request, username, id_string, export_type):
