@@ -249,7 +249,8 @@ class XForm(BaseModel):
 
     def time_of_last_submission_update(self):
         try:
-            # we also consider deleted instances in this case
+            # We don't need to filter on `deleted_at` field anymore.
+            # Instances are really deleted and not flagged as deleted.
             return self.instances.latest("date_modified").date_modified
         except ObjectDoesNotExist:
             pass

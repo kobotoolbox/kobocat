@@ -162,10 +162,16 @@ class Export(models.Model):
         except cls.DoesNotExist:
             return True
         else:
-            if latest_export.time_of_last_submission is not None \
-                    and xform.time_of_last_submission_update() is not None:
-                return latest_export.time_of_last_submission <\
-                    xform.time_of_last_submission_update()
+            xform.refresh_from_db(fields=['date_modified'])
+            xform_last_submission_time = xform.time_of_last_submission_update()
+            export_last_submission_time = latest_export.time_of_last_submission
+            if export_last_submission_time is None:
+                return True
+
+            if export_last_submission_time < xform.date_modified:
+                return True
+            elif xform_last_submission_time is not None:
+                return export_last_submission_time < xform_last_submission_time
             else:
                 # return true if we can't determine the status, to force
                 # auto-generation

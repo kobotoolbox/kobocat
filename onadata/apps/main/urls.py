@@ -56,8 +56,6 @@ urlpatterns = patterns(
     # form specific
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)$',
         'onadata.apps.main.views.show'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delete_data$',
-        'onadata.apps.main.views.delete_data', name='delete_data'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/edit$',
         'onadata.apps.main.views.edit'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/photos',

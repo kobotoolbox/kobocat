@@ -619,7 +619,7 @@ def query_mongo(username, id_string, query=None, hide_deleted=True):
 
 def should_create_new_export(xform, export_type):
     if Export.objects.filter(
-            xform=xform, export_type=export_type).count() == 0\
+            xform=xform, export_type=export_type).count() == 0 \
             or Export.exports_outdated(xform, export_type=export_type):
         return True
     return False
