@@ -6,7 +6,6 @@ import logging
 import os
 import re
 from datetime import datetime
-from time import strftime, strptime
 
 import rest_framework.request
 from django.conf import settings
@@ -27,7 +26,6 @@ from django.views.decorators.http import require_POST
 from rest_framework.settings import api_settings
 
 from onadata.apps.logger.models import XForm, Attachment
-from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.tasks import create_async_export
 from onadata.libs.exceptions import NoRecordsFoundError
@@ -64,65 +62,9 @@ def _set_submission_time_to_query(query, request):
     return query
 
 
-def encode(time_str):
-    time = strptime(time_str, "%Y_%m_%d_%H_%M_%S")
-    return strftime("%Y-%m-%d %H:%M:%S", time)
-
-
 def format_date_for_mongo(x):
     return datetime.strptime(x, '%y_%m_%d_%H_%M_%S')\
         .strftime('%Y-%m-%dT%H:%M:%S')
-
-
-def instances_for_export(dd, start=None, end=None):
-    if start and not end:
-        return dd.instances.filter(date_created__gte=start)
-    elif end and not start:
-        return dd.instances.filter(date_created__lte=end)
-    elif start and end:
-        return dd.instances.filter(date_created__gte=start,
-                                   date_created__lte=end)
-
-
-def dd_for_params(id_string, owner, request):
-    start = end = None
-    dd = DataDictionary.objects.get(id_string__exact=id_string,
-                                    user=owner)
-    if request.GET.get('start'):
-        try:
-            start = encode(request.GET['start'])
-        except ValueError:
-            # bad format
-            return [False,
-                    HttpResponseBadRequest(
-                        _('Start time format must be YY_MM_DD_hh_mm_ss'))
-                    ]
-    if request.GET.get('end'):
-        try:
-            end = encode(request.GET['end'])
-        except ValueError:
-            # bad format
-            return [False,
-                    HttpResponseBadRequest(
-                        _('End time format must be YY_MM_DD_hh_mm_ss'))
-                    ]
-    if start or end:
-        dd.instances_for_export = instances_for_export(dd, start, end)
-
-    return [True, dd]
-
-
-def parse_label_for_display(pi, xpath):
-    label = pi.data_dictionary.get_label(xpath)
-    if not type(label) == dict:
-        label = {'Unknown': label}
-    return label.items()
-
-
-def average(values):
-    if len(values):
-        return sum(values, 0.0) / len(values)
-    return None
 
 
 def data_export(request, username, id_string, export_type):
