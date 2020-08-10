@@ -25,7 +25,7 @@ urlpatterns = patterns(
     url(r'^api/v1', RedirectView.as_view(url='/api/v1/')),
 
     # django default stuff
-    url(r'^accounts/', include('onadata.apps.main.registration_urls')),
+    url(r'^accounts/', include('registration.auth_urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
