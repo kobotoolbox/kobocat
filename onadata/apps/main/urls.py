@@ -62,8 +62,6 @@ urlpatterns = patterns(
         'onadata.apps.main.views.form_photos'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/(?P<dat'
         'a_id>\d+)', 'onadata.apps.main.views.download_media_data'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/preview$',
-        'onadata.apps.main.views.enketo_preview'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/form_settings$',
         'onadata.apps.main.views.show_form_settings', name='show_form_settings'),
 

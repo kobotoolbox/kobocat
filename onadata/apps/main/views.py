@@ -359,56 +359,6 @@ def form_photos(request, username, id_string):
     return render(request, 'form_photos.html', data)
 
 
-# @require_POST
-# @login_required
-# def delete_data(request, username=None, id_string=None):
-#     xform, owner = check_and_set_user_and_form(username, id_string, request)
-#     response_text = u''
-#     if not xform or not has_edit_permission(
-#         xform, owner, request
-#     ):
-#         return HttpResponseForbidden(_(u'Not shared.'))
-#
-#     data_id = request.POST.get('id')
-#     if not data_id:
-#         return HttpResponseBadRequest(_(u"id must be specified"))
-#
-#     Instance.set_deleted_at(data_id)
-#     audit = {
-#         'xform': xform.id_string
-#     }
-#     audit_log(
-#         Actions.SUBMISSION_DELETED, request.user, owner,
-#         _("Deleted submission with id '%(record_id)s' "
-#             "on '%(id_string)s'.") %
-#         {
-#             'id_string': xform.id_string,
-#             'record_id': data_id
-#         }, audit, request)
-#     response_text = json.dumps({"success": "Deleted data %s" % data_id})
-#     if 'callback' in request.GET and request.GET.get('callback') != '':
-#         callback = request.GET.get('callback')
-#         response_text = ("%s(%s)" % (callback, response_text))
-#
-#     return HttpResponse(response_text, content_type='application/json')
-
-
-def enketo_preview(request, username, id_string):
-    xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__exact=id_string)
-    owner = xform.user
-    if not has_permission(xform, owner, request, xform.shared):
-        return HttpResponseForbidden(_(u'Not shared.'))
-    enekto_preview_url = \
-        "%(enketo_url)s?server=%(profile_url)s&id=%(id_string)s" % {
-            'enketo_url': settings.ENKETO_PREVIEW_URL,
-            'profile_url': request.build_absolute_uri(
-                reverse(profile, kwargs={'username': owner.username})),
-            'id_string': xform.id_string
-        }
-    return HttpResponseRedirect(enekto_preview_url)
-
-
 @require_GET
 @login_required
 def username_list(request):
