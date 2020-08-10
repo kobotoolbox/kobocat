@@ -1,7 +1,5 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-# coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
