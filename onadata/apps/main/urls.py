@@ -46,8 +46,6 @@ urlpatterns = patterns(
         'onadata.apps.viewer.views.attachment_url'),
     url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog',
         {'packages': ('main', 'viewer',)}),
-    url(r'^typeahead_usernames', 'onadata.apps.main.views.username_list',
-        name='username_list'),
     url(r'^(?P<username>[^/]+)/$',
         'onadata.apps.main.views.profile', name='user_profile'),
     url(r'^(?P<username>[^/]+)/api-token$',
