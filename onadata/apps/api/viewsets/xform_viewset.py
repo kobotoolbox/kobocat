@@ -161,8 +161,7 @@ def response_for_format(form, format=None):
 def should_regenerate_export(xform, export_type, request):
     return should_create_new_export(xform, export_type) or\
         'start' in request.GET or 'end' in request.GET or\
-        'query' in request.GET or 'meta' in request.GET or\
-        'token' in request.GET
+        'query' in request.GET
 
 
 def value_for_type(form, field, value):
@@ -187,8 +186,7 @@ def log_export(request, xform, export_type):
         }, audit, request)
 
 
-def custom_response_handler(request, xform, query, export_type,
-                            token=None, meta=None):
+def custom_response_handler(request, xform, query, export_type):
     export_type = _get_export_type(export_type)
 
     # check if we need to re-generate,
@@ -523,22 +521,6 @@ https://example.com/api/v1/forms/28058/labels/hello%20world
 >
 >        HTTP 200 OK
 
-## Get webform/enketo link
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/forms/<code>{pk}</code>/enketo</pre>
-
-> Request
->
->       curl -X GET \
-https://example.com/api/v1/forms/28058/enketo
->
-> Response
->
->       {"enketo_url": "https://h6ic6.enketo.org/webform"}
->
->        HTTP 200 OK
-
 ## Get form data in xls, csv format.
 
 Get form data exported as xls, csv, csv zip, sav zip format.
@@ -547,11 +529,6 @@ Where:
 
 - `pk` - is the form unique identifier
 - `format` - is the data export format i.e csv, xls, csvzip, savzip
-
-Params for the custom xls report
-
-- `meta`  - the metadata id containing the template url
--  `token`  - the template url
 
 <pre class="prettyprint">
 <b>GET</b> /api/v1/forms/{pk}.{format}</code>
@@ -566,46 +543,6 @@ Params for the custom xls report
 > Response
 >
 >        HTTP 200 OK
-
-> Example 2 Custom XLS reports (beta)
->
->       curl -X GET https://example.com/api/v1/forms/28058.xls?meta=12121
->                   or
->       curl -X GET https://example.com/api/v1/forms/28058.xls?token={url}
->
-> XLS file is downloaded
->
-> Response
->
->        HTTP 200 OK
-
-## Clone a form to a specific user account
-
-You can clone a form to a specific user account using `GET` with
-
-- `username` of the user you want to clone the form to
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/forms/<code>{pk}</code>/clone
-</pre>
-
-> Example
->
->       curl -X GET https://example.com/api/v1/forms/123/clone \
--d username=alice
-
-> Response
->
->        HTTP 201 CREATED
->       {
->           "url": "https://example.com/api/v1/forms/124",
->           "formid": 124,
->           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1e",
->           "id_string": "Birds_cloned_1",
->           "sms_id_string": "Birds_cloned_1",
->           "title": "Birds_cloned_1",
->           ...
->       }
 
 ## Import CSV data to existing form
 
@@ -633,8 +570,6 @@ data (instance/submission per row)
         renderers.XLSRenderer,
         renderers.XLSXRenderer,
         renderers.CSVRenderer,
-        renderers.CSVZIPRenderer,
-        renderers.SAVZIPRenderer,
         renderers.RawXMLRenderer
     ]
     queryset = XForm.objects.all()
@@ -677,7 +612,7 @@ data (instance/submission per row)
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk, *args, **kwargs):
-        if 'xls_file' in request.FILES or 'text_xls_form' in request.data:
+        if 'xls_file' in request.FILES:
             # A new XLSForm has been uploaded and will replace the existing
             # form
             existing_xform = get_object_or_404(XForm, pk=pk)
@@ -711,25 +646,6 @@ data (instance/submission per row)
         response['Content-Disposition'] = 'attachment; filename=' + filename
 
         return response
-
-    @detail_route(methods=['GET'])
-    def enketo(self, request, **kwargs):
-        self.object = self.get_object()
-        form_url = _get_form_url(request, self.object.user.username)
-
-        data = {'message': _("Enketo not properly configured.")}
-        http_status = status.HTTP_400_BAD_REQUEST
-
-        try:
-            url = enketo_url(form_url, self.object.id_string)
-        except EnketoError:
-            pass
-        else:
-            if url:
-                http_status = status.HTTP_200_OK
-                data = {"enketo_url": url}
-
-        return Response(data, http_status)
 
     def retrieve(self, request, *args, **kwargs):
         xform = self.get_object()
