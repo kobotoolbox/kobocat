@@ -190,7 +190,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         }
         request = self.factory.get('/', **self.extra)
         # test for unsupported format
-        response = view(request, pk=formid, format='csvzip')
+        response = view(request, pk=formid, format='xlsx')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # test for supported formats
@@ -269,34 +269,6 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = view(request, pk=formid, label='hello')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
-
-    def test_enketo_url_no_account(self):
-        self.publish_xls_form()
-        view = XFormViewSet.as_view({
-            'get': 'enketo'
-        })
-        formid = self.xform.pk
-        # no tags
-        request = self.factory.get('/', **self.extra)
-        with HTTMock(enketo_error_mock):
-            response = view(request, pk=formid)
-            data = {'message': "Enketo not properly configured."}
-
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertEqual(response.data, data)
-
-    def test_enketo_url(self):
-        self.publish_xls_form()
-        view = XFormViewSet.as_view({
-            'get': 'enketo'
-        })
-        formid = self.xform.pk
-        # no tags
-        request = self.factory.get('/', **self.extra)
-        with HTTMock(enketo_mock):
-            response = view(request, pk=formid)
-            data = {"enketo_url": "https://dmfrm.enketo.org/webform"}
-            self.assertEqual(response.data, data)
 
     def test_publish_xlsform(self):
         view = XFormViewSet.as_view({
