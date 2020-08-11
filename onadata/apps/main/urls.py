@@ -49,8 +49,6 @@ urlpatterns = patterns(
         'onadata.apps.viewer.views.attachment_url'),
     url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog',
         {'packages': ('main', 'viewer',)}),
-    url(r'^typeahead_usernames', 'onadata.apps.main.views.username_list',
-        name='username_list'),
     url(r'^(?P<username>[^/]+)/$',
         'onadata.apps.main.views.profile', name='user_profile'),
     url(r'^(?P<username>[^/]+)/api-token$',
@@ -65,8 +63,6 @@ urlpatterns = patterns(
         'onadata.apps.main.views.form_photos'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/(?P<dat'
         'a_id>\d+)', 'onadata.apps.main.views.download_media_data'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/preview$',
-        'onadata.apps.main.views.enketo_preview'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/form_settings$',
         'onadata.apps.main.views.show_form_settings', name='show_form_settings'),
 

@@ -1,7 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import json
 import os
 
 from django.conf import settings
@@ -11,7 +10,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
 from django.http import HttpResponseNotFound
 from django.http import HttpResponseRedirect
@@ -23,16 +21,14 @@ from django.views.decorators.http import require_GET
 from rest_framework.authtoken.models import Token
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
-from onadata.apps.logger.models import Instance, XForm
+from onadata.apps.logger.models import XForm
 from onadata.apps.main.forms import QuickConverterForm, MediaForm
-from onadata.apps.main.models import AuditLog, UserProfile, MetaData
+from onadata.apps.main.models import UserProfile, MetaData
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
     check_and_set_user_and_form,
     get_xform_and_perms,
-    has_edit_permission,
-    has_permission,
     set_profile_data
 )
 
@@ -355,31 +351,3 @@ def form_photos(request, username, id_string):
     data['profilei'], created = UserProfile.objects.get_or_create(user=owner)
 
     return render(request, 'form_photos.html', data)
-
-def enketo_preview(request, username, id_string):
-    xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__exact=id_string)
-    owner = xform.user
-    if not has_permission(xform, owner, request, xform.shared):
-        return HttpResponseForbidden(_('Not shared.'))
-    enekto_preview_url = \
-        "%(enketo_url)s?server=%(profile_url)s&id=%(id_string)s" % {
-            'enketo_url': settings.ENKETO_PREVIEW_URL,
-            'profile_url': request.build_absolute_uri(
-                reverse(profile, kwargs={'username': owner.username})),
-            'id_string': xform.id_string
-        }
-    return HttpResponseRedirect(enekto_preview_url)
-
-
-@require_GET
-@login_required
-def username_list(request):
-    data = []
-    query = request.GET.get('query', None)
-    if query:
-        users = User.objects.values('username')\
-            .filter(username__startswith=query, is_active=True, pk__gte=0)
-        data = [user['username'] for user in users]
-
-    return HttpResponse(json.dumps(data), content_type='application/json')
