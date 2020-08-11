@@ -244,7 +244,6 @@ INSTALLED_APPS = (
     'onadata.apps.api',
     'guardian',
     'onadata.libs',
-    'onadata.apps.export',
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',

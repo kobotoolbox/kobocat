@@ -100,8 +100,7 @@ urlpatterns = patterns(
     url(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
         "/(?P<filename>[^/]+)$",
         'onadata.apps.viewer.views.export_download'),
-    url(r'^(?P<username>\w+)/exports/', include('onadata.apps.export.urls')),
-
+    
     # odk data urls
     url(r"^submission$",
         XFormSubmissionApi.as_view({'post': 'create', 'head': 'create'}),
