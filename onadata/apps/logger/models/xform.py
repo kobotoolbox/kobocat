@@ -287,7 +287,7 @@ class XForm(BaseModel):
                 if file_path.endswith('.csv'):
                     return convert_csv_to_xls(ff.read())
                 else:
-                    return StringIO(ff.read())
+                    return BytesIO(ff.read())
 
     def to_kpi_content_schema(self):
         """
@@ -297,9 +297,12 @@ class XForm(BaseModel):
         if not xls_to_dicts:
             raise ImportError('formpack module needed')
         content = xls_to_dicts(self._xls_file_io())
+        if 'settings' in content and len(content['settings']) > 0:
+            content['settings'] = content['settings'][0]
+
         # a temporary fix to the problem of list_name alias
         return json.loads(re.sub('list name', 'list_name',
-                      json.dumps(content, indent=4)))
+                          json.dumps(content, indent=4)))
 
     def to_xlsform(self):
         """
