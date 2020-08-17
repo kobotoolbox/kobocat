@@ -45,15 +45,15 @@ def build_formpack(username, id_string):
 
 
 def build_export_context(request, username, id_string):
-    hierarchy_in_labels = request.REQUEST.get(
+    hierarchy_in_labels = request.GET.get(
         'hierarchy_in_labels', ''
     ).lower() in ('true', 'on')
-    group_sep = request.REQUEST.get('group_sep', '/')
+    group_sep = request.GET.get('group_sep', '/')
 
     user, xform, formpack = build_formpack(username, id_string)
 
     translations = formpack.available_translations
-    lang = request.REQUEST.get('lang', None) or next(iter(translations), None)
+    lang = request.GET.get('lang', None) or next(iter(translations), None)
 
     options = {'versions': 'v1',
                'group_sep': group_sep,
@@ -94,7 +94,7 @@ def build_export_filename(export, extension):
 
 @readable_xform_required
 def export_menu(request, username, id_string):
-    req = request.REQUEST
+    req = request.GET
     export_type = req.get('type', None)
     if export_type:
         q = QueryDict('', mutable=True)
@@ -164,13 +164,13 @@ def csv_export(request, username, id_string):
 
 @readable_xform_required
 def html_export(request, username, id_string):
-    limit = int(request.REQUEST.get('limit', 100))
+    limit = int(request.GET.get('limit', 100))
 
     cursor = get_instances_for_user_and_form(username, id_string)
     paginator = Paginator(cursor, limit, request=request)
 
     try:
-        page = paginator.page(request.REQUEST.get('page', 1))
+        page = paginator.page(request.GET.get('page', 1))
     except (EmptyPage, PageNotAnInteger):
         try:
             page = paginator.page(1)
@@ -211,14 +211,14 @@ def auto_report(request, username, id_string):
     user, xform, formpack = build_formpack(username, id_string)
     report = formpack.autoreport()
 
-    limit = int(request.REQUEST.get('limit', 20))
-    split_by = request.REQUEST.get('split_by') or None
+    limit = int(request.GET.get('limit', 20))
+    split_by = request.GET.get('split_by') or None
 
     fields = [field.name for field in formpack.get_fields_for_versions()]
     paginator = Paginator(fields, limit, request=request)
 
     try:
-        page = paginator.page(request.REQUEST.get('page', 1))
+        page = paginator.page(request.GET.get('page', 1))
     except (EmptyPage, PageNotAnInteger):
         try:
             page = paginator.page(1)
@@ -228,7 +228,7 @@ def auto_report(request, username, id_string):
     # remove fields in a group
     split_by_fields = formpack.get_fields_for_versions(data_types="select_one")
     translations = formpack.available_translations
-    lang = request.REQUEST.get('lang', None) or next(iter(translations), None)
+    lang = request.GET.get('lang', None) or next(iter(translations), None)
 
     ctx = {
         'page': page,
