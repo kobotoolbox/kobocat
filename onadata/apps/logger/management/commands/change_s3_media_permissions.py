@@ -24,7 +24,7 @@ class Command(BaseCommand):
                 "Expected %s as permission") % ' or '.join(permissions))
 
         try:
-            s3 = get_storage_class('storages.backends.s3boto.S3BotoStorage')()
+            s3 = get_storage_class('storages.backends.s3boto3.S3Boto3Storage')()
         except:
             print(_("Missing necessary libraries. Try running: pip install "
                     "-r requirements-s3.pip"))

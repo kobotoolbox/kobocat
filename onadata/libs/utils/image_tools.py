@@ -1,13 +1,13 @@
 # coding: utf-8
-from io import StringIO
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
-from PIL import Image
 import requests
-
 from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.files.base import ContentFile
+from PIL import Image
+
 from onadata.libs.utils.viewer_tools import get_path
 
 
@@ -81,7 +81,7 @@ def resize(filename):
         original_path = filename
         req = requests.get(path)
         if req.status_code == 200:
-            im = StringIO(req.content)
+            im = BytesIO(req.content)
             image = Image.open(im)
 
     if image:

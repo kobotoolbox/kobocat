@@ -534,6 +534,7 @@ class TestProcess(TestBase):
         self.assertEqual(
             calculate_bind_node.getAttribute("calculate"), "'%s'" % xform.uuid)
 
+    @unittest.skip('Removed in kobokitten-remove-ui-CUD-actions-unicode')
     def test_csv_publishing(self):
         csv_text = '\n'.join([
             'survey,,', ',type,name,label',

@@ -7,6 +7,7 @@
 -e git+https://github.com/dimagi/django-digest@52ba7edeb326efd97d5670273bb6fa8b0539e501#egg=django_digest
 
 # formpack exports
+# ToDo Remove when `kobokitten-remove-ui-CUD-actions-unicode is merged.
 git+https://github.com/kobotoolbox/formpack.git@52f77e3519fd1079ce3451f9a5c7c27002e9f3f0#egg=formpack
 
 # captcha
@@ -17,6 +18,11 @@ https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#
 
 # ssrf
 -e git+https://github.com/kobotoolbox/ssrf-protect@755efe16694273ce66060a51e04f973dc034ca4e#egg=ssrf_protect
+
+# jnm's django storages
+# Necessary to use this fork until the resolution of
+# https://github.com/jschneier/django-storages/issues/566
+-e git+https://github.com/jnm/django-storages@s3boto3_accurate_tell#egg=django_storages
 
 # Regular PyPI packages
 pytz
@@ -88,4 +94,5 @@ django-oauth-toolkit
 simplejson
 djangorestframework-guardian
 
-django-storages
+# Django Storage AWS
+boto3

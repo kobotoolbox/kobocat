@@ -206,7 +206,7 @@ class TestFormMetadata(TestBase):
         media_file = os.path.join(
             self.this_directory, 'fixtures', 'transportation',
             'transportation.csv')
-        f = InMemoryUploadedFile(open(media_file),
+        f = InMemoryUploadedFile(open(media_file, 'rb'),
                                  'media',
                                  'transportation.csv',
                                  'application/octet-stream',
