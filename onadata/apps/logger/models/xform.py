@@ -33,12 +33,6 @@ from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.models.base_model import BaseModel
 
 
-try:
-    from formpack.utils.xls_to_ss_structure import xls_to_dicts
-except ImportError:
-    xls_to_dicts = False
-
-
 XFORM_TITLE_LENGTH = 255
 title_pattern = re.compile(r"<h:title>([^<]+)</h:title>")
 
@@ -275,11 +269,11 @@ class XForm(BaseModel):
         return cls.objects.filter(shared=True)
 
     def _xls_file_io(self):
-        '''
-        pulls the xls file from remote storage
+        """
+        Pulls the xls file from remote storage
 
         this should be used sparingly
-        '''
+        """
         file_path = self.xls.name
         default_storage = get_storage_class()()
 
@@ -289,34 +283,6 @@ class XForm(BaseModel):
                     return convert_csv_to_xls(ff.read())
                 else:
                     return StringIO(ff.read())
-
-
-    def to_kpi_content_schema(self):
-        '''
-        parses xlsform structure into json representation
-        of spreadsheet structure.
-        '''
-        if not xls_to_dicts:
-            raise ImportError('formpack module needed')
-        content = xls_to_dicts(self._xls_file_io())
-        # a temporary fix to the problem of list_name alias
-        return json.loads(re.sub('list name', 'list_name',
-                      json.dumps(content, indent=4)))
-
-    def to_xlsform(self):
-        '''Generate an XLS format XLSForm copy of this form.'''
-        file_path= self.xls.name
-        default_storage= get_storage_class()()
-
-        if file_path != '' and default_storage.exists(file_path):
-            with default_storage.open(file_path) as xlsform_file:
-                if file_path.endswith('.csv'):
-                    xlsform_io = convert_csv_to_xls(xlsform_file.read())
-                else:
-                    xlsform_io= io.BytesIO(xlsform_file.read())
-            return xlsform_io
-        else:
-            return None
 
     @property
     def settings(self):
