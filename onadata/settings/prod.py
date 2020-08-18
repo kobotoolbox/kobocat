@@ -110,24 +110,5 @@ if (os.getenv("RAVEN_DSN") or "") != "":
         CELERY_WORKER_HIJACK_ROOT_LOGGER = False
         after_setup_logger.connect(celery_logger_setup_handler)
 
-
-# ## ISSUE 242 TEMPORARY FIX ###
-# See https://github.com/kobotoolbox/kobocat/issues/242
-ISSUE_242_MINIMUM_INSTANCE_ID = os.environ.get(
-    'ISSUE_242_MINIMUM_INSTANCE_ID', None)
-ISSUE_242_INSTANCE_XML_SEARCH_STRING = os.environ.get(
-    'ISSUE_242_INSTANCE_XML_SEARCH_STRING', 'uploaded_form_')
-if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
-    CELERY_BEAT_SCHEDULE['fix-root-node-names'] = {
-        'task': 'onadata.apps.logger.tasks.fix_root_node_names',
-        'schedule': timedelta(hours=1),
-        'kwargs': {
-            'pk__gte': int(ISSUE_242_MINIMUM_INSTANCE_ID),
-            'xml__contains': ISSUE_242_INSTANCE_XML_SEARCH_STRING
-        },
-        'options': {'queue': 'kobocat_queue'}
-    }
-# ##### END ISSUE 242 FIX ######
-
 SESSION_ENGINE = "redis_sessions.session"
 SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
