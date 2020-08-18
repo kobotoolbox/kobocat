@@ -2,18 +2,15 @@
 import logging
 import multiprocessing
 import os
-import subprocess  # nopep8, used by included files
-import sys  # nopep8, used by included files
+import sys
+from datetime import timedelta
 
 import dj_database_url
-from django.conf.global_settings import PASSWORD_HASHERS
 from django.core.exceptions import SuspiciousOperation
-from django.utils.six import string_types
 from django.utils.six.moves.urllib.parse import quote_plus
 from pymongo import MongoClient
 from pyxform.xform2json import logger
 
-from onadata.libs.utils.redis_helper import RedisHelper
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
@@ -100,14 +97,14 @@ ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
 ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
 ENKETO_API_INSTANCE_IFRAME_URL = ENKETO_URL + ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE_IFRAME
 
-KPI_URL = os.environ.get('KPI_URL', False)
-KPI_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KPI_URL)
-KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
-
 # specifically for site urls sent to enketo for form retrieval
 # `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.
 # All internal communications between containers must be HTTP only.
 ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
+
+KPI_URL = os.environ.get('KPI_URL', False)
+KPI_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KPI_URL)
+KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 
 # These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
 # See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
@@ -158,6 +155,8 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
 
+# specify the root folder which may contain a templates folder and a static
+# folder used to override templates for site specific details
 # include the kobocat-template directory
 TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
@@ -315,9 +314,7 @@ COMPRESS = True
 # extra data stored with users
 AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 
-# case insensitive usernames -- DISABLED for KoBoForm compatibility
 AUTHENTICATION_BACKENDS = (
-    #'onadata.apps.main.backends.ModelBackend',
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
@@ -477,20 +474,11 @@ ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
 # default content length for submission requests
 DEFAULT_CONTENT_LENGTH = 10000000
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-NOSE_ARGS = ['--with-fixture-bundling']
-
-
-
 # re-captcha in registrations
 REGISTRATION_REQUIRE_CAPTCHA = False
 RECAPTCHA_USE_SSL = False
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = '6Ld52OMSAAAAAJJ4W-0TFDTgbznnWWFf0XuOSaB6'
-
-# specify the root folder which may contain a templates folder and a static
-# folder used to override templates for site specific details
-TEMPLATE_OVERRIDE_ROOT_DIR = None
 
 # Use 1 or 0 for multiple selects instead of True or False for csv, xls exports
 BINARY_SELECT_MULTIPLES = False
@@ -513,30 +501,6 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'text/csv',
     'application/zip'
 ]
-
-# legacy setting for old sites who still use a local_settings.py file and have
-# not updated to presets/
-try:
-    from local_settings import *  # nopep8
-except ImportError:
-    pass
-
-# Transition from South to native migrations
-try:
-    from django.db import migrations
-except ImportError:
-    # Native migrations unavailable; use South instead
-    INSTALLED_APPS.append['south']
-
-SOUTH_MIGRATION_MODULES = {
-    'taggit': 'taggit.south_migrations',
-    'reversion': 'reversion.south_migrations',
-    'onadata.apps.restservice': 'onadata.apps.restservice.south_migrations',
-    'onadata.apps.api': 'onadata.apps.api.south_migrations',
-    'onadata.apps.main': 'onadata.apps.main.south_migrations',
-    'onadata.apps.logger': 'onadata.apps.logger.south_migrations',
-    'onadata.apps.viewer': 'onadata.apps.viewer.south_migrations',
-}
 
 DEFAULT_VALIDATION_STATUSES = [
     {
@@ -573,16 +537,6 @@ if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
 
 # Limit sessions to 1 week (the default is 2 weeks)
 SESSION_COOKIE_AGE = 604800
-
-
-# KPI running Django 2.2 inserts password hashes into our database, calculated
-# using 150,000 iterations. Django 1.8 uses only 20,000 iterations by default;
-# increase this to match 2.2. See
-# https://github.com/kobotoolbox/kobocat/issues/612
-PASSWORD_HASHERS = [
-    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations'
-] + PASSWORD_HASHERS
-
 
 # The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
 # This variable is available only in Django 1.10+. Only there for next upgrade
