@@ -1,28 +1,19 @@
 # coding: utf-8
-# vim: set fileencoding=utf-8
-# this system uses structured settings as defined in
-# http://www.slideshare.net/jacobian/the-best-and-worst-of-django
-#
-# this is the base settings.py -- which contains settings common to all
-# implementations of ona: edit it at last resort
-#
-# local customizations should be done in several files each of which in turn
-# imports this one.
-# The local files should be used as the value for your DJANGO_SETTINGS_FILE
-# environment variable as needed.
 import logging
 import multiprocessing
 import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
 
+import dj_database_url
 from django.conf.global_settings import PASSWORD_HASHERS
 from django.core.exceptions import SuspiciousOperation
 from django.utils.six import string_types
+from django.utils.six.moves.urllib.parse import quote_plus
 from pymongo import MongoClient
+from pyxform.xform2json import logger
 
 from onadata.libs.utils.redis_helper import RedisHelper
-from pyxform.xform2json import logger
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
@@ -38,7 +29,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 
-DEFAULT_FROM_EMAIL = 'noreply@ona.io'
+DEFAULT_FROM_EMAIL = 'noreply@kobotoolbox.org'
 DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 
 # Local time zone for this installation. Choices can be found here:
@@ -69,7 +60,7 @@ USE_L10N = True
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = 'http://localhost:8000/media/'
+MEDIA_URL = f"/{os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/')}/"
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -89,25 +80,21 @@ KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kc.kobotoolbox.org')
 
 ENKETO_URL = ENKETO_URL.rstrip('/')
 ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
-ENKETO_VERSION = os.environ.get('ENKETO_VERSION', 'Legacy').lower()
-assert ENKETO_VERSION in ['legacy', 'express']
+ENKETO_VERSION = 'express'
+
 # Constants.
 ENKETO_API_ENDPOINT_ONLINE_SURVEYS = '/survey'
 ENKETO_API_ENDPOINT_OFFLINE_SURVEYS = '/survey/offline'
 ENKETO_API_ENDPOINT_INSTANCE = '/instance'
 ENKETO_API_ENDPOINT_INSTANCE_IFRAME = '/instance/iframe'
+
 # Computed settings.
-if ENKETO_VERSION == 'express':
-    ENKETO_API_ROOT = '/api/v2'
-    ENKETO_OFFLINE_SURVEYS = os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
-    ENKETO_API_ENDPOINT_PREVIEW = '/preview'
-    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
-            else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
-else:
-    ENKETO_API_ROOT= '/api_v1'
-    ENKETO_API_ENDPOINT_PREVIEW = '/webform/preview'
-    ENKETO_OFFLINE_SURVEYS = False
-    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_ONLINE_SURVEYS
+ENKETO_API_ROOT = '/api/v2'
+ENKETO_OFFLINE_SURVEYS = os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
+ENKETO_API_ENDPOINT_PREVIEW = '/preview'
+ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
+        else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
+
 ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
 ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
 ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
@@ -153,6 +140,7 @@ STATICFILES_FINDERS = [
 ]
 
 MIDDLEWARE = [
+    'onadata.koboform.redirect_middleware.ConditionalRedirects',
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -186,6 +174,7 @@ TEMPLATES = [
         ],
         'OPTIONS': {
             'context_processors': [
+                'onadata.koboform.context_processors.koboform_integration',
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
@@ -439,9 +428,12 @@ THUMB_ORDER = ['large', 'medium', 'small']
 REST_SERVICE_MAX_RETRIES = 3
 
 # celery
-CELERY_BROKER_URL = 'redis://localhost:6389/2'
-CELERY_RESULT_BACKEND = 'redis://localhost:6389/2'  # telling Celery to report results to Redis
-CELERY_TASK_ALWAYS_EAGER = False
+CELERY_BROKER_URL = os.environ.get(
+    'KOBOCAT_BROKER_URL', 'redis://localhost:6389/2')
+
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('SKIP_CELERY', 'False') == 'True'
 
 # Celery defaults to having as many workers as there are cores. To avoid
 # excessive resource consumption, don't spawn more than 6 workers by default
@@ -467,6 +459,16 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": 120 * (10 ** REST_SERVICE_MAX_RETRIES)  # Longest ETA for RestService
 }
 
+CELERY_BEAT_SCHEDULE = {
+    # Periodically mark exports stuck in the "pending" state as "failed"
+    # See https://github.com/kobotoolbox/kobocat/issues/315
+    'log-stuck-exports-and-mark-failed': {
+        'task': 'onadata.apps.viewer.tasks.log_stuck_exports_and_mark_failed',
+        'schedule': timedelta(hours=6),
+        'options': {'queue': 'kobocat_queue'}
+    },
+}
+
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
 
 # duration to keep zip exports before deletion (in seconds)
@@ -478,9 +480,7 @@ DEFAULT_CONTENT_LENGTH = 10000000
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = ['--with-fixture-bundling']
 
-# fake endpoints for testing
-TEST_HTTP_HOST = 'testserver.com'
-TEST_USERNAME = 'bob'
+
 
 # re-captcha in registrations
 REGISTRATION_REQUIRE_CAPTCHA = False
@@ -591,6 +591,108 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 # The maximum size (in bytes) that an upload will be before it gets streamed to the file system
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
+# MongoDB
+MONGO_DATABASE = {
+    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
+    'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
+    'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
+    'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
+    'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
+}
+
+if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
+    MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
+        format(
+            user=MONGO_DATABASE['USER'],
+            password=quote_plus(MONGO_DATABASE['PASSWORD']),
+            host=MONGO_DATABASE['HOST'],
+            port=MONGO_DATABASE['PORT'],
+            db_name=MONGO_DATABASE['NAME']
+        )
+else:
+    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
+
+# PyMongo 3 does acknowledged writes by default
+# https://emptysqua.re/blog/pymongos-new-default-safe-writes/
+MONGO_CONNECTION = MongoClient(
+    MONGO_CONNECTION_URL, j=True, tz_aware=True)
+
+MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
+
+LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
+
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
+
+# Database (i.e. PostgreSQL)
+DATABASES = {
+    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
+}
+# Replacement for TransactionMiddleware
+DATABASES['default']['ATOMIC_REQUESTS'] = True
+
+# Django `SECRET_KEY`
+try:
+    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+except KeyError:
+    raise Exception('DJANGO_SECRET_KEY must be set in the environment.')
+
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
+
+TESTING_MODE = False
+
+# Domain must not exclude KPI when sharing sessions
+if os.environ.get('SESSION_COOKIE_DOMAIN'):
+    SESSION_COOKIE_DOMAIN = os.environ['SESSION_COOKIE_DOMAIN']
+    SESSION_COOKIE_NAME = 'kobonaut'
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
+
+KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
+KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
+KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+KOBOFORM_LOGIN_AUTOREDIRECT = True
+KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
+KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
+
+# BEGIN external service integration codes
+AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
+AWS_DEFAULT_ACL = 'private'
+AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
+
+# TODO pass these variables from `kobo-docker` envfiles
+AWS_QUERYSTRING_EXPIRE = os.environ.get("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
+AWS_S3_USE_SSL = os.environ.get("KOBOCAT_AWS_S3_USE_SSL", True)
+AWS_S3_HOST = os.environ.get("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
+
+GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
+GOOGLE_ANALYTICS_DOMAIN = "auto"
+# END external service integration codes
+
+# If not properly overridden, leave uninitialized so Django can set the default.
+# (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
+if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
+    DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
+
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
+                               'django.core.mail.backends.filebased.EmailBackend')
+
+if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
+    EMAIL_FILE_PATH = os.environ.get(
+        'EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
+    if not os.path.isdir(EMAIL_FILE_PATH):
+        os.mkdir(EMAIL_FILE_PATH)
+
+# Default value for the `UserProfile.require_auth` attribute
+REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
+        'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
+        'False') == 'True'
+
+POSTGIS_VERSION = (2, 5, 4)
+
 # Monkey Patch PyXForm. @ToDo remove after upgrading to v1.1.0
 logger.removeHandler(logging.NullHandler)
 logger.addHandler(logging.NullHandler())
+

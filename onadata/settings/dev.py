@@ -11,3 +11,5 @@ LOGGING['root'] = {
     'handlers': ['console'],
     'level': 'DEBUG'
 }
+
+MIDDLEWARE.append('onadata.libs.utils.middleware.ExceptionLoggingMiddleware')
