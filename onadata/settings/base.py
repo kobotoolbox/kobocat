@@ -5,11 +5,13 @@ import os
 import sys
 from datetime import timedelta
 
+import sentry_sdk
 import dj_database_url
 from django.core.exceptions import SuspiciousOperation
 from django.utils.six.moves.urllib.parse import quote_plus
 from pymongo import MongoClient
 from pyxform.xform2json import logger
+from sentry_sdk.integrations.django import DjangoIntegration
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -645,6 +647,17 @@ REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
         'False') == 'True'
 
 POSTGIS_VERSION = (2, 5, 4)
+
+if (os.getenv("SENTRY_DSN") or "") != "":
+    sentry_sdk.init(
+        dsn=os.environ['SENTRY_DSN'],
+        integrations=[DjangoIntegration()],
+
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True
+    )
+
 
 # Monkey Patch PyXForm. @ToDo remove after upgrading to v1.1.0
 logger.removeHandler(logging.NullHandler)
