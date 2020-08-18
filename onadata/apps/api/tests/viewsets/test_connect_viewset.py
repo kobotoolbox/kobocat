@@ -1,10 +1,12 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django_digest.test import DigestAuth, BasicAuth
 from rest_framework import authentication
 
-from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
-
 from onadata.libs.authentication import DigestAuthentication
 
 
@@ -57,7 +59,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = view(request)
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data['detail'],
-                         u"Invalid username/password")
+                         "Invalid username/password")
         auth = DigestAuth('bob', 'bobbob')
         request.META.update(auth(request.META, response))
         request.session = self.client.session
@@ -81,7 +83,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = view(request)
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data['detail'],
-                         u"Invalid username/password.")
+                         "Invalid username/password.")
         auth = BasicAuth('bob', 'bobbob')
 
         # redo the request

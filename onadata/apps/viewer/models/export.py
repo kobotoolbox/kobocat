@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 from tempfile import NamedTemporaryFile
 
@@ -19,7 +21,7 @@ def export_delete_callback(sender, **kwargs):
 class Export(models.Model):
     class ExportTypeError(Exception):
         def __unicode__(self):
-            return _(u"Invalid export type specified")
+            return _("Invalid export type specified")
 
         def __str__(self):
             return unicode(self).encode('utf-8')

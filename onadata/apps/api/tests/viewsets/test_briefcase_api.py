@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os
 import codecs
@@ -106,8 +106,8 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             self.assertContains(response, expected_submission_list)
 
         view = BriefcaseApi.as_view({'get': 'retrieve'})
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': uuid}
         params = {'formId': formId}
@@ -202,10 +202,10 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         instance = Instance.objects.get(uuid=instanceId)
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
@@ -222,9 +222,9 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             'view', 'downloadSubmission.xml')
         with codecs.open(download_submission_path, encoding='utf-8') as f:
             text = f.read()
-            text = text.replace(u'{{submissionDate}}',
+            text = text.replace('{{submissionDate}}',
                                 instance.date_created.isoformat())
-            text = text.replace(u'{{xform_uuid}}',
+            text = text.replace('{{xform_uuid}}',
                                 self.xform.uuid)
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
@@ -234,9 +234,9 @@ class TestBriefcaseAPI(TestAbstractViewSet):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
@@ -353,7 +353,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
 
             self.assertEqual(
                 response.data,
-                {'message': u'Form with this id or SMS-keyword already exists.'
+                {'message': 'Form with this id or SMS-keyword already exists.'
                  }
             )
 
@@ -375,8 +375,8 @@ class TestBriefcaseAPI(TestAbstractViewSet):
     def test_submission_with_instance_id_on_root_node(self):
         view = XFormSubmissionApi.as_view({'post': 'create'})
         self._publish_xml_form()
-        message = u"Successful submission."
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        message = "Successful submission."
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         self.assertRaises(
             Instance.DoesNotExist, Instance.objects.get, uuid=instanceId)
         submission_path = os.path.join(

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext_lazy
@@ -44,7 +46,7 @@ class Command(BaseCommand):
         record_count = filter_queryset.count()
         i = 0
         while start < record_count:
-            print 'Querying record %s to %s' % (start, end-1)
+            print('Querying record %s to %s' % (start, end-1))
             queryset = filter_queryset.order_by('pk')[start:end]
             for pi in queryset.iterator():
                 if pi.update_mongo(asynchronous=False):

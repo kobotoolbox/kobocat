@@ -1,9 +1,11 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import json
 
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.views import public_api
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormPublicAPI(TestBase):

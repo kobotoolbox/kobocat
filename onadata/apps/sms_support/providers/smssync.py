@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 """ Ushaidi's SMSSync gateway
 
@@ -29,25 +29,25 @@ def autodoc(url_root, username, id_string):
                               kwargs={'username': username,
                                       'id_string': id_string,
                                       'service': 'smssync'})
-    doc = (u'<p>' +
-           _(u"%(service)s Instructions:")
-           % {'service': u'<a href="http://smssync.ushahidi.com/">'
-                         u'Ushaidi\'s SMS Sync</a>'}
-           + u'</p><ol><li>' +
-           _(u"Download the SMS Sync App on your phone serving as a gateway.")
+    doc = ('<p>' +
+           _("%(service)s Instructions:")
+           % {'service': '<a href="http://smssync.ushahidi.com/">'
+                         'Ushaidi\'s SMS Sync</a>'}
+           + '</p><ol><li>' +
+           _("Download the SMS Sync App on your phone serving as a gateway.")
            + '</li><li>' +
-           _(u"Configure the app to point to one of the following URLs")
-           + u'<br /><span class="sms_autodoc_example">%(urla)s'
-           + u'<br />%(urlb)s</span><br />' +
-           _(u"Optionnaly set a keyword to prevent non-formhub "
-             u"messages to be sent.")
+           _("Configure the app to point to one of the following URLs")
+           + '<br /><span class="sms_autodoc_example">%(urla)s'
+           + '<br />%(urlb)s</span><br />' +
+           _("Optionnaly set a keyword to prevent non-formhub "
+             "messages to be sent.")
            + '</li><li>' +
-           _(u"In the preferences, tick the box to allow "
-             u"replies from the server.")
+           _("In the preferences, tick the box to allow "
+             "replies from the server.")
            + '</li></ol><p>' +
-           _(u"That's it. Now Send an SMS Formhub submission to the number "
-             u"of that phone. It will create a submission on Formhub.")
-           + u'</p>') % {'urla': urla, 'urlb': urlb}
+           _("That's it. Now Send an SMS Formhub submission to the number "
+             "of that phone. It will create a submission on Formhub.")
+           + '</p>') % {'urla': urla, 'urlb': urlb}
     return doc
 
 
@@ -58,7 +58,7 @@ def get_response(data):
         message = None
     elif data.get('code') != SMS_SUBMISSION_ACCEPTED:
         success = True
-        message = _(u"[ERROR] %s") % message
+        message = _("[ERROR] %s") % message
     else:
         success = True
 
@@ -111,9 +111,9 @@ def process_message_for_smssync(username,
 
     if not sms_identity or not sms_text:
         return get_response({'code': SMS_API_ERROR,
-                             'text': _(u"`identity` and `message` are "
-                                       u"both required and must not be "
-                                       u"empty.")})
+                             'text': _("`identity` and `message` are "
+                                       "both required and must not be "
+                                       "empty.")})
 
     incomings = [(sms_identity, sms_text)]
     response = process_incoming_smses(username, incomings, id_string)[-1]

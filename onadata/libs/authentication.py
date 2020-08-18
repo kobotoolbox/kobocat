@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.utils.translation import ugettext as _
 from django_digest import HttpDigestAuthenticator
 from rest_framework.authentication import (
@@ -20,7 +22,7 @@ class DigestAuthentication(BaseAuthentication):
             return request.user, None
         else:
             raise AuthenticationFailed(
-                _(u"Invalid username/password"))
+                _("Invalid username/password"))
 
     def authenticate_header(self, request):
         response = self.authenticator.build_challenge_response()
@@ -39,8 +41,8 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
             # Scold the user if they provided correct credentials for basic
             # auth but didn't use HTTPS
             raise AuthenticationFailed(_(
-                u'Using basic authentication without HTTPS transmits '
-                u'credentials in clear text! You MUST connect via HTTPS '
-                u'to use basic authentication.'
+                'Using basic authentication without HTTPS transmits '
+                'credentials in clear text! You MUST connect via HTTPS '
+                'to use basic authentication.'
             ))
         return user_auth

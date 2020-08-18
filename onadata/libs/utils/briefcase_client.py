@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import time
 import math
@@ -238,8 +240,8 @@ class BriefcaseClient(object):
 
         for uuid in instances:
             self.logger.debug("Fetching %s %s submission" % (uuid, form_id))
-            form_str = u'%(formId)s[@version=null and @uiVersion=null]/'\
-                u'%(formId)s[@key=%(instanceId)s]' % {
+            form_str = '%(formId)s[@version=null and @uiVersion=null]/'\
+                '%(formId)s[@key=%(instanceId)s]' % {
                     'formId': form_id,
                     'instanceId': uuid
                 }

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import unittest
 
@@ -5,7 +7,7 @@ from django.core.urlresolvers import reverse
 
 from onadata.apps.main.views import clone_xlsform
 from onadata.apps.logger.models import XForm
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormGallery(TestBase):

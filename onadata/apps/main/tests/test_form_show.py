@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 from unittest import skip
 
@@ -13,7 +15,7 @@ from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.viewer.views import export_list, map_view
 from onadata.libs.utils.logger_tools import publish_xml_form
 from onadata.libs.utils.user_auth import http_auth_string
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormShow(TestBase):
@@ -315,7 +317,7 @@ class TestFormShow(TestBase):
         # look for the preferred_means question
         # which is only in the updated xls
         is_updated_form = len([e.name for e in data_dictionary.survey_elements
-                               if e.name == u'preferred_means']) > 0
+                               if e.name == 'preferred_means']) > 0
         self.assertTrue(is_updated_form)
 
     def test_update_form_doesnt_truncate_to_50_chars(self):
@@ -347,7 +349,7 @@ class TestFormShow(TestBase):
         # look for the preferred_means question
         # which is only in the updated xls
         is_updated_form = len([e.name for e in data_dictionary.survey_elements
-                               if e.name == u'preferred_means']) > 0
+                               if e.name == 'preferred_means']) > 0
         self.assertTrue(is_updated_form)
 
     def test_xform_delete(self):

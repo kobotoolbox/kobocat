@@ -1,5 +1,5 @@
 # coding: utf-8
-# from __future__ import unicode_literals, absolute_import  - Tests failed when imported
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import json
 import os
@@ -251,7 +251,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         request = self.factory.post('/', data={"tags": "hello"}, **self.extra)
         response = view(request, pk=formid)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data, [u'hello'])
+        self.assertEqual(response.data, ['hello'])
 
         # check filter by tag
         request = self.factory.get('/', data={"tags": "hello"}, **self.extra)
@@ -283,7 +283,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         request = self.factory.get('/', **self.extra)
         with HTTMock(enketo_error_mock):
             response = view(request, pk=formid)
-            data = {'message': u"Enketo not properly configured."}
+            data = {'message': "Enketo not properly configured."}
 
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(response.data, data)
@@ -309,13 +309,13 @@ class TestXFormViewSet(TestAbstractViewSet):
             'owner': 'bob',
             'public': False,
             'public_data': False,
-            'description': u'transportation_2011_07_25',
+            'description': 'transportation_2011_07_25',
             'downloadable': True,
             'allows_sms': False,
             'encrypted': False,
-            'sms_id_string': u'transportation_2011_07_25',
-            'id_string': u'transportation_2011_07_25',
-            'title': u'transportation_2011_07_25',
+            'sms_id_string': 'transportation_2011_07_25',
+            'id_string': 'transportation_2011_07_25',
+            'title': 'transportation_2011_07_25',
         }
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
@@ -371,7 +371,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         view = XFormViewSet.as_view({
             'patch': 'partial_update'
         })
-        title = u'مرحب'
+        title = 'مرحب'
         description = 'DESCRIPTION'
         data = {'public': True, 'description': description, 'title': title,
                 'downloadable': True}
@@ -425,7 +425,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertFalse(self.xform.__getattribute__(key))
         self.assertEqual(response.data,
                          {'shared':
-                          [u"'String' value must be either True or False."]})
+                          ["'String' value must be either True or False."]})
 
     def test_set_form_bad_key(self):
         self.publish_xls_form()
@@ -458,18 +458,18 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     def test_xform_serializer_none(self):
         data = {
-            'title': u'',
+            'title': '',
             'public': False,
             'public_data': False,
             'require_auth': False,
-            'description': u'',
+            'description': '',
             'downloadable': False,
             'allows_sms': False,
-            'uuid': u'',
+            'uuid': '',
             'instances_with_geopoints': False,
             'num_of_submissions': 0,
             'has_kpi_hooks': False,
-            'kpi_asset_uid': u'',
+            'kpi_asset_uid': '',
         }
         self.assertEqual(data, XFormSerializer(None).data)
 

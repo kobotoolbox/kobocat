@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import json
 import os
@@ -55,7 +55,7 @@ def _get_export_type(export_type):
         export_type = EXPORT_EXT[export_type]
     else:
         raise exceptions.ParseError(
-            _(u"'%(export_type)s' format not known or not implemented!" %
+            _("'%(export_type)s' format not known or not implemented!" %
               {'export_type': export_type})
         )
 
@@ -141,7 +141,7 @@ def _get_owner(request):
 
         if owner is None:
             raise ValidationError(
-                u"User with username %(owner)s does not exist."
+                "User with username %(owner)s does not exist."
             )
 
     return owner
@@ -734,7 +734,7 @@ data (instance/submission per row)
         self.object = self.get_object()
         form_url = _get_form_url(request, self.object.user.username)
 
-        data = {'message': _(u"Enketo not properly configured.")}
+        data = {'message': _("Enketo not properly configured.")}
         http_status = status.HTTP_400_BAD_REQUEST
 
         try:

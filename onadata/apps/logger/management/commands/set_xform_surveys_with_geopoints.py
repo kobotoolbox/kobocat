@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext_lazy
@@ -21,7 +24,7 @@ class Command(BaseCommand):
                 xform.instances_with_geopoints = has_geo
                 xform.save()
             except Exception as e:
-                print e
+                print(e)
             else:
                 count += 1
-        print "%d of %d forms processed." % (count, total)
+        print("%d of %d forms processed." % (count, total))

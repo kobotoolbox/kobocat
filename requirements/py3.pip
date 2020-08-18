@@ -1,0 +1,86 @@
+pytz
+Django>=2.2,<3
+dj-database-url
+django-guardian
+django-registration-redux
+django-templated-email
+gdata
+httplib2
+modilabs-python-utils
+Pillow
+# poster
+psycopg2-binary
+pymongo
+lxml
+pyxform
+django-reversion<3.0.2
+xlrd
+xlwt
+openpyxl
+
+celery>=4.0,<5.0
+celery[redis]
+django-celery-beat
+# amqp
+# vine==1.2.0
+django-nose
+raven
+
+# More up-to-date version of django-digest than PyPI seems to have.
+# Also, python-digest is an unlisted dependency thereof.
+-e git+https://github.com/dimagi/python-digest@5c94bb74516b977b60180ee832765c0695ff2b56#egg=python_digest
+-e git+https://github.com/dimagi/django-digest@52ba7edeb326efd97d5670273bb6fa8b0539e501#egg=django_digest
+
+# new export code relies on
+pandas>=0.12.0
+elaphe
+# request
+
+# formpack exports
+git+https://github.com/kobotoolbox/formpack.git@a08b7626507c2ceff35b816f1e1e0845c85cce26#egg=formpack
+django-pure-pagination
+path.py
+
+# sms support
+# dict2xml==1.3
+
+# api support
+djangorestframework
+djangorestframework-csv
+djangorestframework-jsonp
+djangorestframework-xml
+
+# cors
+django-cors-headers
+Markdown
+django-filter
+
+# captcha
+recaptcha-client==1.0.6
+# unicodecsv==0.9.4
+dpath
+
+# tagging
+django-taggit
+
+# oath2 support
+django-oauth-toolkit
+
+# spss
+https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#egg=savreaderwriter
+
+# JSON data type support
+# jsonfield<1.0
+django-db-readonly
+
+transifex-client
+
+# Shell Plus
+django-extensions
+
+# redis-sessions
+django-redis-sessions
+redis
+
+# ssrf
+-e git+https://github.com/kobotoolbox/ssrf-protect@755efe16694273ce66060a51e04f973dc034ca4e#egg=ssrf_protect

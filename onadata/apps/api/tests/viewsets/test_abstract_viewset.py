@@ -1,4 +1,6 @@
 # coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import re
 from tempfile import NamedTemporaryFile
@@ -87,14 +89,14 @@ class TestAbstractViewSet(TestCase):
         return {
             'id': self.user.pk,
             'url': 'http://testserver/api/v1/profiles/bob',
-            'username': u'bob',
-            'name': u'Bob',
-            'email': u'bob@columbia.edu',
-            'city': u'Bobville',
-            'country': u'US',
-            'organization': u'Bob Inc.',
-            'website': u'bob.com',
-            'twitter': u'boberama',
+            'username': 'bob',
+            'name': 'Bob',
+            'email': 'bob@columbia.edu',
+            'city': 'Bobville',
+            'country': 'US',
+            'organization': 'Bob Inc.',
+            'website': 'bob.com',
+            'twitter': 'boberama',
             'gravatar': self.user.profile.gravatar,
             'require_auth': False,
             'user': 'http://testserver/api/v1/users/bob',

@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -10,9 +13,9 @@ DEFAULT_LIMIT = 1000
 
 
 class AuditLog(object):
-    ACCOUNT = u"account"
+    ACCOUNT = "account"
     DEFAULT_BATCHSIZE = 1000
-    CREATED_ON = u"created_on"
+    CREATED_ON = "created_on"
 
     def __init__(self, data):
         self.data = data

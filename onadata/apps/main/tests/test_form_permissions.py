@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import unittest
 
@@ -8,7 +10,7 @@ from onadata.apps.logger.models import XForm
 from onadata.apps.viewer.views import map_view
 from onadata.apps.main.views import set_perm, show, edit, api, profile
 from onadata.apps.main.models import MetaData
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormPermissions(TestBase):

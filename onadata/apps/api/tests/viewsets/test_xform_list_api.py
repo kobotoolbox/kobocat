@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, absolute_import
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os
 
@@ -60,8 +60,8 @@ class TestXFormListApi(TestAbstractViewSet):
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
 
-        xml = u'<?xml version="1.0" encoding="utf-8"?>\n<xforms '
-        xml += u'xmlns="http://openrosa.org/xforms/xformsList"></xforms>'
+        xml = '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
+        xml += 'xmlns="http://openrosa.org/xforms/xformsList"></xforms>'
         content = response.render().content
         self.assertEqual(content, xml)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))

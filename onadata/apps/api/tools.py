@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 
 from datetime import datetime
@@ -42,9 +44,9 @@ DECIMAL_PRECISION = 2
 def _get_first_last_names(name):
     name_split = name.split()
     first_name = name_split[0]
-    last_name = u''
+    last_name = ''
     if len(name_split) > 1:
-        last_name = u' '.join(name_split[1:])
+        last_name = ' '.join(name_split[1:])
     return first_name, last_name
 
 
@@ -83,13 +85,13 @@ def publish_xlsform(request, user, existing_xform=None):
         UserProfile.objects.get_or_create(user=user)[0]
     ):
         raise exceptions.PermissionDenied(
-            detail=_(u"User %(user)s has no permission to add xforms to "
+            detail=_("User %(user)s has no permission to add xforms to "
                      "account %(account)s" % {'user': request.user.username,
                                               'account': user.username}))
     if existing_xform and not request.user.has_perm(
             'change_xform', existing_xform):
         raise exceptions.PermissionDenied(
-            detail=_(u"User %(user)s has no permission to change this "
+            detail=_("User %(user)s has no permission to change this "
                      "form." % {'user': request.user.username, })
         )
 

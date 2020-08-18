@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 
 from django.conf import settings
@@ -62,8 +64,8 @@ class TestRemongo(TestBase):
         # get index info
         index_info = settings.MONGO_DB.instances.index_information()
         # index_info looks like this - {
-        #     u'_id_': {u'key': [(u'_id', 1)], u'v': 1},
-        #     u'_userform_id_1': {u'key': [(u'_userform_id', 1)], u'v': 1}}
+        #     '_id_': {'key': [('_id', 1)], 'v': 1},
+        #     '_userform_id_1': {'key': [('_userform_id', 1)], 'v': 1}}
         # lets make a list of the indexes
         existing_indexes = [v['key'][0][0] for v in index_info.itervalues()
                             if v['key'][0][1] == 1]

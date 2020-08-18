@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.conf.urls import url
 from rest_framework import routers
 from rest_framework.response import Response
@@ -316,9 +318,9 @@ Example using curl:
             lookup_list = self.get_lookup_regexes(viewset)
             if lookup_list:
                 # lookup = lookups[0]
-                lookup_list = [u'/'.join(k) for k in lookup_list]
+                lookup_list = ['/'.join(k) for k in lookup_list]
             else:
-                lookup_list = [u'']
+                lookup_list = ['']
             routes = self.get_routes(viewset)
             for route in routes:
                 mapping = self.get_method_map(viewset, route.mapping)

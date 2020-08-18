@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import base64
 import json
 
@@ -6,7 +8,7 @@ from django.core.urlresolvers import reverse
 from onadata.apps.main.views import api
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
-from test_base import TestBase
+from .test_base import TestBase
 
 
 def dict_for_mongo_without_userform_id(parsed_instance):

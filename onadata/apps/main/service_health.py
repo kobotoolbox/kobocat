@@ -1,4 +1,6 @@
-import requests
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import time
 
 from django.conf import settings
@@ -35,9 +37,9 @@ def service_health(request):
     postgres_time = time.time() - t0
 
     output = (
-        u'{}\r\n\r\n'
-        u'Mongo: {} in {:.3} seconds\r\n'
-        u'Postgres: {} in {:.3} seconds\r\n'
+        '{}\r\n\r\n'
+        'Mongo: {} in {:.3} seconds\r\n'
+        'Postgres: {} in {:.3} seconds\r\n'
     ).format(
         'FAIL' if any_failure else 'OK',
         mongo_message, mongo_time,

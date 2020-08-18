@@ -1,6 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 
 import mimetypes
 import io
@@ -92,27 +93,27 @@ def generate_instance(username, xml_file, media_files, uuid=None):
         )
     except InstanceInvalidUserError:
         return {'code': SMS_SUBMISSION_REFUSED,
-                'text': _(u"Username or ID required.")}
+                'text': _("Username or ID required.")}
     except InstanceEmptyError:
         return {'code': SMS_INTERNAL_ERROR,
-                'text': _(u"Received empty submission. "
-                          u"No instance was created")}
+                'text': _("Received empty submission. "
+                          "No instance was created")}
     except FormInactiveError:
         return {'code': SMS_SUBMISSION_REFUSED,
-                'text': _(u"Form is not active")}
+                'text': _("Form is not active")}
     except XForm.DoesNotExist:
         return {'code': SMS_SUBMISSION_REFUSED,
-                'text': _(u"Form does not exist on this account")}
+                'text': _("Form does not exist on this account")}
     except ExpatError:
         return {'code': SMS_INTERNAL_ERROR,
-                'text': _(u"Improperly formatted XML.")}
+                'text': _("Improperly formatted XML.")}
     except DuplicateInstance:
         return {'code': SMS_SUBMISSION_REFUSED,
-                'text': _(u"Duplicate submission")}
+                'text': _("Duplicate submission")}
 
     if instance is None:
         return {'code': SMS_INTERNAL_ERROR,
-                'text': _(u"Unable to create submission.")}
+                'text': _("Unable to create submission.")}
 
     user = User.objects.get(username=username)
 
@@ -129,7 +130,7 @@ def generate_instance(username, xml_file, media_files, uuid=None):
         [_file.close() for _file in media_files]
 
     return {'code': SMS_SUBMISSION_ACCEPTED,
-            'text': _(u"[SUCCESS] Your submission has been accepted."),
+            'text': _("[SUCCESS] Your submission has been accepted."),
             'id': get_sms_instance_id(instance)}
 
 
@@ -170,9 +171,9 @@ def check_form_sms_compatibility(form, json_survey=None):
 
     if json_survey is None:
         json_survey = form.get('form_o', {})
-        form_text = u"%s<br />" % form['text']
+        form_text = "%s<br />" % form['text']
     else:
-        form_text = u""
+        form_text = ""
 
     def prep_return(msg, comp=None):
 
@@ -181,31 +182,31 @@ def check_form_sms_compatibility(form, json_survey=None):
         error = 'alert-info'
         warning = 'alert-info'
         success = 'alert-success'
-        outro = (u"<br />Please check the <a href=\"%(syntax_url)s"
-                 u"#9-sms-support\">"
-                 u"SMS Syntax Page</a>." % {'syntax_url': reverse('syntax')})
+        outro = ("<br />Please check the <a href=\"%(syntax_url)s"
+                 "#9-sms-support\">"
+                 "SMS Syntax Page</a>." % {'syntax_url': reverse('syntax')})
 
         # no compatibility at all
         if not comp:
             alert = error
-            msg = (u"%(prefix)s %(msg)s"
-                   % {'prefix': u"Your Form is <strong>not SMS-compatible"
-                                u"</strong>. If you want to later enable "
-                                u"SMS Support, please fix:<br />",
+            msg = ("%(prefix)s %(msg)s"
+                   % {'prefix': "Your Form is <strong>not SMS-compatible"
+                                "</strong>. If you want to later enable "
+                                "SMS Support, please fix:<br />",
                       'msg': msg})
         # no blocker but could be improved
         elif comp == 1:
             alert = warning
-            msg = (u"%(prefix)s <ul>%(msg)s</ul>"
-                   % {'prefix': u"Your form can be used with SMS, "
-                                u"knowing that:", 'msg': msg})
+            msg = ("%(prefix)s <ul>%(msg)s</ul>"
+                   % {'prefix': "Your form can be used with SMS, "
+                                "knowing that:", 'msg': msg})
         # SMS compatible
         else:
-            outro = u""
+            outro = ""
             alert = success
 
         return {'type': alert,
-                'text': u"%(msg)s%(outro)s"
+                'text': "%(msg)s%(outro)s"
                         % {'intro': form_text, 'msg': msg, 'outro': outro}}
 
     # first level children. should be groups
@@ -226,14 +227,14 @@ def check_form_sms_compatibility(form, json_survey=None):
 
     # must not contain out-of-group questions
     if sum([1 for e in groups if e.get('type') != 'group']):
-        return prep_return(_(u"All your questions must be in groups."))
+        return prep_return(_("All your questions must be in groups."))
     # all groups must have an sms_field
     bad_groups = [e.get('name') for e in groups if not e.get('sms_field', '')
                   and not e.get('name', '') == 'meta']
     if len(bad_groups):
-        return prep_return(_(u"All your groups must have an 'sms_field' "
-                             u"(use 'meta' prefixed ones for non-fillable "
-                             u"groups). %s" % bad_groups[-1]))
+        return prep_return(_("All your groups must have an 'sms_field' "
+                             "(use 'meta' prefixed ones for non-fillable "
+                             "groups). %s" % bad_groups[-1]))
     # all select_one or select_multiple fields muts have sms_option for each.
     for group in groups:
         fields = group.get('children', [{}])
@@ -252,9 +253,9 @@ def check_form_sms_compatibility(form, json_survey=None):
                 nb_options = len(options)
                 if nb_choices != nb_options:
                     return prep_return(
-                        _(u"Not all options in the choices list for "
-                          u"<strong>%s</strong> have an "
-                          u"<em>sms_option</em> value.") % xlsf_name
+                        _("Not all options in the choices list for "
+                          "<strong>%s</strong> have an "
+                          "<em>sms_option</em> value.") % xlsf_name
                     )
 
     # has sensitive (space containing) fields in non-last position
@@ -267,9 +268,9 @@ def check_form_sms_compatibility(form, json_survey=None):
                 last_pos -= 1
         for idx, field in enumerate(fields):
             if idx != last_pos and field.get('type', '') in sensitive_fields:
-                return prep_return(_(u"Questions for which values can contain "
-                                     u"spaces are only allowed on last "
-                                     u"position of group (%s)"
+                return prep_return(_("Questions for which values can contain "
+                                     "spaces are only allowed on last "
+                                     "position of group (%s)"
                                      % field.get('name')))
     # separator is not set or is within BASE64 alphabet and sms_allow_media
     separator = json_survey.get('sms_separator', DEFAULT_SEPARATOR) \
@@ -277,25 +278,25 @@ def check_form_sms_compatibility(form, json_survey=None):
     sms_allow_media = bool(json_survey.get('sms_allow_media',
                            DEFAULT_ALLOW_MEDIA) or DEFAULT_ALLOW_MEDIA)
     if sms_allow_media and separator in BASE64_ALPHABET:
-        return prep_return(_(u"When allowing medias ('sms_allow_media'), your "
-                             u"separator (%s) must be outside Base64 alphabet "
-                             u"(letters, digits and +/=). "
-                             u"You case use '#' instead." % separator))
+        return prep_return(_("When allowing medias ('sms_allow_media'), your "
+                             "separator (%s) must be outside Base64 alphabet "
+                             "(letters, digits and +/=). "
+                             "You case use '#' instead." % separator))
 
     # WARNINGS
     warnings = []
     # sms_separator not set
     if not json_survey.get('sms_separator', ''):
-        warnings.append(u"<li>You have not set a separator. Default '+' "
-                        u"separator will be used.</li>")
+        warnings.append("<li>You have not set a separator. Default '+' "
+                        "separator will be used.</li>")
     # has date field with no sms_date_format
     if not json_survey.get('sms_date_format', ''):
         for group in groups:
             if sum([1 for e in group.get('children', [{}])
                     if e.get('type') == 'date']):
-                warnings.append(u"<li>You have 'date' fields without "
-                                u"explicitly setting a date format. "
-                                u"Default (%s) will be used.</li>"
+                warnings.append("<li>You have 'date' fields without "
+                                "explicitly setting a date format. "
+                                "Default (%s) will be used.</li>"
                                 % DEFAULT_DATE_FORMAT)
                 break
     # has datetime field with no datetime format
@@ -303,24 +304,24 @@ def check_form_sms_compatibility(form, json_survey=None):
         for group in groups:
             if sum([1 for e in group.get('children', [{}])
                     if e.get('type') == 'datetime']):
-                warnings.append(u"<li>You have 'datetime' fields without "
-                                u"explicitly setting a datetime format. "
-                                u"Default (%s) will be used.</li>"
+                warnings.append("<li>You have 'datetime' fields without "
+                                "explicitly setting a datetime format. "
+                                "Default (%s) will be used.</li>"
                                 % DEFAULT_DATETIME_FORMAT)
                 break
 
     # date or datetime format contain space
     if 'date' in sensitive_fields:
-        warnings.append(u"<li>'sms_date_format' contains space which will "
-                        u"require 'date' questions to be positioned at "
-                        u"the end of groups (%s).</li>" % date_format)
+        warnings.append("<li>'sms_date_format' contains space which will "
+                        "require 'date' questions to be positioned at "
+                        "the end of groups (%s).</li>" % date_format)
     if 'datetime' in sensitive_fields:
-        warnings.append(u"<li>'sms_datetime_format' contains space which will "
-                        u"require 'datetime' questions to be positioned at "
-                        u"the end of groups (%s).</li>" % datetime_format)
+        warnings.append("<li>'sms_datetime_format' contains space which will "
+                        "require 'datetime' questions to be positioned at "
+                        "the end of groups (%s).</li>" % datetime_format)
 
     if len(warnings):
-        return prep_return(u"".join(warnings), comp=1)
+        return prep_return("".join(warnings), comp=1)
 
     # Good to go
-    return prep_return(_(u"Note that your form is also SMS comptatible."), 2)
+    return prep_return(_("Note that your form is also SMS comptatible."), 2)

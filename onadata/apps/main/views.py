@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, unicode_literals
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import json
 import os
@@ -122,13 +122,13 @@ def clone_xlsform(request, username):
                     'id_string': xform.id_string + XForm.CLONED_SUFFIX})
             return {
                 'type': 'alert-success',
-                'text': _(u'Successfully cloned to %(form_url)s into your '
-                          u'%(profile_url)s') %
-                {'form_url': u'<a href="%(url)s">%(id_string)s</a> ' % {
+                'text': _('Successfully cloned to %(form_url)s into your '
+                          '%(profile_url)s') %
+                {'form_url': '<a href="%(url)s">%(id_string)s</a> ' % {
                  'id_string': survey.id_string,
                  'url': clone_form_url
                  },
-                    'profile_url': u'<a href="%s">profile</a>.' %
+                    'profile_url': '<a href="%s">profile</a>.' %
                     reverse(profile, kwargs={'username': to_username})}
             }
     form_result = publish_form(set_form)
@@ -186,10 +186,10 @@ def profile(request, username):
                     'username': username,
                     'id_string': survey.id_string
                 }),
-                'text': _(u'Successfully published %(form_id)s.'
-                          u' <a href="%(form_url)s">Enter Web Form</a>'
-                          u' or <a href="#preview-modal" data-toggle="modal">'
-                          u'Preview Web Form</a>')
+                'text': _('Successfully published %(form_id)s.'
+                          ' <a href="%(form_url)s">Enter Web Form</a>'
+                          ' or <a href="#preview-modal" data-toggle="modal">'
+                          'Preview Web Form</a>')
                 % {'form_id': survey.id_string,
                     'form_url': enketo_webform_url},
                 'form_o': survey
@@ -239,19 +239,19 @@ def profile(request, username):
             {
                 'id': 'published',
                 'xforms': user_xforms,
-                'title': _(u"Published Forms"),
+                'title': _("Published Forms"),
                 'small': _("Export, map, and view submissions.")
             },
             {
                 'id': 'shared',
                 'xforms': forms_shared_with,
-                'title': _(u"Shared Forms"),
+                'title': _("Shared Forms"),
                 'small': _("List of forms shared with you.")
             },
             {
                 'id': 'published_or_shared',
                 'xforms': published_or_shared,
-                'title': _(u"Published Forms"),
+                'title': _("Published Forms"),
                 'small': _("Export, map, and view submissions.")
             }
         ]
@@ -273,7 +273,7 @@ def profile(request, username):
 
 def members_list(request):
     if not request.user.is_staff and not request.user.is_superuser:
-        return HttpResponseForbidden(_(u'Forbidden.'))
+        return HttpResponseForbidden(_('Forbidden.'))
     users = User.objects.all()
     template = 'people.html'
 
@@ -378,14 +378,14 @@ def set_xform_owner_data(data, xform, request, username, id_string):
     for perm in get_users_with_perms(xform, attach_perms=True).items():
         has_perm = []
         if 'change_xform' in perm[1]:
-            has_perm.append(_(u"Can Edit"))
+            has_perm.append(_("Can Edit"))
         if 'view_xform' in perm[1]:
-            has_perm.append(_(u"Can View"))
+            has_perm.append(_("Can View"))
         if 'report_xform' in perm[1]:
-            has_perm.append(_(u"Can submit to"))
+            has_perm.append(_("Can submit to"))
         if 'validate_xform' in perm[1]:
-            has_perm.append(_(u"Can Validate"))
-        users_with_perms.append((perm[0], u" | ".join(has_perm)))
+            has_perm.append(_("Can Validate"))
+        users_with_perms.append((perm[0], " | ".join(has_perm)))
     data['users_with_perms'] = users_with_perms
     data['permission_form'] = PermissionForm(username)
 
@@ -477,7 +477,7 @@ def api_token(request, username=None):
 
         return render(request, "api_token.html", data)
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 @require_http_methods(["GET", "OPTIONS"])
@@ -505,7 +505,7 @@ def api(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
 
     if not xform:
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
 
     try:
         args = {
@@ -699,10 +699,10 @@ def edit(request, username, id_string):
                     sms_support_form.cleaned_data.get('enable_sms_support')
                 if enabled:
                     audit_action = Actions.SMS_SUPPORT_ACTIVATED
-                    audit_message = _(u"SMS Support Activated on")
+                    audit_message = _("SMS Support Activated on")
                 else:
                     audit_action = Actions.SMS_SUPPORT_DEACTIVATED
-                    audit_message = _(u"SMS Support Deactivated on")
+                    audit_message = _("SMS Support Deactivated on")
                 audit_log(
                     audit_action, request.user, owner,
                     audit_message
@@ -731,7 +731,7 @@ def edit(request, username, id_string):
             try:
                 SSRFProtect.validate(uri)
             except SSRFProtectException:
-                return HttpResponseForbidden(_(u'URL {uri} is forbidden.').format(
+                return HttpResponseForbidden(_('URL {uri} is forbidden.').format(
                     uri=uri))
             MetaData.media_add_uri(xform, uri)
         elif request.FILES.get('media'):
@@ -761,7 +761,7 @@ def edit(request, username, id_string):
         xform.update()
 
         if request.is_ajax():
-            return HttpResponse(_(u'Updated succeeded.'))
+            return HttpResponse(_('Updated succeeded.'))
         else:
             if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip(): 
                 return HttpResponseRedirect(request.META['HTTP_REFERER'])               
@@ -771,7 +771,7 @@ def edit(request, username, id_string):
                 'id_string': id_string
             }))
 
-    return HttpResponseForbidden(_(u'Update failed.'))
+    return HttpResponseForbidden(_('Update failed.'))
 
 
 def getting_started(request):
@@ -898,7 +898,7 @@ def download_metadata(request, username, id_string, data_id):
         else:
             return HttpResponseNotFound()
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 @login_required()
@@ -946,7 +946,7 @@ def delete_metadata(request, username, id_string, data_id):
             'id_string': id_string
         }))
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 def download_media_data(request, username, id_string, data_id):
@@ -1012,7 +1012,7 @@ def download_media_data(request, username, id_string, data_id):
             else:
                 return HttpResponseNotFound()
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 def form_photos(request, username, id_string):
@@ -1023,7 +1023,7 @@ def form_photos(request, username, id_string):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
 
     if not xform:
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
 
     data = {}
     data['form_view'] = True
@@ -1068,7 +1068,7 @@ def set_perm(request, username, id_string):
     owner = xform.user
     if username != request.user.username\
             and not has_permission(xform, username, request):
-        return HttpResponseForbidden(_(u'Permission denied.'))
+        return HttpResponseForbidden(_('Permission denied.'))
 
     try:
         perm_type = request.POST['perm_type']
@@ -1082,7 +1082,7 @@ def set_perm(request, username, id_string):
         except User.DoesNotExist:
             messages.add_message(
                 request, messages.INFO,
-                _(u"Wrong username <b>%s</b>." % for_user),
+                _("Wrong username <b>%s</b>." % for_user),
                 extra_tags='alert-error')
         else:
             if perm_type == 'edit' and\
@@ -1195,15 +1195,15 @@ def set_perm(request, username, id_string):
 @login_required
 def delete_data(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
-    response_text = u''
+    response_text = ''
     if not xform or not has_edit_permission(
         xform, owner, request
     ):
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
 
     data_id = request.POST.get('id')
     if not data_id:
-        return HttpResponseBadRequest(_(u"id must be specified"))
+        return HttpResponseBadRequest(_("id must be specified"))
 
     Instance.set_deleted_at(data_id)
     audit = {
@@ -1250,10 +1250,10 @@ def update_xform(request, username, id_string):
             }, audit, request)
         return {
             'type': 'alert-success',
-            'text': _(u'Successfully published %(form_id)s.'
-                      u' <a href="%(form_url)s">Enter Web Form</a>'
-                      u' or <a href="#preview-modal" data-toggle="modal">'
-                      u'Preview Web Form</a>')
+            'text': _('Successfully published %(form_id)s.'
+                      ' <a href="%(form_url)s">Enter Web Form</a>'
+                      ' or <a href="#preview-modal" data-toggle="modal">'
+                      'Preview Web Form</a>')
                     % {'form_id': survey.id_string,
                        'form_url': enketo_webform_url}
         }
@@ -1358,12 +1358,12 @@ def qrcode(request, username, id_string):
         formhub_url = "https://{}/{}".format(settings.TEST_HTTP_HOST,
                                              settings.TEST_USERNAME)
 
-    results = _(u"Unexpected Error occured: No QRCODE generated")
+    results = _("Unexpected Error occured: No QRCODE generated")
     status = 200
     try:
         url = enketo_url(formhub_url, id_string)
     except Exception as e:
-        error_msg = _(u"Error Generating QRCODE: %s" % e)
+        error_msg = _("Error Generating QRCODE: %s" % e)
         results = """<div class="alert alert-error">%s</div>""" % error_msg
         status = 400
     else:
@@ -1383,7 +1383,7 @@ def enketo_preview(request, username, id_string):
         XForm, user__username__iexact=username, id_string__exact=id_string)
     owner = xform.user
     if not has_permission(xform, owner, request, xform.shared):
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
     enekto_preview_url = \
         "%(enketo_url)s?server=%(profile_url)s&id=%(id_string)s" % {
             'enketo_url': settings.ENKETO_PREVIEW_URL,

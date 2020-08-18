@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # vim: ai ts=4 sts=4 et sw=4 nu
+
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 """ SMS Support Automatic Documentation (Web View)
 
@@ -14,8 +16,13 @@
 import json
 import datetime
 
-from tools import (DEFAULT_SEPARATOR, DEFAULT_ALLOW_MEDIA, MEDIA_TYPES,
-                   DEFAULT_DATE_FORMAT, DEFAULT_DATETIME_FORMAT)
+from .tools import (
+    DEFAULT_SEPARATOR,
+    DEFAULT_ALLOW_MEDIA,
+    MEDIA_TYPES,
+    DEFAULT_DATE_FORMAT,
+    DEFAULT_DATETIME_FORMAT
+)
 
 
 def get_sample_data_for(question, json_survey, as_names=False):
@@ -47,10 +54,10 @@ def get_sample_data_for(question, json_survey, as_names=False):
     elif xlsf_type == 'decimal':
         return safe_wrap(1.2)
     elif xlsf_type == 'select one':
-        return safe_wrap(u' '.join([c.get('sms_option')
+        return safe_wrap(' '.join([c.get('sms_option')
                                     for c in xlsf_choices][:1]))
     elif xlsf_type == 'select all that apply':
-        return safe_wrap(u' '.join([c.get('sms_option')
+        return safe_wrap(' '.join([c.get('sms_option')
                                     for c in xlsf_choices][:2]))
     elif xlsf_type == 'geopoint':
         return safe_wrap('12.65 -8')
@@ -87,51 +94,51 @@ def get_helper_text(question, json_survey):
         or DEFAULT_SEPARATOR
 
     def safe_wrap(value, xlsf_type=xlsf_type):
-        value = (u'<span class="sms_autodoc_helper_type">%(type)s</span> '
-                 u'<span class="sms_autodoc_helper_message">%(text)s</span>'
+        value = ('<span class="sms_autodoc_helper_type">%(type)s</span> '
+                 '<span class="sms_autodoc_helper_message">%(text)s</span>'
                  % {'type': xlsf_type, 'text': value})
         return unicode(value)
 
     if xlsf_type == 'text':
-        return safe_wrap(u'Any string (excluding “%s”)' % separator)
+        return safe_wrap('Any string (excluding "%s")' % separator)
     elif xlsf_type == 'integer':
         return safe_wrap('Any integer digit.')
     elif xlsf_type == 'decimal':
         return safe_wrap('A decimal or integer value.')
     elif xlsf_type == 'select one':
-        helper = u'Select one of the following:'
-        helper += u'<ul>'
-        helper += u''.join([u'<li><span class="sms_autodoc_helper_choice_id">'
-                            u'%(sms_option)s</span> <span class="sms_autodoc_'
-                            u'helper_choice_label">%(label)s</span></li>'
+        helper = 'Select one of the following:'
+        helper += '<ul>'
+        helper += ''.join(['<li><span class="sms_autodoc_helper_choice_id">'
+                            '%(sms_option)s</span> <span class="sms_autodoc_'
+                            'helper_choice_label">%(label)s</span></li>'
                             % {'sms_option': c.get('sms_option'),
                                'label': c.get('label')}
                            for c in xlsf_choices])
-        helper += u'</ul>'
+        helper += '</ul>'
         return safe_wrap(helper)
     elif xlsf_type == 'select all that apply':
-        helper = u'Select none, one or more in:'
-        helper += u'<ul>'
-        helper += u''.join([u'<li><span class="sms_autodoc_helper_choice_id">'
-                            u'%(sms_option)s</span> <span class="sms_autodoc_'
-                            u'helper_choice_label">%(label)s</span></li>'
+        helper = 'Select none, one or more in:'
+        helper += '<ul>'
+        helper += ''.join(['<li><span class="sms_autodoc_helper_choice_id">'
+                            '%(sms_option)s</span> <span class="sms_autodoc_'
+                            'helper_choice_label">%(label)s</span></li>'
                             % {'sms_option': c.get('sms_option'),
                                'label': c.get('label')}
                            for c in xlsf_choices])
-        helper += u'</ul>'
+        helper += '</ul>'
         return safe_wrap(helper)
     elif xlsf_type == 'geopoint':
-        helper = (u'GPS coordinates as <span class="sms_autodoc_example">'
-                  u'latitude longitude</span>.'
-                  u'<br />Optionnaly add <span class="sms_autodoc_example">'
-                  u'altitude precision</span> after. All of them are decimal.')
+        helper = ('GPS coordinates as <span class="sms_autodoc_example">'
+                  'latitude longitude</span>.'
+                  '<br />Optionnaly add <span class="sms_autodoc_example">'
+                  'altitude precision</span> after. All of them are decimal.')
         return safe_wrap(helper)
     elif xlsf_type in MEDIA_TYPES:
         exts = {'audio': 'mp3', 'video': 'avi', 'photo': 'jpg'}
-        helper = (u'File name and base64 data of the file as in '
-                  u'<span class="sms_autodoc_example">x.%s;dGhpc</span>.'
-                  u'<br />It is <strong>not</strong> intented to be filled by '
-                  u'humans.' % exts.get(xlsf_type, 'ext'))
+        helper = ('File name and base64 data of the file as in '
+                  '<span class="sms_autodoc_example">x.%s;dGhpc</span>.'
+                  '<br />It is <strong>not</strong> intented to be filled by '
+                  'humans.' % exts.get(xlsf_type, 'ext'))
         return safe_wrap(helper)
     elif xlsf_type == 'barcode':
         return safe_wrap('A string representing the value behind the barcode.')
@@ -166,25 +173,25 @@ def get_autodoc_for(xform):
                            DEFAULT_ALLOW_MEDIA) or DEFAULT_ALLOW_MEDIA)
 
     helpers = []
-    line_names = (u'<span class="sms_autodoc_keyword">%(keyword)s</span>'
-                  u'<sup>%(qid)d</sup> '
+    line_names = ('<span class="sms_autodoc_keyword">%(keyword)s</span>'
+                  '<sup>%(qid)d</sup> '
                   % {'keyword': xform.sms_id_string, 'qid': len(helpers)})
-    line_values = (u'<span class="sms_autodoc_keyword">%(keyword)s</span> '
+    line_values = ('<span class="sms_autodoc_keyword">%(keyword)s</span> '
                    % {'keyword': xform.sms_id_string})
-    helpers.append(('keyword', u'The keyword used to identify the form.'
-                               u'<br />Omit if using a form-aware URL.'))
+    helpers.append(('keyword', 'The keyword used to identify the form.'
+                               '<br />Omit if using a form-aware URL.'))
 
     for group in json_survey.get('children', {}):
         sms_field = group.get('sms_field', '')
         if not sms_field or sms_field.lower() == 'meta':
             continue
 
-        line_values += (u'<span class="group"><span class="group_id">'
-                        u'%(sep)s%(sms_field)s</span> '
+        line_values += ('<span class="group"><span class="group_id">'
+                        '%(sep)s%(sms_field)s</span> '
                         % {'sep': separator,
                            'sms_field': group.get('sms_field')})
-        line_names += (u'<span class="group"><span class="group_id">'
-                       u'%(sep)s%(sms_field)s</span> '
+        line_names += ('<span class="group"><span class="group_id">'
+                       '%(sep)s%(sms_field)s</span> '
                        % {'sep': separator,
                           'sms_field': group.get('sms_field')})
 
@@ -201,18 +208,18 @@ def get_autodoc_for(xform):
             sample_name = get_sample_data_for(question, json_survey,
                                               as_names=True)
 
-            line_values += (u'<span class="sms_autodoc_type_%(type)s '
-                            u'sms_autodoc_type">%(value)s</span> '
+            line_values += ('<span class="sms_autodoc_type_%(type)s '
+                            'sms_autodoc_type">%(value)s</span> '
                             % {'type': type_id, 'value': sample})
-            line_names += (u'<span class="sms_autodoc_type_%(type)s '
-                           u'sms_autodoc_type">%(value)s</span>'
-                           u'<sup>%(h)s</sup> '
+            line_names += ('<span class="sms_autodoc_type_%(type)s '
+                           'sms_autodoc_type">%(value)s</span>'
+                           '<sup>%(h)s</sup> '
                            % {'type': type_id,
                               'value': sample_name, 'h': qid})
             helpers.append((sample_name,
                             get_helper_text(question, json_survey)))
 
-        line_values += u'</span>'
+        line_values += '</span>'
 
     return {'line_values': line_values,
             'line_names': line_names,

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -28,7 +30,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
 
     @check_obj
     def get_hash(self, obj):
-        return u"md5:%s" % obj.hash
+        return "md5:%s" % obj.hash
 
     # Tests are expecting this `public` to be passed only "True" or "False"
     # and as a string. I don't know how it worked pre-migrations to django 1.8
@@ -85,7 +87,7 @@ class XFormListSerializer(serializers.Serializer):
 
     @check_obj
     def get_hash(self, obj):
-        return u"md5:%s" % obj.hash
+        return "md5:%s" % obj.hash
 
     @check_obj
     def get_url(self, obj):
@@ -120,4 +122,4 @@ class XFormManifestSerializer(serializers.Serializer):
 
     @check_obj
     def get_hash(self, obj):
-        return u"%s" % (obj.file_hash or 'md5:')
+        return "%s" % (obj.file_hash or 'md5:')

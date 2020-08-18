@@ -1,8 +1,11 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from rest_framework import serializers
 
 from onadata.apps.main.models import UserProfile
-from onadata.libs.serializers.fields.json_field import JsonField
 from onadata.libs.permissions import CAN_VIEW_PROFILE
+from onadata.libs.serializers.fields.json_field import JsonField
 
 
 class UserProfileSerializer(serializers.Serializer):
@@ -51,7 +54,6 @@ class UserProfileSerializer(serializers.Serializer):
             del ret['email']
 
         return ret
-
 
 
 class UserProfileWithTokenSerializer(UserProfileSerializer):

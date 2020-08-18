@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
@@ -73,7 +75,7 @@ class XFormPermissionFilterMixin(object):
                 int(xform)
             except ValueError:
                 raise ParseError(
-                    u"Invalid value for formid %s." % xform)
+                    "Invalid value for formid %s." % xform)
             xform = get_object_or_404(XForm, pk=xform)
             xform_qs = XForm.objects.filter(pk=xform.pk)
         else:
@@ -106,7 +108,7 @@ class AttachmentFilter(XFormPermissionFilterMixin,
                 int(instance_id)
             except ValueError:
                 raise ParseError(
-                    u"Invalid value for instance %s." % instance_id)
+                    "Invalid value for instance %s." % instance_id)
             instance = get_object_or_404(Instance, pk=instance_id)
             queryset = queryset.filter(instance=instance)
 

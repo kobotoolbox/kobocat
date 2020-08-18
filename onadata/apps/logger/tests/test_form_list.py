@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from django_digest.test import DigestAuth

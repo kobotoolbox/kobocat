@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from optparse import make_option
 from django.contrib.auth.models import User
 
@@ -68,11 +72,11 @@ class Command(BaseCommand):
                     if default_storage.exists(get_path(
                             filename,
                             '%s' % settings.THUMB_CONF['small']['suffix'])):
-                        print (_(u'Thumbnails created for %(file)s')
-                               % {'file': filename})
+                        print(_('Thumbnails created for %(file)s')
+                              % {'file': filename})
                     else:
-                        print (_(u'Problem with the file %(file)s')
-                               % {'file': filename})
+                        print(_('Problem with the file %(file)s')
+                              % {'file': filename})
                 except (IOError, OSError), e:
-                    print _(u'Error on %(filename)s: %(error)s') \
-                        % {'filename': filename, 'error': e}
+                    print(_('Error on %(filename)s: %(error)s')
+                          % {'filename': filename, 'error': e})

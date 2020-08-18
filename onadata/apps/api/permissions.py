@@ -1,22 +1,13 @@
 # coding: utf-8
-from django.conf import settings
-from django.contrib.auth.models import (
-    AnonymousUser,
-    Permission,
-    User
-)
+from __future__ import unicode_literals, print_function, division, absolute_import
 
-from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import (
     DjangoObjectPermissions,
     IsAuthenticated,
     SAFE_METHODS
 )
 
-
-from onadata.libs.permissions import CAN_ADD_XFORM_TO_PROFILE
 from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VALIDATE_XFORM
-from onadata.apps.api.tools import get_user_profile_or_none
 from onadata.apps.logger.models import XForm
 
 

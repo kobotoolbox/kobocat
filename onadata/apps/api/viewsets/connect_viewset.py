@@ -1,7 +1,7 @@
-from rest_framework import status
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from rest_framework import viewsets
-from rest_framework.decorators import detail_route
-from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
 from onadata.apps.api.permissions import ConnectViewsetPermissions
@@ -9,12 +9,10 @@ from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs.mixins.object_lookup_mixin import ObjectLookupMixin
 from onadata.libs.serializers.user_profile_serializer import (
     UserProfileWithTokenSerializer)
-
 from onadata.settings.common import DEFAULT_SESSION_EXPIRY_TIME
 
 
 class ConnectViewSet(ObjectLookupMixin, viewsets.GenericViewSet):
-
     """This endpoint allows you retrieve the authenticated user's profile info.
 
 ## Retrieve profile

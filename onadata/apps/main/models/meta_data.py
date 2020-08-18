@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import mimetypes
 import os
 import requests
@@ -152,14 +155,14 @@ class MetaData(models.Model):
             try:
                 self.data_file.seek(os.SEEK_SET)
             except IOError:
-                return u''
+                return ''
             else:
-                self.file_hash = u'md5:%s' \
+                self.file_hash = 'md5:%s' \
                     % md5(self.data_file.read()).hexdigest()
 
                 return self.file_hash
 
-        return u''
+        return ''
 
     @staticmethod
     def public_link(xform, data_value=None):

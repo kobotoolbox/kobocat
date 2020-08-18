@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import dj_database_url
 from django.utils.six.moves.urllib.parse import quote_plus
 from mongomock import MongoClient as MockMongoClient
@@ -122,7 +123,7 @@ if 'RAVEN_DSN' in os.environ:
     try:
         import raven
     except ImportError:
-        print 'Please install Raven to enable Sentry logging.'
+        print('Please install Raven to enable Sentry logging.')
     else:
         INSTALLED_APPS = INSTALLED_APPS + (
             'raven.contrib.django.raven_compat',

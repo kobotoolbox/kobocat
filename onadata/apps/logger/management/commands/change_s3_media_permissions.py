@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 coding=utf-8
+# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import sys
 
 from django.core.management.base import BaseCommand, CommandError
@@ -25,8 +28,8 @@ class Command(BaseCommand):
         try:
             s3 = get_storage_class('storages.backends.s3boto.S3BotoStorage')()
         except:
-            print _(u"Missing necessary libraries. Try running: pip install "
-                    "-r requirements-s3.pip")
+            print(_("Missing necessary libraries. Try running: pip install "
+                    "-r requirements-s3.pip"))
             sys.exit(1)
         else:
             all_files = s3.bucket.list()
@@ -34,6 +37,6 @@ class Command(BaseCommand):
             for i, f in enumerate(all_files):
                 f.set_acl(permission)
                 if i % 1000 == 0:
-                    print i, "file objects processed"
+                    print(i, "file objects processed")
 
-            print "a total of", i, "file objects processed"
+            print("a total of", i, "file objects processed")
