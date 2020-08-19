@@ -31,12 +31,6 @@ from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.models.base_model import BaseModel
 
 
-try:
-    from formpack.utils.xls_to_ss_structure import xls_to_dicts
-except ImportError:
-    xls_to_dicts = False
-
-
 XFORM_TITLE_LENGTH = 255
 title_pattern = re.compile(r"<h:title>([^<]+)</h:title>")
 
@@ -62,10 +56,10 @@ class XForm(BaseModel):
     shared = models.BooleanField(default=False)
     shared_data = models.BooleanField(default=False)
     downloadable = models.BooleanField(default=True)
-    allows_sms = models.BooleanField(default=False)
     encrypted = models.BooleanField(default=False)
 
     # the following fields are filled in automatically
+    allows_sms = models.BooleanField(default=False)
     sms_id_string = models.SlugField(
         editable=False,
         verbose_name=ugettext_lazy("SMS ID"),
@@ -196,15 +190,12 @@ class XForm(BaseModel):
             raise XLSFormError(_('In strict mode, the XForm ID must be a '
                                'valid slug and contain no spaces.'))
 
-        if not self.sms_id_string:
-            try:
-                # try to guess the form's wanted sms_id_string
-                # from it's json rep (from XLSForm)
-                # otherwise, use id_string to ensure uniqueness
-                self.sms_id_string = json.loads(self.json).get('sms_keyword',
-                                                               self.id_string)
-            except:
-                self.sms_id_string = self.id_string
+        # `sms_id_string` and `allows_sms` are deprecated fields.
+        # We keep them to avoid altering `logger_xform` which can be really big
+        # to avoid a long downtime during a migration.
+        if not self.pk or not self.sms_id_string:
+            self.sms_id_string = self.id_string
+            self.allows_sms = False
 
         super(XForm, self).save(*args, **kwargs)
 
@@ -252,7 +243,8 @@ class XForm(BaseModel):
 
     def time_of_last_submission_update(self):
         try:
-            # we also consider deleted instances in this case
+            # We don't need to filter on `deleted_at` field anymore.
+            # Instances are really deleted and not flagged as deleted.
             return self.instances.latest("date_modified").date_modified
         except ObjectDoesNotExist:
             pass
@@ -275,7 +267,7 @@ class XForm(BaseModel):
 
     def _xls_file_io(self):
         """
-        pulls the xls file from remote storage
+        Pulls the xls file from remote storage
 
         this should be used sparingly
         """
@@ -288,38 +280,6 @@ class XForm(BaseModel):
                     return convert_csv_to_xls(ff.read())
                 else:
                     return BytesIO(ff.read())
-
-    def to_kpi_content_schema(self):
-        """
-        parses xlsform structure into json representation
-        of spreadsheet structure.
-        """
-        if not xls_to_dicts:
-            raise ImportError('formpack module needed')
-        content = xls_to_dicts(self._xls_file_io())
-        if 'settings' in content and len(content['settings']) > 0:
-            content['settings'] = content['settings'][0]
-
-        # a temporary fix to the problem of list_name alias
-        return json.loads(re.sub('list name', 'list_name',
-                          json.dumps(content, indent=4)))
-
-    def to_xlsform(self):
-        """
-        Generate an XLS format XLSForm copy of this form.
-        """
-        file_path = self.xls.name
-        default_storage = get_storage_class()()
-
-        if file_path != '' and default_storage.exists(file_path):
-            with default_storage.open(file_path) as xlsform_file:
-                if file_path.endswith('.csv'):
-                    xlsform_io = convert_csv_to_xls(xlsform_file.read())
-                else:
-                    xlsform_io = BytesIO(xlsform_file.read())
-            return xlsform_io
-        else:
-            return None
 
     @property
     def settings(self):

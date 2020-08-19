@@ -71,30 +71,6 @@ class TestExportList(TestBase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    def test_gdoc_export_list(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.GDOC_EXPORT}
-        url = reverse(export_list, kwargs=kwargs)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)
-
-    def test_csv_zip_export_list(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.CSV_ZIP_EXPORT}
-        url = reverse(export_list, kwargs=kwargs)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-    def test_sav_zip_export_list(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.SAV_ZIP_EXPORT}
-        url = reverse(export_list, kwargs=kwargs)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
 
 class TestDataExportURL(TestBase):
 
@@ -146,32 +122,3 @@ class TestDataExportURL(TestBase):
         filename = self._filename_from_disposition(content_disposition)
         basename, ext = os.path.splitext(filename)
         self.assertEqual(ext, '.xlsx')
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_csv_zip_export_url(self):
-        self._submit_transport_instance()
-        url = reverse('csv_zip_export', kwargs={
-            'username': self.user.username.upper(),
-            'id_string': self.xform.id_string.upper(),
-        })
-        response = self.client.get(url)
-        headers = dict(response.items())
-        self.assertEqual(headers['Content-Type'], 'application/zip')
-        content_disposition = headers['Content-Disposition']
-        filename = self._filename_from_disposition(content_disposition)
-        basename, ext = os.path.splitext(filename)
-        self.assertEqual(ext, '.zip')
-
-    def test_sav_zip_export_url(self):
-        self._submit_transport_instance()
-        url = reverse('sav_zip_export', kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-        })
-        response = self.client.get(url)
-        headers = dict(response.items())
-        self.assertEqual(headers['Content-Type'], 'application/zip')
-        content_disposition = headers['Content-Disposition']
-        filename = self._filename_from_disposition(content_disposition)
-        basename, ext = os.path.splitext(filename)
-        self.assertEqual(ext, '.zip')

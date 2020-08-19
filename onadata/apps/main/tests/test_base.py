@@ -15,6 +15,7 @@ from django.test.client import Client
 from django.utils import timezone
 from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
+from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.logger.models import XForm, Instance, Attachment
@@ -88,11 +89,15 @@ class TestBase(TestCase):
         self.anon = Client()
 
     def _publish_xls_file(self, path):
+
+        xform_list_url = reverse('xform-list')
+
         if not path.startswith(f'/{self.user.username}/'):
             path = os.path.join(self.this_directory, path)
+
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            response = self.client.post(f'/{self.user.username}/', data=post_data)
+            response = self.client.post(xform_list_url, data=post_data)
             return response
 
     def _publish_xlsx_file(self):
@@ -100,7 +105,7 @@ class TestBase(TestCase):
         pre_count = XForm.objects.count()
         response = TestBase._publish_xls_file(self, path)
         # make sure publishing the survey worked
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(XForm.objects.count(), pre_count + 1)
 
     def _publish_xls_file_and_set_xform(self, path):

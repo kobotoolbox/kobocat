@@ -1,5 +1,5 @@
 # coding: utf-8
-# coding: utf-8
+
 from django.core.exceptions import ValidationError
 from south.v2 import DataMigration
 from onadata.libs.utils.model_tools import queryset_iterator
