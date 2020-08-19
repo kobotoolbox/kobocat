@@ -48,7 +48,9 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             'user',
             'has_start_time',
             'shared',
-            'shared_data'
+            'shared_data',
+            'allows_sms',
+            'sms_id_string'
         )
 
     @check_obj
@@ -68,6 +70,8 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
         attrs['shared'] = shared is True or shared == 'True'
         return attrs
 
+
+
     # Again, this is to match unit tests
     @property
     def data(self):
@@ -85,6 +89,12 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
                                       many=True, context=self.context).data
 
         return []
+
+    def get_allows_sms(self, obj):
+        return False
+
+    def get_sms_id_string(self, obj):
+        return obj.id_string
 
 
 class XFormListSerializer(serializers.Serializer):

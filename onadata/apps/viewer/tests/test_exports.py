@@ -15,7 +15,6 @@ from django.core.urlresolvers import reverse
 from django.utils.dateparse import parse_datetime
 from xlrd import open_workbook
 
-from onadata.apps.main.views import delete_data
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.tests.export_helpers import viewer_fixture_path
 from onadata.apps.viewer.views import delete_export, export_list,\
@@ -460,11 +459,11 @@ class TestExports(TestBase):
         # get id of second submission
         instance_id = Instance.objects.filter(
             xform=self.xform).order_by('id').reverse()[0].id
-        delete_url = reverse(
-            delete_data, kwargs={"username": self.user.username,
-                                 "id_string": self.xform.id_string})
-        params = {'id': instance_id}
-        self.client.post(delete_url, params)
+        delete_url = reverse('data-detail', kwargs={
+            'pk': self.xform.pk,
+            'dataid': instance_id
+        })
+        self.client.delete(delete_url)
         count = ParsedInstance.query_mongo(
             self.user.username, self.xform.id_string, '{}', '[]', '{}',
             count=True)[0]['count']
@@ -652,19 +651,20 @@ class TestExports(TestBase):
 
         sleep(1)
         # and when we delete
-        delete_url = reverse(delete_data, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string
-        })
         instance = Instance.objects.filter().order_by('-pk')[0]
-        response = self.client.post(delete_url, {'id': instance.id})
-        self.assertEqual(response.status_code, 200)
+        delete_url = reverse('data-detail', kwargs={
+            'pk': self.xform.pk,
+            'dataid': instance.pk
+        })
+        response = self.client.delete(delete_url)
+        self.assertEqual(response.status_code, 204)
         response = self.client.get(csv_export_url)
         self.assertEqual(response.status_code, 200)
         # we should have an extra export now that the data
         # has been updated by the delete
         num_csv_exports = Export.objects.filter(
             xform=self.xform, export_type=Export.CSV_EXPORT).count()
+        self.xform.refresh_from_db()
         self.assertEqual(num_csv_exports, initial_num_csv_exports + 3)
 
     def test_exports_outdated_doesnt_consider_failed_exports(self):
@@ -1040,19 +1040,6 @@ class TestExports(TestBase):
                 [x for x in output['children/cartoons/characters']
                  if x['children/cartoons/characters/name'] == name][0],
                 expected_output['children/cartoons/characters'][index])
-
-    def test_generate_csv_zip_export(self):
-        # publish xls form
-        self._publish_transportation_form_and_submit_instance()
-        # create export db object
-        export = generate_export(
-            Export.CSV_ZIP_EXPORT, "zip", self.user.username,
-            self.xform.id_string, group_delimiter='/',
-            split_select_multiples=True)
-        storage = get_storage_class()()
-        self.assertTrue(storage.exists(export.filepath))
-        path, ext = os.path.splitext(export.filename)
-        self.assertEqual(ext, '.zip')
 
     def test_dict_to_joined_export_notes(self):
         submission = {

@@ -52,37 +52,41 @@ class TestAbstractViewSet(TestCase):
         self._add_permissions_to_user(AnonymousUser())
         self.maxDiff = None
 
-    def publish_xls_form(self):
-        data = {
-            'owner': self.user.username,
-            'public': False,
-            'public_data': False,
-            'description': u'transportation_2011_07_25',
-            'downloadable': True,
-            'allows_sms': False,
-            'encrypted': False,
-            'sms_id_string': u'transportation_2011_07_25',
-            'id_string': u'transportation_2011_07_25',
-            'title': u'transportation_2011_07_25',
-        }
+    def publish_xls_form(self, path=None, data=None, assert_=True):
+        if not data:
+            data = {
+                'owner': self.user.username,
+                'public': False,
+                'public_data': False,
+                'description': u'transportation_2011_07_25',
+                'downloadable': True,
+                'encrypted': False,
+                'id_string': u'transportation_2011_07_25',
+                'title': u'transportation_2011_07_25',
+            }
 
-        path = os.path.join(
-            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
-            "transportation", "transportation.xls")
+        if not path:
+            path = os.path.join(
+                settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
+                "transportation", "transportation.xls")
 
         xform_list_url = reverse('xform-list')
 
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             response = self.client.post(xform_list_url, data=post_data)
-            self.assertEqual(response.status_code, 201)
-            self.xform = XForm.objects.all().order_by('pk').reverse()[0]
-            data.update({
-                'url': f'http://testserver/api/v1/forms/{self.xform.pk}'
-            })
 
-            self.assertEqual(dict(response.data, **data), response.data)
-            self.form_data = response.data
+        if not assert_:
+            return response
+
+        self.assertEqual(response.status_code, 201)
+        self.xform = XForm.objects.all().order_by('pk').reverse()[0]
+        data.update({
+            'url': f'http://testserver/api/v1/forms/{self.xform.pk}'
+        })
+
+        self.assertEqual(dict(response.data, **data), response.data)
+        self.form_data = response.data
 
     def user_profile_data(self):
         return {
