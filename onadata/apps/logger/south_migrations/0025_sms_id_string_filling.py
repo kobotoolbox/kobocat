@@ -1,5 +1,5 @@
 # coding: utf-8
-# coding: utf-8
+
 import datetime
 from south.db import db
 from south.v2 import DataMigration

@@ -1,15 +1,17 @@
 # coding: utf-8
 import os
 import hashlib
-import unittest
 
 from django.core.files.base import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.urls import reverse
 
 from onadata.apps.main.models import MetaData
-from onadata.apps.main.views import show, edit, download_metadata,\
-    download_media_data, delete_metadata
+from onadata.apps.main.views import (
+    show,
+    edit,
+    download_media_data,
+)
 from .test_base import TestBase
 
 
@@ -28,11 +30,9 @@ class TestFormMetadata(TestBase):
             'id_string': self.xform.id_string
         })
 
-    def _add_metadata(self, data_type='doc'):
-        if data_type == 'media':
-            name = 'screenshot.png'
-        else:
-            name = 'transportation.xls'
+    def _add_metadata(self):
+        name = 'screenshot.png'
+        data_type = 'media'
         path = os.path.join(self.this_directory, "fixtures",
                             "transportation", name)
         with open(path, 'rb') as doc_file:
@@ -40,143 +40,51 @@ class TestFormMetadata(TestBase):
                 data_type: doc_file
             }
             self.client.post(self.edit_url, self.post_data)
-        if data_type == 'media':
-            self.doc = MetaData.objects.filter(data_type='media').reverse()[0]
-            self.doc_url = reverse(download_media_data, kwargs={
-                'username': self.user.username,
-                'id_string': self.xform.id_string,
-                'data_id': self.doc.id})
-        else:
-            self.doc = MetaData.objects.all().reverse()[0]
-            self.doc_url = reverse(download_metadata, kwargs={
-                'username': self.user.username,
-                'id_string': self.xform.id_string,
-                'data_id': self.doc.id})
-        return name
 
-    def test_adds_supporting_doc_on_submit(self):
-        count = len(MetaData.objects.filter(xform=self.xform,
-                    data_type='supporting_doc'))
-        self._add_metadata()
-        self.assertEqual(count + 1, len(MetaData.objects.filter(
-            xform=self.xform, data_type='supporting_doc')))
+        self.doc = MetaData.objects.filter(data_type=data_type).reverse()[0]
+        self.doc_url = reverse(download_media_data, kwargs={
+            'username': self.user.username,
+            'id_string': self.xform.id_string,
+            'data_id': self.doc.id})
+
+        return name
 
     def test_adds_supporting_media_on_submit(self):
         count = len(MetaData.objects.filter(xform=self.xform,
                     data_type='media'))
-        self._add_metadata(data_type='media')
-        self.assertEqual(count + 1, len(MetaData.objects.filter(
+        self._add_metadata()
+        self.assertEquals(count + 1, len(MetaData.objects.filter(
             xform=self.xform, data_type='media')))
 
-    def test_shows_supporting_doc_after_submit(self):
-        name = self._add_metadata()
-        response = self.client.get(self.url)
-        self.assertContains(response, name)
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, name)
-
-    @unittest.skip('Is based on changed template')
-    def test_shows_supporting_media_after_submit(self):
-        name = self._add_metadata(data_type='media')
-        response = self.client.get(self.url)
-        self.assertContains(response, name)
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, name)
-
-    def test_download_supporting_doc(self):
-        self._add_metadata()
-        response = self.client.get(self.doc_url)
-        self.assertEqual(response.status_code, 200)
-        fileName, ext = os.path.splitext(response['Content-Disposition'])
-        self.assertEqual(ext, '.xls')
-
-    def test_no_download_supporting_doc_for_anon(self):
-        self._add_metadata()
-        response = self.anon.get(self.doc_url)
-        self.assertEqual(response.status_code, 403)
-
     def test_download_supporting_media(self):
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         response = self.client.get(self.doc_url)
         self.assertEqual(response.status_code, 200)
         fileName, ext = os.path.splitext(response['Content-Disposition'])
         self.assertEqual(ext, '.png')
 
-    def test_shared_download_supporting_doc_for_anon(self):
-        self._add_metadata()
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.doc_url)
-        self.assertEqual(response.status_code, 200)
-
     def test_shared_download_supporting_media_for_anon(self):
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         self.xform.shared = True
         self.xform.save()
         response = self.anon.get(self.doc_url)
         self.assertEqual(response.status_code, 200)
-
-    def test_delete_supporting_doc(self):
-        count = MetaData.objects.filter(xform=self.xform,
-                                        data_type='supporting_doc').count()
-        self._add_metadata()
-        self.assertEqual(MetaData.objects.filter(
-            xform=self.xform, data_type='supporting_doc').count(), count + 1)
-        doc = MetaData.objects.filter(data_type='supporting_doc').reverse()[0]
-        self.delete_doc_url = reverse(delete_metadata, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-            'data_id': doc.id})
-        response = self.client.get(self.delete_doc_url + '?del=true')
-        self.assertEqual(MetaData.objects.filter(
-            xform=self.xform, data_type='supporting_doc').count(), count)
-        self.assertEqual(response.status_code, 302)
 
     def test_delete_supporting_media(self):
         count = MetaData.objects.filter(
             xform=self.xform, data_type='media').count()
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         self.assertEqual(MetaData.objects.filter(
             xform=self.xform, data_type='media').count(), count + 1)
         response = self.client.get(self.doc_url + '?del=true')
         self.assertEqual(MetaData.objects.filter(
             xform=self.xform, data_type='media').count(), count)
         self.assertEqual(response.status_code, 302)
-        self._add_metadata(data_type='media')
+        self._add_metadata()
         response = self.anon.get(self.doc_url + '?del=true')
         self.assertEqual(MetaData.objects.filter(
             xform=self.xform, data_type='media').count(), count + 1)
         self.assertEqual(response.status_code, 403)
-
-    def test_user_source_edit_updates(self):
-        desc = 'Snooky'
-        response = self.client.post(self.edit_url, {'source': desc},
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(MetaData.source(self.xform).data_value, desc)
-
-    def test_upload_source_file(self):
-        self._add_metadata('source')
-        self.assertNotEqual(MetaData.source(self.xform).data_file, None)
-
-    def test_upload_source_file_set_value_to_name(self):
-        name = self._add_metadata('source')
-        self.assertEqual(MetaData.source(self.xform).data_value, name)
-
-    def test_upload_source_file_keep_name(self):
-        desc = 'Snooky'
-        response = self.client.post(self.edit_url, {'source': desc},
-                                    HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        self.assertEqual(response.status_code, 200)
-        self._add_metadata('source')
-        self.assertNotEqual(MetaData.source(self.xform).data_file, None)
-        self.assertEqual(MetaData.source(self.xform).data_value, desc)
 
     def test_media_file_hash(self):
         name = "screenshot.png"
@@ -206,7 +114,7 @@ class TestFormMetadata(TestBase):
         media_file = os.path.join(
             self.this_directory, 'fixtures', 'transportation',
             'transportation.csv')
-        f = InMemoryUploadedFile(open(media_file),
+        f = InMemoryUploadedFile(open(media_file, 'rb'),
                                  'media',
                                  'transportation.csv',
                                  'application/octet-stream',

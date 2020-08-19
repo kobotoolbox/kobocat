@@ -25,7 +25,7 @@ from rest_framework import exceptions
 import rest_framework.views as rest_framework_views
 from registration.models import RegistrationProfile
 
-from onadata.apps.main.forms import QuickConverter
+from onadata.apps.main.forms import QuickConverterForm
 from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.viewer.models.parsed_instance import datetime_from_str
@@ -56,23 +56,6 @@ def _get_id_for_type(record, mongo_field):
     return {"$substr": [mongo_str, 0, 10]} if isinstance(date_field, datetime)\
         else mongo_str
 
-# TODO verify tests without this method, then delete
-# def get_accessible_forms(owner=None, shared_form=False, shared_data=False):
-#     xforms = XForm.objects.filter()
-#
-#     if shared_form and not shared_data:
-#         xforms = xforms.filter(shared=True)
-#     elif (shared_form and shared_data) or \
-#             (owner == 'public' and not shared_form and not shared_data):
-#         xforms = xforms.filter(Q(shared=True) | Q(shared_data=True))
-#     elif not shared_form and shared_data:
-#         xforms = xforms.filter(shared_data=True)
-#
-#     if owner != 'public':
-#         xforms = xforms.filter(user__username=owner)
-#
-#     return xforms.distinct()
-
 
 def publish_xlsform(request, user, existing_xform=None):
     """
@@ -95,7 +78,7 @@ def publish_xlsform(request, user, existing_xform=None):
         )
 
     def set_form():
-        form = QuickConverter(request.POST, request.FILES)
+        form = QuickConverterForm(request.POST, request.FILES)
         if existing_xform:
             return form.publish(user, existing_xform.id_string)
         else:
@@ -218,24 +201,27 @@ def get_media_file_response(metadata):
         return HttpResponseRedirect(metadata.data_value)
 
 
-def get_view_name(view_cls, suffix=None):
-    ''' Override Django REST framework's name for the base API class '''
+def get_view_name(view_obj):
+    """
+    Override Django REST framework's name for the base API class
+    """
     # The base API class should inherit directly from APIView. We can't use
     # issubclass() because ViewSets also inherit (indirectly) from APIView.
     try:
-        if inspect.getmro(view_cls)[1] is rest_framework_views.APIView:
-            return 'KoBo Api' # awkward capitalization for consistency
+        if inspect.getmro(view_obj.__class__)[1] is rest_framework_views.APIView:
+            return 'KoBo Api'  # awkward capitalization for consistency
     except KeyError:
         pass
-    return rest_framework_views.get_view_name(view_cls, suffix)
+    return rest_framework_views.get_view_name(view_obj)
 
 
-def get_view_description(view_cls, html=False):
-    ''' Replace example.com in Django REST framework's default API description
-    with the domain name of the current site '''
+def get_view_description(view_obj, html=False):
+    """
+    Replace example.com in Django REST framework's default API description
+    with the domain name of the current site
+    """
     domain = Site.objects.get_current().domain
-    description = rest_framework_views.get_view_description(view_cls,
-        html)
+    description = rest_framework_views.get_view_description(view_obj, html)
     # description might not be a plain string: e.g. it could be a SafeText
     # to prevent further HTML escaping
     original_type = type(description)

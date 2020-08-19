@@ -24,6 +24,7 @@ def site_name(request):
         site_name = site.name
     return {'SITE_NAME': site_name}
 
+
 def base_url(request):
     """
     Return a BASE_URL template context for the current request.
@@ -33,4 +34,4 @@ def base_url(request):
     else:
         scheme = 'http://'
         
-    return {'BASE_URL': scheme + request.get_host(),}
+    return {'BASE_URL': scheme + request.get_host(), }
