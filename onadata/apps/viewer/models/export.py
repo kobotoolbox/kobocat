@@ -26,33 +26,20 @@ class Export(models.Model):
     CSV_EXPORT = 'csv'
     KML_EXPORT = 'kml'
     ZIP_EXPORT = 'zip'
-    GDOC_EXPORT = 'gdoc'
-    CSV_ZIP_EXPORT = 'csv_zip'
-    SAV_ZIP_EXPORT = 'sav_zip'
-    SAV_EXPORT = 'sav'
-    ANALYSER_EXPORT = 'analyser'
 
     EXPORT_MIMES = {
         'xls': 'vnd.ms-excel',
         'xlsx': 'vnd.openxmlformats',
         'csv': 'csv',
         'zip': 'zip',
-        'csv_zip': 'zip',
-        'sav_zip': 'zip',
-        'sav': 'sav',
         'kml': 'vnd.google-earth.kml+xml'
     }
 
     EXPORT_TYPES = [
         (XLS_EXPORT, 'Excel'),
         (CSV_EXPORT, 'CSV'),
-        (GDOC_EXPORT, 'GDOC'),
         (ZIP_EXPORT, 'ZIP'),
-        (KML_EXPORT, 'kml'),
-        (CSV_ZIP_EXPORT, 'CSV ZIP'),
-        (SAV_ZIP_EXPORT, 'SAV ZIP'),
-        (SAV_EXPORT, 'SAV'),
-        (ANALYSER_EXPORT, 'Analyser')
+        (KML_EXPORT, 'kml')
     ]
 
     EXPORT_TYPE_DICT = dict(export_type for export_type in EXPORT_TYPES)
@@ -173,10 +160,16 @@ class Export(models.Model):
         except cls.DoesNotExist:
             return True
         else:
-            if latest_export.time_of_last_submission is not None \
-                    and xform.time_of_last_submission_update() is not None:
-                return latest_export.time_of_last_submission <\
-                    xform.time_of_last_submission_update()
+            xform.refresh_from_db(fields=['date_modified'])
+            xform_last_submission_time = xform.time_of_last_submission_update()
+            export_last_submission_time = latest_export.time_of_last_submission
+            if export_last_submission_time is None:
+                return True
+
+            if export_last_submission_time < xform.date_modified:
+                return True
+            elif xform_last_submission_time is not None:
+                return export_last_submission_time < xform_last_submission_time
             else:
                 # return true if we can't determine the status, to force
                 # auto-generation

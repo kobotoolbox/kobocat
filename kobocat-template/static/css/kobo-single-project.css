@@ -189,7 +189,7 @@ button.single-project__button-delete {
 }
 
 .dashboard__left {
-  width: 72%;
+  width: 60%;
   float: left;
   margin-left: 1%;
 }
@@ -197,6 +197,7 @@ button.single-project__button-delete {
 .dashboard__right {
   width: 25%;
   float: left;
+  margin-left: -13%;
 }
 
 h2.dashboard__group-label {
@@ -205,9 +206,8 @@ h2.dashboard__group-label {
 }
 
 .dashboard__submissions {
-  width: 55%;
+  width: 33%;
   float: left;
-  margin-right: 5%;
   position: relative;
 }
 
@@ -268,7 +268,7 @@ a.dashboard__button-download-data:hover span {
 }
 
 .dashboard__submissions a.dashboard__button {
-  width: 30%;
+  width: 60%;
 }
 
 a.dashboard__button-twoline span {
@@ -351,8 +351,8 @@ a.dashboard__formbutton-refresh {
 
 .dashboard__download__drop {
   position: absolute;
-  right: 22px;
-  bottom: -150px;
+  left: 0;
+  bottom: -128px;
   width: 124px;
   border: 1px solid #E7E8E9;
   background: white;
