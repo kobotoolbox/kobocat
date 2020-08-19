@@ -1,15 +1,15 @@
 # coding: utf-8
-from .prod import *
+from onadata.libs.utils.redis_helper import RedisHelper
+from .base import *
 
-LOGGING['handlers']['console'] = {
-    'level': 'DEBUG',
-    'class': 'logging.StreamHandler',
-    'formatter': 'verbose',
-    'stream': sys.stdout,
-}
+################################
+# Django Framework settings    #
+################################
+
 LOGGING['root'] = {
     'handlers': ['console'],
     'level': 'DEBUG'
 }
 
-MIDDLEWARE.append('onadata.libs.utils.middleware.ExceptionLoggingMiddleware')
+SESSION_ENGINE = "redis_sessions.session"
+SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")

@@ -4,21 +4,42 @@ import multiprocessing
 import os
 import sys
 from datetime import timedelta
+from urllib.parse import quote_plus
 
-import sentry_sdk
 import dj_database_url
 from django.core.exceptions import SuspiciousOperation
-from django.utils.six.moves.urllib.parse import quote_plus
 from pymongo import MongoClient
-from pyxform.xform2json import logger
-from sentry_sdk.integrations.django import DjangoIntegration
 
+
+def skip_suspicious_operations(record):
+    """Prevent django from sending 500 error
+    email notifications for SuspiciousOperation
+    events, since they are not true server errors,
+    especially when related to the ALLOWED_HOSTS
+    configuration
+
+    background and more information:
+    http://www.tiwoc.de/blog/2013/03/django-prevent-email-notification-on-suspiciousoperation/
+    """
+    if record.exc_info:
+        exc_value = record.exc_info[1]
+        if isinstance(exc_value, SuspiciousOperation):
+            return False
+    return True
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
 PROJECT_ROOT = os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 
-PRINT_EXCEPTION = False
+################################
+# Django Framework settings    #
+################################
+
+# Django `SECRET_KEY`
+try:
+    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+except KeyError:
+    raise Exception('DJANGO_SECRET_KEY must be set in the environment.')
 
 TEMPLATED_EMAIL_TEMPLATE_DIR = 'templated_email/'
 
@@ -39,12 +60,11 @@ DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
 TIME_ZONE = 'America/New_York'
+USE_TZ = True
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
-
-ugettext = lambda s: s
 
 SITE_ID = os.environ.get('DJANGO_SITE_ID', '1')
 
@@ -71,59 +91,19 @@ STATIC_ROOT = os.path.join(ONADATA_DIR, 'static')
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
-# Enketo URL.
-# Configurable settings.
-ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
-KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'https://kc.kobotoolbox.org')
-
-
-ENKETO_URL = ENKETO_URL.rstrip('/')
-ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
-ENKETO_VERSION = 'express'
-
-# Constants.
-ENKETO_API_ENDPOINT_ONLINE_SURVEYS = '/survey'
-ENKETO_API_ENDPOINT_OFFLINE_SURVEYS = '/survey/offline'
-ENKETO_API_ENDPOINT_INSTANCE = '/instance'
-ENKETO_API_ENDPOINT_INSTANCE_IFRAME = '/instance/iframe'
-
-# Computed settings.
-ENKETO_API_ROOT = '/api/v2'
-ENKETO_OFFLINE_SURVEYS = os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
-ENKETO_API_ENDPOINT_PREVIEW = '/preview'
-ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
-        else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
-
-ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
-ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
-ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
-ENKETO_API_INSTANCE_IFRAME_URL = ENKETO_URL + ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE_IFRAME
-
-# specifically for site urls sent to enketo for form retrieval
-# `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.
-# All internal communications between containers must be HTTP only.
-ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
-
-KPI_URL = os.environ.get('KPI_URL', False)
-KPI_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KPI_URL)
-KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
-
-# These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
-# See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
-KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
-KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
-
-# Default value for the `UserProfile.require_auth` attribute. Even though it's
-# set in kc_environ, include it here as well to support legacy installations
-REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = False
-
 # Login URLs
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
+
+
+if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
+    KOBOCAT_ROOT_URI_PREFIX = '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
+    MEDIA_URL = KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
+    STATIC_URL = KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
+    LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
+    LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
+
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, MEDIA_URL.lstrip('/'))
 
 # URL prefix for admin static files -- CSS, JavaScript and images.
 # Make sure to use a trailing slash.
@@ -135,7 +115,6 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 ]
 
 MIDDLEWARE = [
@@ -155,7 +134,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'onadata.apps.main.urls'
-USE_TZ = True
 
 # specify the root folder which may contain a templates folder and a static
 # folder used to override templates for site specific details
@@ -192,7 +170,8 @@ TEMPLATES = [
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
-            ]
+            ],
+            'debug': os.environ.get('TEMPLATE_DEBUG', 'False') == 'True',
         },
     }
 ]
@@ -209,7 +188,6 @@ STATICFILES_DIRS = [
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static')
 ]
-
 
 # needed by guardian
 ANONYMOUS_USER_ID = -1
@@ -229,7 +207,6 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'registration',
     'reversion',
-    'django_nose',
     'django_digest',
     'corsheaders',
     'oauth2_provider',
@@ -251,100 +228,9 @@ INSTALLED_APPS = [
     'django_extensions',
 ]
 
-OAUTH2_PROVIDER = {
-    # this is the list of available scopes
-    'SCOPES': {
-        'read': 'Read scope',
-        'write': 'Write scope',
-        'groups': 'Access to your groups'}
-}
-
-REST_FRAMEWORK = {
-    # Use hyperlinked styles by default.
-    # Only used if the `serializer_class` attribute is not set on a view.
-    'DEFAULT_MODEL_SERIALIZER_CLASS':
-    'rest_framework.serializers.HyperlinkedModelSerializer',
-
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'onadata.libs.authentication.DigestAuthentication',
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-        'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
-    ),
-    'DEFAULT_RENDERER_CLASSES': (
-        # Keep JSONRenderer at the top "in order to send JSON responses to
-        # clients that do not specify an Accept header." See
-        # http://www.django-rest-framework.org/api-guide/renderers/#ordering-of-renderer-classes
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework_jsonp.renderers.JSONPRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework_xml.renderers.XMLRenderer',
-        'rest_framework_csv.renderers.CSVRenderer',
-    ),
-    'VIEW_NAME_FUNCTION': 'onadata.apps.api.tools.get_view_name',
-    'VIEW_DESCRIPTION_FUNCTION': 'onadata.apps.api.tools.get_view_description',
-}
-
-SWAGGER_SETTINGS = {
-    "exclude_namespaces": [],    # List URL namespaces to ignore
-    "api_version": '1.0',  # Specify your API's version (optional)
-    "enabled_methods": [         # Methods to enable in UI
-        'get',
-        'post',
-        'put',
-        'patch',
-        'delete'
-    ],
-}
-
-CORS_ORIGIN_ALLOW_ALL = False
-CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = (
-    'http://kc.kobo.local',
-)
-
 USE_THOUSAND_SEPARATOR = True
 
 COMPRESS = True
-
-# extra data stored with users
-AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
-
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'guardian.backends.ObjectPermissionBackend',
-)
-
-# All registration should be done through KPI, so Django Registration should
-# never be enabled here. It'd be best to remove all references to the
-# `registration` app in the future.
-REGISTRATION_OPEN = False
-ACCOUNT_ACTIVATION_DAYS = 1
-
-
-def skip_suspicious_operations(record):
-    """Prevent django from sending 500 error
-    email notifications for SuspiciousOperation
-    events, since they are not true server errors,
-    especially when related to the ALLOWED_HOSTS
-    configuration
-
-    background and more information:
-    http://www.tiwoc.de/blog/2013/03/django-prevent-email-notification-on-susp\
-    iciousoperation/
-    """
-    if record.exc_info:
-        exc_value = record.exc_info[1]
-        if isinstance(exc_value, SuspiciousOperation):
-            return False
-    return True
-
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -411,6 +297,176 @@ LOGGING = {
     }
 }
 
+# extra data stored with users
+AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
+)
+
+# Make Django use NGINX $host. Useful when running with ./manage.py runserver_plus
+# It avoids adding the debugger webserver port (i.e. `:8000`) at the end of urls.
+if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
+    USE_X_FORWARDED_HOST = True
+
+# "Although the setting offers little practical benefit, it's sometimes
+# required by security auditors."
+# -- https://docs.djangoproject.com/en/2.2/ref/settings/#csrf-cookie-httponly
+CSRF_COOKIE_HTTPONLY = True
+# SESSION_COOKIE_HTTPONLY is more useful, but it defaults to True.
+
+if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# Limit sessions to 1 week (the default is 2 weeks)
+SESSION_COOKIE_AGE = 604800
+
+# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
+# This variable is available only in Django 1.10+. Only there for next upgrade
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
+
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+
+# Database (i.e. PostgreSQL)
+DATABASES = {
+    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
+}
+# Replacement for TransactionMiddleware
+DATABASES['default']['ATOMIC_REQUESTS'] = True
+
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
+
+# Domain must not exclude KPI when sharing sessions
+if os.environ.get('SESSION_COOKIE_DOMAIN'):
+    SESSION_COOKIE_DOMAIN = os.environ['SESSION_COOKIE_DOMAIN']
+    SESSION_COOKIE_NAME = 'kobonaut'
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
+
+# If not properly overridden, leave uninitialized so Django can set the default.
+# (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
+if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
+    DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
+
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
+                               'django.core.mail.backends.filebased.EmailBackend')
+
+if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
+    EMAIL_FILE_PATH = os.environ.get(
+        'EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
+    if not os.path.isdir(EMAIL_FILE_PATH):
+        os.mkdir(EMAIL_FILE_PATH)
+
+
+###################################
+# Django Rest Framework settings  #
+###################################
+
+REST_FRAMEWORK = {
+    # Use hyperlinked styles by default.
+    # Only used if the `serializer_class` attribute is not set on a view.
+    'DEFAULT_MODEL_SERIALIZER_CLASS':
+    'rest_framework.serializers.HyperlinkedModelSerializer',
+
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'onadata.libs.authentication.DigestAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        # Keep JSONRenderer at the top "in order to send JSON responses to
+        # clients that do not specify an Accept header." See
+        # http://www.django-rest-framework.org/api-guide/renderers/#ordering-of-renderer-classes
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework_jsonp.renderers.JSONPRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework_xml.renderers.XMLRenderer',
+        'rest_framework_csv.renderers.CSVRenderer',
+    ),
+    'VIEW_NAME_FUNCTION': 'onadata.apps.api.tools.get_view_name',
+    'VIEW_DESCRIPTION_FUNCTION': 'onadata.apps.api.tools.get_view_description',
+}
+
+################################
+# KoBoCAT settings             #
+################################
+
+TESTING_MODE = False
+
+PRINT_EXCEPTION = os.environ.get("PRINT_EXCEPTION", False)
+
+KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
+KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
+KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+KOBOFORM_LOGIN_AUTOREDIRECT = True
+KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
+KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
+KPI_URL = os.environ.get('KPI_URL', False)
+KPI_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KPI_URL)
+KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
+
+# These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
+# See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
+KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
+    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
+    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
+KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
+    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
+    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
+
+# Default value for the `UserProfile.require_auth` attribute
+REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
+        'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
+        'False') == 'True'
+
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    'SCOPES': {
+        'read': 'Read scope',
+        'write': 'Write scope',
+        'groups': 'Access to your groups'}
+}
+
+# All registration should be done through KPI, so Django Registration should
+# never be enabled here. It'd be best to remove all references to the
+# `registration` app in the future.
+REGISTRATION_OPEN = False
+ACCOUNT_ACTIVATION_DAYS = 1
+
+SWAGGER_SETTINGS = {
+    "exclude_namespaces": [],    # List URL namespaces to ignore
+    "api_version": '1.0',  # Specify your API's version (optional)
+    "enabled_methods": [         # Methods to enable in UI
+        'get',
+        'post',
+        'put',
+        'patch',
+        'delete'
+    ],
+}
+
+# CORS policies
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = (
+    'http://kc.kobo.local',
+)
+
+# ToDo Remove when `kobokitten-remove-ui-CUD-actions-unicode` is merged
 GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
 GOOGLE_CLIENT_ID = '617113120802.onadata.apps.googleusercontent.com'
 GOOGLE_CLIENT_SECRET = '9reM29qpGFPyI8TBuB54Z4fk'
@@ -426,7 +482,76 @@ THUMB_ORDER = ['large', 'medium', 'small']
 # Number of times Celery retries to send data to external rest service
 REST_SERVICE_MAX_RETRIES = 3
 
-# celery
+# BEGIN external service integration codes
+AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
+AWS_DEFAULT_ACL = 'private'
+AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
+
+# TODO pass these variables from `kobo-docker` envfiles
+AWS_QUERYSTRING_EXPIRE = os.environ.get("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
+AWS_S3_USE_SSL = os.environ.get("KOBOCAT_AWS_S3_USE_SSL", True)
+AWS_S3_HOST = os.environ.get("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
+
+GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
+GOOGLE_ANALYTICS_DOMAIN = "auto"
+
+# END external service integration codes
+# duration to keep zip exports before deletion (in seconds)
+ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
+
+# default content length for submission requests
+DEFAULT_CONTENT_LENGTH = 10000000
+
+# TODO pass these variables from `kobo-docker` envfiles
+# re-captcha in registrations
+REGISTRATION_REQUIRE_CAPTCHA = False
+RECAPTCHA_USE_SSL = False
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = '6Ld52OMSAAAAAJJ4W-0TFDTgbznnWWFf0XuOSaB6'
+
+# Use 1 or 0 for multiple selects instead of True or False for csv, xls exports
+BINARY_SELECT_MULTIPLES = False
+
+# Use 'n/a' for empty values by default on csv exports
+NA_REP = 'n/a'
+
+SUPPORTED_MEDIA_UPLOAD_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/svg+xml',
+    'audio/mpeg',
+    'video/3gpp',
+    'audio/wav',
+    'audio/x-m4a',
+    'audio/mp3',
+    'text/csv',
+    'application/zip'
+]
+
+DEFAULT_VALIDATION_STATUSES = [
+    {
+        'uid': 'validation_status_not_approved',
+        'color': '#ff0000',
+        'label': 'Not Approved'
+    },
+    {
+        'uid': 'validation_status_approved',
+        'color': '#00ff00',
+        'label': 'Approved'
+    },
+    {
+        'uid': 'validation_status_on_hold',
+        'color': '#0000ff',
+        'label': 'On Hold'
+    },
+]
+
+################################
+# Celery settings              #
+################################
+
 CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'redis://localhost:6389/2')
 
@@ -470,84 +595,45 @@ CELERY_BEAT_SCHEDULE = {
 
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
 
-# duration to keep zip exports before deletion (in seconds)
-ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
 
-# default content length for submission requests
-DEFAULT_CONTENT_LENGTH = 10000000
+################################
+# Enketo Express settings      #
+################################
 
-# re-captcha in registrations
-REGISTRATION_REQUIRE_CAPTCHA = False
-RECAPTCHA_USE_SSL = False
-RECAPTCHA_PRIVATE_KEY = ''
-RECAPTCHA_PUBLIC_KEY = '6Ld52OMSAAAAAJJ4W-0TFDTgbznnWWFf0XuOSaB6'
+ENKETO_URL = os.environ.get('ENKETO_URL', 'https://enketo.kobotoolbox.org')
 
-# Use 1 or 0 for multiple selects instead of True or False for csv, xls exports
-BINARY_SELECT_MULTIPLES = False
+ENKETO_URL = ENKETO_URL.rstrip('/')
+ENKETO_API_TOKEN = os.environ.get('ENKETO_API_TOKEN', 'enketorules')
+ENKETO_VERSION = 'express'
 
-# Use 'n/a' for empty values by default on csv exports
-NA_REP = 'n/a'
+# Constants.
+ENKETO_API_ENDPOINT_ONLINE_SURVEYS = '/survey'
+ENKETO_API_ENDPOINT_OFFLINE_SURVEYS = '/survey/offline'
+ENKETO_API_ENDPOINT_INSTANCE = '/instance'
+ENKETO_API_ENDPOINT_INSTANCE_IFRAME = '/instance/iframe'
 
-# Set wsgi url scheme to HTTPS
-os.environ['wsgi.url_scheme'] = 'https'
+# Computed settings.
+ENKETO_API_ROOT = '/api/v2'
+ENKETO_OFFLINE_SURVEYS = os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
+ENKETO_API_ENDPOINT_PREVIEW = '/preview'
+ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
+        else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 
-SUPPORTED_MEDIA_UPLOAD_TYPES = [
-    'image/jpeg',
-    'image/png',
-    'image/svg+xml',
-    'audio/mpeg',
-    'video/3gpp',
-    'audio/wav',
-    'audio/x-m4a',
-    'audio/mp3',
-    'text/csv',
-    'application/zip'
-]
+ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
+ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
+ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
+ENKETO_API_INSTANCE_IFRAME_URL = ENKETO_URL + ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE_IFRAME
 
-DEFAULT_VALIDATION_STATUSES = [
-    {
-        'uid': 'validation_status_not_approved',
-        'color': '#ff0000',
-        'label': 'Not Approved'
-    },
-    {
-        'uid': 'validation_status_approved',
-        'color': '#00ff00',
-        'label': 'Approved'
-    },
-    {
-        'uid': 'validation_status_on_hold',
-        'color': '#0000ff',
-        'label': 'On Hold'
-    },
-]
+# specifically for site urls sent to enketo for form retrieval
+# `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.
+# All internal communications between containers must be HTTP only.
+ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 
-# Make Django use NGINX $host. Useful when running with ./manage.py runserver_plus
-# It avoids adding the debugger webserver port (i.e. `:8000`) at the end of urls.
-if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
-    USE_X_FORWARDED_HOST = True
 
-# "Although the setting offers little practical benefit, it's sometimes
-# required by security auditors."
-# -- https://docs.djangoproject.com/en/2.2/ref/settings/#csrf-cookie-httponly
-CSRF_COOKIE_HTTPONLY = True
-# SESSION_COOKIE_HTTPONLY is more useful, but it defaults to True.
+################################
+# MongoDB settings             #
+################################
 
-if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
-# Limit sessions to 1 week (the default is 2 weeks)
-SESSION_COOKIE_AGE = 604800
-
-# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
-# This variable is available only in Django 1.10+. Only there for next upgrade
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
-
-# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
-
-# MongoDB
 MONGO_DATABASE = {
     'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
     'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
@@ -575,91 +661,34 @@ MONGO_CONNECTION = MongoClient(
 
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
-LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
 
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
-TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
+################################
+# Sentry settings              #
+################################
 
-# Database (i.e. PostgreSQL)
-DATABASES = {
-    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
-}
-# Replacement for TransactionMiddleware
-DATABASES['default']['ATOMIC_REQUESTS'] = True
+if (os.getenv("RAVEN_DSN") or "") != "":
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
 
-# Django `SECRET_KEY`
-try:
-    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-except KeyError:
-    raise Exception('DJANGO_SECRET_KEY must be set in the environment.')
-
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
-
-TESTING_MODE = False
-
-# Domain must not exclude KPI when sharing sessions
-if os.environ.get('SESSION_COOKIE_DOMAIN'):
-    SESSION_COOKIE_DOMAIN = os.environ['SESSION_COOKIE_DOMAIN']
-    SESSION_COOKIE_NAME = 'kobonaut'
-
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
-
-KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
-KOBOFORM_LOGIN_AUTOREDIRECT = True
-KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
-KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
-
-# BEGIN external service integration codes
-AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
-AWS_DEFAULT_ACL = 'private'
-AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
-
-# TODO pass these variables from `kobo-docker` envfiles
-AWS_QUERYSTRING_EXPIRE = os.environ.get("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
-AWS_S3_USE_SSL = os.environ.get("KOBOCAT_AWS_S3_USE_SSL", True)
-AWS_S3_HOST = os.environ.get("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
-
-GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
-GOOGLE_ANALYTICS_DOMAIN = "auto"
-# END external service integration codes
-
-# If not properly overridden, leave uninitialized so Django can set the default.
-# (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
-if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
-    DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
-
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
-                               'django.core.mail.backends.filebased.EmailBackend')
-
-if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
-    EMAIL_FILE_PATH = os.environ.get(
-        'EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
-    if not os.path.isdir(EMAIL_FILE_PATH):
-        os.mkdir(EMAIL_FILE_PATH)
-
-# Default value for the `UserProfile.require_auth` attribute
-REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
-        'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
-        'False') == 'True'
-
-POSTGIS_VERSION = (2, 5, 4)
-
-if (os.getenv("SENTRY_DSN") or "") != "":
+    # All of this is already happening by default!
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,  # Capture info and above as breadcrumbs
+        event_level=logging.ERROR  # Send errors as events
+    )
     sentry_sdk.init(
-        dsn=os.environ['SENTRY_DSN'],
-        integrations=[DjangoIntegration()],
-
-        # If you wish to associate users to errors (assuming you are using
-        # django.contrib.auth) you may enable sending PII data.
+        dsn=os.environ['RAVEN_DSN'],
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            sentry_logging
+        ],
         send_default_pii=True
     )
 
-
 # Monkey Patch PyXForm. @ToDo remove after upgrading to v1.1.0
+from pyxform.xform2json import logger
 logger.removeHandler(logging.NullHandler)
 logger.addHandler(logging.NullHandler())
 
