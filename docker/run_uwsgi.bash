@@ -44,11 +44,6 @@ else
         sv start "${SERVICES_DIR}/celery_beat"
     fi
 
-    if [[ -n "$RAVEN_DSN" ]]; then
-        echo "Sentry detected. Installing \`raven\` pip dependency..."
-        pip install raven
-    fi
-
     echo "Running KoBoCAT container with \`runserver_plus\` debugging application server."
     UWSGI_COMMAND="python manage.py runserver_plus 0:8001"
 fi
