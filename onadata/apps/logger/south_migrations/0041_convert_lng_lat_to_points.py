@@ -1,5 +1,5 @@
 # coding: utf-8
-# coding: utf-8
+
 from south.v2 import DataMigration
 
 from onadata.apps.logger.models.instance import Instance

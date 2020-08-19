@@ -1,25 +1,10 @@
 # coding: utf-8
 import os
-import requests
-import unittest
-
-from django.urls import reverse
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models.instance import Instance
-from onadata.apps.logger.views import edit_data
 from onadata.apps.logger.xform_instance_parser import get_uuid_from_xml
 from onadata.libs.utils.logger_tools import inject_instanceid
-
-from httmock import urlmatch, HTTMock
-
-
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
-def enketo_edit_mock(url, request):
-    response = requests.Response()
-    response.status_code = 201
-    response._content = '{"edit_url": "https://hmh2a.enketo.formhub.org"}'
-    return response
 
 
 class TestWebforms(TestBase):
@@ -30,20 +15,6 @@ class TestWebforms(TestBase):
     def __load_fixture(self, *path):
         with open(os.path.join(os.path.dirname(__file__), *path), 'r') as f:
             return f.read()
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_edit_url(self):
-        instance = Instance.objects.order_by('id').reverse()[0]
-        edit_url = reverse(edit_data, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-            'data_id': instance.id
-        })
-        with HTTMock(enketo_edit_mock):
-            response = self.client.get(edit_url)
-            self.assertEqual(response.status_code, 302)
-            self.assertEqual(response['location'],
-                             'https://hmh2a.enketo.formhub.org')
 
     def test_inject_instanceid(self):
         """
