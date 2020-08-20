@@ -414,8 +414,7 @@ KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
 KOBOFORM_LOGIN_AUTOREDIRECT = True
 KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
 KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
-KPI_URL = os.environ.get('KPI_URL', False)
-KPI_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KPI_URL)
+KOBOFORM_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KOBOFORM_URL)
 KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 
 # These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
