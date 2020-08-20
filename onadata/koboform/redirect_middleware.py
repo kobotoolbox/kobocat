@@ -4,21 +4,22 @@ from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 
 from onadata import koboform
+from onadata.libs.utils.user_auth import helper_auth_helper
 
 # Always redirect to user profile,
 # regardless of koboform setting
 DISABLED_VIEWS = [
-        'home',
-    ]
+    'home',
+]
 
 # if user not logged in:
 #   if kform server exists: redirect to kform login url
 #   else: redirect to kc login url
 REDIRECT_IF_NOT_LOGGED_IN = [
-        'profile',
-        'home',
-        'download_xlsform',
-    ]
+    'profile',
+    'home',
+    'download_xlsform',
+]
 
 # Misc behavior
 #   /accounts/login/     => kform/accounts/login
@@ -30,9 +31,10 @@ class ConditionalRedirects(MiddlewareMixin):
 
     def process_view(self, request, view, args, kwargs):
         view_name = view.__name__
+        if request.user.is_anonymous:
+            helper_auth_helper(request)
         is_logged_in = request.user.is_authenticated
         login_url = reverse('auth_login')
-
         if koboform.active and koboform.autoredirect:
             login_url = koboform.redirect_url(login_url)
             if view_name == 'login':
