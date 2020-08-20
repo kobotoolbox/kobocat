@@ -3,192 +3,184 @@
 {% load static %}
 
 {% block additional-headers %}
-{% load i18n %}
+    {% load i18n %}
 
-  <!-- Project title and background docs -->
-  <header class="single-project__header">
-      <hgroup class="container">
-        <h1>{{ xform.title }}</h1>
-      </hgroup>
-  </header>
+    <!-- Project title and background docs -->
+    <header class="single-project__header">
+        <hgroup class="container">
+            <h1>{{ xform.title }}</h1>
+        </hgroup>
+    </header>
 
-  <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
+    <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
 
 {% endblock %}
 
 {% block content %}
-{% load i18n %}
+    {% load i18n %}
 
-<!-- NEW SINGLE PROJECT VIEW -->
+    <!-- NEW SINGLE PROJECT VIEW -->
     <div class="dashboard__left">
-      <div class="dashboard__submissions">
-        <h2 class="dashboard__group-label">
-          Submissions ({{ xform.submission_count|intcomma }})
-        </h2>
-        <a class="dashboard__button dashboard__button-download-data">
-          <i class="fa fa-download"></i>
-          <span>Download data</span>
-        </a>
+        <div class="dashboard__submissions">
+            <h2 class="dashboard__group-label">
+                Submissions ({{ xform.submission_count|intcomma }})
+            </h2>
+            <a class="dashboard__button dashboard__button-download-data">
+                <i class="fa fa-download"></i>
+                <span>Download data</span>
+            </a>
 
-        <div class="dashboard__download__drop hidden">
-          <a href="{% url "export_list" content_user.username xform.id_string 'xls' %}" class="download__drop-button">XLS</a>
-          <a href="{% url "export_list" content_user.username xform.id_string 'csv' %}" class="download__drop-button">CSV</a>
-          <a href="{% url "export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
-          <a href="{% url "export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
+            <div class="dashboard__download__drop hidden">
+                <a href="{% url "export_list" content_user.username xform.id_string 'xls' %}" class="download__drop-button">XLS</a>
+                <a href="{% url "export_list" content_user.username xform.id_string 'csv' %}" class="download__drop-button">CSV</a>
+                <a href="{% url "export_list" content_user.username xform.id_string 'zip' %}" class="download__drop-button">ZIP</a>
+                <a href="{% url "export_list" content_user.username xform.id_string 'kml'%}"  class="download__drop-button">KML</a>
+            </div>
         </div>
-      </div>
 
-      {# if images|length #}
-      <div class="dashboard__photos">
-        <h2 class="dashboard__group-label">
-          Photos
-        </h2>
+        {# if images|length #}
+        <div class="dashboard__photos">
+            <h2 class="dashboard__group-label">
+                Photos
+            </h2>
 
-        <a title="{% trans "View Photos" %}" href="{% url "form_photos" content_user.username xform.id_string %}" class="dashboard__button dashboard__button-view-gallery">
-          <i class="fa fa-eye"></i>
-          <span>View gallery</span>
-        </a>
-        <a href="{% url "export_list" content_user.username xform.id_string 'zip' %}" class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
-          <i class="fa fa-download"></i>
-          <span>Download all photos</span>
-        </a>
-      </div>
-      {# endif #}
-
-      <div class="dashboard__form">
-        <h2 class="dashboard__group-label">
-          Form
-        </h2>
-        <div class="dashboard__form-contents">
-          <div class="dashboard__form-formid">
-            {{ xform.id_string }}
-            {% if xform.can_be_replaced and xform.user ==  user  %}
-              <a class="dashboard__formbutton dashboard__formbutton-refresh poshytip-small" title="{% trans "Replace the form with a new XLSForm file. This can only be done if no data has yet been collected." %}"><i class="fa fa-refresh"></i></a>
-            {% endif %}
-
-          </div>
+            <a title="{% trans "View Photos" %}"
+               href="{% url "form_photos" content_user.username xform.id_string %}"
+               class="dashboard__button dashboard__button-view-gallery">
+                <i class="fa fa-eye"></i>
+                <span>View gallery</span>
+            </a>
+            <a href="{% url "export_list" content_user.username xform.id_string 'zip' %}"
+               class="dashboard__button dashboard__button-twoline dashboard__button-download-all-photos">
+                <i class="fa fa-download"></i>
+                <span>Download all photos</span>
+            </a>
         </div>
-      </div>
+        {# endif #}
+
+        <div class="dashboard__form">
+            <h2 class="dashboard__group-label">
+                Form
+            </h2>
+            <div class="dashboard__form-contents">
+                <div class="dashboard__form-formid">
+                    {{ xform.id_string }}
+                </div>
+            </div>
+        </div>
     </div>
     <div class="dashboard__right">
-      {% if xform.has_instances_with_geopoints %}
-      <div class="dashboard__gps">
-        <h2 class="dashboard__group-label">GPS Points</h2>
-        <a href="{% url "export_list" content_user.username xform.id_string 'kml'%}" class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
-          <i class="fa fa-download"></i>
-          <span>Download GPS points</span>
-        </a>
-     </div>
-     {% endif %}
+        {% if xform.has_instances_with_geopoints %}
+            <div class="dashboard__gps">
+                <h2 class="dashboard__group-label">GPS Points</h2>
+                <a href="{% url "export_list" content_user.username xform.id_string 'kml' %}"
+                   class="dashboard__button dashboard__button-twoline dashboard__button-download-gps-points">
+                    <i class="fa fa-download"></i>
+                    <span>Download GPS points</span>
+                </a>
+            </div>
+        {% endif %}
     </div>
 
-<!-- END NEW SINGLE PROJECT VIEW -->
+    <!-- END NEW SINGLE PROJECT VIEW -->
 
 {% endblock %}
 
 {% block styles %}
-{{ block.super }}
-  <!-- NEW SANDBOX STYLES -->
-  <link href="{% static "css/ios-switches.css" %}" rel="stylesheet">
-  <link href="{% static "css/kobo-single-project.css" %}" rel="stylesheet">
-  <!-- END NEW SANDBOX STYLES -->
- <!-- <link href="{% static "css/iphone-btn-style.css" %}" rel="stylesheet"/> -->
+    {{ block.super }}
+    <!-- NEW SANDBOX STYLES -->
+    <link href="{% static "css/ios-switches.css" %}" rel="stylesheet">
+    <link href="{% static "css/kobo-single-project.css" %}" rel="stylesheet">
+    <!-- END NEW SANDBOX STYLES -->
+    <!-- <link href="{% static "css/iphone-btn-style.css" %}" rel="stylesheet"/> -->
 {% endblock %}
 
 {% block javascript %}
-{{ block.super }}
-<script src="{% static "js/jquery.poshytip.js" %}"></script>
-  {% if user.is_authenticated %}
-    <script type="text/javascript" src="{% static "js/form_actions.js" %}"></script>
-    <script type="text/javascript" src="{% static "js/jquery.cookie.js" %}"></script>
-  {% endif %}
-
-
-<script type="text/javascript">
-
-$(document).ready(function() {
-
-    $('.btn').tooltip();
-
-    {% if not xform.encrypted %}
-      $('#form-encrypted').hide();
-      $('#data-encrypted').hide();
+    {{ block.super }}
+    <script src="{% static "js/jquery.poshytip.js" %}"></script>
+    {% if user.is_authenticated %}
+        <script type="text/javascript" src="{% static "js/form_actions.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/jquery.cookie.js" %}"></script>
     {% endif %}
 
-    // toggle fields
-    {% if user.is_authenticated %}
-        $.each(['form-shared', 'data-shared', 'active-form'], function(inx, el) {
-            var cb = $('#' + el + ':checkbox');
-            cb.change(function() {
-              privacyEdit(cb.data('url'), el.split('-')[0]);
-              // legacy
-              $('#' + el + '-public').toggle();
-              $('#' + el + '-private').toggle();
-            });
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            $('.btn').tooltip();
+
+            {% if not xform.encrypted %}
+                $('#form-encrypted').hide();
+                $('#data-encrypted').hide();
+            {% endif %}
+
+            // toggle fields
+            {% if user.is_authenticated %}
+                $.each(['form-shared', 'data-shared', 'active-form'], function (inx, el) {
+                    var cb = $('#' + el + ':checkbox');
+                    cb.change(function () {
+                        privacyEdit(cb.data('url'), el.split('-')[0]);
+                        // legacy
+                        $('#' + el + '-public').toggle();
+                        $('#' + el + '-private').toggle();
+                    });
+                });
+
+            {% endif %}
         });
 
-    {% endif %}
-    });
-
-</script>
+    </script>
 
     <!-- NEW SANDBOX JQUERY CALLS -->
     <script type="text/javascript">
-    $(document).ready(function() {
+        $(document).ready(function () {
 
-      $(document).on("click", ".dashboard__button-download-data", function () {
-        $('.dashboard__download__drop').toggleClass('hidden');
-        $(this).toggleClass('active');
-      });
+            $(document).on("click", ".dashboard__button-download-data", function () {
+                $('.dashboard__download__drop').toggleClass('hidden');
+                $(this).toggleClass('active');
+            });
 
-      $(document).on("click", ".dashboard__formbutton-refresh", function () {
-        vexRefresh = vex.open({
-          content: $('#xls-update').clone(),
-          contentClassName: 'vex-content'
+            $(document).click(function (event) {
+                if (!$(event.target).closest('.dashboard__submissions').length) {
+                    if ($('.dashboard__download__drop').is(":visible")) {
+                        $('.dashboard__download__drop').addClass('hidden');
+                        $('.dashboard__button-download-data').removeClass('active');
+                    }
+                }
+
+                if (!$(event.target).closest('.dashboard__form-contents').length) {
+                    if ($('.dashboard__form-drop').is(":visible")) {
+                        $('.dashboard__form-drop').addClass('hidden');
+                    }
+                }
+            });
+
+            // question mark poshytip effect
+            $('.poshytip').poshytip({
+                className: 'tip__bottomarrow',
+                showTimeout: 1,
+                alignTo: 'target',
+                alignX: 'right',
+                alignY: 'top',
+                offsetX: -60,
+                offsetY: -5,
+                liveEvents: true
+            });
+
+            // smaller parent poshytip
+            $('.poshytip-small').poshytip({
+                className: 'tip__bottomarrow multiline',
+                showTimeout: 1,
+                alignTo: 'target',
+                alignX: 'right',
+                alignY: 'top',
+                offsetX: -25,
+                offsetY: -5,
+                liveEvents: true
+            });
+
         });
-      });
-
-      $(document).click(function(event) {
-          if(!$(event.target).closest('.dashboard__submissions').length) {
-            if($('.dashboard__download__drop').is(":visible")) {
-              $('.dashboard__download__drop').addClass('hidden');
-              $('.dashboard__button-download-data').removeClass('active');
-            }
-          }
-
-          if(!$(event.target).closest('.dashboard__form-contents').length) {
-            if($('.dashboard__form-drop').is(":visible")) {
-              $('.dashboard__form-drop').addClass('hidden');
-              $('.dashboard__formbutton-download').removeClass('active');
-            }
-          }
-      });
-
-      // question mark poshytip effect
-      $('.poshytip').poshytip({
-          className: 'tip__bottomarrow',
-          showTimeout: 1,
-          alignTo: 'target',
-          alignX: 'right',
-          alignY: 'top',
-          offsetX: -60,
-          offsetY: -5,
-          liveEvents: true
-      });
-
-      // smaller parent poshytip
-      $('.poshytip-small').poshytip({
-          className: 'tip__bottomarrow multiline',
-          showTimeout: 1,
-          alignTo: 'target',
-          alignX: 'right',
-          alignY: 'top',
-          offsetX: -25,
-          offsetY: -5,
-          liveEvents: true
-      });
-
-    });
     </script>
     <!-- END NEW SANDBOX JQUERY CALLS -->
 
