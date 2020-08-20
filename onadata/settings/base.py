@@ -27,6 +27,7 @@ def skip_suspicious_operations(record):
             return False
     return True
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
 PROJECT_ROOT = os.path.abspath(os.path.join(ONADATA_DIR, '..'))
