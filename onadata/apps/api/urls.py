@@ -20,7 +20,7 @@ from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 class MultiLookupRouter(routers.DefaultRouter):
 
     def __init__(self, *args, **kwargs):
-        super(MultiLookupRouter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.lookups_routes = []
         self.lookups_routes.append(routers.Route(
             url=r'^{prefix}/{lookups}{trailing_slash}$',
@@ -89,42 +89,34 @@ class MultiLookupRouter(routers.DefaultRouter):
 
     def get_lookup_routes(self, viewset):
         ret = [self.routes[0]]
-        # Determine any `@action` or `@link` decorated methods on the viewset
-        dynamic_routes = []
-        for methodname in dir(viewset):
-            attr = getattr(viewset, methodname)
-            httpmethods = getattr(attr, 'bind_to_methods', None)
-            if httpmethods:
-                httpmethods = [method.lower() for method in httpmethods]
-                dynamic_routes.append((httpmethods, methodname))
-
         for route in self.lookups_routes:
             if route.mapping == {'{httpmethod}': '{methodname}'}:
-                # Dynamic routes (@link or @action decorator)
-                for httpmethods, methodname in dynamic_routes:
+                for extra_action in viewset.get_extra_actions():
+                    # FIXME support `url_path` and `url_name` of `@action` decorator
+                    methodname = extra_action.__name__
+                    mapping = extra_action.mapping
+                    detail = extra_action.detail
                     initkwargs = route.initkwargs.copy()
-                    initkwargs.update(getattr(viewset, methodname).kwargs)
-                    mapping = dict(
-                        (httpmethod, methodname) for httpmethod in httpmethods)
-                    name = routers.replace_methodname(route.name, methodname)
+                    initkwargs.update(extra_action.kwargs)
+                    name = self.replace_methodname(route.name, methodname)
                     if 'extra_lookup_fields' in initkwargs:
                         uri = route.url[1]
-                        uri = routers.replace_methodname(uri, methodname)
-
-                        # FIXME routers.Route() expects `detail` parameter
+                        uri = self.replace_methodname(uri, methodname)
                         ret.append(routers.Route(
                             url=uri,
                             mapping=mapping,
-                            name='%s-extra' % name,
+                            name=f'{name}-extra',
                             initkwargs=initkwargs,
+                            detail=detail
                         ))
-                    uri = routers.replace_methodname(route.url[0], methodname)
-                    # FIXME routers.Route() expects `detail` parameter
+
+                    uri = self.replace_methodname(route.url[0], methodname)
                     ret.append(routers.Route(
                         url=uri,
                         mapping=mapping,
                         name=name,
                         initkwargs=initkwargs,
+                        detail=detail
                     ))
             else:
                 # Standard route
@@ -137,7 +129,7 @@ class MultiLookupRouter(routers.DefaultRouter):
         if lookup_fields:
             ret = self.get_lookup_routes(viewset)
         else:
-            ret = super(MultiLookupRouter, self).get_routes(viewset)
+            ret = super().get_routes(viewset)
         return ret
 
     def get_api_root_view(self):
@@ -322,7 +314,7 @@ Example using curl:
 
         if self.include_root_view:
             root_url = re_path(r'^$', self.get_api_root_view(),
-                           name=self.root_view_name)
+                               name=self.root_view_name)
             ret.append(root_url)
         for prefix, viewset, basename in self.registry:
             lookup = self.get_lookup_regex(viewset)
@@ -350,6 +342,24 @@ Example using curl:
                     ret.append(re_path(regex, view, name=name))
         if self.include_format_suffixes:
             ret = format_suffix_patterns(ret, allowed=['[a-z0-9]+'])
+        return ret
+
+    @staticmethod
+    def replace_methodname(format_string, methodname):
+        """
+        Taken from old version of DRF for retro-compatibility.
+        (AFAIK, this method has been dropped in DRF 3.8)
+
+        Partially format a format_string, swapping out any
+        '{methodname}' or '{methodnamehyphen}' components.
+
+        @ToDo If DRF got rid of it, we should too? Let's find a better way to
+        achieve the same goal.
+        """
+        methodnamehyphen = methodname.replace('_', '-')
+        ret = format_string
+        ret = ret.replace('{methodname}', methodname)
+        ret = ret.replace('{methodnamehyphen}', methodnamehyphen)
         return ret
 
 
@@ -385,3 +395,6 @@ router.register(r'briefcase', BriefcaseApi, basename='briefcase')
 
 router_with_patch_list = MultiLookupRouterWithPatchList(trailing_slash=False)
 router_with_patch_list.register(r'data', DataViewSet, basename='data')
+
+#router_api_v1 = ExtendedDefaultRouter()
+#data_routes = router_api_v1.register(r'data', DataViewSet, basename='data')
