@@ -396,12 +396,7 @@ Delete a specific submission in a form
         postgres_query, mongo_query = self.__build_db_queries(xform, payload)
 
         # Delete Postgres & Mongo
-        updated_records_count = Instance.objects.filter(**postgres_query).count()
-
-        # Since Django 1.9, `.delete()` returns an dict with number of rows
-        # deleted per object.
-        # FixMe remove `.count()` query and use that dict instance
-        Instance.objects.filter(**postgres_query).delete()
+        updated_records_count = Instance.objects.filter(**postgres_query).delete()
         ParsedInstance.bulk_delete(mongo_query)
         return Response({
             'detail': _('{} submissions have been deleted').format(
