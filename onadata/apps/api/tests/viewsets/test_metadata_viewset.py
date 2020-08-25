@@ -14,7 +14,7 @@ from onadata.libs.serializers.xform_serializer import XFormSerializer
 
 class TestMetaDataViewSet(TestAbstractViewSet):
     def setUp(self):
-        super(TestMetaDataViewSet, self).setUp()
+        super().setUp()
         self.view = MetaDataViewSet.as_view({
             'delete': 'destroy',
             'get': 'retrieve',

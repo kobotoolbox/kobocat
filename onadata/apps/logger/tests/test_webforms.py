@@ -9,7 +9,7 @@ from onadata.libs.utils.logger_tools import inject_instanceid
 
 class TestWebforms(TestBase):
     def setUp(self):
-        super(TestWebforms, self).setUp()
+        super().setUp()
         self._publish_transportation_form_and_submit_instance()
 
     def __load_fixture(self, *path):

@@ -13,7 +13,7 @@ from onadata.libs.data.query import get_form_submissions_grouped_by_field,\
 class TestTools(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self._create_user_and_login()
         self._publish_transportation_form()
 

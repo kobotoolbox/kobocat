@@ -16,7 +16,7 @@ class TagListSerializer(serializers.Field):
 
     def to_representation(self, obj):
         if obj is None:
-            return super(TagListSerializer, self).to_representation(obj)
+            return super().to_representation(obj)
 
         if type(obj) is not list:
             return list(obj.values_list('name', flat=True))

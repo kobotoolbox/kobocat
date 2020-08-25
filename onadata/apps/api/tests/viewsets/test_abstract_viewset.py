@@ -44,7 +44,7 @@ class TestAbstractViewSet(TestCase):
     }
 
     def setUp(self):
-        super(TestAbstractViewSet, self).setUp()
+        super().setUp()
         self.factory = APIRequestFactory()
         self._login_user_and_profile()
         self._add_permissions_to_user(AnonymousUser())

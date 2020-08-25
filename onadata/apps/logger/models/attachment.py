@@ -50,7 +50,7 @@ class Attachment(models.Model):
                 if mimetype:
                     self.mimetype = mimetype
 
-        super(Attachment, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @property
     def file_hash(self):

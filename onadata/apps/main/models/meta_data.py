@@ -133,7 +133,7 @@ class MetaData(models.Model):
 
     def save(self, *args, **kwargs):
         self._set_hash()
-        super(MetaData, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @property
     def hash(self):

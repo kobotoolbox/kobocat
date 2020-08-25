@@ -19,7 +19,7 @@ from onadata.libs.permissions import (
 
 class TestXFormSubmissionApi(TestAbstractViewSet):
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = XFormSubmissionApi.as_view({
             "head": "create",
             "post": "create"
