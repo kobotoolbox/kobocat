@@ -53,7 +53,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             msg = {'data_value': "This field is required."}
             raise serializers.ValidationError(msg)
 
-        return super(MetaDataSerializer, self).validate(attrs)
+        return super().validate(attrs)
 
     def create(self, validated_data):
         data_type = validated_data.get('data_type')

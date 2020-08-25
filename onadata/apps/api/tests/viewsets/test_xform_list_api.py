@@ -18,7 +18,7 @@ from onadata.libs.tests.utils.xml import pyxform_version_agnostic
 
 class TestXFormListApi(TestAbstractViewSet):
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = XFormListApi.as_view({
             "get": "list"
         })

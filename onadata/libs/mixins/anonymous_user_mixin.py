@@ -14,4 +14,4 @@ class AnonymousUserMixin:
             self.request.user = get_object_or_404(
                 User, pk=settings.ANONYMOUS_USER_ID)
 
-        return super(AnonymousUserMixin, self).get_queryset()
+        return super().get_queryset()

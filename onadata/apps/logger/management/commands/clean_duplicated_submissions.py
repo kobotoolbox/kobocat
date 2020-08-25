@@ -20,12 +20,12 @@ class Command(BaseCommand):
     help = "Deletes duplicated submissions (i.e same `uuid` and same `xml`)"
 
     def __init__(self, **kwargs):
-        super(Command, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.__vaccuum = False
         self.__users = set([])
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
         parser.add_argument(
             "--user",

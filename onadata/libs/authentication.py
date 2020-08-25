@@ -35,7 +35,7 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
         # The parent class can discern whether basic authentication is even
         # being attempted; if it isn't, we need to gracefully defer to other
         # authenticators
-        user_auth = super(HttpsOnlyBasicAuthentication, self).authenticate(
+        user_auth = super().authenticate(
             request)
         if settings.TESTING_MODE is False and \
                 user_auth is not None and not request.is_secure():

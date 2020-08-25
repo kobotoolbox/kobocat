@@ -446,7 +446,7 @@ Delete a specific submission in a form
         return serializer_class
 
     def get_object(self):
-        obj = super(DataViewSet, self).get_object()
+        obj = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
@@ -483,7 +483,7 @@ Delete a specific submission in a form
         return qs
 
     def filter_queryset(self, queryset, view=None):
-        qs = super(DataViewSet, self).filter_queryset(queryset)
+        qs = super().filter_queryset(queryset)
         pk = self.kwargs.get(self.lookup_field)
         tags = self.request.query_params.get('tags', None)
 
@@ -595,7 +595,7 @@ Delete a specific submission in a form
             instance = self.get_object()
             return Response(instance.xml)
         else:
-            return super(DataViewSet, self).retrieve(request, *args, **kwargs)
+            return super().retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -634,7 +634,7 @@ Delete a specific submission in a form
             # With DRF ListSerializer are automatically created and wraps
             # everything in a list. Since this returns a list
             # # already, we unwrap it.
-            res = super(DataViewSet, self).list(request, *args, **kwargs)
+            res = super().list(request, *args, **kwargs)
             res.data = res.data[0]
             return res
 

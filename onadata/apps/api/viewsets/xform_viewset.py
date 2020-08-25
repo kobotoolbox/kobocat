@@ -625,7 +625,7 @@ data (instance/submission per row)
                     # Something odd; hopefully it can be coerced into a string
                     raise exceptions.ParseError(detail=survey)
         # Let the superclass handle updates to the other fields
-        return super(XFormViewSet, self).update(request, pk, *args, **kwargs)
+        return super().update(request, pk, *args, **kwargs)
 
     @action(detail=True, methods=['GET'])
     def form(self, request, format='json', **kwargs):
@@ -648,7 +648,7 @@ data (instance/submission per row)
 
         if export_type is None or export_type in ['json']:
             # perform default viewset retrieve, no data export
-            return super(XFormViewSet, self).retrieve(request, *args, **kwargs)
+            return super().retrieve(request, *args, **kwargs)
 
         return custom_response_handler(request,
                                        xform,

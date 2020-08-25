@@ -16,8 +16,7 @@ class AnonDjangoObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter)
         if request.user.is_anonymous:
             return queryset
 
-        return super(AnonDjangoObjectPermissionFilter, self)\
-            .filter_queryset(request, queryset, view)
+        return super().filter_queryset(request, queryset, view)
 
 
 class XFormListObjectPermissionFilter(AnonDjangoObjectPermissionFilter):
@@ -76,8 +75,7 @@ class XFormPermissionFilterMixin:
             xform_qs = XForm.objects.filter(pk=xform.pk)
         else:
             xform_qs = XForm.objects.all()
-        xforms = super(XFormPermissionFilterMixin, self).filter_queryset(
-            request, xform_qs, view)
+        xforms = super().filter_queryset(request, xform_qs, view)
         kwarg = {"%s__in" % keyword: xforms}
 
         return queryset.filter(**kwarg)

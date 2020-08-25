@@ -40,7 +40,7 @@ def _main_fixture_path(instance_name):
 class TestExports(TestBase):
 
     def setUp(self):
-        super(TestExports, self).setUp()
+        super().setUp()
         self._submission_time = parse_datetime('2013-02-18 15:54:01Z')
 
     def test_unique_xls_sheet_name(self):
