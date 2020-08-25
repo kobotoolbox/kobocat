@@ -37,7 +37,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
     template_name = 'api/xformsList.xml'
 
     def __init__(self, *args, **kwargs):
-        super(XFormListApi, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
         # previously hard-coded authentication classes are included first
         authentication_classes = [
@@ -63,7 +63,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         if self.action and self.action == 'manifest':
             return [XFormManifestRenderer()]
 
-        return super(XFormListApi, self).get_renderers()
+        return super().get_renderers()
 
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
@@ -75,7 +75,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             else:
                 # Return all the forms the currently-logged-in user can access,
                 # including those shared by other users
-                return super(XFormListApi, self).filter_queryset(queryset)
+                return super().filter_queryset(queryset)
 
         profile = get_object_or_404(
             UserProfile, user__username=username.lower())
@@ -91,7 +91,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
                 # Someone has logged in, but they are not necessarily allowed
                 # to access the forms belonging to the specified user. Filter
                 # again to consider object-level permissions
-                return super(XFormListApi, self).filter_queryset(queryset)
+                return super().filter_queryset(queryset)
         else:
             # The specified user's forms are wide open. Return them all
             return queryset

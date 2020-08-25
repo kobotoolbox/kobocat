@@ -56,7 +56,7 @@ Actions = Enum(
 class AuditLogHandler(logging.Handler):
 
     def __init__(self, model=""):
-        super(AuditLogHandler, self).__init__()
+        super().__init__()
         self.model_name = model
 
     def _format(self, record):

@@ -138,7 +138,7 @@ class TemplateXMLRenderer(TemplateHTMLRenderer):
             return XMLRenderer().render(
                 data, accepted_media_type, renderer_context)
 
-        return super(TemplateXMLRenderer, self).render(
+        return super().render(
             data, accepted_media_type, renderer_context)
 
 

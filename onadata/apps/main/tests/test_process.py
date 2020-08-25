@@ -46,10 +46,10 @@ class TestProcess(TestBase):
     }
 
     def setUp(self):
-        super(TestProcess, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(TestProcess, self).tearDown()
+        super().tearDown()
 
     @unittest.skip('Fails under Django 1.6')
     def test_process(self, username=None, password=None):

@@ -10,7 +10,7 @@ from onadata.apps.logger.models import Instance
 
 class TestBackupRestore(TestBase):
     def setUp(self):
-        super(TestBackupRestore, self).setUp()
+        super().setUp()
         self._publish_transportation_form()
 
     def test_restore_from_xml_file(self):

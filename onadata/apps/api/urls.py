@@ -20,7 +20,7 @@ from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 class MultiLookupRouter(routers.DefaultRouter):
 
     def __init__(self, *args, **kwargs):
-        super(MultiLookupRouter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.lookups_routes = []
         self.lookups_routes.append(routers.Route(
             url=r'^{prefix}/{lookups}{trailing_slash}$',
@@ -137,7 +137,7 @@ class MultiLookupRouter(routers.DefaultRouter):
         if lookup_fields:
             ret = self.get_lookup_routes(viewset)
         else:
-            ret = super(MultiLookupRouter, self).get_routes(viewset)
+            ret = super().get_routes(viewset)
         return ret
 
     def get_api_root_view(self):

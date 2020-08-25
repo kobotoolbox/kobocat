@@ -22,4 +22,4 @@ class NoteSerializer(serializers.ModelSerializer):
             if not user.has_perm('change_xform', self.validated_data['instance'].xform):
                 msg = "You are not authorized to add/change notes on this form."
                 raise exceptions.PermissionDenied(msg)
-        return super(NoteSerializer, self).save()
+        return super().save()

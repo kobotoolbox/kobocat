@@ -8,7 +8,7 @@ from onadata.apps.main.tests.test_base import TestBase
 class TestNoteViewSet(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self._create_user_and_login()
         self._publish_transportation_form()
         self._make_submissions()

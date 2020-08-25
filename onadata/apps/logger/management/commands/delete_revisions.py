@@ -13,7 +13,7 @@ class Command(RevisionCommand):
     help = "Deletes revisions (by chunks) for a given app [and model]"
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
         parser.add_argument(
             "--chunks",

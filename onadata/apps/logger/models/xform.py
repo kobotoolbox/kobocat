@@ -170,7 +170,7 @@ class XForm(BaseModel):
                 self.encrypted = False
 
     def update(self, *args, **kwargs):
-        super(XForm, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self._set_title()
@@ -198,7 +198,7 @@ class XForm(BaseModel):
             self.sms_id_string = self.id_string
             self.allows_sms = False
 
-        super(XForm, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return getattr(self, "id_string", "")

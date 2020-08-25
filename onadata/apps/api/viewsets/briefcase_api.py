@@ -89,7 +89,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
     template_name = 'openrosa_response.xml'
 
     def __init__(self, *args, **kwargs):
-        super(BriefcaseApi, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
         # previously hard-coded authentication classes are included first
         authentication_classes = [
@@ -129,7 +129,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
             else:
                 queryset = queryset.filter(user=profile.user)
         else:
-            queryset = super(BriefcaseApi, self).filter_queryset(queryset)
+            queryset = super().filter_queryset(queryset)
 
         formId = self.request.GET.get('formId', '')
 
