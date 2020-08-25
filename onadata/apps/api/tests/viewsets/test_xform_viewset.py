@@ -22,7 +22,7 @@ from onadata.libs.tests.utils.xml import pyxform_version_agnostic
 class TestXFormViewSet(TestAbstractViewSet):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = XFormViewSet.as_view({
             'get': 'list',
         })

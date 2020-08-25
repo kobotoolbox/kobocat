@@ -43,7 +43,7 @@ class LocaleMiddlewareWithTweaks(LocaleMiddleware):
             # this might fail if i18n is disabled.
             pass
 
-        super(LocaleMiddlewareWithTweaks, self).process_request(request)
+        super().process_request(request)
 
 
 class SqlLogging(MiddlewareMixin):

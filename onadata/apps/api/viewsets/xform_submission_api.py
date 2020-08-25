@@ -139,7 +139,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
     template_name = 'submission.xml'
 
     def __init__(self, *args, **kwargs):
-        super(XFormSubmissionApi, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
         # previously hard-coded authentication classes are included first.
         # We include BasicAuthentication here to allow submissions using basic

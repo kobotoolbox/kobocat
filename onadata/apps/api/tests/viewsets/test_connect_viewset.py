@@ -10,7 +10,7 @@ from onadata.libs.authentication import DigestAuthentication
 
 class TestConnectViewSet(TestAbstractViewSet):
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = ConnectViewSet.as_view({
             "get": "list",
         })

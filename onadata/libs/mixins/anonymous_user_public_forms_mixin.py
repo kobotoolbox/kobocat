@@ -12,4 +12,4 @@ class AnonymousUserPublicFormsMixin:
         if self.request and self.request.user.is_anonymous:
             return self._get_public_forms_queryset()
 
-        return super(AnonymousUserPublicFormsMixin, self).get_queryset()
+        return super().get_queryset()

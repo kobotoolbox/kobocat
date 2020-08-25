@@ -263,12 +263,12 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
     def __init__(self, username, id_string, filter_query=None,
                  group_delimiter=DEFAULT_GROUP_DELIMITER,
                  split_select_multiples=True, binary_select_multiples=False):
-        super(XLSDataFrameBuilder, self).__init__(
+        super().__init__(
             username, id_string, filter_query, group_delimiter,
             split_select_multiples, binary_select_multiples)
 
     def _setup(self):
-        super(XLSDataFrameBuilder, self)._setup()
+        super()._setup()
         # need to split columns, with repeats in individual sheets and
         # everything else on the default sheet
         self._generate_sections()
@@ -494,13 +494,13 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
     def __init__(self, username, id_string, filter_query=None,
                  group_delimiter=DEFAULT_GROUP_DELIMITER,
                  split_select_multiples=True, binary_select_multiples=False):
-        super(CSVDataFrameBuilder, self).__init__(
+        super().__init__(
             username, id_string, filter_query, group_delimiter,
             split_select_multiples, binary_select_multiples)
         self.ordered_columns = OrderedDict()
 
     def _setup(self):
-        super(CSVDataFrameBuilder, self)._setup()
+        super()._setup()
 
     @classmethod
     def _reindex(cls, key, value, ordered_columns, parent_prefix=None):

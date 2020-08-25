@@ -15,7 +15,7 @@ from onadata.libs.utils.image_tools import image_url
 class TestAttachment(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self._publish_transportation_form_and_submit_instance()
         self.media_file = "1335783522563.jpg"
         media_file = os.path.join(

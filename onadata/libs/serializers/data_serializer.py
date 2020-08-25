@@ -30,7 +30,7 @@ class DataListSerializer(serializers.Serializer):
         request = self.context.get('request')
 
         if not isinstance(obj, XForm):
-            return super(DataListSerializer, self).to_representation(obj)
+            return super().to_representation(obj)
 
         query_params = (request and request.query_params) or {}
         query = {
@@ -80,7 +80,7 @@ class DataInstanceSerializer(serializers.Serializer):
 
     def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
-            return super(DataInstanceSerializer, self).to_representation(obj)
+            return super().to_representation(obj)
 
         request = self.context.get('request')
         query_params = (request and request.query_params) or {}
@@ -108,7 +108,7 @@ class SubmissionSerializer(serializers.Serializer):
 
     def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
-            return super(SubmissionSerializer, self).to_representation(obj)
+            return super().to_representation(obj)
 
         return {
             'message': _("Successful submission."),

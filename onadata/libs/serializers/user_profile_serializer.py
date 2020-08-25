@@ -42,7 +42,7 @@ class UserProfileSerializer(serializers.Serializer):
         """
         Serialize objects -> primitives.
         """
-        ret = super(UserProfileSerializer, self).to_representation(obj)
+        ret = super().to_representation(obj)
 
         request = self.context['request'] \
             if 'request' in self.context else None

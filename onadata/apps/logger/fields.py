@@ -34,7 +34,7 @@ class LazyDefaultBooleanField(models.PositiveSmallIntegerField):
 
         kwargs['null'] = True
         kwargs['default'] = None
-        super(LazyDefaultBooleanField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _get_lazy_default(self):
         if isinstance(self.lazy_default, collections.Callable):
@@ -43,8 +43,7 @@ class LazyDefaultBooleanField(models.PositiveSmallIntegerField):
             return self.lazy_default
 
     def deconstruct(self):
-        name, path, args, kwargs = super(
-            LazyDefaultBooleanField, self).deconstruct()
+        name, path, args, kwargs = super().deconstruct()
         kwargs['default'] = self.lazy_default
         del kwargs['null']
         return name, path, args, kwargs

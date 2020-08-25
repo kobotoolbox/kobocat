@@ -29,9 +29,7 @@ class ObjectPermissionsWithViewRestricted(DjangoObjectPermissions):
     https://www.django-rest-framework.org/api-guide/permissions/#djangoobjectpermissions
     """
     def __init__(self, *args, **kwargs):
-        super(ObjectPermissionsWithViewRestricted, self).__init__(
-            *args, **kwargs
-        )
+        super().__init__(*args, **kwargs)
         # Do NOT mutate `perms_map` from the parent class! Doing so will affect
         # *every* instance of `DjangoObjectPermissions` and all its subclasses
         self.perms_map = self.perms_map.copy()
@@ -54,7 +52,7 @@ class XFormPermissions(ObjectPermissionsWithViewRestricted):
                 view.action and view.action == 'retrieve':
             return True
 
-        return super(XFormPermissions, self).has_permission(request, view)
+        return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
@@ -62,14 +60,13 @@ class XFormPermissions(ObjectPermissionsWithViewRestricted):
             if obj.shared:
                 return True
 
-        return super(XFormPermissions, self).has_object_permission(
-            request, view, obj)
+        return super().has_object_permission(request, view, obj)
 
 
 class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
 
     def __init__(self, *args, **kwargs):
-        super(XFormDataPermissions, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Those who can edit submissions can also delete them, following the
         # behavior of `onadata.apps.main.views.delete_data`
         self.perms_map = self.perms_map.copy()
@@ -87,7 +84,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         if request.method in SAFE_METHODS and \
                 view.action in allowed_anonymous_action:
             return True
-        return super(XFormDataPermissions, self).has_permission(request, view)
+        return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
@@ -105,8 +102,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             user = request.user
             return user.has_perms([CAN_VALIDATE_XFORM], obj)
 
-        return super(XFormDataPermissions, self).has_object_permission(
-            request, view, obj)
+        return super().has_object_permission(request, view, obj)
 
 
 class HasXFormObjectPermissionMixin:
@@ -159,7 +155,7 @@ class MetaDataObjectPermissions(HasXFormObjectPermissionMixin,
         view.get_queryset = get_queryset
 
         # now getting the perm works
-        parent = super(MetaDataObjectPermissions, self)
+        parent = super()
         has_perm = parent.has_object_permission(request, view, obj.xform)
 
         # putting the true get_queryset back
@@ -176,12 +172,12 @@ class AttachmentObjectPermissions(DjangoObjectPermissions):
         self.perms_map['GET'] = ['%(app_label)s.view_xform']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_xform']
         self.perms_map['HEAD'] = ['%(app_label)s.view_xform']
-        return super(AttachmentObjectPermissions, self).__init__(*args, **kwargs)
+        return super().__init__(*args, **kwargs)
 
     def has_object_permission(self, request, view, obj):
         view.model = XForm
 
-        return super(AttachmentObjectPermissions, self).has_object_permission(
+        return super().has_object_permission(
             request, view, obj.instance.xform)
 
 
@@ -198,14 +194,14 @@ class NoteObjectPermissions(DjangoObjectPermissions):
         self.perms_map['POST'] = ['%(app_label)s.change_xform']
         self.perms_map['DELETE'] = ['%(app_label)s.change_xform']
 
-        return super(NoteObjectPermissions, self).__init__(*args, **kwargs)
+        return super().__init__(*args, **kwargs)
 
     def has_permission(self, request, view):
         # Data will be filtered in `NoteViewSet`
         if request.method in SAFE_METHODS and view.action == 'retrieve':
             return True
 
-        return super(NoteObjectPermissions, self).has_permission(request, view)
+        return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
 
@@ -216,8 +212,7 @@ class NoteObjectPermissions(DjangoObjectPermissions):
             if xform.shared_data:
                 return True
 
-        return super(NoteObjectPermissions, self).has_object_permission(
-            request, view, xform)
+        return super().has_object_permission(request, view, xform)
 
 
 class ConnectViewsetPermissions(IsAuthenticated):
@@ -226,8 +221,7 @@ class ConnectViewsetPermissions(IsAuthenticated):
         if view.action == 'reset':
             return True
 
-        return super(ConnectViewsetPermissions, self)\
-            .has_permission(request, view)
+        return super().has_permission(request, view)
 
 
 __permissions__ = [DjangoObjectPermissions, IsAuthenticated]

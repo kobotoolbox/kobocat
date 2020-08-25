@@ -11,7 +11,7 @@ from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
 class TestAttachmentViewSet(TestAbstractViewSet):
 
     def setUp(self):
-        super(TestAttachmentViewSet, self).setUp()
+        super().setUp()
         self.retrieve_view = AttachmentViewSet.as_view({
             'get': 'retrieve'
         })
