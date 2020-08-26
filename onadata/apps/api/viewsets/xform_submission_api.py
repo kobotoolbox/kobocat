@@ -150,7 +150,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
         # first class that successfully authenticates, so
         # HttpsOnlyBasicAuthentication will be ignored even if included by
         # DEFAULT_AUTHENTICATION_CLASSES.
-        if os.getenv("USE_REMOTE_AUTH", "False"):
+        if os.getenv("USE_REMOTE_AUTH", "False") == "True":
             authentication_classes = [
                 QedRemoteUserAuth,
                 DigestAuthentication,

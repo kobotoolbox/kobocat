@@ -44,7 +44,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         super(XFormListApi, self).__init__(*args, **kwargs)
         # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
         # previously hard-coded authentication classes are included first
-        if os.getenv("USE_REMOTE_AUTH", "False"):
+        if os.getenv("USE_REMOTE_AUTH", "False") == "True":
             authentication_classes = [
                 QedRemoteUserAuth,
                 DigestAuthentication,
