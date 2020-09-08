@@ -185,9 +185,6 @@ class ParsedInstance(models.Model):
 
         if username and id_string:
             query.update(cls.get_base_query(username, id_string))
-            # check if query contains and _id and if its a valid ObjectID
-            if '_uuid' in query and ObjectId.is_valid(query['_uuid']):
-                query['_uuid'] = ObjectId(query['_uuid'])
 
         if hide_deleted:
             # display only active elements
