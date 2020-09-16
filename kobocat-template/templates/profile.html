@@ -4,6 +4,8 @@
 
 {% block additional-headers %}
 {% load i18n %}
+  {% include "legacy_survey.html" %}
+  
   {% if show_dashboard %} 
   <header class="projects-list__header">
     <hgroup class="container">
