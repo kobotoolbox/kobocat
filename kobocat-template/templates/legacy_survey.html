@@ -1,12 +1,15 @@
 {% load i18n %}
 {% load static %}
 
+{% with legacy_survey_url="?todo" %}
+
 <script type="text/javascript">
   (function () {
     window.addEventListener("DOMContentLoaded", function () {
       const popupId = 'legacy-survey-popup';
       const popupEl = document.getElementById(popupId);
       const popupCloseEl = document.getElementById('legacy-survey-popup-close');
+      const popupTakeEl = document.getElementById('legacy-survey-popup-take');
       const hiddenClass = 'legacy-survey-popup--hidden';
 
       function closePopup() {
@@ -21,6 +24,7 @@
       }
 
       popupCloseEl.addEventListener("click", closePopup);
+      popupTakeEl.addEventListener("click", closePopup);
 
       if (localStorage.getItem(popupId) !== "seen") {
         openPopup();
@@ -241,14 +245,19 @@
 
       <p class="legacy-survey__text">{% trans "We announced a while ago on this page that deploying projects on the legacy interface was highly discouraged and that its user interface will be removed “shortly”. We care deeply about our users, so before we disable the legacy interface completely, we ask you to let us know why you are still using the old user interface." %} <strong>{% trans "This should not take more than a minute." %}</strong></p>
 
-      <a class="legacy-survey__button" href="?">{% trans "Take survey now" %}</a>
+      <a 
+        id="legacy-survey-popup-take" 
+        class="legacy-survey__button" 
+        href="{{ legacy_survey_url }}"
+        target="_blank"
+      >{% trans "Take survey now" %}</a>
     </section>
   </section>
 </div>
 
 <div class="legacy-survey-bar">
   <section class="legacy-survey container">
-    <a class="legacy-survey__button" href="?">{% trans "Take survey now" %}</a>
+    <a class="legacy-survey__button" href="{{ legacy_survey_url }}" target="_blank">{% trans "Take survey now" %}</a>
 
     <h1 class="legacy-survey__header">
       <svg class="legacy-survey__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404.92 348">
@@ -282,3 +291,5 @@
     <p class="legacy-survey__text">{% trans "We are planning to remove some or all of it’s the components from this legacy user interface for viewing project data (also known as kobocat). We care deeply about our users, so before we disable the legacy interface completely, we ask you to let us know why you are still using the old user interface." %} <strong>{% trans "This should not take more than a minute." %}</strong></p>
   </section>
 </div>
+
+{% endwith %}
