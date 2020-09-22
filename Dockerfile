@@ -29,7 +29,8 @@ ENV VIRTUAL_ENV=/opt/venv \
     UWSGI_USER=kobo \
     UWSGI_GROUP=kobo \
     SERVICES_DIR=/srv/services \
-    CELERY_PID_DIR=/var/run/celery
+    CELERY_PID_DIR=/var/run/celery \
+    INIT_PATH=/srv/init
 
 # Install Dockerize
 ENV DOCKERIZE_VERSION v0.6.1
@@ -48,7 +49,8 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
     mkdir -p ${SERVICES_DIR}/celery && \
     mkdir -p ${SERVICES_DIR}/celery_beat && \
     mkdir -p ${KOBOCAT_LOGS_DIR}/ && \
-    mkdir -p ${KOBOCAT_SRC_DIR}/emails
+    mkdir -p ${KOBOCAT_SRC_DIR}/emails && \
+    mkdir -p ${INIT_PATH}
 
 # Install `apt` packages.
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -100,7 +102,8 @@ RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo "export PATH=${PATH}" >> /etc/profile && \
-    echo 'source /etc/profile' >> /root/.bashrc
+    echo 'source /etc/profile' >> /root/.bashrc && \
+    echo 'source /etc/profile' >> /home/${UWSGI_USER}/.bashrc
 
 # Remove getty* services to avoid errors of absent tty at sv start-up
 RUN rm -rf /etc/runit/runsvdir/default/getty-tty*

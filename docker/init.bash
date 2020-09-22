@@ -13,6 +13,10 @@ if [[ -z $DATABASE_URL ]]; then
     exit 1
 fi
 
+# Wait for databases to be up & running before going further
+/bin/bash "${INIT_PATH}/wait_for_mongo.bash"
+/bin/bash "${INIT_PATH}/wait_for_postgres.bash"
+
 echo 'Running migrations...'
 python manage.py migrate --noinput
 
