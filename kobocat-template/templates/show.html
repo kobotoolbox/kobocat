@@ -4,7 +4,9 @@
 
 {% block additional-headers %}
 {% load i18n %}
+{% endblock %}
 
+{% block before-content %}
   <!-- NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
   {% if is_owner %}
   <div class="sub-header-bar">
