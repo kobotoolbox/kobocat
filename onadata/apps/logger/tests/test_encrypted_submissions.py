@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import codecs
 
@@ -31,7 +34,7 @@ class TestEncryptedForms(TestBase):
         uuid = "c15252fe-b6f3-4853-8f04-bf89dc73985a"
         with self.assertRaises(Instance.DoesNotExist):
             Instance.objects.get(uuid=uuid)
-        message = u"Successful submission."
+        message = "Successful submission."
         files = {}
         for filename in ['submission.xml', 'submission.xml.enc']:
             files[filename] = os.path.join(

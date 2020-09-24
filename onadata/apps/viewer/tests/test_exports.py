@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import csv
 import datetime
 import json
@@ -7,7 +9,7 @@ import unittest
 from time import sleep
 
 from django.conf import settings
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.core.urlresolvers import reverse
 from django.utils.dateparse import parse_datetime
 from xlrd import open_workbook
@@ -81,7 +83,7 @@ class TestExports(TestBase):
                 'instances', survey, survey + '.xml'),
             forced_submission_time=self._submission_time)
         na_rep_restore = settings.NA_REP
-        settings.NA_REP = u''
+        settings.NA_REP = ''
         response = self.client.get(reverse(
             'csv_export',
             kwargs={
@@ -248,19 +250,6 @@ class TestExports(TestBase):
         self.assertEqual(sorted(['url', 'export_id', 'complete', 'filename']),
                          sorted(content[0].keys()))
 
-    def test_auto_export_if_none_exists(self):
-        self._publish_transportation_form()
-        self._submit_transport_instance()
-        # get export list url
-        num_exports = Export.objects.count()
-        export_list_url = reverse(export_list, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-            'export_type': Export.XLS_EXPORT
-        })
-        self.client.get(export_list_url)
-        self.assertEqual(Export.objects.count(), num_exports + 1)
-
     def test_dont_auto_export_if_exports_exist(self):
         self._publish_transportation_form()
         self._submit_transport_instance()
@@ -293,7 +282,7 @@ class TestExports(TestBase):
             Export.exports_outdated(xform=self.xform,
                                     export_type=Export.XLS_EXPORT))
         sleep(1)
-        # force new  last submission date on xform
+        # force new last submission date on xform
         last_submission = self.xform.instances.order_by('-date_created')[0]
         last_submission.date_created += datetime.timedelta(hours=1)
         last_submission.save()
@@ -301,7 +290,10 @@ class TestExports(TestBase):
         self.assertTrue(
             Export.exports_outdated(xform=self.xform,
                                     export_type=Export.XLS_EXPORT))
-        # check that requesting list url will generate a new export
+        # Force a new export. Auto export has been removed in
+        # https://github.com/kobotoolbox/kobocat/commit/40c67f219778065d24f405b28de790179e1fc4b2
+        generate_export(
+            Export.XLS_EXPORT, 'xls', self.user.username, self.xform.id_string)
         export_list_url = reverse(export_list, kwargs={
             'username': self.user.username,
             'id_string': self.xform.id_string,
@@ -312,9 +304,12 @@ class TestExports(TestBase):
             Export.objects.filter(xform=self.xform,
                                   export_type=Export.XLS_EXPORT).count(),
             num_exports + 1)
-        # make sure another export type causes auto-generation
+        # Force a new export with another type. Auto export has been removed in
+        # https://github.com/kobotoolbox/kobocat/commit/40c67f219778065d24f405b28de790179e1fc4b2
         num_exports = Export.objects.filter(
             xform=self.xform, export_type=Export.CSV_EXPORT).count()
+        generate_export(
+            Export.CSV_EXPORT, 'csv', self.user.username, self.xform.id_string)
         export_list_url = reverse(export_list, kwargs={
             'username': self.user.username,
             'id_string': self.xform.id_string,
@@ -409,7 +404,12 @@ class TestExports(TestBase):
             "filename": export.filename
         })
         response = self.client.get(csv_export_url)
-        self.assertEqual(response.status_code, 200)
+        default_storage = get_storage_class()()
+        if not isinstance(default_storage, FileSystemStorage):
+            self.assertEqual(response.status_code, 302)
+        else:
+            self.assertEqual(response.status_code, 200)
+
         # test xls
         export = generate_export(Export.XLS_EXPORT, 'xls', self.user.username,
                                  self.xform.id_string)
@@ -420,7 +420,10 @@ class TestExports(TestBase):
             "filename": export.filename
         })
         response = self.client.get(xls_export_url)
-        self.assertEqual(response.status_code, 200)
+        if not isinstance(default_storage, FileSystemStorage):
+            self.assertEqual(response.status_code, 302)
+        else:
+            self.assertEqual(response.status_code, 200)
 
     def test_404_on_export_io_error(self):
         """
@@ -696,7 +699,7 @@ class TestExports(TestBase):
         storage = get_storage_class()()
         with storage.open(filepath) as f:
             workbook = open_workbook(file_contents=f.read())
-        transportation_sheet = workbook.sheet_by_name("transportation")
+        transportation_sheet = workbook.sheet_by_name("transportation_2011_07_25")
         self.assertTrue(transportation_sheet.nrows > 1)
         headers = transportation_sheet.row_values(0)
         column1 = transportation_sheet.row_values(1)
@@ -885,7 +888,7 @@ class TestExports(TestBase):
                             {
                                 'children/cartoons/name': 'Flinstones',
                                 'children/cartoons/why':
-                                u"I like bamb bam\u0107",
+                                "I like bamb bam\u0107",
                             }
                         ]
                     },
@@ -967,7 +970,7 @@ class TestExports(TestBase):
                     },
                     {
                         'children/cartoons/name': 'Flinstones',
-                        'children/cartoons/why': u"I like bamb bam\u0107",
+                        'children/cartoons/why': "I like bamb bam\u0107",
                         '_index': 2,
                         '_parent_table_name': 'children',
                         '_parent_index': 1
@@ -1059,7 +1062,6 @@ class TestExports(TestBase):
             "_id": 579828,
             "_submission_time": "2013-07-03T08:26:10",
             "_uuid": "5b4752eb-e13c-483e-87cb-e67ca6bb61e5",
-            "_bamboo_dataset_id": "",
             "_xform_id_string": "test_data_types",
             "_userform_id": "larryweya_test_data_types",
             "_status": "submitted_via_web",
@@ -1096,7 +1098,6 @@ class TestExports(TestBase):
                 '_id': 579828,
                 '_submission_time': '2013-07-03T08:26:10',
                 '_uuid': '5b4752eb-e13c-483e-87cb-e67ca6bb61e5',
-                '_bamboo_dataset_id': '',
                 'amount': '',
                 '_xform_id_string': 'test_data_types',
                 '_userform_id': 'larryweya_test_data_types',
@@ -1119,43 +1120,3 @@ class TestExports(TestBase):
             self.xform.id_string, non_existent_id)
 
         self.assertEqual(result, None)
-
-    def test_create_external_export_url(self):
-        self._publish_transportation_form()
-        self._submit_transport_instance()
-        num_exports = Export.objects.count()
-
-        server = 'http://localhost:8080/xls/23fa4c38c0054748a984ffd89021a295'
-        data_value = 'template 1 |{0}'.format(server)
-        meta = MetaData.external_export(self.xform, data_value)
-
-        custom_params = {
-            'meta': meta.id,
-        }
-        # create export
-        create_export_url = reverse(create_export, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-            'export_type': Export.EXTERNAL_EXPORT
-        })
-
-        response = self.client.post(create_export_url, custom_params)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Export.objects.count(), num_exports + 1)
-
-    def test_create_external_export_without_template(self):
-        self._publish_transportation_form()
-        self._submit_transport_instance()
-        num_exports = Export.objects.count()
-
-        # create export
-        create_export_url = reverse(create_export, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-            'export_type': Export.EXTERNAL_EXPORT
-        })
-
-        response = self.client.post(create_export_url)
-        self.assertEqual(response.status_code, 403)
-        self.assertEquals(response.content, u'No XLS Template set.')
-        self.assertEqual(Export.objects.count(), num_exports)

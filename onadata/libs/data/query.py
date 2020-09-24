@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.conf import settings
 from django.db import connection
 
@@ -14,7 +16,9 @@ def _count_group(field, name, xform):
 
 
 def _dictfetchall(cursor):
-    "Returns all rows from a cursor as a dict"
+    """
+    Returns all rows from a cursor as a dict
+    """
     desc = cursor.description
 
     return [
@@ -26,7 +30,6 @@ def _dictfetchall(cursor):
 def _execute_query(query, to_dict=True):
     cursor = connection.cursor()
     cursor.execute(query)
-
     return _dictfetchall(cursor) if to_dict else cursor
 
 
@@ -44,14 +47,20 @@ def _get_fields_of_type(xform, types):
 
 
 def _json_query(field):
-    return "json->>'%s'" % field
+    if settings.TESTING_MODE:
+        return "json_extract(json, '$.{}')".format(field)
+    else:
+        return "json->>'%s'" % field
 
 
 def _postgres_count_group(field, name, xform):
     string_args = _query_args(field, name, xform)
     if is_date_field(xform, field):
-        string_args['json'] = "to_char(to_date(%(json)s, 'YYYY-MM-DD'), 'YYYY"\
-                              "-MM-DD')" % string_args
+        if settings.TESTING_MODE:
+            string_args['json'] = "date(%(json)s)" % string_args
+        else:
+            string_args['json'] = "to_char(to_date(%(json)s, 'YYYY-MM-DD'), 'YYYY" \
+                                  "-MM-DD')" % string_args
 
     return "SELECT %(json)s AS \"%(name)s\", COUNT(*) AS count FROM "\
            "%(table)s WHERE %(restrict_field)s=%(restrict_value)s "\

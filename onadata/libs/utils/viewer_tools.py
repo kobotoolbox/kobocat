@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import traceback
 import requests
@@ -15,7 +17,7 @@ from django.utils.translation import ugettext as _
 from onadata.libs.utils import common_tags
 
 
-SLASH = u"/"
+SLASH = "/"
 
 
 class MyError(Exception):
@@ -72,9 +74,9 @@ def parse_xform_instance(xml_str):
     # THIS IS OKAY FOR OUR USE CASE, BUT OTHER USERS SHOULD BEWARE.
     survey_data = dict(_path_value_pairs(root_node))
     assert len(list(_all_attributes(root_node))) == 1, \
-        _(u"There should be exactly one attribute in this document.")
+        _("There should be exactly one attribute in this document.")
     survey_data.update({
-        common_tags.XFORM_ID_STRING: root_node.getAttribute(u"id"),
+        common_tags.XFORM_ID_STRING: root_node.getAttribute("id"),
         common_tags.INSTANCE_DOC_NAME: root_node.nodeName,
     })
     return survey_data
@@ -123,13 +125,13 @@ def _all_attributes(node):
 def report_exception(subject, info, exc_info=None):
     if exc_info:
         cls, err = exc_info[:2]
-        info += _(u"Exception in request: %(class)s: %(error)s") \
+        info += _("Exception in request: %(class)s: %(error)s") \
             % {'class': cls.__name__, 'error': err}
-        info += u"".join(traceback.format_exception(*exc_info))
+        info += "".join(traceback.format_exception(*exc_info))
 
     if settings.DEBUG:
-        print subject
-        print info
+        print(subject)
+        print(info)
     else:
         mail_admins(subject=subject, message=info)
 

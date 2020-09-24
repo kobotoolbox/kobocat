@@ -1,17 +1,21 @@
-import math
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import time
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import connections
 from django.db.models import Func, F, Value
 from onadata.apps.logger.models import XForm, Instance
+
 
 def replace_first_and_last(s, old, new):
     s = s.replace(old, new, 1)
     # credit: http://stackoverflow.com/a/2556252
     return new.join(s.rsplit(old, 1))
 
+
 def write_same_line(dest_file, output, last_len=[0]):
-    dest_file.write(u'\r{}'.format(output), ending='')
+    dest_file.write('\r{}'.format(output), ending='')
     this_len = len(output)
     too_short = last_len[0] - this_len
     last_len[0] = this_len
@@ -19,17 +23,21 @@ def write_same_line(dest_file, output, last_len=[0]):
         dest_file.write(' ' * too_short, ending='')
     dest_file.flush()
 
-XFORM_ROOT_NODE_NAME_PATTERN = '<instance>[^<]*< *([^ ]+)'
-INSTANCE_ROOT_NODE_NAME_PATTERN = '\/ *([^\/> ]+) *>[^<>]*$'
+
+XFORM_ROOT_NODE_NAME_PATTERN = r'<instance>[^<]*< *([^ ]+)'
+INSTANCE_ROOT_NODE_NAME_PATTERN = r'\/ *([^\/> ]+) *>[^<>]*$'
+
 
 class Command(BaseCommand):
-    ''' This command cleans up inconsistences between the root instance node
+    """
+    This command cleans up inconsistences between the root instance node
     name specified in the form XML and the actual instance XML. Where a
     discrepancy exists, the instance will be changed to match the form.
     The cause of these mismatches is documented at
     https://github.com/kobotoolbox/kobocat/issues/222 and
     https://github.com/kobotoolbox/kobocat/issues/358. See also
-    https://github.com/kobotoolbox/kobocat/issues/242. '''
+    https://github.com/kobotoolbox/kobocat/issues/242.
+    """
 
     help = 'fixes instances whose root node names do not match their forms'
 

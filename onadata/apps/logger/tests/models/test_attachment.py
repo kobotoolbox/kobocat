@@ -1,6 +1,9 @@
-from datetime import datetime
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
+from datetime import datetime
 
+from django.conf import settings
 from django.core.files.base import File
 from django.core.files.storage import default_storage
 from django.core.management import call_command
@@ -42,21 +45,22 @@ class TestAttachment(TestBase):
 
     def test_create_thumbnails_command(self):
         call_command("create_image_thumbnails")
+        created_times = {}
         for attachment in Attachment.objects.filter(instance=self.instance):
             filename = attachment.media_file.name.replace('.jpg', '')
-            for size in ['small', 'medium', 'large']:
+            for size in settings.THUMB_CONF.keys():
                 thumbnail = '%s-%s.jpg' % (filename, size)
                 self.assertTrue(
                     default_storage.exists(thumbnail))
-        check_datetime = datetime.now()
+                created_times[size] = default_storage.modified_time(thumbnail)
         # replace or regenerate thumbnails if they exist
         call_command("create_image_thumbnails", force=True)
         for attachment in Attachment.objects.filter(instance=self.instance):
             filename = attachment.media_file.name.replace('.jpg', '')
-            for size in ['small', 'medium', 'large']:
+            for size in settings.THUMB_CONF.keys():
                 thumbnail = '%s-%s.jpg' % (filename, size)
                 self.assertTrue(
                     default_storage.exists(thumbnail))
                 self.assertTrue(
-                    default_storage.modified_time(thumbnail) > check_datetime)
+                    default_storage.modified_time(thumbnail) > created_times[size])
                 default_storage.delete(thumbnail)

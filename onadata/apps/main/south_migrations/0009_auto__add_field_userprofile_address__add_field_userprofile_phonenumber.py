@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import datetime
 from south.db import db
 from south.v2 import SchemaMigration
@@ -96,23 +97,23 @@ class Migration(SchemaMigration):
         'logger.xform': {
             'Meta': {'ordering': "('id_string',)", 'unique_together': "(('user', 'id_string'), ('user', 'sms_id_string'))", 'object_name': 'XForm'},
             'allows_sms': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'bamboo_dataset': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '60'}),
+            'bamboo_dataset': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '60'}),
             'date_created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'date_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'description': ('django.db.models.fields.TextField', [], {'default': "u''", 'null': 'True'}),
+            'description': ('django.db.models.fields.TextField', [], {'default': "''", 'null': 'True'}),
             'downloadable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'encrypted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'has_start_time': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'id_string': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
             'is_crowd_form': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'json': ('django.db.models.fields.TextField', [], {'default': "u''"}),
+            'json': ('django.db.models.fields.TextField', [], {'default': "''"}),
             'shared': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'shared_data': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'sms_id_string': ('django.db.models.fields.SlugField', [], {'default': "''", 'max_length': '50'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'xforms'", 'null': 'True', 'to': "orm['auth.User']"}),
-            'uuid': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '32'}),
+            'uuid': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '32'}),
             'xls': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True'}),
             'xml': ('django.db.models.fields.TextField', [], {})
         }

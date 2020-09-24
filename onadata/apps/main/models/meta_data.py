@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import mimetypes
 import os
 import requests
@@ -152,14 +155,14 @@ class MetaData(models.Model):
             try:
                 self.data_file.seek(os.SEEK_SET)
             except IOError:
-                return u''
+                return ''
             else:
-                self.file_hash = u'md5:%s' \
+                self.file_hash = 'md5:%s' \
                     % md5(self.data_file.read()).hexdigest()
 
                 return self.file_hash
 
-        return u''
+        return ''
 
     @staticmethod
     def public_link(xform, data_value=None):
@@ -224,56 +227,3 @@ class MetaData(models.Model):
             media = MetaData(data_type=data_type, xform=xform,
                              data_value=uri)
             media.save()
-
-    @staticmethod
-    def mapbox_layer_upload(xform, data=None):
-        data_type = 'mapbox_layer'
-        if data and not MetaData.objects.filter(xform=xform,
-                                                data_type='mapbox_layer'):
-            s = ''
-            for key in data:
-                s = s + data[key] + '||'
-            mapbox_layer = MetaData(data_type=data_type, xform=xform,
-                                    data_value=s)
-            mapbox_layer.save()
-        if type_for_form(xform, data_type):
-            values = type_for_form(xform, data_type)[0].data_value.split('||')
-            data_values = {}
-            data_values['map_name'] = values[0]
-            data_values['link'] = values[1]
-            data_values['attribution'] = values[2]
-            data_values['id'] = type_for_form(xform, data_type)[0].id
-            return data_values
-        else:
-            return None
-
-    @staticmethod
-    def external_export(xform, data_value=None):
-        data_type = 'external_export'
-
-        if data_value:
-            result = MetaData(data_type=data_type, xform=xform,
-                              data_value=data_value)
-            result.save()
-            return result
-
-        return MetaData.objects.filter(xform=xform, data_type=data_type)\
-            .order_by('-id')
-
-    @property
-    def external_export_url(self):
-        parts = self.data_value.split('|')
-
-        return parts[1] if len(parts) > 1 else None
-
-    @property
-    def external_export_name(self):
-        parts = self.data_value.split('|')
-
-        return parts[0] if len(parts) > 1 else None
-
-    @property
-    def external_export_template(self):
-        parts = self.data_value.split('|')
-
-        return parts[1].replace('xls', 'templates') if len(parts) > 1 else None

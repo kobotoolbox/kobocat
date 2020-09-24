@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from optparse import make_option
 from django.contrib.auth.models import User
 
@@ -8,7 +12,7 @@ from django.conf import settings
 
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.xform import XForm
-from onadata.libs.utils.image_tools import resize, resize_local_env
+from onadata.libs.utils.image_tools import resize
 from onadata.libs.utils.model_tools import queryset_iterator
 from onadata.libs.utils.viewer_tools import get_path
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -49,32 +53,30 @@ class Command(BaseCommand):
                     {'id_string': id_string}
                 )
             attachments_qs = attachments_qs.filter(instance__xform=xform)
-        fs = get_storage_class('django.core.files.storage.FileSystemStorage')()
+
         for att in queryset_iterator(attachments_qs):
             filename = att.media_file.name
             default_storage = get_storage_class()()
             full_path = get_path(filename,
                                  settings.THUMB_CONF['small']['suffix'])
             if kwargs.get('force') is not None:
-                for s in ['small', 'medium', 'large']:
+                for s in settings.THUMB_CONF.keys():
                     fp = get_path(filename,
                                   settings.THUMB_CONF[s]['suffix'])
                     if default_storage.exists(fp):
                         default_storage.delete(fp)
+
             if not default_storage.exists(full_path):
                 try:
-                    if default_storage.__class__ != fs.__class__:
-                        resize(filename)
-                    else:
-                        resize_local_env(filename)
+                    resize(filename)
                     if default_storage.exists(get_path(
                             filename,
                             '%s' % settings.THUMB_CONF['small']['suffix'])):
-                        print (_(u'Thumbnails created for %(file)s')
-                               % {'file': filename})
+                        print(_('Thumbnails created for %(file)s')
+                              % {'file': filename})
                     else:
-                        print (_(u'Problem with the file %(file)s')
-                               % {'file': filename})
+                        print(_('Problem with the file %(file)s')
+                              % {'file': filename})
                 except (IOError, OSError), e:
-                    print _(u'Error on %(filename)s: %(error)s') \
-                        % {'filename': filename, 'error': e}
+                    print(_('Error on %(filename)s: %(error)s')
+                          % {'filename': filename, 'error': e})

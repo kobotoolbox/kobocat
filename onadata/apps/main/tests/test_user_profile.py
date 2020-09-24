@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import unittest
 
 from django.test import TestCase
@@ -35,11 +37,13 @@ class TestUserProfile(TestCase):
         except User.DoesNotExist:
             pass
 
+    @unittest.skip("User creation is deactivated on KC")
     def test_create_user_with_given_name(self):
         self._login_user_and_profile()
         self.assertEqual(self.response.status_code, 302)
         self.assertEqual(self.user.username, 'bob')
 
+    @unittest.skip("User creation is deactivated on KC")
     def test_create_user_profile_for_user(self):
         self._login_user_and_profile()
         self.assertEqual(self.response.status_code, 302)
@@ -47,6 +51,7 @@ class TestUserProfile(TestCase):
         self.assertEqual(user_profile.city, 'Bobville')
         self.assertTrue(hasattr(user_profile, 'metadata'))
 
+    @unittest.skip("User creation is deactivated on KC")
     def test_disallow_non_alpha_numeric(self):
         invalid_usernames = [
             'b ob',
@@ -68,6 +73,7 @@ class TestUserProfile(TestCase):
             self._login_user_and_profile({'username': username})
             self.assertEqual(User.objects.count(), users_before)
 
+    @unittest.skip("User creation is deactivated on KC")
     def test_disallow_reserved_name(self):
         users_before = User.objects.count()
         self._login_user_and_profile({'username': 'admin'})

@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.test import RequestFactory
 
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
@@ -22,7 +25,7 @@ class TestNoteViewSet(TestBase):
 
     def _add_notes_to_data_point(self):
         # add a note to a specific data point
-        note = {'note': u"Road Warrior"}
+        note = {'note': "Road Warrior"}
         dataid = self.xform.instances.all()[0].pk
         note['instance'] = dataid
         request = self.factory.post('/', data=note, **self.extra)
@@ -59,7 +62,7 @@ class TestNoteViewSet(TestBase):
         self._create_user_and_login('lilly', '1234')
         extra = {
             'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
-        note = {'note': u"Road Warrior"}
+        note = {'note': "Road Warrior"}
         dataid = self.xform.instances.all()[0].pk
         note['instance'] = dataid
 
@@ -70,10 +73,10 @@ class TestNoteViewSet(TestBase):
         response = self.view(request)
         self.assertEqual(response.status_code, 403)
 
-        # save some notes
+        # save some notes as bob
         self._add_notes_to_data_point()
 
-        # access to /notes endpoint,should be empty list
+        # access to /notes endpoint, should be empty list
         request = self.factory.get('/', **extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)

@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import sys
 import codecs
@@ -46,7 +49,7 @@ class TestPublishXLS(TestBase):
         self.xform = XForm.objects.order_by('id').reverse()[0]
         data_dictionary = self.xform.data_dictionary()
         is_updated_form = len([e.name for e in data_dictionary.survey_elements
-                               if e.name == u'preferred_means']) > 0
+                               if e.name == 'preferred_means']) > 0
         self.assertTrue(is_updated_form)
 
     @unittest.skip('Fails under Django 1.6')

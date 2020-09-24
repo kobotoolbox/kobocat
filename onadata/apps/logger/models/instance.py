@@ -1,31 +1,41 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from datetime import datetime
 from hashlib import sha256
 
 import reversion
-
-from django.db.models import F
-from django.db import transaction
-from django.contrib.gis.db import models
-from django.db.models.signals import post_save
-from django.db.models.signals import post_delete
 from django.contrib.auth.models import User
+from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
+from django.db import transaction
+from django.db.models import F
+from django.db.models.signals import post_delete
+from django.db.models.signals import post_save
 from django.utils import timezone
-from django.utils.translation import ugettext as _
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
+from onadata.apps.logger.exceptions import FormInactiveError
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.xform_instance_parser import XFormInstanceParser,\
+from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
-from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
-    DELETEDAT, GEOLOCATION, ID, MONGO_STRFTIME, NOTES, SUBMISSION_TIME, TAGS,\
-    UUID, XFORM_ID_STRING, SUBMITTED_BY
+from onadata.libs.utils.common_tags import (
+    ATTACHMENTS,
+    DELETEDAT,
+    GEOLOCATION,
+    ID,
+    MONGO_STRFTIME,
+    NOTES,
+    SUBMISSION_TIME,
+    TAGS,
+    UUID,
+    XFORM_ID_STRING,
+    SUBMITTED_BY
+)
 from onadata.libs.utils.model_tools import set_uuid
-from onadata.apps.logger.fields import LazyDefaultBooleanField
-from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
 
 
 # need to establish id_string of the xform before we run get_dict since
@@ -33,7 +43,7 @@ from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
 def get_id_string_from_xml_str(xml_str):
     xml_obj = clean_and_parse_xml(xml_str)
     root_node = xml_obj.documentElement
-    id_string = root_node.getAttribute(u"id")
+    id_string = root_node.getAttribute("id")
 
     if len(id_string) == 0:
         # may be hidden in submission/data/id_string
@@ -130,8 +140,8 @@ class Instance(models.Model):
     # incomplete, submitted, complete
     # we add a fourth status: submitted_via_web
     status = models.CharField(max_length=20,
-                              default=u'submitted_via_web')
-    uuid = models.CharField(max_length=249, default=u'', db_index=True)
+                              default='submitted_via_web')
+    uuid = models.CharField(max_length=249, default='', db_index=True)
 
     # store an geographic objects associated with this instance
     geom = models.GeometryCollectionField(null=True)
@@ -188,7 +198,7 @@ class Instance(models.Model):
 
         if len(geo_xpaths):
             for xpath in geo_xpaths:
-                geometry = [float(s) for s in doc.get(xpath, u'').split()]
+                geometry = [float(s) for s in doc.get(xpath, '').split()]
 
                 if len(geometry):
                     lat, lng = geometry[0:2]
@@ -316,8 +326,7 @@ class Instance(models.Model):
         data = {
             UUID: self.uuid,
             ID: self.id,
-            BAMBOO_DATASET_ID: self.xform.bamboo_dataset,
-            self.USERFORM_ID: u'%s_%s' % (
+            self.USERFORM_ID: '%s_%s' % (
                 self.user.username,
                 self.xform.id_string),
             ATTACHMENTS: [a.media_file.name for a in
@@ -347,13 +356,13 @@ class Instance(models.Model):
 
     @staticmethod
     def get_hash(input_string):
-        '''
+        """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param basestring input_sting: The string to be hashed.
+        :param basestring input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
-        '''
+        """
         if isinstance(input_string, unicode):
             input_string = input_string.encode('utf-8')
         return sha256(input_string).hexdigest()
@@ -421,7 +430,7 @@ class InstanceHistory(models.Model):
         Instance, related_name='submission_history')
     xml = models.TextField()
     # old instance id
-    uuid = models.CharField(max_length=249, default=u'')
+    uuid = models.CharField(max_length=249, default='')
 
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)

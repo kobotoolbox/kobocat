@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import json
 
 from django.db.models import Q
@@ -46,7 +48,7 @@ This endpoint provides access to submitted data in JSON format. Where:
 
 * `pk` - the form unique identifier
 * `dataid` - submission data unique identifier
-* `owner` - username of the owner(user/organization) of the data point
+* `owner` - username of the owner of the data point
 
 ## GET JSON List of data end points
 
@@ -105,7 +107,6 @@ Provides a list of json submitted data for a specific form.
 >        [
 >            {
 >                "_id": 4503,
->                "_bamboo_dataset_id": "",
 >                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
@@ -154,7 +155,6 @@ Get a single specific submission json data providing `pk`
 >
 >            {
 >                "_id": 4503,
->                "_bamboo_dataset_id": "",
 >                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
@@ -211,7 +211,6 @@ API Parameters</a>.
 >        [
 >            {
 >                "_id": 4503,
->                "_bamboo_dataset_id": "",
 >                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
@@ -339,28 +338,6 @@ Payload
 >           "label": "Not Approved"
 >       }
 
-## Get list of public data endpoints
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/data/public
-</pre>
-
-> Example
->
->       curl -X GET https://example.com/api/v1/data/public
-
-> Response
->
->        [{
->            "id": 4240,
->            "id_string": "dhis2form"
->            "title": "dhis2form"
->            "description": "dhis2form"
->            "url": "https://example.com/api/v1/data/4240"
->         },
->            ...
->        ]
-
 ## Get enketo edit link for a submission instance
 
 <pre class="prettyprint">
@@ -410,8 +387,6 @@ Delete a specific submission in a form
     lookup_field = 'pk'
     lookup_fields = ('pk', 'dataid')
     extra_lookup_fields = None
-    public_data_endpoint = 'public'
-
     queryset = XForm.objects.all()
 
     def bulk_delete(self, request, *args, **kwargs):
@@ -470,8 +445,7 @@ Delete a specific submission in a form
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
-        if pk is not None and dataid is None \
-                and pk != self.public_data_endpoint:
+        if pk is not None and dataid is None:
             serializer_class = DataListSerializer
         elif pk is not None and dataid is not None:
             serializer_class = DataInstanceSerializer
@@ -490,11 +464,11 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+                raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
             try:
                 int(dataid)
             except ValueError:
-                raise ParseError(_(u"Invalid dataid %(dataid)s"
+                raise ParseError(_("Invalid dataid `%(dataid)s`"
                                    % {'dataid': dataid}))
 
             obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
@@ -513,7 +487,7 @@ Delete a specific submission in a form
             qs = XForm.objects.filter(**filter_kwargs)
 
             if not qs:
-                raise Http404(_(u"No data matches with given query."))
+                raise Http404(_("No data matches with given query."))
 
         return qs
 
@@ -530,10 +504,7 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                if pk == self.public_data_endpoint:
-                    qs = self._get_public_forms_queryset()
-                else:
-                    raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+                raise ParseError(_("Invalid pk %(pk)s" % {'pk': pk}))
             else:
                 qs = self._filtered_or_shared_qs(qs, pk)
 
@@ -564,7 +535,7 @@ Delete a specific submission in a form
                     else:
                         http_status = status.HTTP_400_BAD_REQUEST
             else:
-                raise PermissionDenied(_(u"You do not have validate permissions."))
+                raise PermissionDenied(_("You do not have validate permissions."))
 
         if http_status == status.HTTP_200_OK:
             data = instance.validation_status
@@ -610,12 +581,12 @@ Delete a specific submission in a form
         self.object = self.get_object()
         data = {}
         if isinstance(self.object, XForm):
-            raise ParseError(_(u"Data id not provided."))
+            raise ParseError(_("Data id not provided."))
         elif isinstance(self.object, Instance):
             if request.user.has_perm("change_xform", self.object.xform):
                 return_url = request.query_params.get('return_url')
                 if not return_url:
-                    raise ParseError(_(u"return_url not provided."))
+                    raise ParseError(_("return_url not provided."))
 
                 try:
                     data["url"] = get_enketo_edit_url(
@@ -623,7 +594,7 @@ Delete a specific submission in a form
                 except EnketoError as e:
                     data['detail'] = "{}".format(e)
             else:
-                raise PermissionDenied(_(u"You do not have edit permissions."))
+                raise PermissionDenied(_("You do not have edit permissions."))
 
         return Response(data=data)
 
@@ -638,7 +609,7 @@ Delete a specific submission in a form
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
         if isinstance(self.object, XForm):
-            raise ParseError(_(u"Data id not provided."))
+            raise ParseError(_("Data id not provided."))
         elif isinstance(self.object, Instance):
             # Redundant permissions check that duplicates
             # `XFormDataPermissions`, left here to minimize changes. We're
@@ -648,8 +619,8 @@ Delete a specific submission in a form
             if request.user.has_perm(CAN_CHANGE_XFORM, self.object.xform):
                 self.object.delete()
             else:
-                raise PermissionDenied(_(u"You do not have delete "
-                                         u"permissions."))
+                raise PermissionDenied(_("You do not have delete "
+                                         "permissions."))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -660,17 +631,6 @@ Delete a specific submission in a form
         if lookup_field not in kwargs.keys():
             self.object_list = self.filter_queryset(self.get_queryset())
             serializer = self.get_serializer(self.object_list, many=True)
-
-            return Response(serializer.data)
-
-        if lookup == self.public_data_endpoint:
-            self.object_list = self._get_public_forms_queryset()
-
-            page = self.paginate_queryset(self.object_list)
-            if page is not None:
-                serializer = self.get_pagination_serializer(page)
-            else:
-                serializer = self.get_serializer(self.object_list, many=True)
 
             return Response(serializer.data)
 
@@ -787,7 +747,7 @@ Delete a specific submission in a form
         xform = self.get_object()
         if not request.user.has_perm(permission, xform):
             raise PermissionDenied(
-                _(u"You do not have sufficient rights to perform this operation.")
+                _("You do not have sufficient rights to perform this operation.")
             )
         return xform
 

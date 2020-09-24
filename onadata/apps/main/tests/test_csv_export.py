@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 
 from django.core.files.storage import get_storage_class
@@ -6,7 +8,7 @@ from django.utils.dateparse import parse_datetime
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.apps.viewer.models.export import Export
 from onadata.libs.utils.export_tools import generate_export
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestExport(TestBase):
@@ -50,11 +52,11 @@ class TestExport(TestBase):
         self.maxDiff = None
         dd = DataDictionary.objects.all()[0]
         xpaths = [
-            u'/double_repeat/bed_net[1]/member[1]/name',
-            u'/double_repeat/bed_net[1]/member[2]/name',
-            u'/double_repeat/bed_net[2]/member[1]/name',
-            u'/double_repeat/bed_net[2]/member[2]/name',
-            u'/double_repeat/meta/instanceID'
+            '/double_repeat/bed_net[1]/member[1]/name',
+            '/double_repeat/bed_net[1]/member[2]/name',
+            '/double_repeat/bed_net[2]/member[1]/name',
+            '/double_repeat/bed_net[2]/member[2]/name',
+            '/double_repeat/meta/instanceID'
         ]
         self.assertEquals(dd.xpaths(repeat_iterations=2), xpaths)
         # test csv

@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 
 from django.conf import settings
@@ -6,7 +9,6 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import (
     TestAbstractViewSet)
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
-from onadata.apps.api.viewsets.project_viewset import ProjectViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.models.meta_data import MetaData
 from onadata.libs.serializers.xform_serializer import XFormSerializer
@@ -20,7 +22,7 @@ class TestMetaDataViewSet(TestAbstractViewSet):
             'get': 'retrieve',
             'post': 'create'
         })
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
         self.data_value = "screenshot.png"
         self.fixture_dir = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
@@ -48,15 +50,6 @@ class TestMetaDataViewSet(TestAbstractViewSet):
         data = XFormSerializer(self.xform, context={'request': request}).data
         self.assertEqual(response.data, data)
 
-        # /projects/[pk]/forms
-        view = ProjectViewSet.as_view({
-            'get': 'forms'
-        })
-        request = self.factory.get('/', **self.extra)
-        response = view(request, pk=self.project.pk)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, [data])
-
     def test_get_metadata_with_file_attachment(self):
         for data_type in ['supporting_doc', 'media', 'source']:
             self._add_form_metadata(self.xform, data_type,
@@ -70,11 +63,6 @@ class TestMetaDataViewSet(TestAbstractViewSet):
             response = self.view(request, pk=self.metadata.pk, format=ext)
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response['Content-Type'], 'image/png')
-
-    def test_add_mapbox_layer(self):
-        data_type = 'mapbox_layer'
-        data_value = 'test_mapbox_layer||http://0.0.0.0:8080||attribution'
-        self._add_form_metadata(self.xform, data_type, data_value)
 
     def test_delete_metadata(self):
         for data_type in ['supporting_doc', 'media', 'source']:
@@ -119,7 +107,7 @@ class TestMetaDataViewSet(TestAbstractViewSet):
         }
         response = self._post_form_metadata(data, False)
         self.assertEqual(response.status_code, 400)
-        error = {"data_value": ["Invalid url %s." % data['data_value']]}
+        error = {"non_field_errors": ["Invalid url %s." % data['data_value']]}
         self.assertEqual(response.data, error)
 
     def test_invalid_post(self):

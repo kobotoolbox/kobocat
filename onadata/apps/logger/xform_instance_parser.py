@@ -1,9 +1,15 @@
-import re
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import logging
+import re
+import sys
+
 import dateutil.parser
-from xml.dom import minidom, Node
+import six
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.translation import ugettext as _
+from xml.dom import minidom, Node
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
 
@@ -68,7 +74,7 @@ def get_meta_from_xml(xml_str, meta_name):
     uuid_tags = [n for n in meta_tag.childNodes if
                  n.nodeType == Node.ELEMENT_NODE and
                  (n.tagName.lower() == meta_name.lower() or
-                  n.tagName.lower() == u'orx:%s' % meta_name.lower())]
+                  n.tagName.lower() == 'orx:%s' % meta_name.lower())]
     if len(uuid_tags) == 0:
         return None
 
@@ -128,7 +134,7 @@ def get_deprecated_uuid_from_xml(xml):
 
 def clean_and_parse_xml(xml_string):
     clean_xml_str = xml_string.strip()
-    clean_xml_str = re.sub(ur">\s+<", u"><", smart_unicode(clean_xml_str))
+    clean_xml_str = re.sub(r">\s+<", "><", smart_unicode(clean_xml_str))
     xml_obj = minidom.parseString(smart_str(clean_xml_str))
     return xml_obj
 
@@ -212,7 +218,7 @@ def _flatten_dict(d, prefix):
                     # hack: removing [1] index to be consistent across
                     # surveys that have a single repitition of the
                     # loop versus mutliple.
-                    item_prefix[-1] += u"[%s]" % unicode(i + 1)
+                    item_prefix[-1] += "[%s]" % unicode(i + 1)
                 if type(item) == dict:
                     for pair in _flatten_dict(item, item_prefix):
                         yield pair
@@ -243,10 +249,10 @@ def _flatten_dict_nest_repeats(d, prefix):
                     for path, value in \
                             _flatten_dict_nest_repeats(item, item_prefix):
                         # TODO: this only considers the first level of repeats
-                        repeat.update({u"/".join(path[1:]): value})
+                        repeat.update({"/".join(path[1:]): value})
                     repeats.append(repeat)
                 else:
-                    repeats.append({u"/".join(item_prefix[1:]): item})
+                    repeats.append({"/".join(item_prefix[1:]): item})
             yield (new_prefix, repeats)
         else:
             yield (new_prefix, value)
@@ -287,21 +293,26 @@ class XFormInstanceParser(object):
         self._attributes = {}
         try:
             self.parse(xml_str)
-        except Exception as err:
+        except Exception as e:
             logger = logging.getLogger("console_logger")
             logger.error(
                 "Failed to parse instance '%s'" % xml_str, exc_info=True)
+            # `self.parse()` has been wrapped in to try/except but it makes the
+            # exception silently ignored.
+            # `logger_tool.py::safe_create_instance()` needs the exception
+            # to return the correct HTTP code
+            six.reraise(*sys.exc_info())
 
     def parse(self, xml_str):
         self._xml_obj = clean_and_parse_xml(xml_str)
         self._root_node = self._xml_obj.documentElement
         repeats = [e.get_abbreviated_xpath()
-                   for e in self.dd.get_survey_elements_of_type(u"repeat")]
+                   for e in self.dd.get_survey_elements_of_type("repeat")]
         self._dict = _xml_node_to_dict(self._root_node, repeats)
         if self._dict is None:
             raise InstanceEmptyError
         for path, value in _flatten_dict_nest_repeats(self._dict, []):
-            self._flat_dict[u"/".join(path[1:])] = value
+            self._flat_dict["/".join(path[1:])] = value
         self._set_attributes()
 
     def get_root_node(self):
@@ -339,7 +350,7 @@ class XFormInstanceParser(object):
                 self._attributes[key] = value
 
     def get_xform_id_string(self):
-        return self._attributes.get(u"id")
+        return self._attributes.get("id")
 
     def get_flat_dict_with_attributes(self):
         result = self.to_flat_dict().copy()

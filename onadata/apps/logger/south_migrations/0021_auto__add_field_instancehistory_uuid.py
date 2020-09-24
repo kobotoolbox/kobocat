@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # encoding: utf-8
 import datetime
 from south.db import db
@@ -9,7 +11,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'InstanceHistory.uuid'
-        db.add_column('odk_logger_instancehistory', 'uuid', self.gf('django.db.models.fields.CharField')(default=u'', max_length=249), keep_default=False)
+        db.add_column('odk_logger_instancehistory', 'uuid', self.gf('django.db.models.fields.CharField')(default='', max_length=249), keep_default=False)
 
 
     def backwards(self, orm):
@@ -69,10 +71,10 @@ class Migration(SchemaMigration):
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'default': 'None', 'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'start_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'status': ('django.db.models.fields.CharField', [], {'default': "u'submitted_via_web'", 'max_length': '20'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'submitted_via_web'", 'max_length': '20'}),
             'survey_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['odk_logger.SurveyType']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'surveys'", 'null': 'True', 'to': "orm['auth.User']"}),
-            'uuid': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '249'}),
+            'uuid': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '249'}),
             'xform': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'surveys'", 'null': 'True', 'to': "orm['odk_logger.XForm']"}),
             'xml': ('django.db.models.fields.TextField', [], {})
         },
@@ -81,7 +83,7 @@ class Migration(SchemaMigration):
             'date_created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'date_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'uuid': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '249'}),
+            'uuid': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '249'}),
             'xform_instance': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'submission_history'", 'to': "orm['odk_logger.Instance']"}),
             'xml': ('django.db.models.fields.TextField', [], {})
         },
@@ -92,21 +94,21 @@ class Migration(SchemaMigration):
         },
         'odk_logger.xform': {
             'Meta': {'ordering': "('id_string',)", 'unique_together': "(('user', 'id_string'),)", 'object_name': 'XForm'},
-            'bamboo_dataset': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '60'}),
+            'bamboo_dataset': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '60'}),
             'date_created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'date_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'description': ('django.db.models.fields.TextField', [], {'default': "u''", 'null': 'True'}),
+            'description': ('django.db.models.fields.TextField', [], {'default': "''", 'null': 'True'}),
             'downloadable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'has_start_time': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'id_string': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'db_index': 'True'}),
             'is_crowd_form': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'json': ('django.db.models.fields.TextField', [], {'default': "u''"}),
+            'json': ('django.db.models.fields.TextField', [], {'default': "''"}),
             'shared': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'shared_data': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'xforms'", 'null': 'True', 'to': "orm['auth.User']"}),
-            'uuid': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '32'}),
+            'uuid': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '32'}),
             'xls': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True'}),
             'xml': ('django.db.models.fields.TextField', [], {})
         }

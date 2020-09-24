@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 """ Nyaruka's TextIt gateway
 
@@ -32,20 +32,20 @@ def autodoc(url_root, username, id_string):
                               kwargs={'username': username,
                                       'id_string': id_string,
                                       'service': 'textit'})
-    doc = (u'<p>' +
-           _(u"%(service)s Instructions:")
-           % {'service': u'<a href="https://textit.in">'
-                         u'TextIt\'s Webhook API</a>'}
-           + u'</p><ol><li>' +
-           _(u"Sign in to TextIt.in and go to Account Page.")
-           + u'</li><li>' +
-           _(u"Tick “Incoming SMS Messages” and set Webhook URL to either:")
-           + u'<br /><span class="sms_autodoc_example">%(urla)s'
-           + u'<br />%(urlb)s</span><br />'
-           + u'</li></ol><p>' +
-           _(u"That's it. Now Send an SMS Formhub submission to your TextIt"
-             u" phone number. It will create a submission on Formhub.")
-           + u'</p>') % {'urla': urla, 'urlb': urlb}
+    doc = ('<p>' +
+           _("%(service)s Instructions:")
+           % {'service': '<a href="https://textit.in">'
+                         'TextIt\'s Webhook API</a>'}
+           + '</p><ol><li>' +
+           _("Sign in to TextIt.in and go to Account Page.")
+           + '</li><li>' +
+           _("Tick “Incoming SMS Messages” and set Webhook URL to either:")
+           + '<br /><span class="sms_autodoc_example">%(urla)s'
+           + '<br />%(urlb)s</span><br />'
+           + '</li></ol><p>' +
+           _("That's it. Now Send an SMS Formhub submission to your TextIt"
+             " phone number. It will create a submission on Formhub.")
+           + '</p>') % {'urla': urla, 'urlb': urlb}
     return doc
 
 
@@ -55,7 +55,7 @@ def get_response(data):
     if data.get('code') == SMS_API_ERROR:
         message = None
     elif data.get('code') != SMS_SUBMISSION_ACCEPTED:
-        message = _(u"[ERROR] %s") % message
+        message = _("[ERROR] %s") % message
 
     # send a response
     if message:
@@ -122,9 +122,9 @@ def process_message_for_textit(username, sms_identity, sms_text, sms_time,
 
     if not sms_identity or not sms_text:
         return get_response({'code': SMS_API_ERROR,
-                             'text': _(u"`identity` and `message` are "
-                                       u"both required and must not be "
-                                       u"empty.")})
+                             'text': _("`identity` and `message` are "
+                                       "both required and must not be "
+                                       "empty.")})
 
     incomings = [(sms_identity, sms_text)]
     response = process_incoming_smses(username, incomings, id_string)[-1]

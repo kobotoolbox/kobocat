@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import reversion
 import unittest
@@ -33,7 +35,7 @@ class TestXForm(TestBase):
         self.assertTrue(isinstance(self.xform.xml, unicode))
 
         # change title
-        self.xform.title = u'Random Title'
+        self.xform.title = 'Random Title'
 
         self.assertNotIn(self.xform.title, self.xform.xml)
 

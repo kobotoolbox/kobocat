@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # encoding: utf-8
 import datetime
 from south.db import db
@@ -39,7 +41,7 @@ class Migration(SchemaMigration):
             ('survey_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['odk_logger.SurveyType'])),
             ('date_created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('date_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('status', self.gf('django.db.models.fields.CharField')(default=u'submitted_via_web', max_length=20)),
+            ('status', self.gf('django.db.models.fields.CharField')(default='submitted_via_web', max_length=20)),
         ))
         db.send_create_signal('odk_logger', ['Instance'])
 
@@ -117,7 +119,7 @@ class Migration(SchemaMigration):
             'date_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'start_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'status': ('django.db.models.fields.CharField', [], {'default': "u'submitted_via_web'", 'max_length': '20'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'submitted_via_web'", 'max_length': '20'}),
             'survey_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['odk_logger.SurveyType']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'surveys'", 'null': 'True', 'to': "orm['auth.User']"}),
             'xform': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'surveys'", 'null': 'True', 'to': "orm['odk_logger.XForm']"}),

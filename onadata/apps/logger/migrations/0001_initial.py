@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
-from django.db import migrations, models
-import onadata.apps.logger.models.xform
 import django.contrib.gis.db.models.fields
 import jsonfield.fields
-from django.conf import settings
-import onadata.apps.logger.models.attachment
 import taggit.managers
+from django.conf import settings
+from django.db import migrations, models
+
+import onadata.apps.logger.models.attachment
+import onadata.apps.logger.models.xform
 
 
 class Migration(migrations.Migration):

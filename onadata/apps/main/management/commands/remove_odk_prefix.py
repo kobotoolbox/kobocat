@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.core.management.base import BaseCommand
 from django.db import connection
 from django.utils.translation import ugettext_lazy

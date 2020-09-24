@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
@@ -26,17 +28,6 @@ class XFormListObjectPermissionFilter(AnonDjangoObjectPermissionFilter):
     perm_format = '%(app_label)s.report_%(model_name)s'
 
 
-class OrganizationPermissionFilter(filters.DjangoObjectPermissionsFilter):
-    def filter_queryset(self, request, queryset, view):
-        filtered_queryset = super(self.__class__, self).filter_queryset(
-            request, queryset, view)
-        org_users = set([group.team.organization
-                         for group in request.user.groups.all()] + [
-            o.user for o in filtered_queryset])
-
-        return queryset.model.objects.filter(user__in=org_users)
-
-
 class XFormOwnerFilter(filters.BaseFilterBackend):
 
     owner_prefix = 'user'
@@ -62,42 +53,6 @@ class XFormIdStringFilter(filters.BaseFilterBackend):
         return queryset
 
 
-class ProjectOwnerFilter(XFormOwnerFilter):
-    owner_prefix = 'organization'
-
-
-class AnonUserProjectFilter(filters.DjangoObjectPermissionsFilter):
-    def filter_queryset(self, request, queryset, view):
-        """
-        Anonymous user has no object permissions, return queryset as it is.
-        """
-        user = request.user
-        project_id = view.kwargs.get(view.lookup_field)
-
-        if user.is_anonymous():
-            return queryset.filter(Q(shared=True))
-
-        if project_id:
-            try:
-                int(project_id)
-            except ValueError:
-                raise ParseError(
-                    u"Invalid value for project_id '%s' must be a positive "
-                    "integer." % project_id)
-
-            # check if project is public and return it
-            try:
-                project = queryset.get(id=project_id)
-            except ObjectDoesNotExist:
-                raise Http404
-
-            if project.shared:
-                return queryset.filter(Q(id=project_id))
-
-        return super(AnonUserProjectFilter, self)\
-            .filter_queryset(request, queryset, view)
-
-
 class TagFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         # filter by tags if available.
@@ -111,6 +66,7 @@ class TagFilter(filters.BaseFilterBackend):
 
 
 class XFormPermissionFilterMixin(object):
+
     def _xform_filter_queryset(self, request, queryset, view, keyword):
         """Use XForm permissions"""
         xform = request.query_params.get('xform')
@@ -119,7 +75,7 @@ class XFormPermissionFilterMixin(object):
                 int(xform)
             except ValueError:
                 raise ParseError(
-                    u"Invalid value for formid %s." % xform)
+                    "Invalid value for formid %s." % xform)
             xform = get_object_or_404(XForm, pk=xform)
             xform_qs = XForm.objects.filter(pk=xform.pk)
         else:
@@ -152,7 +108,7 @@ class AttachmentFilter(XFormPermissionFilterMixin,
                 int(instance_id)
             except ValueError:
                 raise ParseError(
-                    u"Invalid value for instance %s." % instance_id)
+                    "Invalid value for instance %s." % instance_id)
             instance = get_object_or_404(Instance, pk=instance_id)
             queryset = queryset.filter(instance=instance)
 

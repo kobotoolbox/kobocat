@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import re
 
@@ -236,7 +239,8 @@ class TestFormSubmission(TestBase):
         self.assertEqual(self.response.status_code, 202)
 
     def test_duplicate_submission_with_different_content(self):
-        """Test xml submissions with same instancID but different content
+        """
+        Test xml submissions with same instanceID but different content
         """
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -253,14 +257,13 @@ class TestFormSubmission(TestBase):
         self._make_submission(xml_submission_file_path)
         self.assertEqual(self.response.status_code, 201)
         self.assertEqual(Instance.objects.count(), pre_count + 1)
-        inst = Instance.objects.all().reverse()[0]
+        inst = Instance.objects.order_by('pk').last()
         self._make_submission(duplicate_xml_submission_file_path)
-        self.assertEqual(self.response.status_code, 202)
-        self.assertEqual(Instance.objects.count(), pre_count + 1)
+        self.assertEqual(self.response.status_code, 201)
+        self.assertEqual(Instance.objects.count(), pre_count + 2)
         # this is exactly the same instance
-        anothe_inst = Instance.objects.all().reverse()[0]
-        # no change in xml content
-        self.assertEqual(inst.xml, anothe_inst.xml)
+        another_inst = Instance.objects.order_by('pk').last()
+        self.assertNotEqual(inst.xml, another_inst.xml)
 
     def test_edited_submission(self):
         """
@@ -318,7 +321,7 @@ class TestFormSubmission(TestBase):
         with open(xml_submission_file_path, "r") as f:
             xml_str = f.read()
         xml_str = clean_and_parse_xml(xml_str).toxml()
-        edited_name = re.match(ur"^.+?<name>(.+?)</name>", xml_str).groups()[0]
+        edited_name = re.match(r"^.+?<name>(.+?)</name>", xml_str).groups()[0]
         self.assertEqual(record['name'], edited_name)
 
     def test_submission_w_mismatched_uuid(self):
@@ -379,7 +382,7 @@ class TestFormSubmission(TestBase):
         self.assertEqual(self.response.status_code, 201)
         # query mongo for the _geopoint field
         query_args['count'] = False
-        records = ParsedInstance.query_mongo(**query_args)
+        records = list(ParsedInstance.query_mongo(**query_args))
         self.assertEqual(len(records), 1)
         # submit the edited instance
         xml_submission_file_path = os.path.join(
@@ -389,7 +392,7 @@ class TestFormSubmission(TestBase):
         )
         self._make_submission(xml_submission_file_path)
         self.assertEqual(self.response.status_code, 201)
-        records = ParsedInstance.query_mongo(**query_args)
+        records = list(ParsedInstance.query_mongo(**query_args))
         self.assertEqual(len(records), 1)
         cached_geopoint = records[0][GEOLOCATION]
         # the cached geopoint should equal the gps field
@@ -509,5 +512,5 @@ class TestFormSubmission(TestBase):
         with open(xml_submission_file_path, "r") as f:
             xml_str = f.read()
         xml_str = clean_and_parse_xml(xml_str).toxml()
-        edited_name = re.match(ur"^.+?<name>(.+?)</name>", xml_str).groups()[0]
+        edited_name = re.match(r"^.+?<name>(.+?)</name>", xml_str).groups()[0]
         self.assertEqual(record['name'], edited_name)

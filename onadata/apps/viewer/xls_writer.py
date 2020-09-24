@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from collections import defaultdict
 from pyxform import Section, Question
 from xlwt import Workbook
@@ -50,7 +52,7 @@ class XlsWriter(object):
                 self.add_column(sheet_name, key)
         for j, column_name in enumerate(self._columns[sheet_name]):
             # leaving this untranslated as I'm not sure it's in django context
-            self._sheets[sheet_name].write(i, j, row.get(column_name, u"n/a"))
+            self._sheets[sheet_name].write(i, j, row.get(column_name, "n/a"))
         self._current_index[sheet_name] += 1
 
     def add_obs(self, obs):
@@ -64,11 +66,11 @@ class XlsWriter(object):
     def _fix_indices(self, obs):
         for sheet_name, rows in obs.items():
             for row in rows:
-                row[u'_index'] += self._current_index[sheet_name]
-                if row[u'_parent_index'] == -1:
+                row['_index'] += self._current_index[sheet_name]
+                if row['_parent_index'] == -1:
                     continue
-                i = self._current_index[row[u'_parent_table_name']]
-                row[u'_parent_index'] += i
+                i = self._current_index[row['_parent_table_name']]
+                row['_parent_index'] += i
 
     def write_tables_to_workbook(self, tables):
         """

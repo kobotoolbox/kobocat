@@ -1,11 +1,15 @@
-import os
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+import dj_database_url
+from django.utils.six.moves.urllib.parse import quote_plus
+from mongomock import MongoClient as MockMongoClient
+
 from onadata.settings.common import *
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
 TEMPLATE_STRING_IF_INVALID = ''
 
-import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
@@ -19,13 +23,11 @@ DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
 SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
 
 
-MONGO_DATABASE = {
-    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
-    'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
-    'NAME': os.environ.get('KOBOCAT_TEST_MONGO_NAME', 'formhub_test'),
-    'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
-    'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
-}
+MONGO_CONNECTION_URL = 'mongodb://fakehost/formhub_test'
+MONGO_CONNECTION = MockMongoClient(
+    MONGO_CONNECTION_URL, j=True, tz_aware=True)
+MONGO_DB = MONGO_CONNECTION['formhub_test']
+
 
 CELERY_BROKER_URL = os.environ.get(
     'KOBOCAT_BROKER_URL', 'amqp://guest:guest@rabbit:5672/')
@@ -45,22 +47,16 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
 if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
-    KOBOCAT_ROOT_URI_PREFIX= '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
-    MEDIA_URL= KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
-    STATIC_URL= KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
-    LOGIN_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
-    LOGIN_REDIRECT_URL= KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
+    KOBOCAT_ROOT_URI_PREFIX = '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
+    MEDIA_URL = KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
+    STATIC_URL = KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
+    LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
+    LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
-if TESTING_MODE:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
-    subprocess.call(["rm", "-r", MEDIA_ROOT])
-    MONGO_DATABASE['NAME'] = "formhub_test"
-    CELERY_TASK_ALWAYS_EAGER = True
-    BROKER_BACKEND = 'memory'
-    ENKETO_API_TOKEN = 'abc'
-    #TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
-else:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media/')
+MEDIA_ROOT = '/tmp/test_media/'
+CELERY_TASK_ALWAYS_EAGER = True
+BROKER_BACKEND = 'memory'
+ENKETO_API_TOKEN = 'abc'
 
 if PRINT_EXCEPTION and DEBUG:
     MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
@@ -70,47 +66,32 @@ TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
     'KOBOCAT_TEMPLATES_PATH',
     os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
 )
-TEMPLATE_DIRS = ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
-STATICFILES_DIRS += ( os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
+TEMPLATE_DIRS = (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),) + TEMPLATE_DIRS
+STATICFILES_DIRS += (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),)
 
-KOBOFORM_SERVER=os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT=os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL=os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
-#KOBOFORM_LOGIN_AUTOREDIRECT=True
-KOBOFORM_URL=os.environ.get("KOBOFORM_URL", "http://localhost:8000")
+KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
+KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
+KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+# KOBOFORM_LOGIN_AUTOREDIRECT=True
+KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     'onadata.koboform.context_processors.koboform_integration',
 ) + TEMPLATE_CONTEXT_PROCESSORS
 
-#MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
+# MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
 
 # Domain must not exclude KPI when sharing sessions
 if os.environ.get('SESSION_COOKIE_DOMAIN'):
     SESSION_COOKIE_DOMAIN = os.environ['SESSION_COOKIE_DOMAIN']
     SESSION_COOKIE_NAME = 'kobonaut'
 
-SESSION_SERIALIZER ='django.contrib.sessions.serializers.JSONSerializer'
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 # for debugging
 # print "KOBOFORM_URL=%s" % KOBOFORM_URL
 # print "SECRET_KEY=%s" % SECRET_KEY
 # print "CSRF_COOKIE_DOMAIN=%s " % CSRF_COOKIE_DOMAIN
-
-# MongoDB - moved here from common.py
-if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
-    MONGO_CONNECTION_URL = (
-        "mongodb://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s") % MONGO_DATABASE
-else:
-    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s" % MONGO_DATABASE
-
-MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, safe=True, j=True, tz_aware=True)
-MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
-
-# Clear out the test database
-if TESTING_MODE:
-    MONGO_DB.instances.drop()
 
 # BEGIN external service integration codes
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
@@ -128,7 +109,7 @@ if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
     DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
 
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
-    'django.core.mail.backends.filebased.EmailBackend')
+                               'django.core.mail.backends.filebased.EmailBackend')
 
 if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
     EMAIL_FILE_PATH = os.environ.get(
@@ -142,7 +123,7 @@ if 'RAVEN_DSN' in os.environ:
     try:
         import raven
     except ImportError:
-        print 'Please install Raven to enable Sentry logging.'
+        print('Please install Raven to enable Sentry logging.')
     else:
         INSTALLED_APPS = INSTALLED_APPS + (
             'raven.contrib.django.raven_compat',
@@ -155,11 +136,10 @@ if 'RAVEN_DSN' in os.environ:
         except raven.exceptions.InvalidGitRepository:
             pass
 
-POSTGIS_VERSION = (2, 1, 2)
+POSTGIS_VERSION = (2, 5, 0)
 
 # DISABLE Django DB logging
 LOGGING['loggers']['django.db.backends'] = {
             'level': 'WARNING',
             'propagate': True
         }
-

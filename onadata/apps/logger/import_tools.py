@@ -1,4 +1,6 @@
-# encoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import shutil
 import tempfile
@@ -69,7 +71,7 @@ def import_instances_from_zip(zipfile_path, user, status="zip"):
 
         zf.extractall(temp_directory)
     except zipfile.BadZipfile, e:
-        errors = [u"%s" % e]
+        errors = ["%s" % e]
         return 0, 0, errors
     else:
         return import_instances_from_path(temp_directory, user, status)

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.test import TransactionTestCase
 
 from onadata.libs.serializers.attachment_serializer import get_path

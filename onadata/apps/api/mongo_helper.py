@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, print_function, division, absolute_import
 import re
 import base64
 
@@ -178,6 +178,6 @@ class MongoHelper(object):
         :return: boolean
         """
         for reserved_attribute in NESTED_RESERVED_ATTRIBUTES:
-            if key.startswith(u"{}.".format(reserved_attribute)):
+            if key.startswith("{}.".format(reserved_attribute)):
                 return True
         return False

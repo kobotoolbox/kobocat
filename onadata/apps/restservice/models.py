@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.db import models
 from django.utils.translation import ugettext_lazy
 
@@ -16,7 +19,7 @@ class RestService(models.Model):
     name = models.CharField(max_length=50, choices=SERVICE_CHOICES)
 
     def __unicode__(self):
-        return u"%s:%s - %s" % (self.xform, self.long_name, self.service_url)
+        return "%s:%s - %s" % (self.xform, self.long_name, self.service_url)
 
     def get_service_definition(self):
         m = __import__(''.join(['onadata.apps.restservice.services.',

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import base64
 from functools import wraps
 import re
@@ -9,7 +11,6 @@ from django.contrib.sites.models import Site
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import get_perms_for_model, assign_perm
 
-from onadata.apps.api.models import Project, Team, OrganizationProfile
 from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.models import XForm, Note
 
@@ -149,7 +150,7 @@ def add_cors_headers(response):
 
 
 def set_api_permissions_for_user(user):
-    models = [UserProfile, XForm, Project, Team, OrganizationProfile, Note]
+    models = [UserProfile, XForm, Note]
     for model in models:
         for perm in get_perms_for_model(model):
             assign_perm(

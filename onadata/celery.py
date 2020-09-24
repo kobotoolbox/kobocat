@@ -1,11 +1,14 @@
-# http://celery.readthedocs.org/en/latest/django/first-steps-with-django.html
-from __future__ import absolute_import
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import celery
 import logging
 
 from django.apps import apps
 from django.conf import settings
+
+# http://celery.readthedocs.org/en/latest/django/first-steps-with-django.html
 
 # Attempt to determine the project name from the directory containing this file
 PROJECT_NAME = os.path.basename(os.path.dirname(__file__))
