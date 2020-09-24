@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import unicodecsv as ucsv
 import uuid
 import json
@@ -46,7 +48,7 @@ def dict2xmlsubmission(submission_dict, xform, instance_id, submission_date):
     :return: An xml submission string
     :rtype: string
     """
-    return (u'<?xml version="1.0" ?>'
+    return ('<?xml version="1.0" ?>'
             '<{0} id="{1}" instanceID="uuid:{2}" submissionDate="{3}" '
             'xmlns="http://opendatakit.org/submissions">{4}'
             '</{0}>'.format(
@@ -71,7 +73,7 @@ def submit_csv(username, xform, csv_file):
     if isinstance(csv_file, (str, unicode)):
         csv_file = cStringIO.StringIO(csv_file)
     elif csv_file is None or not hasattr(csv_file, 'read'):
-        return {'error': (u'Invalid param type for `csv_file`. '
+        return {'error': ('Invalid param type for `csv_file`. '
                           'Expected file or String '
                           'got {} instead.'.format(type(csv_file).__name__))}
 

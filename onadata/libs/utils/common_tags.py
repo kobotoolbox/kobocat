@@ -1,47 +1,48 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # WE SHOULD PUT MORE STRUCTURE ON THESE TAGS SO WE CAN ACCESS DOCUMENT
 # FIELDS ELEGANTLY
 
 # These are common variable tags that we'll want to access
-INSTANCE_DOC_NAME = u"_name"
-ID = u"_id"
-UUID = u"_uuid"
-PICTURE = u"picture"
-GPS = u"location/gps"
-SURVEY_TYPE = u'_survey_type_slug'
+INSTANCE_DOC_NAME = "_name"
+ID = "_id"
+UUID = "_uuid"
+PICTURE = "picture"
+GPS = "location/gps"
+SURVEY_TYPE = '_survey_type_slug'
 
 # Phone IMEI:
-DEVICE_ID = u"device_id"  # This tag was used in Phase I
-IMEI = u"imei"            # This tag was used in Phase II
+DEVICE_ID = "device_id"  # This tag was used in Phase I
+IMEI = "imei"            # This tag was used in Phase II
 # Survey start time:
-START_TIME = u"start_time"  # This tag was used in Phase I
-START = u"start"            # This tag was used in Phase II
-END_TIME = u"end_time"
-END = u"end"
+START_TIME = "start_time"  # This tag was used in Phase I
+START = "start"            # This tag was used in Phase II
+END_TIME = "end_time"
+END = "end"
 
 # value of INSTANCE_DOC_NAME that indicates a regisration form
-REGISTRATION = u"registration"
+REGISTRATION = "registration"
 # keys that we'll look for in the registration form
-NAME = u"name"
+NAME = "name"
 
 # extra fields that we're adding to our mongo doc
-XFORM_ID_STRING = u"_xform_id_string"
-STATUS = u"_status"
-ATTACHMENTS = u"_attachments"
-UUID = u"_uuid"
-USERFORM_ID = u"_userform_id"
-DATE = u"_date"
-GEOLOCATION = u"_geolocation"
-SUBMISSION_TIME = u'_submission_time'
-DELETEDAT = u"_deleted_at"  # marker for delete surveys
-BAMBOO_DATASET_ID = u"_bamboo_dataset_id"
-SUBMITTED_BY = u"_submitted_by"
-VALIDATION_STATUS = u"_validation_status"
+XFORM_ID_STRING = "_xform_id_string"
+STATUS = "_status"
+ATTACHMENTS = "_attachments"
+UUID = "_uuid"
+USERFORM_ID = "_userform_id"
+DATE = "_date"
+GEOLOCATION = "_geolocation"
+SUBMISSION_TIME = '_submission_time'
+DELETEDAT = "_deleted_at"  # marker for delete surveys
+SUBMITTED_BY = "_submitted_by"
+VALIDATION_STATUS = "_validation_status"
 
-INSTANCE_ID = u"instanceID"
-META_INSTANCE_ID = u"meta/instanceID"
-INDEX = u"_index"
-PARENT_INDEX = u"_parent_index"
-PARENT_TABLE_NAME = u"_parent_table_name"
+INSTANCE_ID = "instanceID"
+META_INSTANCE_ID = "meta/instanceID"
+INDEX = "_index"
+PARENT_INDEX = "_parent_index"
+PARENT_TABLE_NAME = "_parent_table_name"
 
 # datetime format that we store in mongo
 MONGO_STRFTIME = '%Y-%m-%dT%H:%M:%S'
@@ -50,17 +51,17 @@ MONGO_STRFTIME = '%Y-%m-%dT%H:%M:%S'
 NA_REP = 'n/a'
 
 # hold tags
-TAGS = u"_tags"
+TAGS = "_tags"
 
-NOTES = u"_notes"
+NOTES = "_notes"
 
 # statistics
-MEAN = u"mean"
-MIN = u"min"
-MAX = u"max"
-RANGE = u"range"
-MEDIAN = u"median"
-MODE = u"mode"
+MEAN = "mean"
+MIN = "min"
+MAX = "max"
+RANGE = "range"
+MEDIAN = "median"
+MODE = "mode"
 
 
 # List of nested attributes which bypass 'dots' encoding

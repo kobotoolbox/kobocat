@@ -1,9 +1,11 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from os import path
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
-from onadata.libs.utils.image_tools import image_url
 
 
 class TestAttachmentViewSet(TestAbstractViewSet):
@@ -17,7 +19,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
             'get': 'list'
         })
 
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
     def test_retrieve_view(self):
         self._submit_transport_instance_w_attachment()
@@ -26,9 +28,10 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         data = {
             'url': 'http://testserver/api/v1/media/%s' % pk,
             'field_xpath': None,
-            'download_url': self.attachment.media_file.url,
-            'small_download_url': image_url(self.attachment, 'small'),
-            'medium_download_url': image_url(self.attachment, 'medium'),
+            'download_url': self.attachment.secure_url(),
+            'small_download_url': self.attachment.secure_url('small'),
+            'medium_download_url': self.attachment.secure_url('medium'),
+            'large_download_url': self.attachment.secure_url('large'),
             'id': pk,
             'xform': self.xform.pk,
             'instance': self.attachment.instance.pk,
@@ -39,6 +42,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         response = self.retrieve_view(request, pk=pk)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(isinstance(response.data, dict))
+
         self.assertEqual(response.data, data)
 
         # file download
@@ -109,7 +113,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(isinstance(response.data, basestring))
-        self.assertEqual(response.data, self.attachment.media_file.url)
+        self.assertEqual(response.data, self.attachment.secure_url())
 
         data['filename'] = 10000000
         request = self.factory.get('/', data, **self.extra)
@@ -134,4 +138,4 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(isinstance(response.data, basestring))
-        self.assertEqual(response.data, self.attachment.media_file.url)
+        self.assertEqual(response.data, self.attachment.secure_url())

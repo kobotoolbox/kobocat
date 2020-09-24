@@ -1,4 +1,6 @@
-# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 import re
 from xml.dom import minidom
@@ -12,9 +14,9 @@ from onadata.apps.logger.xform_instance_parser import get_uuid_from_xml,\
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
 
 
-XML = u"xml"
-DICT = u"dict"
-FLAT_DICT = u"flat_dict"
+XML = "xml"
+DICT = "dict"
+FLAT_DICT = "flat_dict"
 ID = XFORM_ID_STRING
 
 
@@ -48,43 +50,43 @@ class TestXFormInstanceParser(TestBase):
         parser = XFormInstanceParser(self.xml, self.xform.data_dictionary())
         dict = parser.to_dict()
         expected_dict = {
-            u'new_repeats': {
-                u'info':
+            'new_repeats': {
+                'info':
                 {
-                    u'age': u'80',
-                    u'name': u'Adam'
+                    'age': '80',
+                    'name': 'Adam'
                 },
-                u'kids':
+                'kids':
                 {
-                    u'kids_details':
+                    'kids_details':
                     [
                         {
-                            u'kids_age': u'50',
-                            u'kids_name': u'Abel'
+                            'kids_age': '50',
+                            'kids_name': 'Abel'
                         },
                     ],
-                    u'has_kids': u'1'
+                    'has_kids': '1'
                 },
-                u'web_browsers': u'chrome ie',
-                u'gps': u'-1.2627557 36.7926442 0.0 30.0'
+                'web_browsers': 'chrome ie',
+                'gps': '-1.2627557 36.7926442 0.0 30.0'
             }
         }
         self.assertEqual(dict, expected_dict)
 
         flat_dict = parser.to_flat_dict()
         expected_flat_dict = {
-            u'gps': u'-1.2627557 36.7926442 0.0 30.0',
-            u'kids/kids_details':
+            'gps': '-1.2627557 36.7926442 0.0 30.0',
+            'kids/kids_details':
             [
                 {
-                    u'kids/kids_details/kids_name': u'Abel',
-                    u'kids/kids_details/kids_age': u'50'
+                    'kids/kids_details/kids_name': 'Abel',
+                    'kids/kids_details/kids_age': '50'
                 }
             ],
-            u'kids/has_kids': u'1',
-            u'info/age': u'80',
-            u'web_browsers': u'chrome ie',
-            u'info/name': u'Adam'
+            'kids/has_kids': '1',
+            'info/age': '80',
+            'web_browsers': 'chrome ie',
+            'info/name': 'Adam'
         }
         self.assertEqual(flat_dict, expected_flat_dict)
 
@@ -97,16 +99,16 @@ class TestXFormInstanceParser(TestBase):
                   '<gps>-1.2625072 36.7924328 0.0 30.0</gps>' \
                   '<info>What</info></gps></test_item_name_matches_repeat>'
         clean_xml_str = xml_str.strip()
-        clean_xml_str = re.sub(ur">\s+<", u"><", clean_xml_str)
+        clean_xml_str = re.sub(r">\s+<", "><", clean_xml_str)
         root_node = minidom.parseString(clean_xml_str).documentElement
         # get the first top-level gps element
         gps_node = root_node.firstChild.nextSibling
-        self.assertEqual(gps_node.nodeName, u'gps')
+        self.assertEqual(gps_node.nodeName, 'gps')
         # get the info element within the gps element
-        info_node = gps_node.getElementsByTagName(u'info')[0]
+        info_node = gps_node.getElementsByTagName('info')[0]
         # create an xpath that should look like gps/info
         xpath = xpath_from_xml_node(info_node)
-        self.assertEqual(xpath, u'gps/info')
+        self.assertEqual(xpath, 'gps/info')
 
     def test_get_meta_from_xml(self):
         with open(

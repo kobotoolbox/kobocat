@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import datetime
 import json
 import logging
@@ -13,9 +15,19 @@ from django.utils.translation import ugettext as _
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
 from onadata.apps.restservice.utils import call_service
-from onadata.libs.utils.common_tags import ID, UUID, ATTACHMENTS, GEOLOCATION,\
-    SUBMISSION_TIME, MONGO_STRFTIME, BAMBOO_DATASET_ID, DELETEDAT, TAGS,\
-    NOTES, SUBMITTED_BY, VALIDATION_STATUS
+from onadata.libs.utils.common_tags import (
+    ID,
+    UUID,
+    ATTACHMENTS,
+    GEOLOCATION,
+    SUBMISSION_TIME,
+    MONGO_STRFTIME,
+    DELETEDAT,
+    TAGS,
+    NOTES,
+    SUBMITTED_BY,
+    VALIDATION_STATUS
+)
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 from onadata.apps.api.mongo_helper import MongoHelper
@@ -57,8 +69,8 @@ def update_mongo_instance(record):
 
 
 class ParsedInstance(models.Model):
-    USERFORM_ID = u'_userform_id'
-    STATUS = u'_status'
+    USERFORM_ID = '_userform_id'
+    STATUS = '_status'
     DEFAULT_LIMIT = 30000
     DEFAULT_BATCHSIZE = 1000
 
@@ -74,7 +86,7 @@ class ParsedInstance(models.Model):
 
     @classmethod
     def get_base_query(cls, username, id_string):
-        userform_id = u'{}_{}'.format(username, id_string)
+        userform_id = '{}_{}'.format(username, id_string)
         return {
             cls.USERFORM_ID: userform_id
         }
@@ -110,9 +122,9 @@ class ParsedInstance(models.Model):
             query = json.loads(
                 query, object_hook=json_util.object_hook) if query else {}
         if not (isinstance(pipeline, dict) or isinstance(pipeline, list)):
-            raise Exception(_(u"Invalid pipeline! %s" % pipeline))
+            raise Exception(_("Invalid pipeline! %s" % pipeline))
         if not isinstance(query, dict):
-            raise Exception(_(u"Invalid query! %s" % query))
+            raise Exception(_("Invalid query! %s" % query))
         query = MongoHelper.to_safe_dict(query)
         if hide_deleted:
             # display only active elements
@@ -232,8 +244,7 @@ class ParsedInstance(models.Model):
         data = {
             UUID: self.instance.uuid,
             ID: self.instance.id,
-            BAMBOO_DATASET_ID: self.instance.xform.bamboo_dataset,
-            self.USERFORM_ID: u'%s_%s' % (
+            self.USERFORM_ID: '%s_%s' % (
                 self.instance.xform.user.username,
                 self.instance.xform.id_string),
             ATTACHMENTS: _get_attachments_from_instance(self.instance),
@@ -255,14 +266,14 @@ class ParsedInstance(models.Model):
 
         return MongoHelper.to_safe_dict(d)
 
-    def update_mongo(self, async=True):
+    def update_mongo(self, asynchronous=True):
         d = self.to_dict_for_mongo()
         if d.get("_xform_id_string") is None:
             # if _xform_id_string, Instance could not be parsed.
             # so, we don't update mongo.
             return False
         else:
-            if async:
+            if asynchronous:
                 # TODO update self.instance after async save is made
                 update_mongo_instance.apply_async((), {"record": d})
             else:
@@ -310,7 +321,7 @@ class ParsedInstance(models.Model):
         """
         datadict = json.loads(self.instance.xform.json)
         for item in datadict['children']:
-            if type(item) == dict and item.get(u'type') == type_value:
+            if type(item) == dict and item.get('type') == type_value:
                 return item['name']
 
     def get_data_dictionary(self):
@@ -331,7 +342,7 @@ class ParsedInstance(models.Model):
             self.lat = self.instance.point.y
             self.lng = self.instance.point.x
 
-    def save(self, async=False, *args, **kwargs):
+    def save(self, asynchronous=False, *args, **kwargs):
         # start/end_time obsolete: originally used to approximate for
         # instanceID, before instanceIDs were implemented
         created = self.pk is None
@@ -343,7 +354,7 @@ class ParsedInstance(models.Model):
         # insert into Mongo.
         # Signal has been removed because of a race condition.
         # Rest Services were called before data was saved in DB.
-        success = self.update_mongo(async)
+        success = self.update_mongo(asynchronous)
         if success and created:
             call_service(self)
         return success

@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# vim: ai ts=4 sts=4 et sw=4 nu
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import json
 
@@ -9,8 +8,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 
-from tools import SMS_API_ERROR
-from parser import process_incoming_smses
+from .tools import SMS_API_ERROR
+from .parser import process_incoming_smses
 
 
 def get_response(data):
@@ -57,9 +56,9 @@ def import_submission_for_form(request, username, id_string):
 
     if not sms_identity or not sms_text:
         return get_response({'code': SMS_API_ERROR,
-                             'text': _(u"`identity` and `message` are "
-                                       u"both required and must not be "
-                                       u"empty.")})
+                             'text': _("`identity` and `message` are "
+                                       "both required and must not be "
+                                       "empty.")})
     incomings = [(sms_identity, sms_text)]
     response = process_incoming_smses(username, incomings, id_string)[-1]
 

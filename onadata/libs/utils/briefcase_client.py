@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import time
 import math
@@ -33,7 +35,7 @@ def django_file(file_obj, field_name, content_type):
 
 
 def retry(tries, delay=3, backoff=2):
-    '''
+    """
     Adapted from code found here:
         http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
 
@@ -43,8 +45,7 @@ def retry(tries, delay=3, backoff=2):
     factor by which the delay should lengthen after each failure.
     *backoff* must be greater than 1, or else it isn't really a backoff.
     *tries* must be at least 0, and *delay* greater than 0.
-    '''
-
+    """
     if backoff <= 1:  # pragma: no cover
         raise ValueError("backoff must be greater than 1")
 
@@ -134,7 +135,7 @@ class BriefcaseClient(object):
         response = self._current_response
         forms = self._get_form_list(response.content)
 
-        self.logger.debug('Successfull fetched %s.' % self.form_list_url)
+        self.logger.debug('Successfully fetched %s.' % self.form_list_url)
 
         for id_string, download_url, manifest_url in forms:
             form_path = os.path.join(
@@ -239,8 +240,8 @@ class BriefcaseClient(object):
 
         for uuid in instances:
             self.logger.debug("Fetching %s %s submission" % (uuid, form_id))
-            form_str = u'%(formId)s[@version=null and @uiVersion=null]/'\
-                u'%(formId)s[@key=%(instanceId)s]' % {
+            form_str = '%(formId)s[@version=null and @uiVersion=null]/'\
+                '%(formId)s[@key=%(instanceId)s]' % {
                     'formId': form_id,
                     'instanceId': uuid
                 }

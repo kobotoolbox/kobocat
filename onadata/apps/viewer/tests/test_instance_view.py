@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.core.urlresolvers import reverse
 from guardian.shortcuts import assign_perm, remove_perm
 

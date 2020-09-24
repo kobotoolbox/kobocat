@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
@@ -27,9 +30,9 @@ class Command(BaseCommand):
             if not name or len(name) == 0:
                 name = user.email
             if verbosity:
-                print _('Emailing name: %(name)s, email: %(email)s')\
-                    % {'name': name, 'email': user.email}
-            # send each email separately so users cannot see eachother
+                print(_('Emailing name: %(name)s, email: %(email)s')
+                      % {'name': name, 'email': user.email})
+            # send each email separately so users cannot see each other
             send_templated_mail(
                 template_name='notice',
                 from_email='noreply@formhub.org',

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # vim: set fileencoding=utf-8
 # this system uses structured settings as defined in
 # http://www.slideshare.net/jacobian/the-best-and-worst-of-django
@@ -36,7 +38,6 @@ MANAGERS = ADMINS
 
 
 DEFAULT_FROM_EMAIL = 'noreply@ona.io'
-SHARE_PROJECT_SUBJECT = '{} Ona Project has been shared with you.'
 DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 
 # Local time zone for this installation. Choices can be found here:
@@ -96,16 +97,16 @@ ENKETO_API_ENDPOINT_INSTANCE = '/instance'
 ENKETO_API_ENDPOINT_INSTANCE_IFRAME = '/instance/iframe'
 # Computed settings.
 if ENKETO_VERSION == 'express':
-    ENKETO_API_ROOT= '/api/v2'
-    ENKETO_OFFLINE_SURVEYS= os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
-    ENKETO_API_ENDPOINT_PREVIEW= '/preview'
-    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
+    ENKETO_API_ROOT = '/api/v2'
+    ENKETO_OFFLINE_SURVEYS = os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
+    ENKETO_API_ENDPOINT_PREVIEW = '/preview'
+    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
             else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 else:
     ENKETO_API_ROOT= '/api_v1'
     ENKETO_API_ENDPOINT_PREVIEW = '/webform/preview'
     ENKETO_OFFLINE_SURVEYS = False
-    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_ONLINE_SURVEYS
+    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
 ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
 ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
@@ -242,7 +243,6 @@ INSTALLED_APPS = (
     'onadata.apps.restservice',
     'onadata.apps.api',
     'guardian',
-    'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
     'onadata.apps.survey_report',
@@ -545,7 +545,6 @@ SOUTH_MIGRATION_MODULES = {
     'onadata.apps.restservice': 'onadata.apps.restservice.south_migrations',
     'onadata.apps.api': 'onadata.apps.api.south_migrations',
     'onadata.apps.main': 'onadata.apps.main.south_migrations',
-    'onadata.apps.stats': 'onadata.apps.stats.south_migrations',
     'onadata.apps.logger': 'onadata.apps.logger.south_migrations',
     'onadata.apps.viewer': 'onadata.apps.viewer.south_migrations',
 }

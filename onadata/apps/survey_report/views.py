@@ -1,7 +1,5 @@
 # coding: utf-8
-
-from __future__ import (unicode_literals, print_function, absolute_import,
-                        division)
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import uuid
 
@@ -29,7 +27,7 @@ def readable_xform_required(func):
         owner = get_object_or_404(User, username=username)
         xform = get_object_or_404(owner.xforms, id_string=id_string)
         if not has_permission(xform, owner, request):
-            return HttpResponseForbidden(_(u'Not shared.'))
+            return HttpResponseForbidden(_('Not shared.'))
         return func(request, username, id_string, *args, **kwargs)
     return _wrapper
 

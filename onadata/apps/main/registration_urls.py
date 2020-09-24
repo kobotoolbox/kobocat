@@ -1,3 +1,13 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
+from django.conf.urls import patterns, url, include
+from django.views.generic import TemplateView
+from registration.backends.default.views import ActivationView
+
+from onadata.apps.main.registration_views import FHRegistrationView
+from onadata.apps.main.forms import RegistrationFormUserProfile
+
 """
 URLConf for Django user registration and authentication.
 
@@ -6,14 +16,6 @@ URLConf to include this URLConf for any URL beginning with
 ``/accounts/``.
 
 """
-
-
-from django.conf.urls import patterns, url, include
-from django.views.generic import TemplateView
-from registration.backends.default.views import ActivationView
-
-from onadata.apps.main.registration_views import FHRegistrationView
-from onadata.apps.main.forms import RegistrationFormUserProfile
 
 urlpatterns = patterns(
     '',

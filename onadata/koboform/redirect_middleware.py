@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from onadata import koboform
@@ -16,7 +18,6 @@ DISABLED_VIEWS = [
         'about_us',
         'getting_started',
         'xls2xform',
-        'stats',
         'public_profile',
     ]
 

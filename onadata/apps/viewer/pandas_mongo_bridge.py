@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from collections import OrderedDict
 from itertools import chain
 import time
@@ -8,7 +10,7 @@ from pandas.core.frame import DataFrame
 # an immediate fix to an error with the installation of pandas v0.15
 try:
     from pandas.io.parsers import ExcelWriter
-except ImportError, e:
+except ImportError:
     from pandas import ExcelWriter
 
 from pyxform.survey_element import SurveyElement
@@ -18,9 +20,20 @@ from pyxform.question import Question
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.libs.exceptions import NoRecordsFoundError
-from onadata.libs.utils.common_tags import ID, XFORM_ID_STRING, STATUS,\
-    ATTACHMENTS, GEOLOCATION, UUID, SUBMISSION_TIME, NA_REP,\
-    BAMBOO_DATASET_ID, DELETEDAT, TAGS, NOTES, SUBMITTED_BY
+from onadata.libs.utils.common_tags import (
+    ID,
+    XFORM_ID_STRING,
+    STATUS,
+    ATTACHMENTS,
+    GEOLOCATION, UUID,
+    SUBMISSION_TIME,
+    NA_REP,
+    DELETEDAT,
+    TAGS,
+    NOTES,
+    SUBMITTED_BY,
+    VALIDATION_STATUS
+)
 from onadata.libs.utils.export_tools import question_types_to_exclude
 
 
@@ -28,8 +41,8 @@ from onadata.libs.utils.export_tools import question_types_to_exclude
 xform_instances = settings.MONGO_DB.instances
 
 # the bind type of select multiples that we use to compare
-MULTIPLE_SELECT_BIND_TYPE = u"select"
-GEOPOINT_BIND_TYPE = u"geopoint"
+MULTIPLE_SELECT_BIND_TYPE = "select"
+GEOPOINT_BIND_TYPE = "geopoint"
 
 # column group delimiters
 GROUP_DELIMITER_SLASH = '/'
@@ -76,9 +89,9 @@ def get_prefix_from_xpath(xpath):
 
 class AbstractDataFrameBuilder(object):
     IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ID, ATTACHMENTS, GEOLOCATION,
-                       BAMBOO_DATASET_ID, DELETEDAT, SUBMITTED_BY]
+                       DELETEDAT, SUBMITTED_BY]
     # fields NOT within the form def that we want to include
-    ADDITIONAL_COLUMNS = [UUID, SUBMISSION_TIME, TAGS, NOTES]
+    ADDITIONAL_COLUMNS = [UUID, SUBMISSION_TIME, TAGS, NOTES, VALIDATION_STATUS]
     BINARY_SELECT_MULTIPLES = False
     """
     Group functionality used by any DataFrameBuilder i.e. XLS, CSV and KML
@@ -168,7 +181,7 @@ class AbstractDataFrameBuilder(object):
                     tags.append('"%s"' % tag)
                 else:
                     tags.append(tag)
-            record.update({'_tags': u', '.join(sorted(tags))})
+            record.update({'_tags': ', '.join(sorted(tags))})
 
     @classmethod
     def _split_gps_fields(cls, record, gps_fields):
@@ -219,7 +232,7 @@ class AbstractDataFrameBuilder(object):
                 'query': query,
                 'fields': fields,
                 # TODO: we might want to add this in for the user
-                # to sepcify a sort order
+                # to specify a sort order
                 'sort': '{}',
                 'start': start,
                 'limit': limit,
@@ -237,9 +250,9 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
     This builder can choose to query the data in batches and write to a single
     ExcelWriter object using multiple instances of DataFrameXLSWriter
     """
-    INDEX_COLUMN = u"_index"
-    PARENT_TABLE_NAME_COLUMN = u"_parent_table_name"
-    PARENT_INDEX_COLUMN = u"_parent_index"
+    INDEX_COLUMN = "_index"
+    PARENT_TABLE_NAME_COLUMN = "_parent_table_name"
+    PARENT_INDEX_COLUMN = "_parent_index"
     EXTRA_COLUMNS = [INDEX_COLUMN, PARENT_TABLE_NAME_COLUMN,
                      PARENT_INDEX_COLUMN]
     SHEET_NAME_MAX_CHARS = 30
@@ -422,7 +435,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
                     new_section_name, child, new_is_repeating)
             else:
                 # add to survey_sections
-                child_bind_type = child.bind.get(u"type")
+                child_bind_type = child.bind.get("type")
                 if isinstance(child, Question) and not \
                         question_types_to_exclude(child.type)\
                         and not child_bind_type == MULTIPLE_SELECT_BIND_TYPE:
@@ -529,7 +542,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
                             # collapse xpath
                             if parent_prefix:
                                 xpaths[0:len(parent_prefix)] = parent_prefix
-                            new_xpath = u"/".join(xpaths)
+                            new_xpath = "/".join(xpaths)
                             # check if this key exists in our ordered columns
                             if key in ordered_columns.keys():
                                 if new_xpath not in ordered_columns[key]:

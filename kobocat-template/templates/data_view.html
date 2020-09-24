@@ -8,7 +8,9 @@
 <link rel="stylesheet" href="{% static "bower_components/backgrid-filter/backgrid-filter.min.css" %}" />
 <link rel="stylesheet" href="{% static "bower_components/backgrid-paginator/backgrid-paginator.min.css" %}" />
 <link href="{% static "css/data_view.css" %}" rel="stylesheet">
+{% endblock %}
 
+{% block before-content %}
 <div class="sub-header-bar">
   <div class="container__wide">
     <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>

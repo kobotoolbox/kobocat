@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 #!/usr/bin/env python
 # encoding: utf-8
 
@@ -30,7 +32,7 @@ from shell_command import shell_call
 LANGS = ['en', 'fr', 'es', 'it', 'nl', 'zh', 'ne', 'km']
 I18N_APPS = ['onadata.apps.main', 'onadata.apps.viewer']
 
-TX_LOGIN_URL = u'https://www.transifex.com/signin/'
+TX_LOGIN_URL = 'https://www.transifex.com/signin/'
 REPO_ROOT = os.join('..', os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -74,8 +76,8 @@ def download_with_login(url, login_url, login=None,
         code = get_browser().get_code()
         # ensure we don't keep credentials
         tw.reset_browser()
-        raise DownloadFailed(u"Unable to download %(url)s. "
-                             u"Received HTTP #%(code)s."
+        raise DownloadFailed("Unable to download %(url)s. "
+                             "Received HTTP #%(code)s."
                              % {'url': url, 'code': code})
     buff = StringIO.StringIO()
     twill.set_output(buff)
@@ -105,29 +107,29 @@ def getlangs(lang):
 
 def add(lang):
     langs = getlangs(lang)
-    puts(u"Adding %s" % ', '.join(langs))
+    puts("Adding %s" % ', '.join(langs))
     for loc in langs:
         with indent(2):
-            puts(u"Generating PO for %s" % loc)
-        shell_call(u"django-admin.py makemessages -l %(lang)s "
-                   u"-e py,html,email,txt" % {'lang': loc})
+            puts("Generating PO for %s" % loc)
+        shell_call("django-admin.py makemessages -l %(lang)s "
+                   "-e py,html,email,txt" % {'lang': loc})
         for app in I18N_APPS:
             with indent(4):
-                puts(u"Generating PO for app %s" % app)
+                puts("Generating PO for app %s" % app)
             with chdir(os.path.join(REPO_ROOT, app)):
-                shell_call(u"django-admin.py makemessages "
-                           u"-d djangojs -l %(lang)s" % {'lang': loc})
+                shell_call("django-admin.py makemessages "
+                           "-d djangojs -l %(lang)s" % {'lang': loc})
         puts(colored.green("sucesssfuly generated %s" % loc))
 
 
 def update(user, password, lang=None):
     langs = getlangs(lang)
-    puts(u"Updating %s" % ', '.join(langs))
+    puts("Updating %s" % ', '.join(langs))
     for loc in langs:
         with indent(2):
-            puts(u"Downloading PO for %s" % loc)
-        url = (u'https://www.transifex.com/projects/p/formhub/'
-               u'resource/django/l/%(lang)s/download/for_use/' % {'lang': loc})
+            puts("Downloading PO for %s" % loc)
+        url = ('https://www.transifex.com/projects/p/formhub/'
+               'resource/django/l/%(lang)s/download/for_use/' % {'lang': loc})
         try:
             tmp_po_file = download_with_login(url, TX_LOGIN_URL,
                                               login=user, password=password,
@@ -138,52 +140,52 @@ def update(user, password, lang=None):
             po_file = os.path.join(REPO_ROOT, 'locale', loc,
                                    'LC_MESSAGES', 'django.po')
             with indent(2):
-                puts(u"Copying downloaded file to %s" % po_file)
+                puts("Copying downloaded file to %s" % po_file)
             shutil.move(tmp_po_file, po_file)
         except Exception as e:
-            puts(colored.red(u"Unable to update %s "
-                             u"from Transifex: %r" % (loc, e)))
+            puts(colored.red("Unable to update %s "
+                             "from Transifex: %r" % (loc, e)))
         puts(colored.green("sucesssfuly retrieved %s" % loc))
     compile_mo(langs)
 
 
 def compile_mo(lang=None):
     langs = getlangs(lang)
-    puts(u"Compiling %s" % ', '.join(langs))
+    puts("Compiling %s" % ', '.join(langs))
     for loc in langs:
         with indent(2):
-            puts(u"Compiling %s" % loc)
-        shell_call(u"django-admin.py compilemessages -l %(lang)s "
+            puts("Compiling %s" % loc)
+        shell_call("django-admin.py compilemessages -l %(lang)s "
                    % {'lang': loc})
         for app in I18N_APPS:
             with indent(4):
-                puts(u"Compiling app %s" % app)
+                puts("Compiling app %s" % app)
             with chdir(os.path.join(REPO_ROOT, app)):
-                shell_call(u"django-admin.py compilemessages -l %(lang)s"
+                shell_call("django-admin.py compilemessages -l %(lang)s"
                            % {'lang': loc})
         puts(colored.green("sucesssfuly compiled %s" % loc))
 
 
 def usage(exit=True, code=1):
-    print(u"i18n wrapper script for formhub.\n")
+    print("i18n wrapper script for formhub.\n")
     with indent(4):
-        puts(colored.yellow(u",/i18ntool.py add --lang <lang>"))
-        puts(u"Create required files for enabling translation "
-             u"of language with code <lang>\n")
+        puts(colored.yellow(",/i18ntool.py add --lang <lang>"))
+        puts("Create required files for enabling translation "
+             "of language with code <lang>\n")
 
-        puts(colored.yellow(u"./i18ntool.py refresh [--lang <lang>]"))
-        puts(u"Update the PO file for <lang> based on code.\n"
-             u"<lang> is optionnal as we only use EN and do "
-             u"all translations in Transifex.\n")
+        puts(colored.yellow("./i18ntool.py refresh [--lang <lang>]"))
+        puts("Update the PO file for <lang> based on code.\n"
+             "<lang> is optionnal as we only use EN and do "
+             "all translations in Transifex.\n")
 
-        puts(colored.yellow(u"./i18ntool.py update --user <tx_user> "
-                            u"--password <tx_pass> [--lang <lang>]"))
-        puts(u"Downloads new PO files for <lang> (or all) from Transifex "
-             u"then compiles new MO files\n")
+        puts(colored.yellow("./i18ntool.py update --user <tx_user> "
+                            "--password <tx_pass> [--lang <lang>]"))
+        puts("Downloads new PO files for <lang> (or all) from Transifex "
+             "then compiles new MO files\n")
 
-        puts(colored.yellow(u"./i18ntool.py compile [--lang <lang>]"))
-        puts(u"Compiles all PO files for <lang> (or all) into MO files.\n"
-             u"Not required unless you want to.\n")
+        puts(colored.yellow("./i18ntool.py compile [--lang <lang>]"))
+        puts("Compiles all PO files for <lang> (or all) into MO files.\n"
+             "Not required unless you want to.\n")
 
     if exit:
         sys.exit(code)
@@ -214,7 +216,7 @@ def main():
     try:
         lang = args.grouped.get('lang', []).pop(0)
         if lang not in LANGS:
-            raise ValueError(u"Unknown lang code")
+            raise ValueError("Unknown lang code")
     except ValueError as e:
         puts(colored.red(e.message))
         usage()
@@ -233,7 +235,7 @@ def main():
 
         if not user or not password:
             print(colored.red(
-                u"You need to provide Transifex.com credentials"))
+                "You need to provide Transifex.com credentials"))
             usage()
 
         return command(user, password, lang)

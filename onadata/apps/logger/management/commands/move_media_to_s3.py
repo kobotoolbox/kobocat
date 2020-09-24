@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
+
 import sys
 
 from django.core.files.storage import get_storage_class
@@ -22,14 +27,14 @@ class Command(BaseCommand):
                 'django.core.files.storage.FileSystemStorage')()
             s3 = get_storage_class('storages.backends.s3boto.S3BotoStorage')()
         except:
-            print _(u"Missing necessary libraries. Try running: pip install -r"
-                    "requirements/s3.pip")
+            print(_("Missing necessary libraries. Try running: pip install -r"
+                    "requirements/s3.pip"))
             sys.exit(1)
 
         default_storage = get_storage_class()()
         if default_storage.__class__ != s3.__class__:
-            print _(u"You must first set your default storage to s3 in your "
-                    "local_settings.py file.")
+            print(_("You must first set your default storage to s3 in your "
+                    "local_settings.py file."))
             sys.exit(1)
 
         classes_to_move = [
@@ -38,7 +43,7 @@ class Command(BaseCommand):
         ]
 
         for cls, file_field, upload_to in classes_to_move:
-            print _("Moving %(class)ss to s3...") % {'class': cls.__name__}
+            print(_("Moving %(class)ss to s3...") % {'class': cls.__name__})
             for i in cls.objects.all():
                 f = getattr(i, file_field)
                 old_filename = f.name
@@ -48,7 +53,7 @@ class Command(BaseCommand):
                     print (_("\t+ '%(fname)s'\n\t---> '%(url)s'")
                            % {'fname': fs.path(old_filename), 'url': f.url})
                 else:
-                    print "\t- (f.name=%s, fs.exists(f.name)=%s, not s3.exist"\
+                    print("\t- (f.name=%s, fs.exists(f.name)=%s, not s3.exist"
                           "s(upload_to(i, f.name))=%s)" % (
                               f.name, fs.exists(f.name),
-                              not s3.exists(upload_to(i, f.name)))
+                              not s3.exists(upload_to(i, f.name))))

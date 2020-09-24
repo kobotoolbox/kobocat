@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 """ Telerivet WebHook gateway
 
     Supports Receiving and replying SMS from/to Telerivet Service
@@ -26,20 +28,20 @@ def autodoc(url_root, username, id_string):
                               kwargs={'username': username,
                                       'id_string': id_string,
                                       'service': 'telerivet'})
-    doc = (u'<p>' +
-           _(u"%(service)s Instructions:")
-           % {'service': u'<a href="https://telerivet.com">'
-                         u'Telerivet\'s Webhook API</a>'}
-           + u'</p><ol><li>' +
-           _(u"Sign in to Telerivet.com and go to Service Page.")
-           + u'</li><li>' +
-           _(u"Follow instructions to add an application with either URL:")
-           + u'<br /><span class="sms_autodoc_example">%(urla)s'
-           + u'<br />%(urlb)s</span><br />'
-           + u'</li></ol><p>' +
-           _(u"That's it. Now Send an SMS Formhub submission to your Telerivet"
-             u" phone number. It will create a submission on Formhub.")
-           + u'</p>') % {'urla': urla, 'urlb': urlb}
+    doc = ('<p>' +
+           _("%(service)s Instructions:")
+           % {'service': '<a href="https://telerivet.com">'
+                         'Telerivet\'s Webhook API</a>'}
+           + '</p><ol><li>' +
+           _("Sign in to Telerivet.com and go to Service Page.")
+           + '</li><li>' +
+           _("Follow instructions to add an application with either URL:")
+           + '<br /><span class="sms_autodoc_example">%(urla)s'
+           + '<br />%(urlb)s</span><br />'
+           + '</li></ol><p>' +
+           _("That's it. Now Send an SMS Formhub submission to your Telerivet"
+             " phone number. It will create a submission on Formhub.")
+           + '</p>') % {'urla': urla, 'urlb': urlb}
     return doc
 
 
@@ -50,7 +52,7 @@ def get_response(data):
     if data.get('code') == SMS_API_ERROR:
         message = None
     elif data.get('code') != SMS_SUBMISSION_ACCEPTED:
-        message = _(u"[ERROR] %s") % message
+        message = _("[ERROR] %s") % message
 
     response = {}
 
@@ -98,9 +100,9 @@ def process_message_for_telerivet(username,
 
     if not sms_identity or not sms_text:
         return get_response({'code': SMS_API_ERROR,
-                             'text': _(u"`identity` and `message` are "
-                                       u"both required and must not be "
-                                       u"empty.")})
+                             'text': _("`identity` and `message` are "
+                                       "both required and must not be "
+                                       "empty.")})
 
     incomings = [(sms_identity, sms_text)]
     response = process_incoming_smses(username, incomings, id_string)[-1]
