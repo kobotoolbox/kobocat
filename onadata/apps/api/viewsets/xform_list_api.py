@@ -75,26 +75,38 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             else:
                 # Return all the forms the currently-logged-in user can access,
                 # including those shared by other users
-                return super(XFormListApi, self).filter_queryset(queryset)
-
-        profile = get_object_or_404(
-            UserProfile, user__username=username.lower())
-        # Include only the forms belonging to the specified user
-        queryset = queryset.filter(user=profile.user)
-        if profile.require_auth:
-            # The specified has user ticked "Require authentication to see
-            # forms and submit data"; reject anonymous requests
-            if self.request.user.is_anonymous():
-                # raises a permission denied exception, forces authentication
-                self.permission_denied(self.request)
-            else:
-                # Someone has logged in, but they are not necessarily allowed
-                # to access the forms belonging to the specified user. Filter
-                # again to consider object-level permissions
-                return super(XFormListApi, self).filter_queryset(queryset)
+                queryset = super(XFormListApi, self).filter_queryset(queryset)
         else:
-            # The specified user's forms are wide open. Return them all
-            return queryset
+            profile = get_object_or_404(
+                UserProfile, user__username=username.lower()
+            )
+            # Include only the forms belonging to the specified user
+            queryset = queryset.filter(user=profile.user)
+            if profile.require_auth:
+                # The specified has user ticked "Require authentication to see
+                # forms and submit data"; reject anonymous requests
+                if self.request.user.is_anonymous():
+                    # raises a permission denied exception, forces
+                    # authentication
+                    self.permission_denied(self.request)
+                else:
+                    # Someone has logged in, but they are not necessarily
+                    # allowed to access the forms belonging to the specified
+                    # user. Filter again to consider object-level permissions
+                    queryset = super(XFormListApi, self).filter_queryset(
+                        queryset
+                    )
+        try:
+            # https://docs.getodk.org/openrosa-form-list/#form-list-api says:
+            #   `formID`: If specified, the server MUST return information for
+            #   only this formID.
+            id_string_filter = self.request.GET['formID']
+        except KeyError:
+            pass
+        else:
+            queryset = queryset.filter(id_string=id_string_filter)
+
+        return queryset
 
     def list(self, request, *args, **kwargs):
         self.object_list = self.filter_queryset(self.get_queryset())
