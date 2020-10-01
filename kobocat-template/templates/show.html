@@ -4,6 +4,9 @@
 
 {% block additional-headers %}
 {% load i18n %}
+    <style type="text/css">
+        .kc-hide { display: none !important; }
+    </style>
 {% endblock %}
 
 {% block before-content %}
@@ -76,14 +79,6 @@
             </button>
 
           </div>
-
-          {% if is_owner %}
-          <div class="settings__rest-services">
-              <h2 class="settings__group-label">{% trans "Legacy Rest Services" %}</h2>
-              <div id='restservice_tab'>
-              </div>
-          </div>
-          {% endif %}
 
         </div>
 
@@ -205,6 +200,27 @@
       </hgroup>
   </header>
 
+    <!-- Delete form (in vex window) -->
+  {% if is_owner %}
+  <div class="kc-hide">
+    <div id="delete-form">
+        <form action="{% url "onadata.apps.logger.views.delete_xform" username=user.username id_string=xform.id_string %}" method="post">
+        {% csrf_token %}
+            <div class="vex-header">
+                <h3>{% trans "Delete Confirmation" %}</h3>
+            </div>
+            <div class="vex-kobo-body">
+                <p>{% blocktrans with title=xform.title nb_sub=xform.submission_count|intcomma %}Are you sure you want to delete the form '{{ title }}'? This form has <strong>{{ nb_sub }}</strong> submissions associated with it that will also be deleted. If you are unsure about deleting this form press 'Cancel' and consider 'Archiving' the form instead.{% endblocktrans %}</p>
+            </div>
+            <div class="vex-footer">
+                <a href="#" onclick="vex.close(vexDelete.data().vex.id)" class="btn btn-transparent">{% trans "Cancel" %}</a>
+                <button class="btn btn-danger form-submit">Delete</button>
+            </div>
+        </form>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- END NEW SANDBOX HTML OUTSIDE THE CONTAINER -->
 
 {% endblock %}
@@ -289,6 +305,32 @@
           </a>
           {% endif %}
 
+          {% if can_edit or xform.shared %}
+            <div class="kc-hide">
+                <div id="preview-vex">
+                    <div class="vex-header"><h3>{{ xform.title }} - {% trans "Preview" %}</h3></div>
+                    <div class="vex-kobo-body" data-iframe-src="{% url "onadata.apps.main.views.enketo_preview" content_user.username xform.id_string %}"></div>
+                </div>
+            </div>
+          {% endif %}
+
+            {% if xform.can_be_replaced and xform.user ==  user  %}
+              <div class="kc-hide">
+                <div id="xls-update">
+                  <div class="vex-header"><h3>{% trans "Update XLS" %}</h3></div>
+                  <div id="replace-{{ xform.id_string }}">
+                      <form action="{% url "onadata.apps.main.views.update_xform" xform.user.username xform.id_string %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="vex-kobo-body">
+                          <input type="file" name="xls_file" id="id_xls_file" />
+                          <input type="submit" class="btn large btn-primary" value="{% trans "Update" %}" data-original-title="" />
+                        </div>
+                      </form>
+                  </div>
+                </div>
+              </div>
+          {% endif %}
+
         </div>
       </div>
     </div>
@@ -321,6 +363,41 @@
           <i class="fa fa-mobile"></i>
           <span>How to collect data on mobile device?</span>
         </a>
+
+        <div class="kc-hide">
+          <div id="popupmodal">
+              <div class="vex-header">
+                  <h3>{%  trans "How to Collect Data on a Mobile Device" %}</h3>
+              </div>
+              <div class="vex-kobo-body">
+                  <div class="qrcode__android">
+                    <span>{{ BASE_URL }}{% url "user_profile" content_user.username %}</span>
+                  </div>
+                  <h4>{%  trans "Collect data on your Android device with KoBoCollect" %}</h4>
+                  <p>{%  trans "To start collecting data with our " %}
+                    <a href="https://play.google.com/store/apps/details?id=org.koboc.collect.android">
+                      {%  trans "KoBoCollect Android app" %}</a>
+                      {%  trans "you need to enter the following URL into the URL field in the KoBoCollect settings: " %}</p>
+
+                  <p><a href="{{ BASE_URL }}{% url "get_qrcode" xform.user.username xform.id_string %}">{{ BASE_URL }}{% url "user_profile" content_user.username as profile_url %}{{ profile_url|slice:':-1' }}</a></p>
+
+                  <p><strong><a target="_blank" href="http://support.kobotoolbox.org/customer/portal/articles/1653782-collecting-data-with-kobocollect-on-android">Click here</a>  to read more about getting started with KoBoCollect</strong></p>
+                  <p class="qr__divider"><span>or</span></p>
+                  <div class="qrcode__code js-img_holder"> </div>
+                  <div class="qrcode__text">
+                    <h4>{%  trans "Collect Data on Any Device in Your Browser" %}</h4>
+                    <p>For iPhones or any other device that has a Web browser, use the following link to enter data - even offline:
+                    <p>
+                      <span class="qrcode__enter-data-url">
+                        <a href="{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}">{{ BASE_URL }}{% url "onadata.apps.logger.views.enter_data" content_user.username xform.id_string %}</a>
+                      </span>
+                    <br/>
+                    (Or if you have a barcode scanner on your phone, just scan the barcode on the right)
+                    </p>
+                  </div>
+              </div>
+          </div>
+        </div>
 
       </div>
       {% endif %}
