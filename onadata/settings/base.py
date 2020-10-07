@@ -190,9 +190,6 @@ STATICFILES_DIRS = [
     os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static')
 ]
 
-# needed by guardian
-ANONYMOUS_USER_ID = -1
-
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     # Always put `contenttypes` before `auth`; see
@@ -405,6 +402,12 @@ REST_FRAMEWORK = {
 ################################
 
 TESTING_MODE = False
+
+# needed by guardian`
+# Deprecated since v1.4.2. ToDo move to constants.py`
+ANONYMOUS_USER_ID = -1
+# Needed to get ANONYMOUS_USER = -1
+GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_anonymous_user_instance'
 
 PRINT_EXCEPTION = os.environ.get("PRINT_EXCEPTION", False)
 

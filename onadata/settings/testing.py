@@ -44,8 +44,6 @@ SECRET_KEY = os.urandom(50).hex()
 TESTING_MODE = True
 TEST_HTTP_HOST = 'testserver.com'
 TEST_USERNAME = 'bob'
-# Needed to get ANONYMOUS_USER = -1 in `testing`
-GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_anonymous_user_instance'
 
 ################################
 # Celery settings              #

@@ -6,9 +6,11 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy
+from guardian.conf import settings as guardian_settings
 from guardian.shortcuts import get_perms_for_model, assign_perm
-from rest_framework.authtoken.models import Token
 from jsonfield import JSONField
+from rest_framework.authtoken.models import Token
+
 from onadata.libs.utils.country_field import COUNTRIES
 from onadata.libs.utils.gravatar import get_gravatar_img_link, gravatar_exists
 from onadata.apps.main.signals import set_api_permissions
@@ -107,5 +109,6 @@ def get_anonymous_user_instance(User):
     :param User: User class
     :return: User instance
     """
+
     return User(pk=settings.ANONYMOUS_USER_ID,
-                username='AnonymousUser')
+                username=guardian_settings.ANONYMOUS_USER_NAME)
