@@ -24,6 +24,7 @@ echo 'Setting up cron tasks...'
 sudo -E ${KOBOCAT_SRC_DIR}/docker/setup_cron.bash
 sudo -E ${KOBOCAT_SRC_DIR}/docker/setup_pydev_debugger.bash
 sudo -E ${KOBOCAT_SRC_DIR}/docker/sync_static.bash
+sudo -E ${KOBOCAT_SRC_DIR}/docker/restore_permissions.bash
 
 echo 'Cleaning up Celery PIDs...'
 rm -rf ${CELERY_PID_DIR}/*.pid

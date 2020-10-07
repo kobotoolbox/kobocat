@@ -84,9 +84,11 @@ RUN adduser --disabled-password --gecos '' "$UWSGI_USER" && \
 RUN echo "Cmnd_Alias SETUP_CRON = ${KOBOCAT_SRC_DIR}/docker/setup_cron.bash" >> /etc/sudoers && \
     echo "Cmnd_Alias SETUP_PYDEV_DEBUGGER = ${KOBOCAT_SRC_DIR}/docker/setup_pydev_debugger.bash" >> /etc/sudoers && \
     echo "Cmnd_Alias SYNC_STATIC = ${KOBOCAT_SRC_DIR}/docker/sync_static.bash" >> /etc/sudoers && \
+    echo "Cmnd_Alias RESTORE_PERMISSIONS = ${KOBOCAT_SRC_DIR}/docker/restore_permissions.bash" >> /etc/sudoers && \
     echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: SETUP_CRON" >> /etc/sudoers && \
     echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: SETUP_PYDEV_DEBUGGER" >> /etc/sudoers && \
-    echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: SYNC_STATIC" >> /etc/sudoers
+    echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: SYNC_STATIC" >> /etc/sudoers && \
+    echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: RESTORE_PERMISSIONS" >> /etc/sudoers
 
 # Copy KoBoCAT directory
 COPY . "${KOBOCAT_SRC_DIR}"
