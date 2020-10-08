@@ -7,4 +7,6 @@ cd "${KOBOCAT_SRC_DIR}"
 exec celery worker -A onadata -Ofair --loglevel=info \
     --hostname=kobocat_main_worker@%h \
     --logfile=${KOBOCAT_LOGS_DIR}/celery.log \
-    --pidfile=${CELERY_PID_DIR}/celery.pid
+    --pidfile=${CELERY_PID_DIR}/celery.pid \
+    --uid=${UWSGI_USER} \
+    --gid=${UWSGI_GROUP}

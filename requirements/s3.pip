@@ -1,5 +1,0 @@
-boto==2.48.0
-
-# Necessary to use this fork until the resolution of
-# https://github.com/jschneier/django-storages/issues/566
--e git+https://github.com/jnm/django-storages@s3boto_accurate_tell#egg=django_storages
