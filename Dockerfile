@@ -1,16 +1,5 @@
 FROM nikolaik/python-nodejs:python3.8-nodejs10
 
-ARG DOCKER_USER_PASSWORD=kobo
-
-RUN if [ "$DOCKER_USER_PASSWORD" = "kobo" ]; then \
-    echo "###################################################################" && \
-    echo "# You are using default password: \`kobo\`.                         #" && \
-    echo "# You should build your image with:                               #" && \
-    echo "# \`docker build --build-arg DOCKER_USER_PASSWORD=<your password>\` #" && \
-    echo "###################################################################" && \
-    sleep 5; \
-    fi;
-
 # Declare environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8
@@ -28,7 +17,7 @@ ENV VIRTUAL_ENV=/opt/venv \
     TMP_DIR=/srv/tmp \
     UWSGI_USER=kobo \
     UWSGI_GROUP=kobo \
-    SERVICES_DIR=/srv/services \
+    SERVICES_DIR=/etc/service \
     CELERY_PID_DIR=/var/run/celery \
     INIT_PATH=/srv/init
 
@@ -66,7 +55,7 @@ RUN apt-get -qq update && \
         runit-init \
         rsync \
         vim \
-        sudo \
+        gosu \
         cron && \
     apt-get clean && \
         rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -75,18 +64,8 @@ RUN apt-get -qq update && \
 RUN echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && \
     locale-gen && dpkg-reconfigure locales -f noninteractive
 
-# Create local user UWSGI_USER` with sudo privileges
-RUN adduser --disabled-password --gecos '' "$UWSGI_USER" && \
-    echo "${UWSGI_USER}:${DOCKER_USER_PASSWORD}" | chpasswd  && \
-    adduser "$UWSGI_USER" sudo
-
-# Add command to sudoers to avoid asking for `UWSGI_USER`'s password#
-RUN echo "Cmnd_Alias SETUP_CRON = ${KOBOCAT_SRC_DIR}/docker/setup_cron.bash" >> /etc/sudoers && \
-    echo "Cmnd_Alias SETUP_PYDEV_DEBUGGER = ${KOBOCAT_SRC_DIR}/docker/setup_pydev_debugger.bash" >> /etc/sudoers && \
-    echo "Cmnd_Alias SYNC_STATIC = ${KOBOCAT_SRC_DIR}/docker/sync_static.bash" >> /etc/sudoers && \
-    echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: SETUP_CRON" >> /etc/sudoers && \
-    echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: SETUP_PYDEV_DEBUGGER" >> /etc/sudoers && \
-    echo "$UWSGI_USER ALL=(ALL) NOPASSWD:SETENV: SYNC_STATIC" >> /etc/sudoers
+# Create local user UWSGI_USER`
+RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 
 # Copy KoBoCAT directory
 COPY . "${KOBOCAT_SRC_DIR}"
@@ -117,18 +96,15 @@ RUN ln -s "${KOBOCAT_SRC_DIR}/docker/run_uwsgi_wrong_port_warning.bash" "${SERVI
 # Add/Restore `UWSGI_USER`'s permissions
 RUN chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
     chmod g+w ${CELERY_PID_DIR} && \
-    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${SERVICES_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_SRC_DIR}/emails/ && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_LOGS_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${TMP_DIR} && \
-    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${VIRTUAL_ENV}
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${VIRTUAL_ENV} && \
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${BACKUPS_DIR}
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
 # TODO: Remove port 8000, say, at the start of 2021 (see kobotoolbox/kobo-docker#301 and wrong port warning above)
 EXPOSE 8001 8000
-
-# Run container with `UWSGI_USER`
-USER $UWSGI_USER
 
 CMD ["/bin/bash", "-c", "exec ${KOBOCAT_SRC_DIR}/docker/init.bash"]

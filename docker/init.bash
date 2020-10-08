@@ -18,12 +18,12 @@ fi
 /bin/bash "${INIT_PATH}/wait_for_postgres.bash"
 
 echo 'Running migrations...'
-python manage.py migrate --noinput
+gosu "${UWSGI_USER}" python manage.py migrate --noinput
 
 echo 'Setting up cron tasks...'
-sudo -E ${KOBOCAT_SRC_DIR}/docker/setup_cron.bash
-sudo -E ${KOBOCAT_SRC_DIR}/docker/setup_pydev_debugger.bash
-sudo -E ${KOBOCAT_SRC_DIR}/docker/sync_static.bash
+/bin/bash "${KOBOCAT_SRC_DIR}/docker/setup_cron.bash"
+/bin/bash "${KOBOCAT_SRC_DIR}/docker/setup_pydev_debugger.bash"
+/bin/bash "${KOBOCAT_SRC_DIR}/docker/sync_static.bash"
 
 echo 'Cleaning up Celery PIDs...'
 rm -rf ${CELERY_PID_DIR}/*.pid

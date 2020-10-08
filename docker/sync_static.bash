@@ -4,7 +4,7 @@ set -e
 mkdir -p "${KOBOCAT_SRC_DIR}/onadata/static"
 
 echo "Collecting static files..."
-${VIRTUAL_ENV}/bin/python manage.py collectstatic -v 0 --noinput
+gosu "${UWSGI_USER}" "${VIRTUAL_ENV}/bin/python" manage.py collectstatic -v 0 --noinput
 echo "Done"
 
 # `chown -R` becomes very slow once a fair amount of media has been collected,
