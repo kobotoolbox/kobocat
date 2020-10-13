@@ -202,6 +202,7 @@ MIDDLEWARE_CLASSES = (
 if os.getenv("USE_REMOTE_AUTH", "False") == "True":
     MIDDLEWARE_CLASSES += (
         'onadata.auth.QedAuthMiddleware',
+        'onadata.auth.QedRemoteUserAttributeMiddleware',
     )
 
 MIDDLEWARE_CLASSES += (
