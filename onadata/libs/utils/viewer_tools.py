@@ -257,9 +257,9 @@ def _get_form_url(request, username, protocol='https'):
     # Test: Use public url only
     http_host = settings.KOBOCAT_URL
 
-    protocol = "http" if is_call_internal else protocol
-
-    return '%s://%s/%s' % (protocol, http_host, username)
+    # KOBOCAT_URL already has the protocol
+    #protocol = "http" if is_call_internal else protocol
+    return '%s/%s' % (http_host, username)
 
 
 def get_enketo_edit_url(request, instance, return_url):
