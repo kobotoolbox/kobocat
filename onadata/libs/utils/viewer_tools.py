@@ -256,6 +256,7 @@ def _get_form_url(request, username, protocol='https'):
 
     # Test: Use public url only
     http_host = settings.KOBOCAT_URL
+
     protocol = "http" if is_call_internal else protocol
 
     return '%s://%s/%s' % (protocol, http_host, username)
@@ -270,5 +271,4 @@ def get_enketo_edit_url(request, instance, return_url):
         form_url, instance.xform.id_string, instance_xml=instance.xml,
         instance_id=instance.uuid, return_url=return_url,
         instance_attachments=instance_attachments)
-    raise Exception(form_url)
     return url
