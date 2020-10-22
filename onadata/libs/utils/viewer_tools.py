@@ -244,21 +244,10 @@ def _get_form_url(request, username, protocol='https'):
         http_host = settings.TEST_HTTP_HOST
         username = settings.TEST_USERNAME
     else:
-        http_host = request.get_host()
+        # Always use a public url to prevent Enketo SSRF from blocking request
+        http_host = settings.KOBOCAT_URL
 
-    # In case INTERNAL_DOMAIN_NAME is equal to PUBLIC_DOMAIN_NAME,
-    # configuration doesn't use docker internal network.
-    # Don't overwrite `protocol.
-    is_call_internal = settings.KOBOCAT_INTERNAL_HOSTNAME == http_host and \
-                       settings.KOBOCAT_PUBLIC_HOSTNAME != http_host
-
-    # Make sure protocol is enforced to `http` when calling `kc` internally
-
-    # Test: Use public url only
-    http_host = settings.KOBOCAT_URL
-
-    # KOBOCAT_URL already has the protocol
-    #protocol = "http" if is_call_internal else protocol
+    # Internal requests use the public url, KOBOCAT_URL already has the protocol
     return '%s/%s' % (http_host, username)
 
 
