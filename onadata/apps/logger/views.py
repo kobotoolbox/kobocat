@@ -485,7 +485,7 @@ def enter_data(request, username, id_string):
     if not has_edit_permission(xform, owner, request):
         return HttpResponseForbidden(_('Not shared.'))
 
-    form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
+    form_url = _get_form_url(username)
 
     try:
         url = enketo_url(form_url, xform.id_string)
@@ -540,7 +540,7 @@ def edit_data(request, username, id_string, data_id):
                 'username': username,
                 'id_string': id_string}
         ) + "#/" + str(instance.id))
-    form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
+    form_url = _get_form_url(username)
 
     try:
         url = enketo_url(

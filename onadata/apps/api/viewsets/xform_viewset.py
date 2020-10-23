@@ -732,7 +732,7 @@ data (instance/submission per row)
     @detail_route(methods=['GET'])
     def enketo(self, request, **kwargs):
         self.object = self.get_object()
-        form_url = _get_form_url(request, self.object.user.username)
+        form_url = _get_form_url(self.object.user.username)
 
         data = {'message': _("Enketo not properly configured.")}
         http_status = status.HTTP_400_BAD_REQUEST
