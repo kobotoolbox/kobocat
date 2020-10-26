@@ -239,29 +239,23 @@ def create_attachments_zipfile(attachments, output_file=None):
     return output_file
 
 
-def _get_form_url(request, username, protocol='https'):
+def _get_form_url(username):
     if settings.TESTING_MODE:
-        http_host = settings.TEST_HTTP_HOST
+        http_host = 'http://{}'.format(settings.TEST_HTTP_HOST)
         username = settings.TEST_USERNAME
     else:
-        http_host = request.get_host()
+        # Always use a public url to prevent Enketo SSRF from blocking request
+        http_host = settings.KOBOCAT_URL
 
-    # In case INTERNAL_DOMAIN_NAME is equal to PUBLIC_DOMAIN_NAME,
-    # configuration doesn't use docker internal network.
-    # Don't overwrite `protocol.
-    is_call_internal = settings.KOBOCAT_INTERNAL_HOSTNAME == http_host and \
-                       settings.KOBOCAT_PUBLIC_HOSTNAME != http_host
-
-    # Make sure protocol is enforced to `http` when calling `kc` internally
-    protocol = "http" if is_call_internal else protocol
-
-    return '%s://%s/%s' % (protocol, http_host, username)
+    # Internal requests use the public url, KOBOCAT_URL already has the protocol
+    return '{http_host}/{username}'.format(
+        http_host=http_host,
+        username=username
+    )
 
 
 def get_enketo_edit_url(request, instance, return_url):
-    form_url = _get_form_url(request,
-                             instance.xform.user.username,
-                             settings.ENKETO_PROTOCOL)
+    form_url = _get_form_url(instance.xform.user.username)
     instance_attachments = image_urls_dict(instance)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
