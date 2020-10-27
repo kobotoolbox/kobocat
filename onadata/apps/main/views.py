@@ -1107,14 +1107,19 @@ def set_perm(request, username, id_string):
                 audit = {
                     'xform': xform.id_string
                 }
+                audit_message = _("All permissions on '{id_string}' "
+                                  "removed from '{for_user}'.")
                 audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("All permissions on '%(id_string)s' "
-                      "removed from '%(for_user)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
+                    Actions.FORM_PERMISSIONS_UPDATED,
+                    request.user,
+                    owner,
+                    audit_message.format(
+                        id_string=xform.id_string,
+                        for_user=for_user
+                    ),
+                    audit,
+                    request
+                )
                 remove_perm(CAN_CHANGE_XFORM, user, xform)
                 remove_perm(CAN_VIEW_XFORM, user, xform)
                 remove_perm(CAN_ADD_SUBMISSIONS, user, xform)
@@ -1125,16 +1130,22 @@ def set_perm(request, username, id_string):
                 audit = {
                     'xform': xform.id_string
                 }
+                audit_message = _("'{codename}' permission on '{id_string}' "
+                                  "assigned to '{for_user}'.")
                 audit_log(
-                    Actions.FORM_PERMISSIONS_UPDATED, request.user, owner,
-                    _("`%(codename)` permission on '%(id_string)s' assigned to "
-                      "'%(for_user)s'.") %
-                    {
-                        'codename': perms_by_type[perm_type],
-                        'id_string': xform.id_string,
-                        'for_user': for_user
-                    }, audit, request)
-                assign_perm(CAN_CHANGE_XFORM, user, xform)
+                    Actions.FORM_PERMISSIONS_UPDATED,
+                    request.user,
+                    owner,
+                    audit_message.format(
+                        codename=perms_by_type[perm_type],
+                        id_string=xform.id_string,
+                        for_user=for_user
+                    ),
+                    audit,
+                    request
+                )
+
+                assign_perm(perms_by_type[perm_type], user, xform)
 
     elif perm_type == 'link':
         current = MetaData.public_link(xform)

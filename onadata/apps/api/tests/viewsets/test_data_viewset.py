@@ -11,7 +11,11 @@ from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import XForm
-from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
+from onadata.libs.constants import (
+    CAN_CHANGE_XFORM,
+    CAN_DELETE_DATA_XFORM,
+    CAN_VIEW_XFORM,
+)
 from httmock import all_requests, HTTMock
 
 
@@ -386,7 +390,6 @@ class TestDataViewSet(TestBase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         count = self.xform.instances.all().count()
         self.assertEquals(before_count - 1, count)
-
         self._create_user_and_login(username='alice', password='alice')
         # Allow Alice to delete submissions.
         assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
@@ -397,6 +400,12 @@ class TestDataViewSet(TestBase):
         dataid = self.xform.instances.all().order_by('id')[0].pk
         response = view(request, pk=formid, dataid=dataid)
 
+        # Alice cannot delete submissions with `CAN_CHANGE_XFORM`
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Now, she should be able to
+        assign_perm(CAN_DELETE_DATA_XFORM, self.user, self.xform)
+        response = view(request, pk=formid, dataid=dataid)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         count = self.xform.instances.all().count()
         self.assertEquals(before_count - 2, count)

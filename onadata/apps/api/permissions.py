@@ -8,14 +8,9 @@ from rest_framework.permissions import (
 )
 
 from onadata.libs.constants import (
-    CAN_ADD_XFORM_TO_PROFILE,
     CAN_CHANGE_XFORM,
     CAN_VALIDATE_XFORM,
     CAN_DELETE_DATA_XFORM,
-)
-from onadata.apps.api.tools import (
-    get_user_profile_or_none,
-    check_inherit_permission_from_project,
 )
 from onadata.apps.logger.models import XForm
 
