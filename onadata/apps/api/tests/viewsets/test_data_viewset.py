@@ -11,7 +11,7 @@ from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import XForm
-from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
+from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
 from httmock import all_requests, HTTMock
 
 

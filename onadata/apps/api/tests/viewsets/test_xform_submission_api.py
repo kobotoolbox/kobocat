@@ -13,7 +13,7 @@ from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Attachment
-from onadata.libs.permissions import (
+from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS
 )
 

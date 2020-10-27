@@ -1,7 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import json
 import os
 import re
 from datetime import datetime
@@ -12,15 +11,14 @@ import requests
 from django.conf import settings
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from httmock import urlmatch, HTTMock, all_requests
+from httmock import HTTMock, all_requests
 from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.logger.models import XForm
-from onadata.apps.main.models import MetaData
-from onadata.libs.permissions import (
+from onadata.libs.constants import (
     CAN_VIEW_XFORM
 )
 from onadata.libs.serializers.xform_serializer import XFormSerializer

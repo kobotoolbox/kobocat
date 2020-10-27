@@ -10,7 +10,7 @@ from guardian.shortcuts import assign_perm
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
-from onadata.libs.permissions import (
+from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
     CAN_VIEW_XFORM
 )
