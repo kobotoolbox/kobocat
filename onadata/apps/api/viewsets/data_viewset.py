@@ -618,9 +618,9 @@ Delete a specific submission in a form
             # Redundant permissions check that duplicates
             # `XFormDataPermissions`, left here to minimize changes. We're
             # deleting an `Instance`, not an `XForm`, so the correct permission
-            # to verify is `change_xform` (`CAN_CHANGE_XFORM`). This matches
+            # to verify is 'delete_data_xform' (`CAN_DELETE_DATA_XFORM`). This matches
             # the behavior of `onadata.apps.main.views.delete_data`
-            if request.user.has_perm(CAN_CHANGE_XFORM, self.object.xform):
+            if request.user.has_perm(CAN_DELETE_DATA_XFORM, self.object.xform):
                 self.object.delete()
             else:
                 raise PermissionDenied(_("You do not have delete "
