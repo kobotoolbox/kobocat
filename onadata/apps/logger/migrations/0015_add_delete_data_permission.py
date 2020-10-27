@@ -1,11 +1,29 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations, models
-from django.contrib.auth.models import Permission, User, AnonymousUser
+from django.db import migrations
+from django.contrib.auth.management import create_permissions
+from django.contrib.auth.models import (
+    Permission,
+    User,
+    AnonymousUser,
+)
 
 
 def forwards_func(apps, schema_editor):
+    """
+    All users need to receive the new permission at the model level.
+    """
+    # Permission does not exist when running this migration for the first time.
+    # Django is running migrations in a transaction and permissions are created
+    # after the transaction is completed.
+
+    # ToDo update this code when upgrading to Django 2.x
+    # see https://stackoverflow.com/a/40092780/1141214
+    apps.models_module = True
+    create_permissions(apps, verbosity=0)
+    apps.models_module = None
+
     permission = Permission.objects.get(codename='delete_data_xform')
     users = User.objects.exclude(pk=AnonymousUser().pk)
     for user_ in users.all():
@@ -22,7 +40,7 @@ def reverse_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0012_add_asset_uid_to_xform'),
+        ('logger', '0014_attachment_add_media_file_size'),
     ]
 
     operations = [
