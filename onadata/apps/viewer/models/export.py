@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 from tempfile import NamedTemporaryFile
 
@@ -19,7 +21,7 @@ def export_delete_callback(sender, **kwargs):
 class Export(models.Model):
     class ExportTypeError(Exception):
         def __unicode__(self):
-            return _(u"Invalid export type specified")
+            return _("Invalid export type specified")
 
         def __str__(self):
             return unicode(self).encode('utf-8')
@@ -32,8 +34,7 @@ class Export(models.Model):
     CSV_ZIP_EXPORT = 'csv_zip'
     SAV_ZIP_EXPORT = 'sav_zip'
     SAV_EXPORT = 'sav'
-    EXTERNAL_EXPORT = 'external'
-    ANALYSER_EXPORT= 'analyser'
+    ANALYSER_EXPORT = 'analyser'
 
     EXPORT_MIMES = {
         'xls': 'vnd.ms-excel',
@@ -55,7 +56,6 @@ class Export(models.Model):
         (CSV_ZIP_EXPORT, 'CSV ZIP'),
         (SAV_ZIP_EXPORT, 'SAV ZIP'),
         (SAV_EXPORT, 'SAV'),
-        (EXTERNAL_EXPORT, 'Excel'),
         (ANALYSER_EXPORT, 'Analyser')
     ]
 
@@ -190,5 +190,6 @@ class Export(models.Model):
     def is_filename_unique(cls, xform, filename):
         return Export.objects.filter(
             xform=xform, filename=filename).count() == 0
+
 
 post_delete.connect(export_delete_callback, sender=Export)

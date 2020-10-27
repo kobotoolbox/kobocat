@@ -1,9 +1,12 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import time
 import csv
 import tempfile
 
 from django.core.urlresolvers import reverse
+from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.utils import timezone
 from xlrd import open_workbook
 
@@ -11,8 +14,7 @@ from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.views import kml_export, export_download
 from onadata.libs.utils.export_tools import generate_export
 from onadata.libs.utils.user_auth import http_auth_string
-from test_base import TestBase
-
+from .test_base import TestBase
 
 class TestFormExports(TestBase):
 
@@ -195,4 +197,8 @@ class TestFormExports(TestBase):
             'filename': export.filename
         })
         response = self.anon.get(url, **extra)
-        self.assertEqual(response.status_code, 200)
+        default_storage = get_storage_class()()
+        if not isinstance(default_storage, FileSystemStorage):
+            self.assertEqual(response.status_code, 302)
+        else:
+            self.assertEqual(response.status_code, 200)

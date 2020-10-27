@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext_lazy
 
@@ -20,6 +23,6 @@ class Command(BaseCommand):
             id = record[ID]
             if Instance.set_deleted_at(id, deleted_at=date_deleted):
                 c += 1
-            print "deleted on ", date_deleted
-        print "-------------------------------"
-        print "Updated %d records." % c
+            print("deleted on ", date_deleted)
+        print("-------------------------------")
+        print("Updated %d records." % c)

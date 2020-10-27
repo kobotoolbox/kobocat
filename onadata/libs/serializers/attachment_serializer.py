@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from rest_framework import serializers
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.libs.utils.decorators import check_obj
@@ -34,6 +36,7 @@ class AttachmentSerializer(serializers.ModelSerializer):
     download_url = serializers.SerializerMethodField()
     small_download_url = serializers.SerializerMethodField()
     medium_download_url = serializers.SerializerMethodField()
+    large_download_url = serializers.SerializerMethodField()
     xform = serializers.ReadOnlyField(source='instance.xform.pk')
     instance = serializers.ReadOnlyField(source='instance.pk')
     filename = serializers.ReadOnlyField(source='media_file.name')
@@ -41,22 +44,25 @@ class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('url', 'filename', 'mimetype', 'field_xpath', 'id', 'xform',
                   'instance', 'download_url', 'small_download_url',
-                  'medium_download_url')
+                  'medium_download_url', 'large_download_url')
         lookup_field = 'pk'
         model = Attachment
 
     @check_obj
     def get_download_url(self, obj):
-
-        return obj.media_file.url if obj.secure_url() else None
+        return obj.secure_url() if obj.media_file.url else None
 
     def get_small_download_url(self, obj):
         if obj.mimetype.startswith('image'):
-            return obj.secure_url("small")
+            return obj.secure_url('small')
 
     def get_medium_download_url(self, obj):
         if obj.mimetype.startswith('image'):
-            return obj.secure_url("medium")
+            return obj.secure_url('medium')
+
+    def get_large_download_url(self, obj):
+        if obj.mimetype.startswith('image'):
+            return obj.secure_url('large')
 
     def get_field_xpath(self, obj):
         qa_dict = obj.instance.get_dict()

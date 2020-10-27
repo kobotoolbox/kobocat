@@ -1,5 +1,7 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
-import shutil
 import codecs
 
 from django.core.urlresolvers import reverse
@@ -7,11 +9,13 @@ from django.core.files.storage import get_storage_class
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
 
-from onadata.apps.api.tests.viewsets import test_abstract_viewset
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import TestAbstractViewSet
 from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import XForm
+from onadata.libs.utils.storage import delete_user_storage
+
 
 NUM_INSTANCES = 4
 storage = get_storage_class()()
@@ -21,10 +25,10 @@ def ordered_instances(xform):
     return Instance.objects.filter(xform=xform).order_by('id')
 
 
-class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
+class TestBriefcaseAPI(TestAbstractViewSet):
 
     def setUp(self):
-        super(test_abstract_viewset.TestAbstractViewSet, self).setUp()
+        super(TestAbstractViewSet, self).setUp()
         self.factory = APIRequestFactory()
         self._login_user_and_profile()
         self.login_username = 'bob'
@@ -102,8 +106,8 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             self.assertContains(response, expected_submission_list)
 
         view = BriefcaseApi.as_view({'get': 'retrieve'})
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': uuid}
         params = {'formId': formId}
@@ -116,14 +120,19 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
         response = view(request, username=self.user.username)
         self.assertTrue(response.status_code, 404)
 
-    def test_view_submission_list_OtherUser(self):
+    def test_view_submission_list_other_user(self):
         view = BriefcaseApi.as_view({'get': 'list'})
         self._publish_xml_form()
         self._make_submissions()
         # alice cannot view bob's submissionList
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request = self.factory.get(
             self._submission_list_url,
             data={'formId': self.xform.id_string})
@@ -149,8 +158,10 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
         view = BriefcaseApi.as_view({'get': 'list'})
         self._publish_xml_form()
         self._make_submissions()
-        params = {'formId': self.xform.id_string}
-        params['numEntries'] = 2
+        params = {
+            'formId': self.xform.id_string,
+            'numEntries': 2
+        }
         instances = ordered_instances(self.xform)
 
         self.assertEqual(instances.count(), NUM_INSTANCES)
@@ -186,15 +197,15 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
                 self.assertContains(response, expected_submission_list)
             last_index += 2
 
-    def test_view_downloadSubmission(self):
+    def test_view_download_submission(self):
         view = BriefcaseApi.as_view({'get': 'retrieve'})
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         instance = Instance.objects.get(uuid=instanceId)
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
@@ -211,26 +222,33 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             'view', 'downloadSubmission.xml')
         with codecs.open(download_submission_path, encoding='utf-8') as f:
             text = f.read()
-            text = text.replace(u'{{submissionDate}}',
+            text = text.replace('{{submissionDate}}',
                                 instance.date_created.isoformat())
+            text = text.replace('{{xform_uuid}}',
+                                self.xform.uuid)
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
 
-    def test_view_downloadSubmission_OtherUser(self):
+    def test_view_download_submission_other_user(self):
         view = BriefcaseApi.as_view({'get': 'retrieve'})
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
         # alice cannot view bob's downloadSubmission
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         url = self._download_submission_url  # aliasing long name
         request = self.factory.get(url, data=params)
         response = view(request, username=self.user.username)
@@ -243,16 +261,21 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
         response = view(request, username=self.user.username)
         self.assertEqual(response.status_code, 404)
 
-    def test_publish_xml_form_OtherUser(self):
+    def test_publish_xml_form_other_user(self):
         view = BriefcaseApi.as_view({'post': 'create'})
         # deno cannot publish form to bob's account
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         self._create_user_profile(alice_data)
         count = XForm.objects.count()
 
         with codecs.open(self.form_def_path, encoding='utf-8') as f:
             params = {'form_def_file': f, 'dataFile': ''}
-            auth = DigestAuth('alice', 'bobbob')
+            auth = DigestAuth('alice', 'alicealice')
             request = self.factory.post(self._form_upload_url, data=params)
             response = view(request, username=self.user.username)
             self.assertEqual(response.status_code, 401)
@@ -330,7 +353,7 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
 
             self.assertEqual(
                 response.data,
-                {'message': u'Form with this id or SMS-keyword already exists.'
+                {'message': 'Form with this id or SMS-keyword already exists.'
                  }
             )
 
@@ -352,8 +375,8 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
     def test_submission_with_instance_id_on_root_node(self):
         view = XFormSubmissionApi.as_view({'post': 'create'})
         self._publish_xml_form()
-        message = u"Successful submission."
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        message = "Successful submission."
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         self.assertRaises(
             Instance.DoesNotExist, Instance.objects.get, uuid=instanceId)
         submission_path = os.path.join(
@@ -379,7 +402,5 @@ class TestBriefcaseAPI(test_abstract_viewset.TestAbstractViewSet):
             self.assertEqual(Instance.objects.count(), count + 1)
 
     def tearDown(self):
-        # remove media files
         if self.user:
-            if storage.exists(self.user.username):
-                shutil.rmtree(storage.path(self.user.username))
+            delete_user_storage(self.user.username)

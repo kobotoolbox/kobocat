@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 from unittest import skip
 
@@ -13,7 +15,7 @@ from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.viewer.views import export_list, map_view
 from onadata.libs.utils.logger_tools import publish_xml_form
 from onadata.libs.utils.user_auth import http_auth_string
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormShow(TestBase):
@@ -151,12 +153,6 @@ class TestFormShow(TestBase):
         }))
         self.assertEqual(response.status_code, 200)
 
-    def test_show_private_if_shared_but_not_data(self):
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(self.url)
-        self.assertContains(response, 'PRIVATE')
-
     def test_show_link_if_shared_and_data(self):
         self.xform.shared = True
         self.xform.shared_data = True
@@ -217,10 +213,6 @@ class TestFormShow(TestBase):
         response = self.client.get(show_url)
         self.assertContains(response, map_url)
 
-    def test_user_sees_edit_btn(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'edit</a>')
-
     def test_user_sees_settings(self):
         response = self.client.get(self.url)
         self.assertContains(response, 'Settings')
@@ -238,10 +230,6 @@ class TestFormShow(TestBase):
         self.assertNotContains(response, 'PUBLIC</a>')
         self.assertNotContains(response, 'PRIVATE</a>')
 
-    def test_show_add_sourc_doc_if_owner(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'Source document:')
-
     def test_show_add_supporting_docs_if_owner(self):
         response = self.client.get(self.url)
         self.assertContains(response, 'Supporting document:')
@@ -249,10 +237,6 @@ class TestFormShow(TestBase):
     def test_show_add_supporting_media_if_owner(self):
         response = self.client.get(self.url)
         self.assertContains(response, 'Media Upload')
-
-    def test_show_add_mapbox_layer_if_owner(self):
-        response = self.client.get(self.url)
-        self.assertContains(response, 'JSONP url:')
 
     def test_hide_add_supporting_docs_if_not_owner(self):
         self.xform.shared = True
@@ -333,7 +317,7 @@ class TestFormShow(TestBase):
         # look for the preferred_means question
         # which is only in the updated xls
         is_updated_form = len([e.name for e in data_dictionary.survey_elements
-                               if e.name == u'preferred_means']) > 0
+                               if e.name == 'preferred_means']) > 0
         self.assertTrue(is_updated_form)
 
     def test_update_form_doesnt_truncate_to_50_chars(self):
@@ -365,7 +349,7 @@ class TestFormShow(TestBase):
         # look for the preferred_means question
         # which is only in the updated xls
         is_updated_form = len([e.name for e in data_dictionary.survey_elements
-                               if e.name == u'preferred_means']) > 0
+                               if e.name == 'preferred_means']) > 0
         self.assertTrue(is_updated_form)
 
     def test_xform_delete(self):

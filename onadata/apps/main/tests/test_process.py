@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import csv
 import fnmatch
 from hashlib import md5
@@ -19,7 +22,7 @@ from onadata.apps.logger.models.xform import XFORM_TITLE_LENGTH
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.libs.utils.common_tags import UUID, SUBMISSION_TIME
-from test_base import TestBase
+from .test_base import TestBase
 
 
 uuid_regex = re.compile(
@@ -34,8 +37,8 @@ class TestProcess(TestBase):
     bicycle_key = '%s/bicycle/%s' % (loop_str, frequency_str)
     other_key = '%s/other/%s' % (loop_str, frequency_str)
     taxi_key = '%s/taxi/%s' % (loop_str, frequency_str)
-    transport_ambulance_key = u'transport/%s' % ambulance_key
-    transport_bicycle_key = u'transport/%s' % bicycle_key
+    transport_ambulance_key = 'transport/%s' % ambulance_key
+    transport_bicycle_key = 'transport/%s' % bicycle_key
     uuid_to_submission_times = {
         '5b2cc313-fc09-437e-8149-fcd32f695d41': '2013-02-14T15:37:21',
         'f3d8dc65-91a6-4d0f-9e97-802128083390': '2013-02-14T15:37:22',
@@ -130,7 +133,7 @@ class TestProcess(TestBase):
                         if self.xform:
                             self.xform.delete()
                             self.xform = None
-                print 'finished sub-folder %s' % root
+                print('finished sub-folder %s' % root)
             self.assertEqual(success, True)
 
     def test_url_upload_non_dot_xls_path(self):
@@ -162,7 +165,7 @@ class TestProcess(TestBase):
         self.assertEqual(self.response.status_code, 200)
         if XForm.objects.count() != pre_count + 1:
             # print file location
-            print '\nPublish Failure for file: %s' % xls_path
+            print('\nPublish Failure for file: %s' % xls_path)
             if strict:
                 self.assertEqual(XForm.objects.count(), pre_count + 1)
             else:
@@ -274,7 +277,7 @@ class TestProcess(TestBase):
         ]
         for d_from_db in self.data_dictionary.get_data_for_excel():
             for k, v in d_from_db.items():
-                if (k != u'_xform_id_string' and k != 'meta/instanceID') and v:
+                if (k != '_xform_id_string' and k != 'meta/instanceID') and v:
                     new_key = k[len('transport/'):]
                     d_from_db[new_key] = d_from_db[k]
                 del d_from_db[k]
@@ -283,7 +286,7 @@ class TestProcess(TestBase):
         self.assertEquals(data, [])
 
     def _check_group_xpaths_do_not_appear_in_dicts_for_export(self):
-        uuid = u'uuid:f3d8dc65-91a6-4d0f-9e97-802128083390'
+        uuid = 'uuid:f3d8dc65-91a6-4d0f-9e97-802128083390'
         instances = self.xform.instances.all()
         instance = None
 
@@ -292,31 +295,31 @@ class TestProcess(TestBase):
                 instance = i
 
         expected_dict = {
-            u"transportation": {
-                u"meta": {
-                    u"instanceID": uuid
+            "transportation": {
+                "meta": {
+                    "instanceID": uuid
                 },
-                u"transport": {
-                    u"loop_over_transport_types_frequency": {u"bicycle": {
-                        u"frequency_to_referral_facility": u"weekly"
+                "transport": {
+                    "loop_over_transport_types_frequency": {"bicycle": {
+                        "frequency_to_referral_facility": "weekly"
                     },
-                        u"ambulance": {
-                            u"frequency_to_referral_facility": u"daily"
+                        "ambulance": {
+                            "frequency_to_referral_facility": "daily"
                         }
                     },
-                    u"available_transportation_types_to_referral_facility":
-                    u"ambulance bicycle",
+                    "available_transportation_types_to_referral_facility":
+                    "ambulance bicycle",
                 }
             }
         }
         self.assertEqual(instance.get_dict(flat=False), expected_dict)
         expected_dict = {
-            u"transport/available_transportation_types_to_referral_facility":
-            u"ambulance bicycle",
-            self.transport_ambulance_key: u"daily",
-            self.transport_bicycle_key: u"weekly",
-            u"_xform_id_string": u"transportation_2011_07_25",
-            u"meta/instanceID": uuid
+            "transport/available_transportation_types_to_referral_facility":
+            "ambulance bicycle",
+            self.transport_ambulance_key: "daily",
+            self.transport_bicycle_key: "weekly",
+            "_xform_id_string": "transportation_2011_07_25",
+            "meta/instanceID": uuid
         }
         self.assertEqual(instance.get_dict(), expected_dict)
 
@@ -478,8 +481,10 @@ class TestProcess(TestBase):
         self.assertTrue(len(md.hash) > 16)
 
     def test_uuid_injection_in_cascading_select(self):
-        """Test that the uuid is injected in the right instance node for
-        forms with a cascading select"""
+        """
+        Test that the uuid is injected in the right instance node for
+        forms with a cascading select
+        """
         pre_count = XForm.objects.count()
         xls_path = os.path.join(
             self.this_directory, "fixtures", "cascading_selects",
@@ -521,7 +526,7 @@ class TestProcess(TestBase):
                                 node.nodeType == Node.ELEMENT_NODE and
                                 node.tagName == "bind" and
                                 node.getAttribute("nodeset") ==
-                                "/%s/formhub/uuid" % file_name]
+                                "/%s/formhub/uuid" % xform.id_string]
         self.assertEqual(len(calculate_bind_nodes), 1)
         calculate_bind_node = calculate_bind_nodes[0]
         self.assertEqual(
@@ -530,7 +535,9 @@ class TestProcess(TestBase):
     def test_csv_publishing(self):
         csv_text = '\n'.join([
             'survey,,', ',type,name,label',
-            ',text,whatsyourname,"What is your name?"', 'choices,,'])
+            ',text,whatsyourname,"What is your name?"',
+            'choices,,',
+            'settings,,', ',id_string', ',identity'])
         url = reverse('onadata.apps.main.views.profile',
                       kwargs={'username': self.user.username})
         num_xforms = XForm.objects.count()

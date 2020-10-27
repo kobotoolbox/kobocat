@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import re
 import urllib2
 
@@ -23,7 +26,7 @@ class Section(dict):
         return render_to_string('section.html', self)
 
     def url(self):
-        return u'<a href="#%(id)s">%(title)s</a>' % self
+        return '<a href="#%(id)s">%(title)s</a>' % self
 
 
 class TreeNode(list):

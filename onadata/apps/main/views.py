@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import absolute_import, unicode_literals
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import json
 import os
@@ -14,7 +14,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import default_storage
 from django.core.files.storage import get_storage_class
 from django.core.urlresolvers import reverse
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
@@ -36,8 +36,7 @@ from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import enter_data
 from onadata.apps.main.forms import UserProfileForm, FormLicenseForm, \
     DataLicenseForm, SupportDocForm, QuickConverterFile, QuickConverterURL, \
-    QuickConverter, SourceForm, PermissionForm, MediaForm, MapboxLayerForm, \
-    ActivateSMSSupportFom, ExternalExportForm
+    QuickConverter, SourceForm, PermissionForm, MediaForm, ActivateSMSSupportFom
 from onadata.apps.main.models import AuditLog, UserProfile, MetaData
 from onadata.apps.sms_support.autodoc import get_autodoc_for
 from onadata.apps.sms_support.providers import providers_doc
@@ -47,7 +46,6 @@ from onadata.apps.viewer.models.data_dictionary import DataDictionary, \
     upload_to
 from onadata.apps.viewer.models.parsed_instance import \
     DATETIME_FORMAT, ParsedInstance
-from onadata.apps.viewer.views import attachment_url
 from onadata.libs.constants import (
     CAN_CHANGE_XFORM,
     CAN_VALIDATE_XFORM,
@@ -55,22 +53,21 @@ from onadata.libs.constants import (
     CAN_VIEW_XFORM,
     CAN_ADD_SUBMISSIONS,
 )
-from onadata.libs.utils.bamboo import get_new_bamboo_dataset, \
-    delete_bamboo_dataset, ensure_rest_service
 from onadata.libs.utils.decorators import is_owner
-from onadata.libs.utils.export_tools import upload_template_for_external_export
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
     publish_form
 from onadata.libs.utils.qrcode import generate_qrcode
-from onadata.libs.utils.user_auth import add_cors_headers
-from onadata.libs.utils.user_auth import check_and_set_user
-from onadata.libs.utils.user_auth import check_and_set_user_and_form
-from onadata.libs.utils.user_auth import get_xform_and_perms
+from onadata.libs.utils.user_auth import (
+    add_cors_headers,
+    check_and_set_user,
+    check_and_set_user_and_form,
+    get_xform_and_perms,
+    has_permission,
+    helper_auth_helper,
+    set_profile_data
+)
 from onadata.libs.utils.user_auth import has_delete_data_permission
-from onadata.libs.utils.user_auth import has_permission
-from onadata.libs.utils.user_auth import helper_auth_helper
-from onadata.libs.utils.user_auth import set_profile_data
 from onadata.libs.utils.viewer_tools import enketo_url
 
 
@@ -130,13 +127,13 @@ def clone_xlsform(request, username):
                     'id_string': xform.id_string + XForm.CLONED_SUFFIX})
             return {
                 'type': 'alert-success',
-                'text': _(u'Successfully cloned to %(form_url)s into your '
-                          u'%(profile_url)s') %
-                {'form_url': u'<a href="%(url)s">%(id_string)s</a> ' % {
+                'text': _('Successfully cloned to %(form_url)s into your '
+                          '%(profile_url)s') %
+                {'form_url': '<a href="%(url)s">%(id_string)s</a> ' % {
                  'id_string': survey.id_string,
                  'url': clone_form_url
                  },
-                    'profile_url': u'<a href="%s">profile</a>.' %
+                    'profile_url': '<a href="%s">profile</a>.' %
                     reverse(profile, kwargs={'username': to_username})}
             }
     form_result = publish_form(set_form)
@@ -194,15 +191,19 @@ def profile(request, username):
                     'username': username,
                     'id_string': survey.id_string
                 }),
-                'text': _(u'Successfully published %(form_id)s.'
-                          u' <a href="%(form_url)s">Enter Web Form</a>'
-                          u' or <a href="#preview-modal" data-toggle="modal">'
-                          u'Preview Web Form</a>')
+                'text': _('Successfully published %(form_id)s.'
+                          ' <a href="%(form_url)s">Enter Web Form</a>'
+                          ' or <a href="#preview-modal" data-toggle="modal">'
+                          'Preview Web Form</a>')
                 % {'form_id': survey.id_string,
                     'form_url': enketo_webform_url},
                 'form_o': survey
             }
-        form_result = publish_form(set_form)
+        with transaction.atomic():
+            # publish_form must be wrapped into `transaction.atomic` because of
+            # https://stackoverflow.com/a/23326971/1141214
+            form_result = publish_form(set_form)
+
         if form_result['type'] == 'alert-success':
             # comment the following condition (and else)
             # when we want to enable sms check for all.
@@ -243,19 +244,19 @@ def profile(request, username):
             {
                 'id': 'published',
                 'xforms': user_xforms,
-                'title': _(u"Published Forms"),
+                'title': _("Published Forms"),
                 'small': _("Export, map, and view submissions.")
             },
             {
                 'id': 'shared',
                 'xforms': forms_shared_with,
-                'title': _(u"Shared Forms"),
+                'title': _("Shared Forms"),
                 'small': _("List of forms shared with you.")
             },
             {
                 'id': 'published_or_shared',
                 'xforms': published_or_shared,
-                'title': _(u"Published Forms"),
+                'title': _("Published Forms"),
                 'small': _("Export, map, and view submissions.")
             }
         ]
@@ -277,7 +278,7 @@ def profile(request, username):
 
 def members_list(request):
     if not request.user.is_staff and not request.user.is_superuser:
-        return HttpResponseForbidden(_(u'Forbidden.'))
+        return HttpResponseForbidden(_('Forbidden.'))
     users = User.objects.all()
     template = 'people.html'
 
@@ -377,23 +378,22 @@ def set_xform_owner_data(data, xform, request, username, id_string):
     data['doc_form'] = SupportDocForm()
     data['source_form'] = SourceForm()
     data['media_form'] = MediaForm()
-    data['mapbox_layer_form'] = MapboxLayerForm()
-    data['external_export_form'] = ExternalExportForm()
     users_with_perms = []
 
     for perm in get_users_with_perms(xform, attach_perms=True).items():
         has_perm = []
         if CAN_CHANGE_XFORM in perm[1]:
-            has_perm.append(_(u"Can Edit"))
+            has_perm.append(_("Can Edit"))
         if CAN_VIEW_XFORM in perm[1]:
-            has_perm.append(_(u"Can View"))
+            has_perm.append(_("Can View"))
         if CAN_ADD_SUBMISSIONS in perm[1]:
-            has_perm.append(_(u"Can Submit To"))
+            has_perm.append(_("Can submit to"))
         if CAN_VALIDATE_XFORM in perm[1]:
             has_perm.append(_(u"Can Validate"))
         if CAN_DELETE_DATA_XFORM in perm[1]:
             has_perm.append(_(u"Can Delete Data"))
-        users_with_perms.append((perm[0], u" | ".join(has_perm)))
+        users_with_perms.append((perm[0], " | ".join(has_perm)))
+
     data['users_with_perms'] = users_with_perms
     data['permission_form'] = PermissionForm(username)
 
@@ -427,8 +427,6 @@ def show(request, username=None, id_string=None, uuid=None):
     data['data_license'] = MetaData.data_license(xform).data_value
     data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
-    data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
-    data['external_export'] = MetaData.external_export(xform)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
@@ -469,8 +467,6 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['data_license'] = MetaData.data_license(xform).data_value
     data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
-    data['mapbox_layer'] = MetaData.mapbox_layer_upload(xform)
-    data['external_export'] = MetaData.external_export(xform)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
@@ -491,7 +487,7 @@ def api_token(request, username=None):
 
         return render(request, "api_token.html", data)
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 @require_http_methods(["GET", "OPTIONS"])
@@ -519,7 +515,7 @@ def api(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
 
     if not xform:
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
 
     try:
         args = {
@@ -566,7 +562,6 @@ def public_api(request, username, id_string):
     _DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
     exports = {'username': xform.user.username,
                'id_string': xform.id_string,
-               'bamboo_dataset': xform.bamboo_dataset,
                'shared': xform.shared,
                'shared_data': xform.shared_data,
                'downloadable': xform.downloadable,
@@ -714,10 +709,10 @@ def edit(request, username, id_string):
                     sms_support_form.cleaned_data.get('enable_sms_support')
                 if enabled:
                     audit_action = Actions.SMS_SUPPORT_ACTIVATED
-                    audit_message = _(u"SMS Support Activated on")
+                    audit_message = _("SMS Support Activated on")
                 else:
                     audit_action = Actions.SMS_SUPPORT_DEACTIVATED
-                    audit_message = _(u"SMS Support Deactivated on")
+                    audit_message = _("SMS Support Deactivated on")
                 audit_log(
                     audit_action, request.user, owner,
                     audit_message
@@ -746,7 +741,7 @@ def edit(request, username, id_string):
             try:
                 SSRFProtect.validate(uri)
             except SSRFProtectException:
-                return HttpResponseForbidden(_(u'URL {uri} is forbidden.').format(
+                return HttpResponseForbidden(_('URL {uri} is forbidden.').format(
                     uri=uri))
             MetaData.media_add_uri(xform, uri)
         elif request.FILES.get('media'):
@@ -761,19 +756,6 @@ def edit(request, username, id_string):
                 }, audit, request)
             for aFile in request.FILES.getlist("media"):
                 MetaData.media_upload(xform, aFile)
-        elif request.POST.get('map_name'):
-            mapbox_layer = MapboxLayerForm(request.POST)
-            if mapbox_layer.is_valid():
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_UPDATED, request.user, owner,
-                    _("Map layer added to '%(id_string)s'.") %
-                    {
-                        'id_string': xform.id_string
-                    }, audit, request)
-                MetaData.mapbox_layer_upload(xform, mapbox_layer.cleaned_data)
         elif request.FILES.get('doc'):
             audit = {
                 'xform': xform.id_string
@@ -785,47 +767,11 @@ def edit(request, username, id_string):
                     'id_string': xform.id_string
                 }, audit, request)
             MetaData.supporting_docs(xform, request.FILES.get('doc'))
-        elif request.POST.get("template_token") \
-                and request.POST.get("template_token"):
-            template_name = request.POST.get("template_name")
-            template_token = request.POST.get("template_token")
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("External export added to '%(id_string)s'.") %
-                {
-                    'id_string': xform.id_string
-                }, audit, request)
-            merged = template_name + '|' + template_token
-            MetaData.external_export(xform, merged)
-        elif request.POST.get("external_url") \
-                and request.FILES.get("xls_template"):
-            template_upload_name = request.POST.get("template_upload_name")
-            external_url = request.POST.get("external_url")
-
-            try:
-                SSRFProtect.validate(external_url)
-            except SSRFProtectException:
-                return HttpResponseForbidden(_(u'URL {url} is forbidden.').format(
-                    url=external_url))
-
-            xls_template = request.FILES.get("xls_template")
-
-            result = upload_template_for_external_export(external_url,
-                                                         xls_template)
-            status_code = result.split('|')[0]
-            token = result.split('|')[1]
-            if status_code == '201':
-                data_value =\
-                    template_upload_name + '|' + external_url + '/xls/' + token
-                MetaData.external_export(xform, data_value=data_value)
 
         xform.update()
 
         if request.is_ajax():
-            return HttpResponse(_(u'Updated succeeded.'))
+            return HttpResponse(_('Updated succeeded.'))
         else:
             if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip(): 
                 return HttpResponseRedirect(request.META['HTTP_REFERER'])               
@@ -835,7 +781,7 @@ def edit(request, username, id_string):
                 'id_string': id_string
             }))
 
-    return HttpResponseForbidden(_(u'Update failed.'))
+    return HttpResponseForbidden(_('Update failed.'))
 
 
 def getting_started(request):
@@ -962,7 +908,7 @@ def download_metadata(request, username, id_string, data_id):
         else:
             return HttpResponseNotFound()
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 @login_required()
@@ -994,8 +940,7 @@ def delete_metadata(request, username, id_string, data_id):
             }))
         except Exception:
             return HttpResponseServerError()
-    elif (request.GET.get('map_name_del', False) or
-          request.GET.get('external_del', False)) and username == req_username:
+    elif request.GET.get('map_name_del', False) and username == req_username:
         data.delete()
         audit = {
             'xform': xform.id_string
@@ -1011,7 +956,7 @@ def delete_metadata(request, username, id_string, data_id):
             'id_string': id_string
         }))
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 def download_media_data(request, username, id_string, data_id):
@@ -1077,7 +1022,7 @@ def download_media_data(request, username, id_string, data_id):
             else:
                 return HttpResponseNotFound()
 
-    return HttpResponseForbidden(_(u'Permission denied.'))
+    return HttpResponseForbidden(_('Permission denied.'))
 
 
 def form_photos(request, username, id_string):
@@ -1088,7 +1033,7 @@ def form_photos(request, username, id_string):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
 
     if not xform:
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
 
     data = {}
     data['form_view'] = True
@@ -1110,11 +1055,9 @@ def form_photos(request, username, id_string):
                 continue
 
             data = {}
-
-            for i in ['small', 'medium', 'large', 'original']:
-                url = reverse(attachment_url, kwargs={'size': i})
-                url = '%s?media_file=%s' % (url, attachment.media_file.name)
-                data[i] = url
+            data['original'] = attachment.secure_url()
+            for suffix in settings.THUMB_CONF.keys():
+                data[suffix] = attachment.secure_url(suffix)
 
             image_urls.append(data)
 
@@ -1135,7 +1078,7 @@ def set_perm(request, username, id_string):
     owner = xform.user
     if username != request.user.username\
             and not has_permission(xform, username, request):
-        return HttpResponseForbidden(_(u'Permission denied.'))
+        return HttpResponseForbidden(_('Permission denied.'))
 
     try:
         perm_type = request.POST['perm_type']
@@ -1157,7 +1100,7 @@ def set_perm(request, username, id_string):
         except User.DoesNotExist:
             messages.add_message(
                 request, messages.INFO,
-                _(u"Wrong username <b>%s</b>." % for_user),
+                _("Wrong username <b>%s</b>." % for_user),
                 extra_tags='alert-error')
         else:
             if perm_type == 'remove':
@@ -1231,13 +1174,13 @@ def set_perm(request, username, id_string):
 @login_required
 def delete_data(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
-    response_text = u''
+    response_text = ''
     if not xform or not has_delete_data_permission(xform, owner, request):
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
 
     data_id = request.POST.get('id')
     if not data_id:
-        return HttpResponseBadRequest(_(u"id must be specified"))
+        return HttpResponseBadRequest(_("id must be specified"))
 
     Instance.set_deleted_at(data_id)
     audit = {
@@ -1257,47 +1200,6 @@ def delete_data(request, username=None, id_string=None):
         response_text = ("%s(%s)" % (callback, response_text))
 
     return HttpResponse(response_text, content_type='application/json')
-
-
-@require_POST
-@is_owner
-def link_to_bamboo(request, username, id_string):
-    xform = get_object_or_404(XForm,
-                              user__username__iexact=username,
-                              id_string__exact=id_string)
-    owner = xform.user
-    audit = {
-        'xform': xform.id_string
-    }
-
-    # try to delete the dataset first (in case it exists)
-    if xform.bamboo_dataset and delete_bamboo_dataset(xform):
-        xform.bamboo_dataset = u''
-        xform.save()
-        audit_log(
-            Actions.BAMBOO_LINK_DELETED, request.user, owner,
-            _("Bamboo link deleted on '%(id_string)s'.")
-            % {'id_string': xform.id_string}, audit, request)
-
-    # create a new one from all the data
-    dataset_id = get_new_bamboo_dataset(xform)
-
-    # update XForm
-    xform.bamboo_dataset = dataset_id
-    xform.save()
-    ensure_rest_service(xform)
-
-    audit_log(
-        Actions.BAMBOO_LINK_CREATED, request.user, owner,
-        _("Bamboo link created on '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-
-    return HttpResponseRedirect(reverse(show, kwargs={
-        'username': username,
-        'id_string': id_string
-    }))
 
 
 @require_POST
@@ -1325,10 +1227,10 @@ def update_xform(request, username, id_string):
             }, audit, request)
         return {
             'type': 'alert-success',
-            'text': _(u'Successfully published %(form_id)s.'
-                      u' <a href="%(form_url)s">Enter Web Form</a>'
-                      u' or <a href="#preview-modal" data-toggle="modal">'
-                      u'Preview Web Form</a>')
+            'text': _('Successfully published %(form_id)s.'
+                      ' <a href="%(form_url)s">Enter Web Form</a>'
+                      ' or <a href="#preview-modal" data-toggle="modal">'
+                      'Preview Web Form</a>')
                     % {'form_id': survey.id_string,
                        'form_url': enketo_webform_url}
         }
@@ -1433,12 +1335,12 @@ def qrcode(request, username, id_string):
         formhub_url = "https://{}/{}".format(settings.TEST_HTTP_HOST,
                                              settings.TEST_USERNAME)
 
-    results = _(u"Unexpected Error occured: No QRCODE generated")
+    results = _("Unexpected Error occured: No QRCODE generated")
     status = 200
     try:
         url = enketo_url(formhub_url, id_string)
     except Exception as e:
-        error_msg = _(u"Error Generating QRCODE: %s" % e)
+        error_msg = _("Error Generating QRCODE: %s" % e)
         results = """<div class="alert alert-error">%s</div>""" % error_msg
         status = 400
     else:
@@ -1458,7 +1360,7 @@ def enketo_preview(request, username, id_string):
         XForm, user__username__iexact=username, id_string__exact=id_string)
     owner = xform.user
     if not has_permission(xform, owner, request, xform.shared):
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
     enekto_preview_url = \
         "%(enketo_url)s?server=%(profile_url)s&id=%(id_string)s" % {
             'enketo_url': settings.ENKETO_PREVIEW_URL,

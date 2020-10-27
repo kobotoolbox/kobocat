@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.conf.urls import url
 from rest_framework import routers
 from rest_framework.response import Response
@@ -5,21 +7,11 @@ from rest_framework.reverse import reverse
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework.views import APIView
 
-from onadata.apps.api.viewsets.charts_viewset import ChartsViewSet
 from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
 from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
-from onadata.apps.api.viewsets.organization_profile_viewset import\
-    OrganizationProfileViewSet
-from onadata.apps.api.viewsets.project_viewset import ProjectViewSet
-from onadata.apps.api.viewsets.stats_viewset import StatsViewSet
-from onadata.apps.api.viewsets.team_viewset import TeamViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
-from onadata.apps.api.viewsets.user_profile_viewset import UserProfileViewSet
-from onadata.apps.api.viewsets.user_viewset import UserViewSet
-from onadata.apps.api.viewsets.submissionstats_viewset import\
-    SubmissionStatsViewSet
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
@@ -69,8 +61,6 @@ class MultiLookupRouter(routers.DefaultRouter):
             initkwargs={'suffix': 'List'})
 
     def get_extra_lookup_regexes(self, route):
-
-
         ret = []
         base_regex = '(?P<{lookup_field}>[^/]+)'
         if 'extra_lookup_fields' in route.initkwargs:
@@ -80,8 +70,6 @@ class MultiLookupRouter(routers.DefaultRouter):
 
     def get_lookup_regexes(self, viewset):
         ret = []
-
-
         lookup_fields = getattr(viewset, 'lookup_fields', None)
         if lookup_fields:
             for i in range(1, len(lookup_fields)):
@@ -155,25 +143,16 @@ class MultiLookupRouter(routers.DefaultRouter):
 ## KoBo JSON Rest API endpoints:
 
 ### Data
-* [/api/v1/charts](/api/v1/charts) - List, Retrieve Charts of collected data
 * [/api/v1/data](/api/v1/data) - List, Retrieve submission data
-* [/api/v1/stats](/api/v1/stats) - Summary statistics
 
 ### Forms
 * [/api/v1/forms](/api/v1/forms) - List, Retrieve form information
 * [/api/v1/media](/api/v1/media) - List, Retrieve media attachments
 * [/api/v1/metadata](/api/v1/metadata) - List, Retrieve form metadata
-* [/api/v1/projects](/api/v1/projects) - List, Retrieve, Create,
- Update organization projects, forms
 * [/api/v1/submissions](/api/v1/submissions) - Submit XForms to a form
 
 ### Users and Organizations
-* [/api/v1/orgs](/api/v1/orgs) - List, Retrieve, Create,
-Update organization and organization info
-* [/api/v1/profiles](/api/v1/profiles) - List, Create, Update user information
-* [/api/v1/teams](/api/v1/teams) - List, Retrieve, Create, Update teams
 * [/api/v1/user](/api/v1/user) - Return authenticated user profile info
-* [/api/v1/users](/api/v1/users) - List, Retrieve user data
 
 ## Status Codes
 
@@ -339,9 +318,9 @@ Example using curl:
             lookup_list = self.get_lookup_regexes(viewset)
             if lookup_list:
                 # lookup = lookups[0]
-                lookup_list = [u'/'.join(k) for k in lookup_list]
+                lookup_list = ['/'.join(k) for k in lookup_list]
             else:
-                lookup_list = [u'']
+                lookup_list = ['']
             routes = self.get_routes(viewset)
             for route in routes:
                 mapping = self.get_method_map(viewset, route.mapping)
@@ -382,18 +361,9 @@ class MultiLookupRouterWithPatchList(MultiLookupRouter):
 
 
 router = MultiLookupRouter(trailing_slash=False)
-router.register(r'users', UserViewSet)
 router.register(r'user', ConnectViewSet)
-router.register(r'profiles', UserProfileViewSet)
-router.register(r'orgs', OrganizationProfileViewSet)
 router.register(r'forms', XFormViewSet)
-router.register(r'projects', ProjectViewSet)
-router.register(r'teams', TeamViewSet)
 router.register(r'notes', NoteViewSet, base_name='notes')
-router.register(r'stats', StatsViewSet, base_name='stats')
-router.register(r'stats/submissions', SubmissionStatsViewSet,
-                base_name='submissionstats')
-router.register(r'charts', ChartsViewSet, base_name='chart')
 router.register(r'metadata', MetaDataViewSet, base_name='metadata')
 router.register(r'media', AttachmentViewSet, base_name='attachment')
 router.register(r'formlist', XFormListApi, base_name='formlist')

@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import re
 import requests
@@ -19,7 +21,7 @@ from onadata.apps.main.views import set_perm, show, qrcode
 from onadata.apps.main.models import MetaData
 from onadata.apps.logger.views import enter_data
 from onadata.libs.utils.viewer_tools import enketo_url
-from test_base import TestBase
+from .test_base import TestBase
 
 
 @urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')

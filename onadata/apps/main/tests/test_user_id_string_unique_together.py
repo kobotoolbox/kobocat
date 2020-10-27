@@ -1,7 +1,12 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 
-from test_base import TestBase
+from django.utils.encoding import smart_text
+
 from onadata.apps.logger.models import XForm
+from .test_base import TestBase
 
 
 class TestUserIdStringUniqueTogether(TestBase):
@@ -22,7 +27,8 @@ class TestUserIdStringUniqueTogether(TestBase):
 
         # second time
         response = self._publish_xls_file(xls_path)
-        self.assertIn("already exists.", response.content)
+        response_content = smart_text(response.content)
+        self.assertIn("already exists.", response_content)
         self.assertEquals(XForm.objects.count(), 1)
         self.client.logout()
 

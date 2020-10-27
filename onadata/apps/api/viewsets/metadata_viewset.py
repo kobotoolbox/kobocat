@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from rest_framework import renderers
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -23,11 +26,11 @@ class MetaDataViewSet(viewsets.ModelViewSet):
 
     ### Permissions
 
-    This endpoint applys the same permissions someone has on the form.
+    This endpoint applies the same permissions someone has on the form.
 
     ## Get list of metadata
 
-    Returns a list of metadata accross all forms requesting user has access to.
+    Returns a list of metadata across all forms requesting user has access to.
 
     <pre class="prettyprint">GET /api/v1/metadata</pre>
 
@@ -55,6 +58,9 @@ class MetaDataViewSet(viewsets.ModelViewSet):
             ....
         ]
 
+    Filtering by `data_type` is possible, e.g.
+    `/api/v1/metadata?data_type=media` returns only media files.
+
     ## Get list of metadata for a specific form
 
     The form endpoint, `/api/v1/forms/formid`, contains a `metadata` field
@@ -62,7 +68,7 @@ class MetaDataViewSet(viewsets.ModelViewSet):
     parameter `xform` with the `formid` as the value.
 
     <pre class="prettyprint">
-    GET /api/v1/metdata?<code>xform=formid</code></pre>
+    GET /api/v1/metadata?<code>xform=formid</code></pre>
 
         HTTP 200 OK
 
@@ -132,26 +138,6 @@ Accept: image/png </pre>
 
     Example:
 
-            curl -X POST -d "{"data_type": "mapbox_layer", "data_value": \
-"example||https://api.tiles.mapbox.com/v3/examples.map-0l53fhk2.json||example\
- attribution", "xform": 320}" https://example.com/api/v1/metadata \
--H "Content-Type: appliction/json"
-
-            HTTP 201 CREATED
-
-            {
-            "id": 7119,
-            "xform": 320,
-            "data_value": "example||https://api.tiles.mapbox.com/v3/examples\
-.map-0l53fhk2.json||example attribution",
-            "data_type": "mapbox_layer",
-            "data_file": null,
-            "data_file_type": null,
-            "url": "https://example.com/api/v1/metadata/7119.json"
-            }
-
-    Media upload example:
-
             curl -X POST -F 'data_type=media' -F 'data_value=demo.jpg' \
 -F 'xform=320' -F "data_file=@folder.jpg" https://example.com/api/v1/metadata.json
 
@@ -194,3 +180,13 @@ Accept: image/png </pre>
         serializer = self.get_serializer(self.object)
 
         return Response(serializer.data)
+
+    def perform_destroy(self, *args, **kwargs):
+        # Delete file
+        try:
+            file_ = self.get_object()
+            file_.data_file.delete(save=False)
+        except OSError:
+            pass
+
+        return super(MetaDataViewSet, self).perform_destroy(*args, **kwargs)

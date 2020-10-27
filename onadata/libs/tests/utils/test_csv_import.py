@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # import mock
 import os
 from cStringIO import StringIO
@@ -21,7 +23,7 @@ class CSVImportTestCase(TestBase):
         self.xform = XForm.objects.get()
 
     def test_submit_csv_param_sanity_check(self):
-        resp = csv_import.submit_csv(u'userX', XForm(), 123456)
+        resp = csv_import.submit_csv('userX', XForm(), 123456)
         self.assertIsNotNone(resp.get('error'))
 
     # @mock.patch('onadata.libs.utils.csv_import.safe_create_instance')
@@ -39,16 +41,16 @@ class CSVImportTestCase(TestBase):
         count = Instance.objects.count()
         csv_import.submit_csv(self.user.username, self.xform, self.good_csv)
         self.assertEqual(Instance.objects.count(),
-                         count + 9, u'submit_csv test Failed!')
+                         count + 9, 'submit_csv test Failed!')
         # Check that correct # of submissions belong to our user
         self.assertEqual(
             Instance.objects.filter(user=self.user).count(),
-            count + 8, u'submit_csv username check failed!')
+            count + 8, 'submit_csv username check failed!')
 
     def test_submit_csv_edits(self):
         csv_import.submit_csv(self.user.username, self.xform, self.good_csv)
         self.assertEqual(Instance.objects.count(),
-                         9, u'submit_csv edits #1 test Failed!')
+                         9, 'submit_csv edits #1 test Failed!')
 
         edit_csv = open(os.path.join(self.fixtures_dir, 'edit.csv'))
         edit_csv_str = edit_csv.read()
@@ -59,4 +61,4 @@ class CSVImportTestCase(TestBase):
         count = Instance.objects.count()
         csv_import.submit_csv(self.user.username, self.xform, edit_csv)
         self.assertEqual(Instance.objects.count(),
-                         count, u'submit_csv edits #2 test Failed!')
+                         count, 'submit_csv edits #2 test Failed!')

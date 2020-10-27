@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+# coding: utf-8
+from __future__ import unicode_literals, absolute_import, print_function, division
 
-from django.db import migrations, models
 import jsonfield.fields
-from django.conf import settings
 import taggit.managers
+from django.conf import settings
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):

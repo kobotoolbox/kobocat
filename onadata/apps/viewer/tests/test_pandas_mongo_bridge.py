@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import csv
 import os
 from tempfile import NamedTemporaryFile
@@ -64,15 +66,15 @@ class TestPandasMongoBridge(TestBase):
 
     def _publish_single_level_repeat_form(self):
         self._publish_xls_fixture_set_xform("new_repeats")
-        self.survey_name = u"new_repeats"
+        self.survey_name = "new_repeats"
 
     def _publish_nested_repeats_form(self):
         self._publish_xls_fixture_set_xform("nested_repeats")
-        self.survey_name = u"nested_repeats"
+        self.survey_name = "nested_repeats"
 
     def _publish_grouped_gps_form(self):
         self._publish_xls_fixture_set_xform("grouped_gps")
-        self.survey_name = u"grouped_gps"
+        self.survey_name = "grouped_gps"
 
     def _xls_data_for_dataframe(self):
         xls_df_builder = XLSDataFrameBuilder(self.user.username,
@@ -91,7 +93,7 @@ class TestPandasMongoBridge(TestBase):
         self._submit_fixture_instance("new_repeats", "01")
         xls_df_builder = XLSDataFrameBuilder(self.user.username,
                                              self.xform.id_string)
-        expected_section_keys = [self.survey_name, u"kids_details"]
+        expected_section_keys = [self.survey_name, "kids_details"]
         section_keys = xls_df_builder.sections.keys()
         self.assertEqual(sorted(expected_section_keys), sorted(section_keys))
 
@@ -106,7 +108,7 @@ class TestPandasMongoBridge(TestBase):
         self._submit_fixture_instance("new_repeats", "01")
         data = self._xls_data_for_dataframe()
         self.assertEqual(len(data[self.survey_name]), 1)
-        self.assertEqual(len(data[u"kids_details"]), 2)
+        self.assertEqual(len(data["kids_details"]), 2)
 
     def test_xls_columns(self):
         """
@@ -117,19 +119,19 @@ class TestPandasMongoBridge(TestBase):
         data = self._xls_data_for_dataframe()
         # columns in the default sheet
         expected_default_columns = [
-            u"gps",
-            u"_gps_latitude",
-            u"_gps_longitude",
-            u"_gps_altitude",
-            u"_gps_precision",
-            u"web_browsers/firefox",
-            u"web_browsers/safari",
-            u"web_browsers/ie",
-            u"info/age",
-            u"web_browsers/chrome",
-            u"kids/has_kids",
-            u"info/name",
-            u"meta/instanceID"
+            "gps",
+            "_gps_latitude",
+            "_gps_longitude",
+            "_gps_altitude",
+            "_gps_precision",
+            "web_browsers/firefox",
+            "web_browsers/safari",
+            "web_browsers/ie",
+            "info/age",
+            "web_browsers/chrome",
+            "kids/has_kids",
+            "info/name",
+            "meta/instanceID"
         ] + AbstractDataFrameBuilder.ADDITIONAL_COLUMNS +\
             XLSDataFrameBuilder.EXTRA_COLUMNS
         # get the header
@@ -139,11 +141,11 @@ class TestPandasMongoBridge(TestBase):
 
         # columns in the kids_details sheet
         expected_kids_details_columns = [
-            u"kids/kids_details/kids_name",
-            u"kids/kids_details/kids_age"
+            "kids/kids_details/kids_name",
+            "kids/kids_details/kids_age"
         ] + AbstractDataFrameBuilder.ADDITIONAL_COLUMNS +\
             XLSDataFrameBuilder.EXTRA_COLUMNS
-        kids_details_columns = [k for k in data[u"kids_details"][0]]
+        kids_details_columns = [k for k in data["kids_details"][0]]
         self.assertEqual(sorted(expected_kids_details_columns),
                          sorted(kids_details_columns))
 
@@ -157,16 +159,16 @@ class TestPandasMongoBridge(TestBase):
         data = self._xls_data_for_dataframe()
         # columns in the default sheet
         expected_default_columns = [
-            u"gps_group/gps",
-            u"gps_group/_gps_latitude",
-            u"gps_group/_gps_longitude",
-            u"gps_group/_gps_altitude",
-            u"gps_group/_gps_precision",
-            u"web_browsers/firefox",
-            u"web_browsers/safari",
-            u"web_browsers/ie",
-            u"web_browsers/chrome",
-            u"meta/instanceID"
+            "gps_group/gps",
+            "gps_group/_gps_latitude",
+            "gps_group/_gps_longitude",
+            "gps_group/_gps_altitude",
+            "gps_group/_gps_precision",
+            "web_browsers/firefox",
+            "web_browsers/safari",
+            "web_browsers/ie",
+            "web_browsers/chrome",
+            "meta/instanceID"
         ] + AbstractDataFrameBuilder.ADDITIONAL_COLUMNS +\
             XLSDataFrameBuilder.EXTRA_COLUMNS
         default_columns = [k for k in data[self.survey_name][0]]
@@ -239,19 +241,19 @@ class TestPandasMongoBridge(TestBase):
         data = self._csv_data_for_dataframe()
         columns = data[0].keys()
         expected_columns = [
-            u'gps_group/gps',
-            u'gps_group/_gps_latitude',
-            u'gps_group/_gps_longitude',
-            u'gps_group/_gps_altitude',
-            u'gps_group/_gps_precision',
-            u'web_browsers/firefox',
-            u'web_browsers/chrome',
-            u'web_browsers/ie',
-            u'web_browsers/safari',
+            'gps_group/gps',
+            'gps_group/_gps_latitude',
+            'gps_group/_gps_longitude',
+            'gps_group/_gps_altitude',
+            'gps_group/_gps_precision',
+            'web_browsers/firefox',
+            'web_browsers/chrome',
+            'web_browsers/ie',
+            'web_browsers/safari',
         ] + AbstractDataFrameBuilder.ADDITIONAL_COLUMNS +\
             AbstractDataFrameBuilder.IGNORED_COLUMNS
         try:
-            expected_columns.remove(u'_deleted_at')
+            expected_columns.remove('_deleted_at')
         except ValueError:
             pass
         self.maxDiff = None
@@ -271,22 +273,22 @@ class TestPandasMongoBridge(TestBase):
             if key in data_0:
                 data_0.pop(key)
         expected_data_0 = {
-            u'gps': u'-1.2627557 36.7926442 0.0 30.0',
-            u'_gps_latitude': u'-1.2627557',
-            u'_gps_longitude': u'36.7926442',
-            u'_gps_altitude': u'0.0',
-            u'_gps_precision': u'30.0',
-            u'kids/has_kids': u'1',
-            u'info/age': u'80',
-            u'kids/kids_details[1]/kids_name': u'Abel',
-            u'kids/kids_details[1]/kids_age': u'50',
-            u'kids/kids_details[2]/kids_name': u'Cain',
-            u'kids/kids_details[2]/kids_age': u'76',
-            u'web_browsers/chrome': True,
-            u'web_browsers/ie': True,
-            u'web_browsers/safari': False,
-            u'web_browsers/firefox': False,
-            u'info/name': u'Adam',
+            'gps': '-1.2627557 36.7926442 0.0 30.0',
+            '_gps_latitude': '-1.2627557',
+            '_gps_longitude': '36.7926442',
+            '_gps_altitude': '0.0',
+            '_gps_precision': '30.0',
+            'kids/has_kids': '1',
+            'info/age': '80',
+            'kids/kids_details[1]/kids_name': 'Abel',
+            'kids/kids_details[1]/kids_age': '50',
+            'kids/kids_details[2]/kids_name': 'Cain',
+            'kids/kids_details[2]/kids_age': '76',
+            'web_browsers/chrome': True,
+            'web_browsers/ie': True,
+            'web_browsers/safari': False,
+            'web_browsers/firefox': False,
+            'info/name': 'Adam',
         }
         self.assertEqual(expected_data_0, data_0)
 
@@ -302,10 +304,10 @@ class TestPandasMongoBridge(TestBase):
         result = CSVDataFrameBuilder._split_select_multiples(record,
                                                              select_multiples)
         expected_result = {
-            u'web_browsers/ie': True,
-            u'web_browsers/safari': True,
-            u'web_browsers/firefox': False,
-            u'web_browsers/chrome': False
+            'web_browsers/ie': True,
+            'web_browsers/safari': True,
+            'web_browsers/firefox': False,
+            'web_browsers/chrome': False
         }
         # build a new dictionary only composed of the keys we want to use in
         # the comparison
@@ -318,10 +320,10 @@ class TestPandasMongoBridge(TestBase):
         result = csv_df_builder._split_select_multiples(record,
                                                         select_multiples)
         expected_result = {
-            u'web_browsers/ie': 1,
-            u'web_browsers/safari': 1,
-            u'web_browsers/firefox': 0,
-            u'web_browsers/chrome': 0
+            'web_browsers/ie': 1,
+            'web_browsers/safari': 1,
+            'web_browsers/firefox': 0,
+            'web_browsers/chrome': 0
         }
         # build a new dictionary only composed of the keys we want to use in
         # the comparison
@@ -473,18 +475,18 @@ class TestPandasMongoBridge(TestBase):
             xml_str = f.read()
         dict = xform_instance_to_dict(xml_str, self.xform.data_dictionary())
         expected_dict = {
-            u'test_item_name_matches_repeat': {
-                u'formhub': {
-                    u'uuid': u'c911d71ce1ac48478e5f8bac99addc4e'
+            'test_item_name_matches_repeat': {
+                'formhub': {
+                    'uuid': 'c911d71ce1ac48478e5f8bac99addc4e'
                 },
-                u'gps': [
+                'gps': [
                     {
-                        u'info': u'Yo',
-                        u'gps': u'-1.2625149 36.7924478 0.0 30.0'
+                        'info': 'Yo',
+                        'gps': '-1.2625149 36.7924478 0.0 30.0'
                     },
                     {
-                        u'info': u'What',
-                        u'gps': u'-1.2625072 36.7924328 0.0 30.0'
+                        'info': 'What',
+                        'gps': '-1.2625072 36.7924328 0.0 30.0'
                     }
                 ]
             }
@@ -595,37 +597,38 @@ class TestPandasMongoBridge(TestBase):
         # remove dynamic fields
         ignore_list = [
             '_uuid', 'meta/instanceID', 'formhub/uuid', '_submission_time',
-            '_id', '_bamboo_dataset_id']
+            '_id']
         for item in ignore_list:
             data_0.pop(item)
         expected_data_0 = {
-            u'_xform_id_string': u'groups_in_repeats',
-            u'_status': u'submitted_via_web',
-            u'_tags': u'',
-            u'_notes': u'',
-            u"_submitted_by": u'bob',
-            u'name': u'Abe',
-            u'age': u'88',
-            u'has_children': u'1',
-            u'_attachments': [],
-            u'children[1]/childs_info/name': u'Cain',
-            u'children[2]/childs_info/name': u'Abel',
-            u'children[1]/childs_info/age': u'56',
-            u'children[2]/childs_info/age': u'48',
-            u'children[1]/immunization/immunization_received/polio_1': True,
-            u'children[1]/immunization/immunization_received/polio_2': False,
-            u'children[2]/immunization/immunization_received/polio_1': True,
-            u'children[2]/immunization/immunization_received/polio_2': True,
-            u'web_browsers/chrome': True,
-            u'web_browsers/firefox': False,
-            u'web_browsers/ie': False,
-            u'web_browsers/safari': False,
-            u'gps': u'-1.2626156 36.7923571 0.0 30.0',
-            u'_geolocation': [-1.2626156, 36.7923571],
-            u'_gps_latitude': u'-1.2626156',
-            u'_gps_longitude': u'36.7923571',
-            u'_gps_altitude': u'0.0',
-            u'_gps_precision': u'30.0',
+            '_xform_id_string': 'groups_in_repeats',
+            '_status': 'submitted_via_web',
+            '_tags': '',
+            '_notes': '',
+            "_submitted_by": 'bob',
+            'name': 'Abe',
+            'age': '88',
+            'has_children': '1',
+            '_attachments': [],
+            'children[1]/childs_info/name': 'Cain',
+            'children[2]/childs_info/name': 'Abel',
+            'children[1]/childs_info/age': '56',
+            'children[2]/childs_info/age': '48',
+            'children[1]/immunization/immunization_received/polio_1': True,
+            'children[1]/immunization/immunization_received/polio_2': False,
+            'children[2]/immunization/immunization_received/polio_1': True,
+            'children[2]/immunization/immunization_received/polio_2': True,
+            'web_browsers/chrome': True,
+            'web_browsers/firefox': False,
+            'web_browsers/ie': False,
+            'web_browsers/safari': False,
+            'gps': '-1.2626156 36.7923571 0.0 30.0',
+            '_geolocation': [-1.2626156, 36.7923571],
+            '_gps_latitude': '-1.2626156',
+            '_gps_longitude': '36.7923571',
+            '_gps_altitude': '0.0',
+            '_gps_precision': '30.0',
+            '_validation_status': {},
         }
         self.maxDiff = None
         self.assertEqual(data_0, expected_data_0)
@@ -640,7 +643,8 @@ class TestPandasMongoBridge(TestBase):
         # remove dynamic fields
         ignore_list = [
             '_uuid', 'meta/instanceID', 'formhub/uuid', '_submission_time',
-            '_id', '_bamboo_dataset_id']
+            '_id'
+        ]
         for item in ignore_list:
             # pop unwanted keys from main section
             for d in data["groups_in_repeats"]:
@@ -652,51 +656,52 @@ class TestPandasMongoBridge(TestBase):
                     d.pop(item)
         # todo: add _id to xls export
         expected_data = {
-            u"groups_in_repeats":
+            "groups_in_repeats":
             [
                 {
-                    u'picture': None,
-                    u'has_children': u'1',
-                    u'name': u'Abe',
-                    u'age': u'88',
-                    u'web_browsers/chrome': True,
-                    u'web_browsers/safari': False,
-                    u'web_browsers/ie': False,
-                    u'web_browsers/firefox': False,
-                    u'gps': u'-1.2626156 36.7923571 0.0 30.0',
-                    u'_gps_latitude': u'-1.2626156',
-                    u'_gps_longitude': u'36.7923571',
-                    u'_gps_altitude': u'0.0',
-                    u'_gps_precision': u'30.0',
-                    u'_index': 1,
-                    u'_parent_table_name': None,
-                    u'_parent_index': -1,
-                    u'_tags': [],
-                    u'_notes': []
+                    'picture': None,
+                    'has_children': '1',
+                    'name': 'Abe',
+                    'age': '88',
+                    'web_browsers/chrome': True,
+                    'web_browsers/safari': False,
+                    'web_browsers/ie': False,
+                    'web_browsers/firefox': False,
+                    'gps': '-1.2626156 36.7923571 0.0 30.0',
+                    '_gps_latitude': '-1.2626156',
+                    '_gps_longitude': '36.7923571',
+                    '_gps_altitude': '0.0',
+                    '_gps_precision': '30.0',
+                    '_index': 1,
+                    '_parent_table_name': None,
+                    '_parent_index': -1,
+                    '_tags': [],
+                    '_notes': [],
+                    '_validation_status': {}
                 }
             ],
-            u"children": [
+            "children": [
                 {
-                    u'children/childs_info/name': u'Cain',
-                    u'children/childs_info/age': u'56',
-                    u'children/immunization/immunization_received/polio_1':
+                    'children/childs_info/name': 'Cain',
+                    'children/childs_info/age': '56',
+                    'children/immunization/immunization_received/polio_1':
                     True,
-                    u'children/immunization/immunization_received/polio_2':
+                    'children/immunization/immunization_received/polio_2':
                     False,
-                    u'_index': 1,
-                    u'_parent_table_name': u'groups_in_repeats',
-                    u'_parent_index': 1,
+                    '_index': 1,
+                    '_parent_table_name': 'groups_in_repeats',
+                    '_parent_index': 1,
                 },
                 {
-                    u'children/childs_info/name': u'Able',
-                    u'children/childs_info/age': u'48',
-                    u'children/immunization/immunization_received/polio_1':
+                    'children/childs_info/name': 'Able',
+                    'children/childs_info/age': '48',
+                    'children/immunization/immunization_received/polio_1':
                     True,
-                    u'children/immunization/immunization_received/polio_2':
+                    'children/immunization/immunization_received/polio_2':
                     True,
-                    u'_index': 2,
-                    u'_parent_table_name': u'groups_in_repeats',
-                    u'_parent_index': 1,
+                    '_index': 2,
+                    '_parent_table_name': 'groups_in_repeats',
+                    '_parent_index': 1,
                 }
             ]
         }

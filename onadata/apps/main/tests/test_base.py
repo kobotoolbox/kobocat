@@ -1,21 +1,22 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import base64
 import os
 import re
 import socket
 import urllib2
+from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
 
-from cStringIO import StringIO
-
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.test import TransactionTestCase
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import AnonymousUser, User, Permission
+from django.test import TestCase
 from django.test.client import Client
+from django.utils import timezone
 from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
-from django.contrib.auth import authenticate
-from django.utils import timezone
-
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.logger.models import XForm, Instance, Attachment
@@ -23,7 +24,7 @@ from onadata.apps.logger.views import submission
 from onadata.apps.main.models import UserProfile
 
 
-class TestBase(TransactionTestCase):
+class TestBase(TestCase):
 
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
@@ -36,6 +37,7 @@ class TestBase(TransactionTestCase):
         self._create_user_and_login()
         self.base_url = 'http://testserver'
         self.factory = APIRequestFactory()
+        self._add_permissions_to_user(AnonymousUser())
 
     def tearDown(self):
         # clear mongo db after each test
@@ -44,9 +46,21 @@ class TestBase(TransactionTestCase):
     def _fixture_path(self, *args):
         return os.path.join(os.path.dirname(__file__), 'fixtures', *args)
 
+    def _add_permissions_to_user(self, user, save=True):
+        # Gives `user` unrestricted model-level access to everything listed in
+        # `auth_permission`.  Without this, actions
+        # on individual instances are immediately denied and object-level permissions
+        # are never considered.
+        if user.is_anonymous():
+            user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
+        user.user_permissions = Permission.objects.all()
+        if save:
+            user.save()
+
     def _create_user(self, username, password):
         user, created = User.objects.get_or_create(username=username)
         user.set_password(password)
+        self._add_permissions_to_user(user, save=False)
         user.save()
 
         return user
@@ -77,6 +91,7 @@ class TestBase(TransactionTestCase):
     def _publish_xls_file(self, path):
         if not path.startswith('/%s/' % self.user.username):
             path = os.path.join(self.this_directory, path)
+
         with open(path) as xls_file:
             post_data = {'xls_file': xls_file}
             return self.client.post('/%s/' % self.user.username, post_data)
@@ -174,7 +189,6 @@ class TestBase(TransactionTestCase):
 
             url_prefix = '%s/' % username if username else ''
             url = '/%ssubmission' % url_prefix
-
             request = self.factory.post(url, post_data)
             request.user = authenticate(username=auth.username,
                                         password=auth.password)
@@ -215,7 +229,8 @@ class TestBase(TransactionTestCase):
 
     def _make_submissions(self, username=None, add_uuid=False,
                           should_store=True):
-        """Make test fixture submissions to current xform.
+        """
+        Make test fixture submissions to current xform.
 
         :param username: submit under this username, default None.
         :param add_uuid: add UUID to submission, default False.
@@ -230,7 +245,7 @@ class TestBase(TransactionTestCase):
         for path in paths:
             self._make_submission(path, username, add_uuid)
 
-        post_count = pre_count + len(self.surveys) if should_store\
+        post_count = pre_count + len(self.surveys) if should_store \
             else pre_count
         self.assertEqual(Instance.objects.count(), post_count)
         self.assertEqual(self.xform.instances.count(), post_count)
@@ -253,7 +268,7 @@ class TestBase(TransactionTestCase):
     def _set_auth_headers(self, username, password):
         return {
             'HTTP_AUTHORIZATION':
-            'Basic ' + base64.b64encode('%s:%s' % (username, password)),
+                'Basic ' + base64.b64encode('%s:%s' % (username, password)),
         }
 
     def _get_authenticated_client(
@@ -267,7 +282,7 @@ class TestBase(TransactionTestCase):
         return client
 
     def _get_response_content(self, response):
-        contents = u''
+        contents = ''
         if response.streaming:
             actual_content = StringIO()
             for content in response.streaming_content:

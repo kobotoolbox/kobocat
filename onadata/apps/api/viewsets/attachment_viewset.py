@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.http import Http404
 from django.utils.translation import ugettext as _
 from rest_framework import renderers

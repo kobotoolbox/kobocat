@@ -1,4 +1,2 @@
-from onadata.apps.api.models.organization_profile import OrganizationProfile  # flake8: noqa
-from onadata.apps.api.models.project import Project
-from onadata.apps.api.models.project_xform import ProjectXForm
-from onadata.apps.api.models.team import Team
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import

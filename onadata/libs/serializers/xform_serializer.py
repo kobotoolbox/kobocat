@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -13,10 +15,7 @@ from onadata.libs.utils.decorators import check_obj
 class XFormSerializer(serializers.HyperlinkedModelSerializer):
     formid = serializers.ReadOnlyField(source='id')
     metadata = serializers.SerializerMethodField('get_xform_metadata')
-    owner = serializers.HyperlinkedRelatedField(view_name='user-detail',
-                                                source='user',
-                                                lookup_field='username',
-                                                queryset=User.objects.all())
+    owner = serializers.ReadOnlyField(source='user.username')
     public = BooleanField(source='shared')
     public_data = BooleanField(source='shared_data')
     require_auth = BooleanField()
@@ -31,24 +30,26 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
 
     @check_obj
     def get_hash(self, obj):
-        return u"md5:%s" % obj.hash
+        return "md5:%s" % obj.hash
 
-    # Tests are expecting this "public" to be passed only "True" or "False"
+    # Tests are expecting this `public` to be passed only "True" or "False"
     # and as a string. I don't know how it worked pre-migrations to django 1.8
-    # but now it must be implemented manually
+    # but now it must be implemented manually.
+    # As of 2020-03-16, does not seem to be true anymore. `shared` is a boolean
     def validate(self, attrs):
         shared = attrs.get('shared')
-        if shared not in (None, 'True', 'False'):
-            msg = "'%s' value must be either True or False." % shared
-            raise serializers.ValidationError({'shared': msg})
-        attrs['shared'] = shared == 'True'
+        if shared not in (None, True, False, 'True', 'False'):
+            raise serializers.ValidationError({
+                'shared': "'{}' value must be either True or False.".format(shared)
+            })
+        attrs['shared'] = shared is True or shared == 'True'
         return attrs
 
     class Meta:
         model = XForm
         read_only_fields = (
             'json', 'xml', 'date_created', 'date_modified', 'encrypted',
-            'bamboo_dataset', 'last_submission_time')
+            'last_submission_time')
         exclude = ('json', 'xml', 'xls', 'user',
                    'has_start_time', 'shared', 'shared_data')
 
@@ -86,7 +87,7 @@ class XFormListSerializer(serializers.Serializer):
 
     @check_obj
     def get_hash(self, obj):
-        return u"md5:%s" % obj.hash
+        return "md5:%s" % obj.hash
 
     @check_obj
     def get_url(self, obj):
@@ -121,4 +122,4 @@ class XFormManifestSerializer(serializers.Serializer):
 
     @check_obj
     def get_hash(self, obj):
-        return u"%s" % (obj.file_hash or 'md5:')
+        return "%s" % (obj.file_hash or 'md5:')

@@ -1,6 +1,9 @@
-import os
-import glob
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
+import os
+
+from django.core.files.storage import get_storage_class
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
@@ -8,16 +11,11 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.views import bulksubmission
+from onadata.libs.utils.storage import delete_user_storage
 
 CUR_PATH = os.path.abspath(__file__)
 CUR_DIR = os.path.dirname(CUR_PATH)
 DB_FIXTURES_PATH = os.path.join(CUR_DIR, 'data_from_sdcard')
-
-
-def images_count(username="bob"):
-    images = glob.glob(
-        os.path.join(settings.MEDIA_ROOT, username, 'attachments', '*'))
-    return len(images)
 
 
 class TestImportingDatabase(TestBase):
@@ -29,15 +27,22 @@ class TestImportingDatabase(TestBase):
                 settings.ONADATA_DIR, "apps", "logger", "fixtures",
                 "test_forms", "tutorial.xls"))
 
+    def _images_count(self, instance):
+        placeholder_path = '{username}/attachments/{xform_uuid}/{instance_uuid}'
+        attachments_path = placeholder_path.format(
+            username=self.user.username,
+            xform_uuid=instance.xform.uuid,
+            instance_uuid=instance.uuid
+        )
+        storage = get_storage_class()()
+        _, images = storage.listdir(attachments_path)
+        return len(images)
+
     def tearDown(self):
         # delete everything we imported
-        Instance.objects.all().delete()  # ?
-        if settings.TESTING_MODE:
-            images = glob.glob(
-                os.path.join(settings.MEDIA_ROOT, self.user.username,
-                             'attachments', '*'))
-            for image in images:
-                os.remove(image)
+        Instance.objects.all().delete()
+        if self.user:
+            delete_user_storage(self.user.username)
 
     def test_importing_b1_and_b2(self):
         """
@@ -52,22 +57,26 @@ class TestImportingDatabase(TestBase):
         1 photo survey (duplicate, completed)
         1 simple survey (marked as complete)
         """
+        queryset = Instance.objects
         # import from sd card
-        initial_instance_count = Instance.objects.count()
-        initial_image_count = images_count()
+        initial_instances_count = queryset.count()
+        initial_images_count = 0
+        for instance in queryset.all():
+            initial_images_count += self._images_count(instance)
 
         import_instances_from_zip(os.path.join(
             DB_FIXTURES_PATH, "bulk_submission.zip"), self.user)
 
         instance_count = Instance.objects.count()
-        image_count = images_count()
+        images_count = 0
+        for instance in queryset.all():
+            images_count += self._images_count(instance)
         # Images are not duplicated
-        # TODO: Figure out how to get this test passing.
-        self.assertEqual(image_count, initial_image_count + 2)
+        self.assertEqual(images_count, initial_images_count + 2)
 
         # Instance count should have incremented
         # by 1 (or 2) based on the b1 & b2 data sets
-        self.assertEqual(instance_count, initial_instance_count + 2)
+        self.assertEqual(instance_count, initial_instances_count + 2)
 
     def test_badzipfile_import(self):
         total, success, errors = import_instances_from_zip(
@@ -75,7 +84,7 @@ class TestImportingDatabase(TestBase):
                 CUR_DIR, "Water_Translated_2011_03_10.xml"), self.user)
         self.assertEqual(total, 0)
         self.assertEqual(success, 0)
-        expected_errors = [u'File is not a zip file']
+        expected_errors = ['File is not a zip file']
         self.assertEqual(errors, expected_errors)
 
     def test_bulk_import_post(self):

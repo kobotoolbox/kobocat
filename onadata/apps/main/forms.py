@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import re
 import urllib2
 from urlparse import urlparse
@@ -192,8 +195,8 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
             None)
 
         if not response.is_valid:
-            raise forms.ValidationError(_(u"The Captcha is invalid. "
-                                          u"Please, try again."))
+            raise forms.ValidationError(_("The Captcha is invalid. "
+                                          "Please, try again."))
         return cleaned_data
 
     # This code use to be in clean_username. Now clean_username is just
@@ -206,33 +209,33 @@ class RegistrationFormUserProfile(RegistrationFormUniqueEmail,
         username = username.lower()
         if username in cls._reserved_usernames:
             raise forms.ValidationError(
-                _(u'%s is a reserved name, please choose another') % username)
+                _('%s is a reserved name, please choose another') % username)
         elif not cls.legal_usernames_re.search(username):
             raise forms.ValidationError(
-                _(u'username may only contain alpha-numeric characters and '
-                  u'underscores'))
+                _('username may only contain alpha-numeric characters and '
+                  'underscores'))
         try:
             User.objects.get(username=username)
         except User.DoesNotExist:
             return username
-        raise forms.ValidationError(_(u'%s already exists') % username)
+        raise forms.ValidationError(_('%s already exists') % username)
 
     def clean_username(self):
         return self.validate_username(self.cleaned_data['username'])
 
 
 class SourceForm(forms.Form):
-    source = forms.FileField(label=ugettext_lazy(u"Source document"),
+    source = forms.FileField(label=ugettext_lazy("Source document"),
                              required=True)
 
 
 class SupportDocForm(forms.Form):
-    doc = forms.FileField(label=ugettext_lazy(u"Supporting document"),
+    doc = forms.FileField(label=ugettext_lazy("Supporting document"),
                           required=True)
 
 
 class MediaForm(forms.Form):
-    media = forms.FileField(label=ugettext_lazy(u"Media upload"),
+    media = forms.FileField(label=ugettext_lazy("Media upload"),
                             required=True)
 
     def clean_media(self):
@@ -242,18 +245,9 @@ class MediaForm(forms.Form):
                                         allowed .png .jpg .mp3 .3gp .wav')
 
 
-class MapboxLayerForm(forms.Form):
-    map_name = forms.CharField(widget=forms.TextInput(), required=True,
-                               max_length=255)
-    attribution = forms.CharField(widget=forms.TextInput(), required=False,
-                                  max_length=255)
-    link = forms.URLField(label=ugettext_lazy(u'JSONP url'),
-                          required=True)
-
-
 class QuickConverterFile(forms.Form):
     xls_file = forms.FileField(
-        label=ugettext_lazy(u'XLS File'), required=False)
+        label=ugettext_lazy('XLS File'), required=False)
 
 
 class QuickConverterURL(forms.Form):
@@ -309,7 +303,7 @@ class QuickConverter(QuickConverterFile, QuickConverterURL,
 
             if not cleaned_xls_file:
                 cleaned_url = self.cleaned_data['xls_url']
-                if cleaned_url.strip() == u'':
+                if cleaned_url.strip() == '':
                     cleaned_url = self.cleaned_data['dropbox_xls_url']
                 cleaned_xls_file = urlparse(cleaned_url)
                 cleaned_xls_file = \
@@ -333,20 +327,15 @@ class ActivateSMSSupportFom(forms.Form):
                                                          (True, 'Yes')),
                                                 widget=forms.Select,
                                                 label=ugettext_lazy(
-                                                    u"Enable SMS Support"))
+                                                    "Enable SMS Support"))
     sms_id_string = forms.CharField(max_length=50, required=True,
-                                    label=ugettext_lazy(u"SMS Keyword"))
+                                    label=ugettext_lazy("SMS Keyword"))
 
     def clean_sms_id_string(self):
         sms_id_string = self.cleaned_data.get('sms_id_string', '').strip()
 
         if not re.match(r'^[a-z0-9\_\-]+$', sms_id_string):
-            raise forms.ValidationError(u"id_string can only contain alphanum"
-                                        u" characters")
+            raise forms.ValidationError("id_string can only contain alphanum"
+                                        " characters")
 
         return sms_id_string
-
-
-class ExternalExportForm(forms.Form):
-    template_name = forms.CharField(label='Template Name', max_length=20)
-    template_token = forms.URLField(label='Template URL', max_length=100)

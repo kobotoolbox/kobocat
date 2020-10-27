@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import unittest
 
@@ -8,7 +10,7 @@ from onadata.apps.logger.models import XForm
 from onadata.apps.viewer.views import map_view
 from onadata.apps.main.views import set_perm, show, edit, api, profile
 from onadata.apps.main.models import MetaData
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormPermissions(TestBase):
@@ -109,7 +111,7 @@ class TestFormPermissions(TestBase):
         response = alice.get(self.show_url)
         self.assertEqual(response.status_code, 302)
         response = alice.get(self.show_normal_url)
-        self.assertContains(response, 'Submissions:')
+        self.assertContains(response, 'View data in table')
 
     def test_add_edit_to_user(self):
         user = self._create_user('alice', 'alice')

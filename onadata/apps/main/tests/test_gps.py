@@ -1,9 +1,11 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 import unittest
 
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestGPS(TestBase):

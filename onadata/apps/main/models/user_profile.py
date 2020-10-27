@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -36,7 +39,7 @@ class UserProfile(models.Model):
     metadata = JSONField(default={}, blank=True)
 
     def __unicode__(self):
-        return u'%s[%s]' % (self.name, self.user.username)
+        return '%s[%s]' % (self.name, self.user.username)
 
     @property
     def gravatar(self):
