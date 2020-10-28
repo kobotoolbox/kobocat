@@ -22,11 +22,27 @@ addons:
       - libpcre3
       - libpcre3-dev
       - libpq-dev
+      - libgnutls28-dev
+      - binutils
+      - default-jre-headless
+      - gdal-bin
+      - libpcre3-dev
+      - libpq-dev
+      - libproj-dev
+      - libxml2
+      - libxml2-dev
+      - libxslt1-dev
+      - libjpeg-dev
+      - libffi-dev
+      - postgresql-client
+      - postgresql-9.5-postgis-2.5
+      - libsqlite3-mod-spatialite
 cache:
   directories:
     - $HOME/.pip-download-cache
 before_script:
   - psql -c 'create database travis_ci_test;' -U postgres
+  - psql -U postgres -c "create extension postgis"
 script:
   - pytest -vv
 env:
@@ -42,4 +58,4 @@ env:
        TRAVIS_NODE_VERSION="8"
 install:
   - pip install --upgrade 'pip>=10,<11'
-  - pip install -r requirements/dev.pip
+  - pip install -r requirements/travis.pip

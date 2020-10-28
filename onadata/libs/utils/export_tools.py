@@ -8,7 +8,6 @@ import os
 import re
 import six
 import tempfile
-from urlparse import urlparse
 from zipfile import ZipFile
 
 from bson import json_util
@@ -24,10 +23,8 @@ from openpyxl.workbook import Workbook
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
 from savReaderWriter import SavWriter
-from json2xlsclient.client import Client
 
 from onadata.apps.logger.models import Attachment, Instance, XForm
-from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.viewer.models.export import Export
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.libs.utils.viewer_tools import create_attachments_zipfile
