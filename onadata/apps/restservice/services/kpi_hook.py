@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import logging
 import re
 import requests
@@ -9,8 +11,8 @@ from onadata.apps.logger.models import Instance
 
 
 class ServiceDefinition(RestServiceInterface):
-    id = u"kpi_hook"
-    verbose_name = u"KPI Hook POST"
+    id = "kpi_hook"
+    verbose_name = "KPI Hook POST"
 
     def send(self, endpoint, data):
 

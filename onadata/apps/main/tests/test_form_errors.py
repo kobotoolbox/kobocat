@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 from unittest import skip
 
@@ -6,7 +8,7 @@ from django.core.files.storage import get_storage_class
 
 from onadata.apps.main.views import show
 from onadata.apps.logger.models import XForm
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormErrors(TestBase):

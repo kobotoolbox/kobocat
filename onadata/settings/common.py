@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # vim: set fileencoding=utf-8
 # this system uses structured settings as defined in
 # http://www.slideshare.net/jacobian/the-best-and-worst-of-django
@@ -15,6 +17,7 @@ import os
 import subprocess  # nopep8, used by included files
 import sys  # nopep8, used by included files
 
+from django.conf.global_settings import PASSWORD_HASHERS
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
@@ -35,7 +38,6 @@ MANAGERS = ADMINS
 
 
 DEFAULT_FROM_EMAIL = 'noreply@ona.io'
-SHARE_PROJECT_SUBJECT = '{} Ona Project has been shared with you.'
 DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 
 # Local time zone for this installation. Choices can be found here:
@@ -95,16 +97,16 @@ ENKETO_API_ENDPOINT_INSTANCE = '/instance'
 ENKETO_API_ENDPOINT_INSTANCE_IFRAME = '/instance/iframe'
 # Computed settings.
 if ENKETO_VERSION == 'express':
-    ENKETO_API_ROOT= '/api/v2'
-    ENKETO_OFFLINE_SURVEYS= os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
-    ENKETO_API_ENDPOINT_PREVIEW= '/preview'
-    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
+    ENKETO_API_ROOT = '/api/v2'
+    ENKETO_OFFLINE_SURVEYS = os.environ.get('ENKETO_OFFLINE_SURVEYS', 'True').lower() == 'true'
+    ENKETO_API_ENDPOINT_PREVIEW = '/preview'
+    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_OFFLINE_SURVEYS if ENKETO_OFFLINE_SURVEYS \
             else ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 else:
     ENKETO_API_ROOT= '/api_v1'
     ENKETO_API_ENDPOINT_PREVIEW = '/webform/preview'
     ENKETO_OFFLINE_SURVEYS = False
-    ENKETO_API_ENDPOINT_SURVEYS= ENKETO_API_ENDPOINT_ONLINE_SURVEYS
+    ENKETO_API_ENDPOINT_SURVEYS = ENKETO_API_ENDPOINT_ONLINE_SURVEYS
 ENKETO_API_SURVEY_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_SURVEYS
 ENKETO_API_INSTANCE_PATH = ENKETO_API_ROOT + ENKETO_API_ENDPOINT_INSTANCE
 ENKETO_PREVIEW_URL = ENKETO_URL + ENKETO_API_ENDPOINT_PREVIEW
@@ -118,15 +120,6 @@ KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 # `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.
 # All internal communications between containers must be HTTP only.
 ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
-
-# These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
-# See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
-KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
-KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
 
 # Default value for the `UserProfile.require_auth` attribute. Even though it's
 # set in kc_environ, include it here as well to support legacy installations
@@ -241,7 +234,6 @@ INSTALLED_APPS = (
     'onadata.apps.restservice',
     'onadata.apps.api',
     'guardian',
-    'onadata.apps.stats',
     'onadata.apps.sms_support',
     'onadata.libs',
     'onadata.apps.survey_report',
@@ -495,11 +487,21 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
     'image/png',
     'image/svg+xml',
-    'audio/mpeg',
     'video/3gpp',
-    'audio/wav',
-    'audio/x-m4a',
+    'video/mp4',
+    'video/quicktime',
+    'video/ogg',
+    'video/webm',
+    'audio/aac',
+    'audio/aacp',
+    'audio/flac',
     'audio/mp3',
+    'audio/mp4',
+    'audio/mpeg',
+    'audio/ogg',
+    'audio/wav',
+    'audio/webm',
+    'audio/x-m4a',
     'text/csv',
     'application/zip'
 ]
@@ -534,7 +536,6 @@ SOUTH_MIGRATION_MODULES = {
     'onadata.apps.restservice': 'onadata.apps.restservice.south_migrations',
     'onadata.apps.api': 'onadata.apps.api.south_migrations',
     'onadata.apps.main': 'onadata.apps.main.south_migrations',
-    'onadata.apps.stats': 'onadata.apps.stats.south_migrations',
     'onadata.apps.logger': 'onadata.apps.logger.south_migrations',
     'onadata.apps.viewer': 'onadata.apps.viewer.south_migrations',
 }
@@ -574,3 +575,23 @@ CSRF_COOKIE_HTTPONLY = True
 if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+# Limit sessions to 1 week (the default is 2 weeks)
+SESSION_COOKIE_AGE = 604800
+
+
+# KPI running Django 2.2 inserts password hashes into our database, calculated
+# using 150,000 iterations. Django 1.8 uses only 20,000 iterations by default;
+# increase this to match 2.2. See
+# https://github.com/kobotoolbox/kobocat/issues/612
+PASSWORD_HASHERS = (
+    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations',
+) + PASSWORD_HASHERS
+
+
+# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
+# This variable is available only in Django 1.10+. Only there for next upgrade
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760

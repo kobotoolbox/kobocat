@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from datetime import datetime
 import datetime as datetime_module
 import json
@@ -18,7 +21,6 @@ from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden,
                          HttpResponseRedirect,
-                         HttpResponseServerError,
                          StreamingHttpResponse,
                          Http404,
                          )
@@ -32,15 +34,12 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django_digest import HttpDigestAuthenticator
-from pyxform import Survey
-from wsgiref.util import FileWrapper
 
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.models.ziggy_instance import ZiggyInstance
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.viewer_tools import enketo_url
 from onadata.libs.utils.viewer_tools import image_urls_dict
@@ -105,7 +104,7 @@ def _submission_response(request, instance):
     data['message'] = _("Successful submission.")
     data['formid'] = instance.xform.id_string
     data['encrypted'] = instance.xform.encrypted
-    data['instanceID'] = u'uuid:%s' % instance.uuid
+    data['instanceID'] = 'uuid:%s' % instance.uuid
     data['submissionDate'] = instance.date_created.isoformat()
     data['markedAsCompleteDate'] = instance.date_modified.isoformat()
 
@@ -128,13 +127,13 @@ def bulksubmission(request, username):
     try:
         temp_postfile = request.FILES.pop("zip_submission_file", [])
     except IOError:
-        return HttpResponseBadRequest(_(u"There was a problem receiving your "
-                                        u"ODK submission. [Error: IO Error "
-                                        u"reading data]"))
+        return HttpResponseBadRequest(_("There was a problem receiving your "
+                                        "ODK submission. [Error: IO Error "
+                                        "reading data]"))
     if len(temp_postfile) != 1:
-        return HttpResponseBadRequest(_(u"There was a problem receiving your"
-                                        u" ODK submission. [Error: multiple "
-                                        u"submission files (?)]"))
+        return HttpResponseBadRequest(_("There was a problem receiving your"
+                                        " ODK submission. [Error: multiple "
+                                        "submission files (?)]"))
 
     postfile = temp_postfile[0]
     tempdir = tempfile.gettempdir()
@@ -154,13 +153,13 @@ def bulksubmission(request, username):
         # TODO: log this Exception somewhere
         pass
     json_msg = {
-        'message': _(u"Submission complete. Out of %(total)d "
-                     u"survey instances, %(success)d were imported, "
-                     u"(%(rejected)d were rejected as duplicates, "
-                     u"missing forms, etc.)") %
+        'message': _("Submission complete. Out of %(total)d "
+                     "survey instances, %(success)d were imported, "
+                     "(%(rejected)d were rejected as duplicates, "
+                     "missing forms, etc.)") %
         {'total': total_count, 'success': success_count,
          'rejected': total_count - success_count},
-        'errors': u"%d %s" % (len(errors), errors)
+        'errors': "%d %s" % (len(errors), errors)
     }
     audit = {
         "bulk_submission_log": json_msg
@@ -287,7 +286,7 @@ def submission(request, username=None):
         xml_file_list = request.FILES.pop("xml_submission_file", [])
         if len(xml_file_list) != 1:
             return OpenRosaResponseBadRequest(
-                _(u"There should be a single XML submission file.")
+                _("There should be a single XML submission file.")
             )
         # save this XML file and media files as attachments
         media_files = request.FILES.values()
@@ -302,7 +301,7 @@ def submission(request, username=None):
             return error
         elif instance is None:
             return OpenRosaResponseBadRequest(
-                _(u"Unable to create submission."))
+                _("Unable to create submission."))
 
         audit = {
             "xform": instance.xform.id_string
@@ -329,7 +328,7 @@ def submission(request, username=None):
     except IOError as e:
         if _bad_request(e):
             return OpenRosaResponseBadRequest(
-                _(u"File transfer interruption."))
+                _("File transfer interruption."))
         else:
             raise
     finally:
@@ -412,8 +411,8 @@ def download_xlsform(request, username, id_string):
 
     else:
         messages.add_message(request, messages.WARNING,
-                             _(u'No XLS file for your form '
-                               u'<strong>%(id)s</strong>')
+                             _('No XLS file for your form '
+                               '<strong>%(id)s</strong>')
                              % {'id': id_string})
 
         return HttpResponseRedirect("/%s" % username)
@@ -428,7 +427,7 @@ def download_jsonform(request, username, id_string):
         return response
     helper_auth_helper(request)
     if not has_permission(xform, owner, request, xform.shared):
-        response = HttpResponseForbidden(_(u'Not shared.'))
+        response = HttpResponseForbidden(_('Not shared.'))
         add_cors_headers(response)
         return response
     response = response_with_mimetype_and_name('json', id_string,
@@ -484,9 +483,9 @@ def enter_data(request, username, id_string):
     xform = get_object_or_404(XForm, user__username__iexact=username,
                               id_string__exact=id_string)
     if not has_edit_permission(xform, owner, request):
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
 
-    form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
+    form_url = _get_form_url(username)
 
     try:
         url = enketo_url(form_url, xform.id_string)
@@ -505,7 +504,7 @@ def enter_data(request, username, id_string):
         data['form_view'] = True
         data['message'] = {
             'type': 'alert-error',
-            'text': u"Enketo error, reason: %s" % e}
+            'text': "Enketo error, reason: %s" % e}
         messages.add_message(
             request, messages.WARNING,
             _("Enketo error: enketo replied %s") % e, fail_silently=True)
@@ -525,7 +524,7 @@ def edit_data(request, username, id_string, data_id):
         Instance, pk=data_id, xform=xform)
     instance_attachments = image_urls_dict(instance)
     if not has_edit_permission(xform, owner, request):
-        return HttpResponseForbidden(_(u'Not shared.'))
+        return HttpResponseForbidden(_('Not shared.'))
     if not hasattr(settings, 'ENKETO_URL'):
         return HttpResponseRedirect(reverse(
             'onadata.apps.main.views.show',
@@ -541,7 +540,7 @@ def edit_data(request, username, id_string, data_id):
                 'username': username,
                 'id_string': id_string}
         ) + "#/" + str(instance.id))
-    form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
+    form_url = _get_form_url(username)
 
     try:
         url = enketo_url(
@@ -552,7 +551,7 @@ def edit_data(request, username, id_string, data_id):
     except Exception as e:
         context.message = {
             'type': 'alert-error',
-            'text': u"Enketo error, reason: %s" % e}
+            'text': "Enketo error, reason: %s" % e}
         messages.add_message(
             request, messages.WARNING,
             _("Enketo error: enketo replied %s") % e, fail_silently=True)
@@ -632,7 +631,7 @@ def view_download_submission(request, username):
         return HttpResponseForbidden('Not shared.')
     submission_xml_root_node = instance.get_root_node()
     submission_xml_root_node.setAttribute(
-        'instanceID', u'uuid:%s' % instance.uuid)
+        'instanceID', 'uuid:%s' % instance.uuid)
     submission_xml_root_node.setAttribute(
         'submissionDate', instance.date_created.isoformat()
     )
@@ -666,7 +665,7 @@ def form_upload(request, username):
         return authenticator.build_challenge_response()
     if form_user != request.user:
         return HttpResponseForbidden(
-            _(u"Not allowed to upload form[s] to %(user)s account." %
+            _("Not allowed to upload form[s] to %(user)s account." %
               {'user': form_user}))
     if request.method == 'HEAD':
         response = OpenRosaResponse(status=204)
@@ -674,13 +673,13 @@ def form_upload(request, username):
             request.get_full_path(), '/%s/formUpload' % form_user.username)
         return response
     xform_def = request.FILES.get('form_def_file', None)
-    content = u""
+    content = ""
     if isinstance(xform_def, File):
         do_form_upload = DoXmlFormUpload(xform_def, form_user)
         dd = publish_form(do_form_upload.publish)
         status = 201
         if isinstance(dd, XForm):
-            content = _(u"%s successfully published." % dd.id_string)
+            content = _("%s successfully published." % dd.id_string)
         else:
             content = dd['text']
             if isinstance(content, Exception):
@@ -689,47 +688,6 @@ def form_upload(request, username):
             else:
                 status = 400
     return OpenRosaResponse(content, status=status)
-
-
-@csrf_exempt
-def ziggy_submissions(request, username):
-    """
-    Accepts ziggy JSON submissions.
-        - stored in mongo, ziggy_instances
-        - ZiggyInstance Django Model
-    Copy form_instance - to create actual Instances for a specific form?
-    """
-    data = {'message': _(u"Invalid request!")}
-    status = 400
-    form_user = get_object_or_404(User, username__iexact=username)
-    if request.method == 'POST':
-        json_post = request.body
-        if json_post:
-            # save submission
-            # i.e pick entity_id, instance_id, server_version, client_version?
-            # reporter_id
-            records = ZiggyInstance.create_ziggy_instances(
-                form_user, json_post)
-
-            data = {'status': 'success',
-                    'message': _(u"Successfully processed %(records)s records"
-                                 % {'records': records})}
-            status = 201
-    else:
-        # get clientVersion and reportId
-        reporter_id = request.GET.get('reporter-id', None)
-        client_version = request.GET.get('timestamp', 0)
-        if reporter_id is not None and client_version is not None:
-            try:
-                cursor = ZiggyInstance.get_current_list(
-                    reporter_id, client_version)
-            except ValueError as e:
-                status = 400
-                data = {'message': '%s' % e}
-            else:
-                status = 200
-                data = [record for record in cursor]
-    return HttpResponse(json.dumps(data), status=status)
 
 
 @user_passes_test(lambda u: u.is_superuser)

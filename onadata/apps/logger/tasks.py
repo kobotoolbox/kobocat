@@ -1,8 +1,23 @@
-### ISSUE 242 TEMPORARY FIX ###
-# See https://github.com/kobotoolbox/kobocat/issues/242
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
+import csv
+import datetime
+import zipfile
+from collections import defaultdict
+from io import BytesIO
 
 from celery import shared_task
+from dateutil import relativedelta
+from django.contrib.auth.models import User
+from django.core.files.storage import get_storage_class
 from django.core.management import call_command
+
+from .models import Instance, XForm
+
+# ## ISSUE 242 TEMPORARY FIX ##
+# See https://github.com/kobotoolbox/kobocat/issues/242
+
 
 @shared_task(soft_time_limit=600, time_limit=900)
 def fix_root_node_names(**kwargs):
@@ -11,19 +26,8 @@ def fix_root_node_names(**kwargs):
         **kwargs
     )
 
-###### END ISSUE 242 FIX ######
+# #### END ISSUE 242 FIX ######
 
-import csv
-import zipfile
-import datetime
-from io import BytesIO
-from dateutil import relativedelta
-from collections import defaultdict
-
-from django.contrib.auth.models import User
-from django.core.files.storage import get_storage_class
-
-from .models import Instance, XForm
 
 @shared_task
 def generate_stats_zip(output_filename):

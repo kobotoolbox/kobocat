@@ -1,10 +1,12 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.core.urlresolvers import reverse
 
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.views import edit
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.views import delete_xform
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormEdit(TestBase):

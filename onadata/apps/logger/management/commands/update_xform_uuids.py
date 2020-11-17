@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 coding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import csv
 from optparse import make_option
@@ -36,15 +38,15 @@ class Command(BaseCommand):
                         uuid = line[2]
                         update_xform_uuid(username, id_string, uuid)
                     except IndexError:
-                        print "line %d is in an invalid format" % (i + 1)
+                        print("line %d is in an invalid format" % (i + 1))
                     except XForm.DoesNotExist:
-                        print "XForm with username: %s and id string: %s does"\
-                              " not exist" % (username, id_string, uuid)
+                        print("XForm with username: %s and id string: %s does"
+                              " not exist" % (username, id_string, uuid))
                     except DuplicateUUIDError:
-                        print "An xform with uuid: %s already exists" % uuid
+                        print("An xform with uuid: %s already exists" % uuid)
                     else:
                         i += 1
-                        print "Updated %d rows" % i
+                        print("Updated %d rows" % i)
         except IOError:
             raise CommandError(
                 "file %s could not be open" % kwargs.get('file'))

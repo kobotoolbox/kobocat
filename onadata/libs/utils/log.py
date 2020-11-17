@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import logging
 from datetime import datetime
 from onadata.libs.utils.viewer_tools import get_client_ip
@@ -48,8 +50,6 @@ Actions = Enum(
     SUBMISSION_DELETED="submission-deleted",
     SUBMISSION_ACCESSED="submission-accessed",
     SUBMISSION_EDIT_REQUESTED="submission-edit-requested",
-    BAMBOO_LINK_CREATED="bamboo-link-created",
-    BAMBOO_LINK_DELETED="bamboo-link-deleted",
     SMS_SUPPORT_ACTIVATED="sms-support-activated",
     SMS_SUPPORT_DEACTIVATED="sms-support-deactivated",
 )

@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from registration.backends.default.views import RegistrationView
 
 from onadata.apps.main.models import UserProfile

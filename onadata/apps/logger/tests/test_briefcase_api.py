@@ -1,5 +1,7 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
-import shutil
 import codecs
 
 from django.core.urlresolvers import reverse
@@ -15,6 +17,7 @@ from onadata.apps.logger.views import form_upload
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.views import submission
+from onadata.libs.utils.storage import delete_user_storage
 
 NUM_INSTANCES = 4
 storage = get_storage_class()()
@@ -98,15 +101,15 @@ class TestBriefcaseAPI(TestBase):
                     '{{resumptionCursor}}', '%s' % last_index)
             self.assertEqual(response.content, expected_submission_list)
 
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': uuid}
         params = {'formId': formId}
         response = self.client.get(self._download_submission_url, data=params)
         self.assertTrue(response.status_code, 404)
 
-    def test_view_submission_list_OtherUser(self):
+    def test_view_submission_list_other_user(self):
         self._publish_xml_form()
         self._make_submissions()
         params = {'formId': self.xform.id_string}
@@ -173,14 +176,14 @@ class TestBriefcaseAPI(TestBase):
                 self.assertEqual(response.content, expected_submission_list)
             last_index += 2
 
-    def test_view_downloadSubmission(self):
+    def test_view_download_submission(self):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         instance = Instance.objects.get(uuid=instanceId)
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
@@ -196,18 +199,20 @@ class TestBriefcaseAPI(TestBase):
             'view', 'downloadSubmission.xml')
         with codecs.open(download_submission_path, encoding='utf-8') as f:
             text = f.read()
-            text = text.replace(u'{{submissionDate}}',
+            text = text.replace('{{submissionDate}}',
                                 instance.date_created.isoformat())
+            text = text.replace('{{xform_uuid}}',
+                                self.xform.uuid)
             self.assertContains(response, instanceId, status_code=200)
             self.assertMultiLineEqual(response.content, text)
 
-    def test_view_downloadSubmission_OtherUser(self):
+    def test_view_download_submission_other_user(self):
         self._publish_xml_form()
         self.maxDiff = None
         self._submit_transport_instance_w_attachment()
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
-        formId = u'%(formId)s[@version=null and @uiVersion=null]/' \
-                 u'%(formId)s[@key=uuid:%(instanceId)s]' % {
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
+        formId = '%(formId)s[@version=null and @uiVersion=null]/' \
+                 '%(formId)s[@key=uuid:%(instanceId)s]' % {
                      'formId': self.xform.id_string,
                      'instanceId': instanceId}
         params = {'formId': formId}
@@ -221,7 +226,7 @@ class TestBriefcaseAPI(TestBase):
         response = view_download_submission(request, self.user.username)
         self.assertEqual(response.status_code, 403)
 
-    def test_publish_xml_form_OtherUser(self):
+    def test_publish_xml_form_other_user(self):
         # deno cannot publish form to bob's account
         self._create_user('deno', 'deno')
         count = XForm.objects.count()
@@ -281,13 +286,13 @@ class TestBriefcaseAPI(TestBase):
             response = form_upload(request, username=self.user.username)
             self.assertContains(
                 response,
-                u'Form with this id or SMS-keyword already exists',
+                'Form with this id or SMS-keyword already exists',
                 status_code=400)
 
     def test_submission_with_instance_id_on_root_node(self):
         self._publish_xml_form()
-        message = u"Successful submission."
-        instanceId = u'5b2cc313-fc09-437e-8149-fcd32f695d41'
+        message = "Successful submission."
+        instanceId = '5b2cc313-fc09-437e-8149-fcd32f695d41'
         self.assertRaises(
             Instance.DoesNotExist, Instance.objects.get, uuid=instanceId)
         submission_path = os.path.join(
@@ -308,5 +313,4 @@ class TestBriefcaseAPI(TestBase):
     def tearDown(self):
         # remove media files
         if self.user:
-            if storage.exists(self.user.username):
-                shutil.rmtree(storage.path(self.user.username))
+            delete_user_storage(self.user.username)

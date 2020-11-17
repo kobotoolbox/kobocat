@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import unittest
 
@@ -93,37 +95,6 @@ class TestExportList(TestBase):
         url = reverse(export_list, kwargs=kwargs)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-
-    def test_external_export_list(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.EXTERNAL_EXPORT}
-        server = 'http://localhost:8080/xls/23fa4c38c0054748a984ffd89021a295'
-        data_value = 'template 1 |{0}'.format(server)
-        meta = MetaData.external_export(self.xform, data_value)
-
-        custom_params = {
-            'meta': meta.id,
-        }
-        url = reverse(export_list, kwargs=kwargs)
-        count = len(Export.objects.all())
-        response = self.client.get(url, custom_params)
-        self.assertEqual(response.status_code, 200)
-        count1 = len(Export.objects.all())
-        self.assertEquals(count+1, count1)
-
-    def test_external_export_list_no_template(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.EXTERNAL_EXPORT}
-
-        url = reverse(export_list, kwargs=kwargs)
-        count = len(Export.objects.all())
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-        self.assertEquals(response.content, u'No XLS Template set.')
-        count1 = len(Export.objects.all())
-        self.assertEquals(count, count1)
 
 
 class TestDataExportURL(TestBase):

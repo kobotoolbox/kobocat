@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from datetime import datetime
 
 from django.conf import settings
@@ -7,7 +9,7 @@ from onadata.apps.main.views import delete_data
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.logger.models.instance import Instance
 from onadata.libs.utils import common_tags
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormAPIDelete(TestBase):
@@ -85,7 +87,7 @@ class TestFormAPIDelete(TestBase):
         query = '{"_id": %s}' % instance.id
         self.mongo_args.update({"query": query})
         # check that query_mongo will not return the deleted record
-        after = ParsedInstance.query_mongo(**self.mongo_args)
+        after = list(ParsedInstance.query_mongo(**self.mongo_args))
         self.assertEqual(len(after), count - 1)
 
     def test_delete_updates_mongo(self):

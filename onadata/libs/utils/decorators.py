@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from functools import wraps
 import urlparse
 
@@ -5,7 +7,6 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.utils.decorators import available_attrs
 from django.conf import settings
 from django.http import HttpResponseRedirect
-from pymongo.cursor import Cursor
 
 from onadata.apps.logger.models import XForm
 
@@ -61,7 +62,8 @@ def apply_form_field_names(func):
             return record
 
         cursor = func(*args, **kwargs)
-        if isinstance(cursor, Cursor) and 'id_string' in kwargs and\
+        # Compare by class name instead of type because tests use MockMongo
+        if cursor.__class__.__name__ == 'Cursor' and 'id_string' in kwargs and \
                 'username' in kwargs:
             username = kwargs.get('username')
             id_string = kwargs.get('id_string')

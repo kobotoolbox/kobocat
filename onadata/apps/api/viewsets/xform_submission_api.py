@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import re
 import StringIO
 
@@ -5,8 +8,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext as _
-from django.utils.decorators import method_decorator
-from django.db import transaction
 
 from rest_framework import permissions
 from rest_framework import status
@@ -67,7 +68,7 @@ def create_instance_from_json(username, request):
 
     if submission is None:
         # return an error
-        return [_(u"No submission key provided."), None]
+        return [_("No submission key provided."), None]
 
     # convert lists in submission dict to joined strings
     submission_joined = dict_lists2strings(submission)
@@ -204,7 +205,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
 
     def error_response(self, error, is_json_request, request):
         if not error:
-            error_msg = _(u"Unable to create submission.")
+            error_msg = _("Unable to create submission.")
             status_code = status.HTTP_400_BAD_REQUEST
         elif isinstance(error, basestring):
             error_msg = error

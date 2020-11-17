@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 
 from onadata.apps.main.tests.test_base import TestBase

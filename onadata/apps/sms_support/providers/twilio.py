@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 """ Twilio SMS gateway
 
@@ -31,34 +31,34 @@ def autodoc(url_root, username, id_string):
                               kwargs={'username': username,
                                       'id_string': id_string,
                                       'service': 'twilio'})
-    doc = (u'<p>' +
-           _(u"%(service)s Instructions:")
-           % {'service': u'<a href="https://twilio.com">'
-                         u'Twilio\'s SMS Request</a>'}
-           + u'</p><ol><li>' +
-           _(u"Sign in to Twilio.com and go your Application.")
-           + u'</li><li>' +
-           _(u"Follow instructions to add one of the following URLs, "
-             u"selecting the HTTP POST method:")
-           + u'<br /><span class="sms_autodoc_example">%(urla)s'
-           + u'<br />%(urlb)s</span><br />'
-           + u'</li></ol><p>' +
-           _(u"That's it. Now Send an SMS Formhub submission to your Twilio"
-             u" phone number. It will create a submission on Formhub.")
-           + u'</p>') % {'urla': urla, 'urlb': urlb}
+    doc = ('<p>' +
+           _("%(service)s Instructions:")
+           % {'service': '<a href="https://twilio.com">'
+                         'Twilio\'s SMS Request</a>'}
+           + '</p><ol><li>' +
+           _("Sign in to Twilio.com and go your Application.")
+           + '</li><li>' +
+           _("Follow instructions to add one of the following URLs, "
+             "selecting the HTTP POST method:")
+           + '<br /><span class="sms_autodoc_example">%(urla)s'
+           + '<br />%(urlb)s</span><br />'
+           + '</li></ol><p>' +
+           _("That's it. Now Send an SMS Formhub submission to your Twilio"
+             " phone number. It will create a submission on Formhub.")
+           + '</p>') % {'urla': urla, 'urlb': urlb}
     return doc
 
 
 def get_response(data):
 
-    xml_head = u'<?xml version="1.0" encoding="UTF-8" ?>'
+    xml_head = '<?xml version="1.0" encoding="UTF-8" ?>'
     response_dict = {'Response': {}}
     message = data.get('text')
 
     if data.get('code') == SMS_API_ERROR:
         message = None
     elif data.get('code') != SMS_SUBMISSION_ACCEPTED:
-        message = _(u"[ERROR] %s") % message
+        message = _("[ERROR] %s") % message
 
     if message:
         messages = [message, ]
@@ -106,9 +106,9 @@ def process_message_for_twilio(username,
 
     if not sms_identity or not sms_text:
         return get_response({'code': SMS_API_ERROR,
-                             'text': _(u"`identity` and `message` are "
-                                       u"both required and must not be "
-                                       u"empty.")})
+                             'text': _("`identity` and `message` are "
+                                       "both required and must not be "
+                                       "empty.")})
 
     incomings = [(sms_identity, sms_text)]
     response = process_incoming_smses(username, incomings, id_string)[-1]

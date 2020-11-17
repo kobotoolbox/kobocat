@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test.client import RequestFactory

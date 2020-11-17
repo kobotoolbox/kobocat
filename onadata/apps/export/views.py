@@ -1,31 +1,26 @@
 # coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
+import uuid
+from datetime import datetime
+
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import render, get_object_or_404
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from formpack import FormPack
+from path import tempdir
+from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
+
+from onadata.libs.utils.user_auth import has_permission
+
 
 #################################################
 # THIS APP IS DEAD CODE AND SHOULD BE EXCISED   #
 # EVERY SINGLE ENDPOINT 500s EXCEPT export_menu #
 #################################################
-
-from __future__ import (unicode_literals, print_function, absolute_import,
-                        division)
-
-import uuid
-
-from datetime import datetime
-
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseForbidden
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-
-from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
-
-from path import tempdir
-
-from onadata.libs.utils.user_auth import has_permission
-
-from formpack import FormPack
 
 
 def readable_xform_required(func):
@@ -33,7 +28,7 @@ def readable_xform_required(func):
         owner = get_object_or_404(User, username=username)
         xform = get_object_or_404(owner.xforms, id_string=id_string)
         if not has_permission(xform, owner, request):
-            return HttpResponseForbidden(_(u'Not shared.'))
+            return HttpResponseForbidden(_('Not shared.'))
         return func(request, username, id_string)
     return _wrapper
 

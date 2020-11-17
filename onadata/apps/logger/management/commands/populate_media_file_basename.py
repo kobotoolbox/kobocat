@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 coding=utf-8
-from django.conf import settings
-from django.db import connection
-from django.db.models import Q, Func
-from django.db.models.functions import Substr
-from django.core.management.base import BaseCommand, CommandError
-from django.utils.translation import ugettext as _, ugettext_lazy
+# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from optparse import make_option
+
+from django.core.management.base import BaseCommand
+from django.db.models import Q, Func
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from onadata.apps.logger.models.attachment import Attachment
 

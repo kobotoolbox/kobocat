@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from pyxform import xls2json_backends
 import xlwt
 import re
@@ -11,7 +13,7 @@ def convert_csv_to_xls(csv_repr):
     # There should not be any blank lines in the "sheeted" CSV representation,
     # but often times there are. Strip them out before any further processing;
     # otherwise, `convert_csv_to_xls()` will raise an
-    # `invalid worksheet name u''` exception
+    # `invalid worksheet name ''` exception
     csv_repr = ''.join([
         line for line in csv_repr.splitlines(True) if line.strip().strip('"')
     ])

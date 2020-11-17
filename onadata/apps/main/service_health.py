@@ -1,4 +1,6 @@
-import requests
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import time
 
 from django.conf import settings
@@ -6,9 +8,12 @@ from django.http import HttpResponse
 
 from onadata.apps.logger.models import Instance
 
+
 def service_health(request):
-    ''' Return a HTTP 200 if some very basic runtime tests of the application
-    pass. Otherwise, return HTTP 500 '''
+    """
+    Return a HTTP 200 if some very basic runtime tests of the application
+    pass. Otherwise, return HTTP 500
+    """
     any_failure = False
 
     t0 = time.time()
@@ -32,9 +37,9 @@ def service_health(request):
     postgres_time = time.time() - t0
 
     output = (
-        u'{}\r\n\r\n'
-        u'Mongo: {} in {:.3} seconds\r\n'
-        u'Postgres: {} in {:.3} seconds\r\n'
+        '{}\r\n\r\n'
+        'Mongo: {} in {:.3} seconds\r\n'
+        'Postgres: {} in {:.3} seconds\r\n'
     ).format(
         'FAIL' if any_failure else 'OK',
         mongo_message, mongo_time,

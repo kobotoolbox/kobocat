@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 '''
 Created on May 14, 2015
 
@@ -78,19 +80,19 @@ def copy_cells(source_worksheet_file, destination_worksheet_file_path, new_strin
 
         # Copy over the cells one by one.
         for source_c in source_row:
-            destination_c= copy.deepcopy(source_c)
+            destination_c = copy.deepcopy(source_c)
             # Remap references to shared strings.
             if destination_c.attrib['t'] == 's':
-                values= destination_c.xpath('.//xmlns:v', namespaces=NAMESPACES)
+                values = destination_c.xpath('.//xmlns:v', namespaces=NAMESPACES)
                 if values:
-                    destination_v= values[0]
-                    destination_v.text= unicode(new_string_indices[int(destination_v.text)])
+                    destination_v = values[0]
+                    destination_v.text = unicode(new_string_indices[int(destination_v.text)])
             destination_row.append(destination_c)
 
         # Clean up elements of the source worksheet to save memory.
         while source_row.getprevious():
             source_row.getprevious().clean()
-            print 'Previous row cleaned'
+            print('Previous row cleaned')
         source_row.clear()
 
         # Append in the copied row.

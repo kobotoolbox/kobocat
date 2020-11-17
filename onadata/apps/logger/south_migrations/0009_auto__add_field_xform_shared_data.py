@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 # encoding: utf-8
 import datetime
 from south.db import db
@@ -68,7 +70,7 @@ class Migration(SchemaMigration):
             'date_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'start_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'status': ('django.db.models.fields.CharField', [], {'default': "u'submitted_via_web'", 'max_length': '20'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'submitted_via_web'", 'max_length': '20'}),
             'survey_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['odk_logger.SurveyType']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'surveys'", 'null': 'True', 'to': "orm['auth.User']"}),
             'xform': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'surveys'", 'null': 'True', 'to': "orm['odk_logger.XForm']"}),
@@ -86,7 +88,7 @@ class Migration(SchemaMigration):
             'downloadable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'id_string': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'db_index': 'True'}),
-            'json': ('django.db.models.fields.TextField', [], {'default': "u''"}),
+            'json': ('django.db.models.fields.TextField', [], {'default': "''"}),
             'shared': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'shared_data': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '64'}),

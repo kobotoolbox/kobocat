@@ -1,3 +1,5 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
 from rest_framework import negotiation
 from django.utils.xmlutils import SimplerXMLGenerator
 
@@ -109,7 +111,6 @@ class XFormListRenderer(BaseRenderer):
 
         xml.endElement(self.root_node)
         xml.endDocument()
-
         return stream.getvalue()
 
     def _to_xml(self, xml, data):

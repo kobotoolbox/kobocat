@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.views.generic import RedirectView
@@ -58,9 +61,6 @@ urlpatterns = patterns(
     url(r'^people/$', 'onadata.apps.main.views.members_list'),
     url(r'^xls2xform/$', 'onadata.apps.main.views.xls2xform'),
     url(r'^support/$', 'onadata.apps.main.views.support'),
-    url(r'^stats/$', 'onadata.apps.stats.views.stats', name='form-stats'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/stats$',
-        'onadata.apps.viewer.views.charts', name='form-stats'),
     url(r'^login_redirect/$', 'onadata.apps.main.views.login_redirect'),
     # Bring back old url because it's still used by `kpi`
     # ToDo Remove when `kpi#gallery-2` is merged into master
@@ -106,8 +106,6 @@ urlpatterns = patterns(
         'onadata.apps.main.views.edit'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/perms$',
         'onadata.apps.main.views.set_perm'),
-    url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/bamboo$',
-        'onadata.apps.main.views.link_to_bamboo'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/photos',
         'onadata.apps.main.views.form_photos'),
     url(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/doc/(?P<data_id>\d+)'
@@ -136,9 +134,6 @@ urlpatterns = patterns(
     url(r"^(?P<username>\w+)/upload$",
         BriefcaseApi.as_view({'post': 'create', 'head': 'create'}),
         name='upload'),
-
-    # stats
-    url(r"^stats/submissions/$", 'onadata.apps.stats.views.submissions'),
 
     # exporting stuff
     url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.csv$",
@@ -259,14 +254,6 @@ urlpatterns = patterns(
     url(r"^(?P<username>[^/]+)/sms_submission$",
         'onadata.apps.sms_support.views.import_submission',
         name='sms_submission'),
-
-    # Stats tables
-    url(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/tables",
-        'onadata.apps.viewer.views.stats_tables'),
-
-    # Ziggy
-    url(r"^(?P<username>[^/]+)/form-submissions$",
-        'onadata.apps.logger.views.ziggy_submissions'),
 
     # static media
     # Media are now served by NginX.

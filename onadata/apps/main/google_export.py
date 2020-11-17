@@ -1,3 +1,6 @@
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 import gdata.client
 import gdata.docs.data
 import gdata.docs.client
@@ -38,7 +41,7 @@ def google_oauth2_request(request):
             _l = '<ul>'
             for entry in docs_feed.entry:
                 _l += '<li>%s</li>' % entry.title.text
-                print entry.title.text
+                print(entry.title.text)
             _l += '</ul>'
             return HttpResponse(_l)
     return HttpResponseRedirect(redirect_uri)
@@ -46,7 +49,7 @@ def google_oauth2_request(request):
 
 def google_auth_return(request):
     if 'code' not in request.REQUEST:
-        return HttpResponse(u"Invalid Request")
+        return HttpResponse("Invalid Request")
     if request.user.is_authenticated():
         try:
             ts = TokenStorageModel.objects.get(id=request.user)

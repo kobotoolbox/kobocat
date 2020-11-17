@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 coding=utf-8
-from time import sleep
+# coding: utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -19,7 +21,6 @@ class Command(BaseCommand):
             type='int',
             default=100,
             help=ugettext_lazy("Number of records to process per query")),)
-
 
     def handle(self, *args, **kwargs):
         batchsize = kwargs.get("batchsize", 100)
