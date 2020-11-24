@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-from django.core.exceptions import ValidationError
+
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
@@ -26,13 +26,15 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     data_type = serializers.ChoiceField(choices=METADATA_TYPES)
     data_file = serializers.FileField(required=False)
     data_file_type = serializers.CharField(max_length=255, required=False)
+    from_kpi = serializers.BooleanField(required=False)
 
     class Meta:
         model = MetaData
 
     # was previously validate_data_value but the signature change in DRF3.
     def validate(self, attrs):
-        """Ensure we have a valid url if we are adding a media uri
+        """
+        Ensure we have a valid url if we are adding a media uri
         instead of a media file
         """
         value = attrs.get("data_value")
@@ -50,15 +52,24 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         data_type = validated_data.get('data_type')
         data_file = validated_data.get('data_file')
+        data_file_type = validated_data.get('data_file_type')
+        from_kpi = validated_data.get('from_kpi', False)
         xform = validated_data.get('xform')
-        data_value = data_file.name if data_file else validated_data.get('data_value')
-        data_file_type = data_file.content_type if data_file else None
+        file_hash = validated_data.get('file_hash')
+        data_value = (
+            data_file.name if data_file else validated_data.get('data_value')
+        )
+
+        if not data_file_type:
+            data_file_type = data_file.content_type if data_file else None
 
         return MetaData.objects.create(
             data_type=data_type,
             xform=xform,
             data_value=data_value,
             data_file=data_file,
-            data_file_type=data_file_type
+            data_file_type=data_file_type,
+            file_hash=file_hash,
+            from_kpi=from_kpi,
         )
 
