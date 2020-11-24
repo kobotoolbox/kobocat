@@ -561,7 +561,7 @@ class OpenRosaResponse(BaseOpenRosaResponse):
         self.content = '''<?xml version='1.0' encoding='UTF-8' ?>
 <OpenRosaResponse xmlns="http://openrosa.org/http/response">
         <message nature="">%s</message>
-</OpenRosaResponse>''' % self.content
+</OpenRosaResponse>''' % smart_str(self.content)
 
 
 class OpenRosaResponseNotFound(OpenRosaResponse):
