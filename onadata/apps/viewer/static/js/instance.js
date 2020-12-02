@@ -321,7 +321,7 @@ function updatePosStatus()
 
 function updateButtons(data) {
 
-    // Enabled Edit button and add link
+    // Enable Edit button and add link
     let editButton = $('#data a[data-js-selector="btn-edit"]'),
         deleteButton = $('#data a[data-js-selector="btn-delete"]');
 
@@ -330,7 +330,7 @@ function updateButtons(data) {
         editButton.attr('href', 'edit-data/' + data['_id']);
     }
 
-    // Enabled Delete button and add link
+    // Enable Delete button and add link
     if (deleteButton.length > 0) {
         deleteButton.removeClass('disabled');
         deleteButton.attr('href', '#del/' + data['_id']);
