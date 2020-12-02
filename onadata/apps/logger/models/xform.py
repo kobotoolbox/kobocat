@@ -222,20 +222,6 @@ class XForm(BaseModel):
         return self.num_of_submissions
     submission_count.short_description = ugettext_lazy("Submission Count")
 
-    @property
-    def submission_count_for_today(self):
-        current_timzone_name = timezone.get_current_timezone_name()
-        current_timezone = pytz.timezone(current_timzone_name)
-        today = datetime.today()
-        current_date = current_timezone.localize(
-            datetime(today.year,
-                     today.month,
-                     today.day))
-        count = self.instances.filter(
-            deleted_at__isnull=True,
-            date_created=current_date).count()
-        return count
-
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""
         return self.instances.filter(deleted_at__isnull=True,
