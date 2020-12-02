@@ -7,7 +7,11 @@ from rest_framework.permissions import (
     SAFE_METHODS
 )
 
-from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VALIDATE_XFORM
+from onadata.libs.constants import (
+    CAN_CHANGE_XFORM,
+    CAN_VALIDATE_XFORM,
+    CAN_DELETE_DATA_XFORM,
+)
 from onadata.apps.logger.models import XForm
 
 
@@ -75,7 +79,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         # Those who can edit submissions can also delete them, following the
         # behavior of `onadata.apps.main.views.delete_data`
         self.perms_map = self.perms_map.copy()
-        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
+        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_DELETE_DATA_XFORM]
 
     def has_permission(self, request, view):
         lookup_field = view.lookup_field

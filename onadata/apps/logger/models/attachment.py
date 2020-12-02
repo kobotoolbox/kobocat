@@ -35,6 +35,9 @@ class Attachment(models.Model):
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
     media_file_basename = models.CharField(
         max_length=260, null=True, blank=True, db_index=True)
+    # `PositiveIntegerField` will only accomodate 2 GiB, so we should consider
+    # `PositiveBigIntegerField` after upgrading to Django 3.1+
+    media_file_size = models.PositiveIntegerField(blank=True, null=True)
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
 
@@ -49,6 +52,9 @@ class Attachment(models.Model):
                 mimetype, encoding = mimetypes.guess_type(self.media_file.name)
                 if mimetype:
                     self.mimetype = mimetype
+            # Cache the file size in the database to avoid expensive calls to
+            # the storage engine when running reports
+            self.media_file_size = self.media_file.size
 
         super(Attachment, self).save(*args, **kwargs)
 

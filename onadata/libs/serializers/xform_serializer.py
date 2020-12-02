@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-from django.contrib.auth.models import User
+
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
@@ -19,7 +19,6 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     public = BooleanField(source='shared')
     public_data = BooleanField(source='shared_data')
     require_auth = BooleanField()
-    submission_count_for_today = serializers.ReadOnlyField()
     tags = TagListSerializer(read_only=True)
     title = serializers.CharField(max_length=255)
     url = serializers.HyperlinkedIdentityField(view_name='xform-detail',
