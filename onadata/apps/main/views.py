@@ -63,11 +63,11 @@ from onadata.libs.utils.user_auth import (
     check_and_set_user,
     check_and_set_user_and_form,
     get_xform_and_perms,
+    has_delete_data_permission,
     has_permission,
     helper_auth_helper,
-    set_profile_data
+    set_profile_data,
 )
-from onadata.libs.utils.user_auth import has_delete_data_permission
 from onadata.libs.utils.viewer_tools import enketo_url
 
 
