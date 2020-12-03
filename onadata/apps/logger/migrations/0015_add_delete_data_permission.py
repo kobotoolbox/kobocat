@@ -43,7 +43,8 @@ def reverse_func(apps, schema_editor):
     Revert 'delete_data_xform' permission. It can take a while on big databases
     """
     users = User.objects.exclude(pk=AnonymousUser().pk)
-    permission = Permission.objects.get(codename='delete_data_xform')
+    permission = Permission.objects.get(content_type__app_label='logger',
+                                        codename='delete_data_xform')
     for user_ in users.all():
         user_.user_permissions.remove(permission)
 
