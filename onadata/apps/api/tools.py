@@ -1,42 +1,30 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-import os
 
-from datetime import datetime
-import numpy as np
 import inspect
+import os
 import re
 import time
+from datetime import datetime
 
-import logging
+import rest_framework.views as rest_framework_views
 from django import forms
-from django.conf import settings
-from django.core.files.storage import get_storage_class
-from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django.db.models import Q
+from django.core.files.storage import get_storage_class
 from django.http import HttpResponseNotFound
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
-from django.shortcuts import get_object_or_404
-from taggit.forms import TagField
 from rest_framework import exceptions
-import rest_framework.views as rest_framework_views
-from registration.models import RegistrationProfile
+from taggit.forms import TagField
 
 from onadata.apps.main.forms import QuickConverter
 from onadata.apps.main.models import UserProfile
-from onadata.apps.logger.models.xform import XForm
 from onadata.apps.viewer.models.parsed_instance import datetime_from_str
-from onadata.libs.data.query import get_field_records
-from onadata.libs.data.query import get_numeric_fields
 from onadata.libs.utils.logger_tools import publish_form
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import check_and_set_form_by_id
 from onadata.libs.utils.user_auth import check_and_set_form_by_id_string
-from onadata.libs.permissions import get_object_users_with_permissions
 
 DECIMAL_PRECISION = 2
 

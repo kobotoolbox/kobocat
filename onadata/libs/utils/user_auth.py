@@ -1,18 +1,23 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 import base64
-from functools import wraps
 import re
+from functools import wraps
 
 from django.contrib.auth import authenticate
-from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import get_perms_for_model, assign_perm
 
-from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.models import XForm, Note
+from onadata.apps.main.models import UserProfile
+from onadata.libs.constants import (
+    CAN_DELETE_DATA_XFORM,
+    CAN_CHANGE_XFORM,
+    CAN_VIEW_XFORM,
+)
 
 
 class HttpResponseNotAuthorized(HttpResponse):
@@ -61,18 +66,24 @@ def set_profile_data(data, content_user):
 
 def has_permission(xform, owner, request, shared=False):
     user = request.user
-    return shared or xform.shared_data or\
+    return shared or xform.shared_data or \
         (hasattr(request, 'session') and
-         request.session.get('public_link') == xform.uuid) or\
-        owner == user or\
-        user.has_perm('logger.view_xform', xform) or\
-        user.has_perm('logger.change_xform', xform)
+         request.session.get('public_link') == xform.uuid) or \
+        owner == user or \
+        user.has_perm('logger.' + CAN_VIEW_XFORM, xform) or \
+        user.has_perm('logger.' + CAN_CHANGE_XFORM, xform)
+
+
+def has_delete_data_permission(xform, owner, request):
+    user = request.user
+    return owner == user or \
+        user.has_perm('logger.' + CAN_DELETE_DATA_XFORM, xform)
 
 
 def has_edit_permission(xform, owner, request):
     user = request.user
     return owner == user or \
-        user.has_perm('logger.change_xform', xform)
+        user.has_perm('logger.' + CAN_CHANGE_XFORM, xform)
 
 
 def check_and_set_user_and_form(username, id_string, request):
@@ -100,11 +111,14 @@ def get_xform_and_perms(username, id_string, request):
     xform = get_object_or_404(
         XForm, user__username=username, id_string=id_string)
     is_owner = xform.user == request.user
-    can_edit = is_owner or\
-        request.user.has_perm('logger.change_xform', xform)
-    can_view = can_edit or\
-        request.user.has_perm('logger.view_xform', xform)
-    return [xform, is_owner, can_edit, can_view]
+    can_edit = is_owner or \
+        request.user.has_perm('logger.' + CAN_CHANGE_XFORM, xform)
+    can_view = can_edit or \
+        request.user.has_perm('logger.' + CAN_VIEW_XFORM, xform)
+    can_delete_data = is_owner or \
+        request.user.has_perm('logger.' + CAN_DELETE_DATA_XFORM,
+                              xform)
+    return [xform, is_owner, can_edit, can_view, can_delete_data]
 
 
 def helper_auth_helper(request):
