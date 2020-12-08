@@ -16,11 +16,14 @@ DATABASES = {
         env='TEST_DATABASE_URL', default="sqlite:///%s/db.sqlite3" % BASE_DIR)
 }
 
-# Need to add these lines to make the tests run
-# Moreover, `apt-get update && apt-get install libsqlite3-mod-spatialite`
-#  should be executed inside the container
-DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
-SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
+if not os.environ.get('TEST_DATABASE_URL', '').startswith('postgis'):
+    # Need to add these lines to make the tests run
+    # Moreover, `apt-get update && apt-get install libsqlite3-mod-spatialite`
+    #  should be executed inside the container
+
+    DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
+    SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
+    USE_POSTGIS_DATABASE_DRIVER = False
 
 
 MONGO_CONNECTION_URL = 'mongodb://fakehost/formhub_test'

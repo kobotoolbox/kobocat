@@ -47,7 +47,7 @@ def _get_fields_of_type(xform, types):
 
 
 def _json_query(field):
-    if settings.TESTING_MODE:
+    if settings.TESTING_MODE and not settings.USE_POSTGIS_DATABASE_DRIVER:
         return "json_extract(json, '$.{}')".format(field)
     else:
         return "json->>'%s'" % field

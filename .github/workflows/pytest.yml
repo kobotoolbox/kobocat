@@ -1,0 +1,50 @@
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: pytest
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: ['2.7']
+    services:
+      postgres:
+        image: postgis/postgis:9.5-2.5
+        env:
+          POSTGRES_USER: kobo
+          POSTGRES_PASSWORD: kobo
+          POSTGRES_DB: kobocat_test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis_cache:
+        image: redis:3.2
+        ports:
+          - 6380:6379
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Upgrade pip
+      run: python -m pip install --upgrade 'pip>=10,<11'
+    - name: Install apt dependencies
+      run: sudo apt-get install ghostscript gettext libxml2-dev libxslt-dev python-dev libsqlite3-mod-spatialite
+    - name: Install Python dependencies
+      run: pip install -r requirements/base.pip && pip install -r requirements/github_actions.pip
+    - name: Patch Django 1.8 GEOS library to support newest geo versions
+      run: python -c "libgeos_py = '/opt/hostedtoolcache/Python/2.7.18/x64/lib/python2.7/site-packages/django/contrib/gis/geos/libgeos.py'; f = open(libgeos_py, 'r'); patch_ = f.read().replace('( r\d+)?$', '( \w+)?$'); f = open(libgeos_py, 'w'); f.write(patch_); f.close();"
+    - name: Run pytest
+      run: pytest -vv
+      env:
+        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        TEST_DATABASE_URL: postgis://kobo:kobo@localhost:5432/kobocat_test
+        REDIS_SESSION_URL: redis://localhost:6380/2
