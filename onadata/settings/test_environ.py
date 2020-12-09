@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import dj_database_url
-from django.utils.six.moves.urllib.parse import quote_plus
 from mongomock import MongoClient as MockMongoClient
 
 from onadata.settings.common import *
@@ -23,7 +23,7 @@ if not os.environ.get('TEST_DATABASE_URL', '').startswith('postgis'):
 
     DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
     SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
-    USE_POSTGIS_DATABASE_DRIVER = False
+    USE_POSTGRESQL = False
 
 
 MONGO_CONNECTION_URL = 'mongodb://fakehost/formhub_test'

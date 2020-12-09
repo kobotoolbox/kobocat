@@ -589,11 +589,16 @@ PASSWORD_HASHERS = (
 ) + PASSWORD_HASHERS
 
 
-# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
+# The maximum size in bytes that a request body may be before a
+# SuspiciousOperation (RequestDataTooBig) is raised
 # This variable is available only in Django 1.10+. Only there for next upgrade
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
-# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
+# The maximum size (in bytes) that an upload will be before it gets streamed
+# to the file system
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
-USE_POSTGIS_DATABASE_DRIVER = True
+# By default, PostgreSQL is considered as the default engine. Some DB queries
+# of rely on PostgreSQL engine to be executed. When set to `False`, some
+# changes are applied to make them run with SQLite (i.e. running unit tests)
+USE_POSTGRESQL = True
