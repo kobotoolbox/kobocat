@@ -1,30 +1,25 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-import os
+
 import re
 import requests
-import unittest
 
-from urlparse import urlparse
 from time import time
-from httmock import urlmatch, HTTMock
+from httmock import HTTMock, all_requests
 
 from django.test import RequestFactory
 from django.core.urlresolvers import reverse
 from django.core.validators import URLValidator
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
-
 from nose import SkipTest
 
 from onadata.apps.main.views import set_perm, show, qrcode
-from onadata.apps.main.models import MetaData
 from onadata.apps.logger.views import enter_data
 from onadata.libs.utils.viewer_tools import enketo_url
 from .test_base import TestBase
 
 
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
+@all_requests
 def enketo_mock(url, request):
     response = requests.Response()
     response.status_code = 201
@@ -32,7 +27,7 @@ def enketo_mock(url, request):
     return response
 
 
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
+@all_requests
 def enketo_error_mock(url, request):
     response = requests.Response()
     response.status_code = 400
@@ -42,6 +37,10 @@ def enketo_error_mock(url, request):
 
 
 class TestFormEnterData(TestBase):
+    """
+    This class is deprecated and is going to be removed in KoBoCAT 2.0
+    Notes: skipped tests have been removed
+    """
 
     def setUp(self):
         TestBase.setUp(self)
@@ -80,68 +79,9 @@ class TestFormEnterData(TestBase):
 
         return response
 
-    @unittest.skip('Fails under Django 1.6')
-    def test_qrcode_view(self):
-        with HTTMock(enketo_mock):
-            response = self._get_grcode_view_response()
-            qrfile = os.path.join(
-                self.this_directory, 'fixtures', 'qrcode.response')
-            with open(qrfile, 'r') as f:
-                data = f.read()
-                self.assertContains(response, data.strip(), status_code=200)
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_qrcode_view_with_enketo_error(self):
-        with HTTMock(enketo_error_mock):
-            response = self._get_grcode_view_response()
-            self.assertEqual(response.status_code, 400)
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_enter_data_redir(self):
-        if not self._running_enketo():
-            raise SkipTest
-        with HTTMock(enketo_mock):
-            factory = RequestFactory()
-            request = factory.get('/')
-            request.user = self.user
-            response = enter_data(
-                request, self.user.username, self.xform.id_string)
-            # make sure response redirect to an enketo site
-            enketo_base_url = urlparse(settings.ENKETO_URL).netloc
-            redirected_base_url = urlparse(response['Location']).netloc
-            # TODO: checking if the form is valid on enketo side
-            self.assertIn(enketo_base_url, redirected_base_url)
-            self.assertEqual(response.status_code, 302)
-
     def test_enter_data_no_permission(self):
         response = self.anon.get(self.url)
         self.assertEqual(response.status_code, 403)
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_public_with_link_to_share_toggle_on(self):
-        # sharing behavior as of 09/13/2012:
-        # it requires both data_share and form_share both turned on
-        # in order to grant anon access to form uploading
-        # TODO: findout 'for_user': 'all' and what it means
-        response = self.client.post(self.perm_url, {'for_user': 'all',
-                                    'perm_type': 'link'})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(MetaData.public_link(self.xform), True)
-        # toggle shared on
-        self.xform.shared = True
-        self.xform.shared_data = True
-        self.xform.save()
-        response = self.anon.get(self.show_url)
-        self.assertEqual(response.status_code, 302)
-        if not self._running_enketo():
-            raise SkipTest
-        with HTTMock(enketo_mock):
-            factory = RequestFactory()
-            request = factory.get('/')
-            request.user = AnonymousUser()
-            response = enter_data(
-                request, self.user.username, self.xform.id_string)
-            self.assertEqual(response.status_code, 302)
 
     def test_enter_data_non_existent_user(self):
         url = reverse(enter_data, kwargs={

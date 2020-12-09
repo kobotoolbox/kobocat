@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import os
 
 from mock import patch
@@ -54,7 +54,12 @@ class TestTools(TestBase):
                 self.xform, field)[0]
 
             self.assertEqual([field, count_key], sorted(result.keys()))
-            self.assertEqual(result[field], str(now.date()))
+
+            expected_now = now.date()
+            if not isinstance(result[field], date):
+                expected_now = str(expected_now)
+
+            self.assertEqual(result[field], expected_now)
             self.assertEqual(result[count_key], count)
 
     @patch('django.utils.timezone.now')
