@@ -599,6 +599,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
 # By default, PostgreSQL is considered as the default engine. Some DB queries
-# of rely on PostgreSQL engine to be executed. When set to `False`, some
-# changes are applied to make them run with SQLite (i.e. running unit tests)
+# rely on PostgreSQL engine to be executed. It needs to be set to `False` to
+# make them run with SQLite (i.e. running unit tests locally)
 USE_POSTGRESQL = True

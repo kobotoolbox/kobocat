@@ -57,18 +57,6 @@ except KeyError:
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
 
-TESTING_MODE = False
-# This trick works only when we run tests from the command line.
-if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
-    raise Exception(
-        "Testing destroys data and must NOT be run in a production "
-        "environment. Please use a different settings file if you want to "
-        "run tests."
-    )
-    TESTING_MODE = True
-else:
-    TESTING_MODE = False
-
 MEDIA_URL = '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
 STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login/'
@@ -81,23 +69,10 @@ if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
     LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
     LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
-if TESTING_MODE:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'test_media/')
-    subprocess.call(["rm", "-r", MEDIA_ROOT])
-    MONGO_DATABASE['NAME'] = "formhub_test"
-    CELERY_TASK_ALWAYS_EAGER = True
-    BROKER_BACKEND = 'memory'
-    ENKETO_API_TOKEN = 'abc'
-    #TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
-else:
-    MEDIA_ROOT = os.path.join(PROJECT_ROOT, MEDIA_URL.lstrip('/'))
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, MEDIA_URL.lstrip('/'))
 
 if PRINT_EXCEPTION and DEBUG:
     MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
-
-# Clear out the test database
-if TESTING_MODE:
-    MONGO_DB.instances.drop()
 
 # include the kobocat-template directory
 TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
