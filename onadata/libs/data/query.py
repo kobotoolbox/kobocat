@@ -56,7 +56,7 @@ def _json_query(field):
 def _postgres_count_group(field, name, xform):
     string_args = _query_args(field, name, xform)
     if is_date_field(xform, field):
-        if settings.USE_POSTGRESQL:
+        if not settings.USE_POSTGRESQL:
             string_args['json'] = "date(%(json)s)" % string_args
         else:
             string_args['json'] = (
