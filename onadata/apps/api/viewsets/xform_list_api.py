@@ -85,7 +85,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             if profile.require_auth:
                 # The specified has user ticked "Require authentication to see
                 # forms and submit data"; reject anonymous requests
-                if self.request.user.is_anonymous():
+                if self.request.user.is_anonymous:
                     # raises a permission denied exception, forces
                     # authentication
                     self.permission_denied(self.request)

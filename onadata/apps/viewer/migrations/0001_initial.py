@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('filename', models.CharField(max_length=255, null=True, blank=True)),
                 ('filedir', models.CharField(max_length=255, null=True, blank=True)),
-                ('export_type', models.CharField(default=b'xls', max_length=10, choices=[(b'xls', b'Excel'), (b'csv', b'CSV'), (b'gdoc', b'GDOC'), (b'zip', b'ZIP'), (b'kml', b'kml'), (b'csv_zip', b'CSV ZIP'), (b'sav_zip', b'SAV ZIP'), (b'sav', b'SAV'), (b'external', b'Excel')])),
+                ('export_type', models.CharField(default='xls', max_length=10, choices=[('xls', 'Excel'), ('csv', 'CSV'), ('gdoc', 'GDOC'), ('zip', 'ZIP'), ('kml', 'kml'), ('csv_zip', 'CSV ZIP'), ('sav_zip', 'SAV ZIP'), ('sav', 'SAV'), ('external', 'Excel')])),
                 ('task_id', models.CharField(max_length=255, null=True, blank=True)),
                 ('time_of_last_submission', models.DateTimeField(default=None, null=True)),
                 ('internal_status', models.SmallIntegerField(default=0, max_length=1)),
