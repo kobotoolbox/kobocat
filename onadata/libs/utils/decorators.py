@@ -49,7 +49,9 @@ def apply_form_field_names(func):
     def wrapper(*args, **kwargs):
         def _get_decoded_record(record):
             if isinstance(record, dict):
-                for field in record:
+                # Avoid RuntimeError: dictionary keys changed during iteration
+                record_iter = dict(record)
+                for field in record_iter:
                     if isinstance(record[field], list):
                         tmp_items = []
                         items = record[field]

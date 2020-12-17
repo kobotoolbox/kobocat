@@ -13,14 +13,11 @@ def create_new_perms(apps):
     The new `delete_data_xform` permission does not exist when running this
     migration for the first time. Django runs migrations in a transaction and
     new permissions are not created until after the transaction is completed.
-
-    See https://stackoverflow.com/a/40092780/1141214
     """
-    # ToDo update this code when upgrading to Django 2.x
-    # see https://stackoverflow.com/a/40092780/1141214
-    apps.models_module = True
-    create_permissions(apps, verbosity=0)
-    apps.models_module = None
+    for app_config in apps.get_app_configs():
+        app_config.models_module = True
+        create_permissions(app_config, apps=apps, verbosity=0)
+        app_config.models_module = None
 
 
 def grant_model_level_perms(apps):
