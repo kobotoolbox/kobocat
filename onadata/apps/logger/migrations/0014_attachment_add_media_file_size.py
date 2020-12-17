@@ -5,13 +5,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0003_add-index-on-attachment-media-file'),
+        ('logger', '0013_remove_bamboo_and_ziggy_instance'),
     ]
 
     operations = [
-        migrations.AlterField(
+        migrations.AddField(
             model_name='attachment',
-            name='mimetype',
-            field=models.CharField(default='', max_length=100, blank=True),
+            name='media_file_size',
+            field=models.PositiveIntegerField(null=True, blank=True),
         ),
     ]

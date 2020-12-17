@@ -407,7 +407,7 @@ TESTING_MODE = False
 # Deprecated since v1.4.2. ToDo move to constants.py`
 ANONYMOUS_USER_ID = -1
 # Needed to get ANONYMOUS_USER = -1
-GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_anonymous_user_instance'
+GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_anonymous_user_instance'  # noqa
 
 PRINT_EXCEPTION = os.environ.get("PRINT_EXCEPTION", False)
 
@@ -522,11 +522,21 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
     'image/png',
     'image/svg+xml',
-    'audio/mpeg',
     'video/3gpp',
-    'audio/wav',
-    'audio/x-m4a',
+    'video/mp4',
+    'video/quicktime',
+    'video/ogg',
+    'video/webm',
+    'audio/aac',
+    'audio/aacp',
+    'audio/flac',
     'audio/mp3',
+    'audio/mp4',
+    'audio/mpeg',
+    'audio/ogg',
+    'audio/wav',
+    'audio/webm',
+    'audio/x-m4a',
     'text/csv',
     'application/zip'
 ]

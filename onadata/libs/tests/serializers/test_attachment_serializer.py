@@ -1,14 +1,14 @@
 # coding: utf-8
-from django.test import TransactionTestCase
+from django.test import TestCase
 
 from onadata.libs.serializers.attachment_serializer import get_path
 
 
-class TestAttachmentSerializer(TransactionTestCase):
+class TestAttachmentSerializer(TestCase):
 
     def setUp(self):
         """
-        self.data is a json represenatation of an xform
+        self.data is a json representation of an xform
         """
         self.data = {
             "name": "photo_in_group",

@@ -1,12 +1,8 @@
 # coding: utf-8
-import csv
 import json
 import os
 import re
-import six
-import tempfile
 from datetime import datetime, date, time, timedelta
-from zipfile import ZipFile
 
 from bson import json_util
 from django.conf import settings
@@ -20,7 +16,6 @@ from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
-from savReaderWriter import SavWriter
 
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.viewer.models.export import Export
