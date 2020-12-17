@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
     """
     Re-apply parts of `0015_add_delete_data_permission.py` for upgrade
     of existing installations.
-    See `0015_add_delete_data_permission.py` for details
+    See `0015_add_delete_data_permission.py` for detailsf
     """
 
     dependencies = [
