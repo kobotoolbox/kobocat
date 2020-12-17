@@ -9,11 +9,11 @@ from guardian.shortcuts import assign_perm
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
-from onadata.libs.permissions import (
+from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
     CAN_VIEW_XFORM
 )
-from onadata.libs.tests.utils.xml import pyxform_version_agnostic
+from onadata.libs.tests.utils.xml import pyxform_version_agnostic, is_equal_xml
 
 
 class TestXFormListApi(TestAbstractViewSet):
@@ -201,6 +201,30 @@ class TestXFormListApi(TestAbstractViewSet):
             self.assertEqual(response['Content-Type'],
                              'text/xml; charset=utf-8')
 
+    def test_get_xform_list_with_formid_parameter(self):
+        """
+        Test `formList` with `?formID=[id_string]` filter
+        """
+        # Test unrecognized `formID`
+        request = self.factory.get('/', {'formID': 'unrecognizedID'})
+        response = self.view(request, username=self.user.username)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])
+
+        # Test a valid `formID`
+        request = self.factory.get('/', {'formID': self.xform.id_string})
+        response = self.view(request, username=self.user.username)
+        self.assertEqual(response.status_code, 200)
+        path = os.path.join(
+            os.path.dirname(__file__), '..', 'fixtures', 'formList.xml'
+        )
+
+        with open(path) as f:
+            form_list_xml = f.read().strip()
+            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            content = response.render().content.decode()
+            self.assertEqual(content, form_list_xml % data)
+
     def test_retrieve_xform_xml(self):
         self.view = XFormListApi.as_view({
             "get": "retrieve"
@@ -228,8 +252,9 @@ class TestXFormListApi(TestAbstractViewSet):
             form_xml = f.read().strip()
             data = {"form_uuid": self.xform.uuid}
             content = smart_str(response.render().content).strip()
-            self.assertEqual(pyxform_version_agnostic(content),
-                             pyxform_version_agnostic(form_xml % data))
+
+            is_equal_xml(pyxform_version_agnostic(content),
+                         pyxform_version_agnostic(form_xml % data))
 
     def _load_metadata(self, xform=None):
         data_value = "screenshot.png"
