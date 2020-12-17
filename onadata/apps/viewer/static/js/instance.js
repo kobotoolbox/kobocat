@@ -150,11 +150,11 @@ function createTable(canEdit, canDeleteData)
     dataContainer.append(topStatusNavRows);
 
     if (canEdit === true || canDeleteData === true) {
-        let buttonsContainer = $('<div>').addClass('row'),
+        var buttonsContainer = $('<div>').addClass('row'),
             innerContainer = $('<div>').addClass('span6');
 
         if (canEdit) {
-            let editLink = $('<a>');
+            var editLink = $('<a>');
             editLink.attr({
                 'id': 'title_edit',
                 'href': '#kate',
@@ -166,7 +166,7 @@ function createTable(canEdit, canDeleteData)
         }
 
         if (canDeleteData) {
-            let deleteLink = $('<a>');
+            var deleteLink = $('<a>');
             deleteLink.attr({
                 'href': '#',
                 'data-js-selector': 'btn-delete'
@@ -322,7 +322,7 @@ function updatePosStatus()
 function updateButtons(data) {
 
     // Enable Edit button and add link
-    let editButton = $('#data a[data-js-selector="btn-edit"]'),
+    var editButton = $('#data a[data-js-selector="btn-edit"]'),
         deleteButton = $('#data a[data-js-selector="btn-delete"]');
 
     if (editButton.length > 0) {
