@@ -2,23 +2,60 @@
 branches:
   only: 
     - master
-
-sudo: false
+dist: xenial
+sudo: required
 language: python
 python:
-- '2.7'
+  - "2.7"
+services:
+  - postgresql
+  - redis-server
+addons:
+  postgresql: "9.5"
+  chrome: stable
+  apt:
+    packages:
+      - build-essential
+      - fontforge
+      - gettext
+      - git-core
+      - libpcre3
+      - libpcre3-dev
+      - libpq-dev
+      - libgnutls28-dev
+      - binutils
+      - default-jre-headless
+      - gdal-bin
+      - libpcre3-dev
+      - libpq-dev
+      - libproj-dev
+      - libxml2
+      - libxml2-dev
+      - libxslt1-dev
+      - libjpeg-dev
+      - libffi-dev
+      - postgresql-client
+      - postgresql-9.5-postgis-2.5
+      - libsqlite3-mod-spatialite
+cache:
+  directories:
+    - $HOME/.pip-download-cache
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
+  - psql -U postgres -c "create extension postgis"
 script:
-- 
-after_success:
-- test "$TRAVIS_PULL_REQUEST" == 'false' || exit 0
-- test "$TRAVIS_BRANCH" == 'master' || exit 0
-- echo '*** Deploying to staging server'
-- openssl aes-256-cbc -K $encrypted_cddd71e0ad67_key -iv $encrypted_cddd71e0ad67_iv
-  -in .travis/staging_deploy_key.pem.enc -out .travis/staging_deploy_key.pem -d
-- chmod 600 .travis/staging_deploy_key.pem
-- eval "$(ssh-agent)"
-- ssh-add .travis/staging_deploy_key.pem
-- ssh -o UserKnownHostsFile=.travis/staging_known_host ubuntu@kc.kbtdev.org /home/ubuntu/scripts/deploy.sh kobocat "$TRAVIS_COMMIT"
-notifications:
-  irc: irc.freenode.org#kobotest
-  flowdock: ad631fc562736cf87e0c4439f9518f9d
+  - pytest -vv
+env:
+  # All about YAML line breaks: https://stackoverflow.com/a/21699210
+  - >-
+       PIP_DOWNLOAD_CACHE=$HOME/.pip-download-cache
+       DJANGO_DEBUG=False
+       DJANGO_SECRET_KEY=o4xbmwsyTJicFmjhQc4Xm
+       DJANGO_SETTINGS_MODULE=onadata.settings.test_environ
+       DJANGO_LANGUAGE_CODES="en ar es fr hi ku pl pt zh-hans"
+       DATABASE_URL="postgres://postgres@localhost:5432/travis_ci_test"
+       REDIS_SESSION_URL="redis://localhost:6379"
+       TRAVIS_NODE_VERSION="8"
+install:
+  - pip install --upgrade 'pip>=10,<11'
+  - pip install -r requirements/travis.pip

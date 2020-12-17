@@ -14,7 +14,6 @@ from django.contrib.sites.models import Site
 from django.contrib import messages
 from django.core.files.storage import get_storage_class
 from django.core.files import File
-from django.urls import reverse
 from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden,
@@ -25,7 +24,6 @@ from django.http import (HttpResponse,
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
-from django.template import RequestContext
 from django.utils.six import string_types, text_type
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
@@ -39,28 +37,22 @@ from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.viewer_tools import enketo_url
-from onadata.libs.utils.viewer_tools import image_urls_dict
 from onadata.libs.utils.logger_tools import (
     safe_create_instance,
     OpenRosaResponseBadRequest,
     OpenRosaResponse,
     BaseOpenRosaResponse,
-    inject_instanceid,
-    remove_xform,
     publish_xml_form,
-    publish_form)
+    publish_form,
+)
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
-from onadata.libs.utils.decorators import is_owner
 from onadata.libs.utils.user_auth import (helper_auth_helper,
                                           has_permission,
-                                          has_edit_permission,
                                           HttpResponseNotAuthorized,
                                           add_cors_headers,
                                           )
-from onadata.libs.utils.viewer_tools import _get_form_url
-from ...koboform.pyxform_utils import convert_csv_to_xls
 from .tasks import generate_stats_zip
+from ...koboform.pyxform_utils import convert_csv_to_xls
 
 IO_ERROR_STRINGS = [
     'request data read error',

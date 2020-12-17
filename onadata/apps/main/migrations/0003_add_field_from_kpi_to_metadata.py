@@ -11,11 +11,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='tokenstoragemodel',
-            name='id',
-        ),
-        migrations.DeleteModel(
-            name='TokenStorageModel',
+        migrations.AddField(
+            model_name='metadata',
+            name='from_kpi',
+            field=models.BooleanField(default=False),
         ),
     ]
