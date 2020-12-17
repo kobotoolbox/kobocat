@@ -34,7 +34,8 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             'data_value',
             'data_type',
             'data_file',
-            'data_file_type'
+            'data_file_type',
+            'from_kpi',
         )
 
     # was previously validate_data_value but the signature change in DRF3.

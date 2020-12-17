@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0002_auto_20160205_1915'),
+        ('main', '0003_add_field_from_kpi_to_metadata'),
     ]
 
     operations = [
