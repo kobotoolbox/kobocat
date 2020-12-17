@@ -123,15 +123,6 @@ KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 # All internal communications between containers must be HTTP only.
 ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 
-# These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
-# See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
-KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
-KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
-
 # Default value for the `UserProfile.require_auth` attribute. Even though it's
 # set in kc_environ, include it here as well to support legacy installations
 REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = False
@@ -507,11 +498,21 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
     'image/png',
     'image/svg+xml',
-    'audio/mpeg',
     'video/3gpp',
-    'audio/wav',
-    'audio/x-m4a',
+    'video/mp4',
+    'video/quicktime',
+    'video/ogg',
+    'video/webm',
+    'audio/aac',
+    'audio/aacp',
+    'audio/flac',
     'audio/mp3',
+    'audio/mp4',
+    'audio/mpeg',
+    'audio/ogg',
+    'audio/wav',
+    'audio/webm',
+    'audio/x-m4a',
     'text/csv',
     'application/zip'
 ]

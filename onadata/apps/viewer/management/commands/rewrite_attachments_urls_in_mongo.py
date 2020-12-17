@@ -57,8 +57,8 @@ class Command(BaseCommand):
                                     self.__secure_url(filename, suffix)
 
                         except Exception as e:
-                            print("ERROR - {}".format(str(e)))
-                            print(instance)
+                            self.stderr.write("ERROR - {}".format(str(e)))
+                            self.stderr.write(instance)
 
                     done += 1
                     self.__last_id = instance.get("_id")

@@ -3,10 +3,11 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 import os
 import re
+from xml.dom import Node
 
 from django.db import models
 from django.db.models.signals import post_save
-from django.utils.encoding import smart_str
+from django.utils.encoding import smart_text
 from django.utils.six import text_type
 from guardian.shortcuts import assign_perm, get_perms_for_model
 from pyxform import SurveyElementBuilder
@@ -14,7 +15,6 @@ from pyxform.builder import create_survey_from_xls
 from pyxform.question import Question
 from pyxform.section import RepeatingSection
 from pyxform.xform2json import create_survey_element_from_xml
-from xml.dom import Node
 
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
@@ -134,13 +134,13 @@ class DataDictionary(XForm):
             calculate_node.setAttribute("calculate", "'%s'" % self.uuid)
             model_node.appendChild(calculate_node)
 
-        self.xml = smart_str(doc.toprettyxml(indent="  ", encoding='utf-8'))
+        self.xml = smart_text(doc.toprettyxml(indent="  ", encoding='utf-8'))
         # hack
         # http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-\
         # and-silly-whitespace/
         text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
         output_re = re.compile(r'\n.*(<output.*>)\n(  )*')
-        pretty_xml = text_re.sub(r'>\g<1></', self.xml)
+        pretty_xml = text_re.sub(r'>\g<1></', smart_text(self.xml))
         inline_output = output_re.sub(r'\g<1>', pretty_xml)
         inline_output = re.compile(r'<label>\s*\n*\s*\n*\s*</label>').sub(
             '<label></label>', inline_output)

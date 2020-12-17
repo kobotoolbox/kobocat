@@ -1,5 +1,6 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
+from __future__ import unicode_literals, print_function, division, \
+    absolute_import
 
 import os
 
@@ -22,14 +23,17 @@ from rest_framework.authtoken.models import Token
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import XForm
-from onadata.apps.main.forms import QuickConverterForm, MediaForm
+from onadata.apps.main.forms import (
+    MediaForm,
+)
+from onadata.apps.main.forms import QuickConverterForm
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
     check_and_set_user_and_form,
     get_xform_and_perms,
-    set_profile_data
+    set_profile_data,
 )
 
 
@@ -127,7 +131,7 @@ def show(request, username=None, id_string=None, uuid=None):
     if uuid:
         return redirect_to_public_link(request, uuid)
 
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
+    xform, is_owner, can_edit, can_view, can_delete_data = get_xform_and_perms(
         username, id_string, request)
     # no access
     if not (xform.shared or can_view or request.session.get('public_link')):
@@ -142,6 +146,7 @@ def show(request, username=None, id_string=None, uuid=None):
     data['is_owner'] = is_owner
     data['can_edit'] = can_edit
     data['can_view'] = can_view or request.session.get('public_link')
+    data['can_delete_data'] = can_delete_data
     data['xform'] = xform
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
@@ -159,7 +164,7 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     if uuid:
         return redirect_to_public_link(request, uuid)
 
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
+    xform, is_owner, can_edit, can_view, can_delete_data = get_xform_and_perms(
         username, id_string, request)
     # no access
     if not (xform.shared or can_view or request.session.get('public_link')):
@@ -174,6 +179,7 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['is_owner'] = is_owner
     data['can_edit'] = can_edit
     data['can_view'] = can_view or request.session.get('public_link')
+    data['can_delete_data'] = can_delete_data
     data['xform'] = xform
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()

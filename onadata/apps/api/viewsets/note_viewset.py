@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from onadata.apps.api.permissions import NoteObjectPermissions
 from onadata.apps.logger.models import Note, XForm
-from onadata.libs.permissions import CAN_VIEW_XFORM
+from onadata.libs.constants import CAN_VIEW_XFORM
 from onadata.libs.serializers.note_serializer import NoteSerializer
 
 

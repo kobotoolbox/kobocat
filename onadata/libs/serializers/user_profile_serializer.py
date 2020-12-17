@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 from rest_framework import serializers
 
 from onadata.apps.main.models import UserProfile
-from onadata.libs.permissions import CAN_VIEW_PROFILE
+from onadata.libs.constants import CAN_VIEW_PROFILE
 from onadata.libs.serializers.fields.json_field import JsonField
 
 

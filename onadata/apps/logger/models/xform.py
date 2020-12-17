@@ -4,12 +4,10 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import json
 import os
 import re
-from io import StringIO, BytesIO
-from datetime import datetime
+from io import StringIO
 from hashlib import md5
 from xml.sax import saxutils
 
-import pytz
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,7 +15,6 @@ from django.core.files.storage import get_storage_class
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete
-from django.utils import timezone
 from django.utils.encoding import smart_text
 
 from django.utils.translation import ugettext_lazy, ugettext as _
@@ -30,6 +27,13 @@ from taggit.managers import TaggableManager
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
+from onadata.libs.constants import (
+    CAN_ADD_SUBMISSIONS,
+    CAN_VALIDATE_XFORM,
+    CAN_VIEW_XFORM,
+    CAN_DELETE_DATA_XFORM,
+    CAN_TRANSFER_OWNERSHIP,
+)
 from onadata.libs.models.base_model import BaseModel
 
 
@@ -101,10 +105,11 @@ class XForm(BaseModel):
         verbose_name_plural = ugettext_lazy("XForms")
         ordering = ("id_string",)
         permissions = (
-            ("view_xform", _("Can view associated data")),
-            ("report_xform", _("Can make submissions to the form")),
-            ("transfer_xform", _("Can transfer form ownership.")),
-            ("validate_xform", _("Can validate submissions.")),
+            (CAN_VIEW_XFORM, _('Can view associated data')),
+            (CAN_ADD_SUBMISSIONS, _('Can make submissions to the form')),
+            (CAN_TRANSFER_OWNERSHIP, _('Can transfer form ownership.')),
+            (CAN_VALIDATE_XFORM, _('Can validate submissions')),
+            (CAN_DELETE_DATA_XFORM, _('Can delete submissions')),
         )
 
     def file_name(self):
@@ -212,20 +217,6 @@ class XForm(BaseModel):
             self.save(update_fields=['num_of_submissions'])
         return self.num_of_submissions
     submission_count.short_description = ugettext_lazy("Submission Count")
-
-    @property
-    def submission_count_for_today(self):
-        current_timzone_name = timezone.get_current_timezone_name()
-        current_timezone = pytz.timezone(current_timzone_name)
-        today = datetime.today()
-        current_date = current_timezone.localize(
-            datetime(today.year,
-                     today.month,
-                     today.day))
-        count = self.instances.filter(
-            deleted_at__isnull=True,
-            date_created=current_date).count()
-        return count
 
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""
