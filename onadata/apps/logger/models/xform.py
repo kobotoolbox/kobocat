@@ -102,7 +102,6 @@ class XForm(BaseModel):
         verbose_name_plural = ugettext_lazy("XForms")
         ordering = ("id_string",)
         permissions = (
-            (CAN_VIEW_XFORM, _('Can view associated data')),
             (CAN_ADD_SUBMISSIONS, _('Can make submissions to the form')),
             (CAN_TRANSFER_OWNERSHIP, _('Can transfer form ownership.')),
             (CAN_VALIDATE_XFORM, _('Can validate submissions')),
