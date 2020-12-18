@@ -699,7 +699,52 @@ if (os.getenv("RAVEN_DSN") or "") != "":
     )
 
 # Monkey Patch PyXForm. @ToDo remove after upgrading to v1.1.0
+import re
+
+import pyxform.validators.odk_validate
+from pyxform.validators.util import (
+    run_popen_with_timeout,
+)
 from pyxform.xform2json import logger
+
 logger.removeHandler(logging.NullHandler)
 logger.addHandler(logging.NullHandler())
+
+
+def patched_check_java_version():
+    """
+    Monkey patched version of pyxform 0.15.
+    pyxform version expected the version to be MAJOR.MINOR.PATCH, but
+    newer versions of JAVA can use an extra digit.
+
+    """
+    try:
+        stderr = str(
+            run_popen_with_timeout(
+                ["java", "-Djava.awt.headless=true", "-version"], 100
+            )[3]
+        )
+    except OSError as os_error:
+        stderr = str(os_error)
+    # convert string to unicode for python2
+    if sys.version_info.major < 3:
+        stderr = stderr.strip().decode("utf-8")
+    if "java version" not in stderr and "openjdk version" not in stderr:
+        raise EnvironmentError(
+            "pyxform odk validate dependency: java not found")
+    # extract version number from version string
+    java_version_str = stderr.split("\n")[0]
+    # version number is usually inside double-quotes.
+    # Using regex to find that in the string
+    java_version = re.findall(r"\"(.+?)\"", java_version_str)[0]
+    parts = java_version.split(".")
+    major = parts[0]
+    minor = parts[1]
+    if not ((int(major) == 1 and int(minor) >= 8) or int(major) >= 8):
+        raise EnvironmentError(
+            "pyxform odk validate dependency: " "java 8 or newer version not found"
+        )
+
+
+pyxform.validators.odk_validate.check_java_version = patched_check_java_version
 
