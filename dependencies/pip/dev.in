@@ -11,3 +11,4 @@ pytest-env
 mongomock
 mock
 httmock
+django-nose
