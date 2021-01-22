@@ -411,23 +411,23 @@ GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_an
 
 PRINT_EXCEPTION = os.environ.get("PRINT_EXCEPTION", False)
 
-KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'http://kc.kobo.local')
+KOBOFORM_SERVER = os.environ.get('KOBOFORM_SERVER', 'localhost')
+KOBOFORM_SERVER_PORT = os.environ.get('KOBOFORM_SERVER_PORT', '8000')
+KOBOFORM_SERVER_PROTOCOL = os.environ.get('KOBOFORM_SERVER_PROTOCOL', 'http')
 KOBOFORM_LOGIN_AUTOREDIRECT = True
-KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
-KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
-KOBOFORM_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KOBOFORM_URL)
+KOBOFORM_URL = os.environ.get('KOBOFORM_URL', 'http://kf.kobo.local')
+KOBOFORM_INTERNAL_URL = os.environ.get('KOBOFORM_INTERNAL_URL', KOBOFORM_URL)
 KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 
 # These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
 # See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
-KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
-KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
+KOBOCAT_INTERNAL_HOSTNAME = '{}.{}'.format(
+    os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
+    os.environ.get('INTERNAL_DOMAIN_NAME', 'docker.internal'))
+KOBOCAT_PUBLIC_HOSTNAME = '{}.{}'.format(
+    os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
+    os.environ.get('PUBLIC_DOMAIN_NAME', 'kobotoolbox.org'))
 
 # Default value for the `UserProfile.require_auth` attribute
 REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
@@ -449,9 +449,9 @@ REGISTRATION_OPEN = False
 ACCOUNT_ACTIVATION_DAYS = 1
 
 SWAGGER_SETTINGS = {
-    "exclude_namespaces": [],    # List URL namespaces to ignore
-    "api_version": '1.0',  # Specify your API's version (optional)
-    "enabled_methods": [         # Methods to enable in UI
+    'exclude_namespaces': [],    # List URL namespaces to ignore
+    'api_version': '1.0',  # Specify your API's version (optional)
+    'enabled_methods': [         # Methods to enable in UI
         'get',
         'post',
         'put',

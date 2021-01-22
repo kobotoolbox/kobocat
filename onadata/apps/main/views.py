@@ -202,6 +202,7 @@ def api_token(request, username=None):
     return HttpResponseForbidden(_('Permission denied.'))
 
 
+# ToDo Remove when `form-media` features is released in KPI
 @login_required
 def edit(request, username, id_string):
     xform = XForm.objects.get(user__username__iexact=username,
@@ -216,8 +217,9 @@ def edit(request, username, id_string):
             try:
                 SSRFProtect.validate(uri)
             except SSRFProtectException:
-                return HttpResponseForbidden(_('URL {uri} is forbidden.').format(
-                    uri=uri))
+                return HttpResponseForbidden(
+                    _('URL {uri} is forbidden.').format(uri=uri)
+                )
             MetaData.media_add_uri(xform, uri)
         elif request.FILES.get('media'):
             audit = {
