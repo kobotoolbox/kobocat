@@ -25,6 +25,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     data_file = serializers.FileField(required=False)
     data_file_type = serializers.CharField(max_length=255, required=False)
     from_kpi = serializers.BooleanField(required=False)
+    data_filename = serializers.CharField(max_length=255, required=False)
 
     class Meta:
         model = MetaData
@@ -38,6 +39,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             'file_hash',
             'url',
             'from_kpi',
+            'data_filename',
         )
 
     # was previously validate_data_value but the signature change in DRF3.
@@ -68,6 +70,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_value = (
             data_file.name if data_file else validated_data.get('data_value')
         )
+        data_filename = validated_data.get('data_filename')
 
         if not data_file_type:
             data_file_type = data_file.content_type if data_file else None
@@ -80,5 +83,6 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             data_file_type=data_file_type,
             file_hash=file_hash,
             from_kpi=from_kpi,
+            data_filename=data_filename,
         )
 

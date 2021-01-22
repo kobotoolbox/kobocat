@@ -1,6 +1,7 @@
 # coding: utf-8
 import mimetypes
 import os
+import re
 import requests
 from contextlib import closing
 from hashlib import md5
@@ -112,7 +113,6 @@ def media_resources(media_list, download=False):
     for media in media_list:
         if media.data_file.name == '' and download:
             media = create_media(media)
-
             if media:
                 data.append(media)
         else:
@@ -129,10 +129,19 @@ class MetaData(models.Model):
     data_file_type = models.CharField(max_length=255, blank=True, null=True)
     file_hash = models.CharField(max_length=50, blank=True, null=True)
     from_kpi = models.BooleanField(default=False)
+    data_filename = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         app_label = 'main'
         unique_together = ('xform', 'data_type', 'data_value')
+
+    @property
+    def is_paired_data(self):
+        pattern = (
+            rf'{settings.KOBOFORM_URL}/'
+            r'api/v2/assets/[^\/]+/paired_data/pd[^\.]+\.xml'
+        )
+        return re.match(pattern, self.data_value)
 
     def save(self, *args, **kwargs):
         self._set_hash()
@@ -154,8 +163,12 @@ class MetaData(models.Model):
 
         # If it is a remote URL, get the filename from it and return it
         if self.data_type == 'media' and is_valid_url(self.data_value):
-            parsed_url = urlparse(self.data_value)
-            self.__filename = os.path.basename(parsed_url.path)
+            if self.data_filename:
+                self.__filename = self.data_filename
+            else:
+                parsed_url = urlparse(self.data_value)
+                self.__filename = os.path.basename(parsed_url.path)
+
             return self.__filename
 
         # Return `self.data_value` as fallback
