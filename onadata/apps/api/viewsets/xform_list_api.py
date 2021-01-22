@@ -142,4 +142,4 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         meta_obj = get_object_or_404(
             MetaData, data_type='media', xform=self.object, pk=pk)
 
-        return get_media_file_response(meta_obj)
+        return get_media_file_response(meta_obj, request)
