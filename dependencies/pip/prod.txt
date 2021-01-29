@@ -51,7 +51,6 @@ future==0.18.2            # via celery
 gdata-python3==3.0.1      # via -r dependencies/pip/requirements.in
 gitdb==4.0.5              # via gitpython
 gitpython==3.1.7          # via transifex-client
-httplib2==0.18.1          # via -r dependencies/pip/requirements.in
 idna==2.10                # via requests
 jdcal==1.4.1              # via openpyxl
 jmespath==0.10.0          # via boto3, botocore

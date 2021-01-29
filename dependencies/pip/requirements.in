@@ -28,7 +28,6 @@ django-registration-redux
 django-templated-email
 dpath
 gdata-python3
-httplib2
 modilabs-python-utils
 Pillow
 psycopg2-binary
