@@ -45,6 +45,7 @@ from onadata.libs.utils.common_tags import (
     NOTES
 )
 
+
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
 
