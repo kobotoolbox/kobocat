@@ -78,7 +78,13 @@ $ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin.py compil
 ```
 ## Testing in Kobocat
 
-Enter the container
+For Kobo-Install Users, enter the folder for Kobo-Install and run this command
+
+```
+./run.py -cf exec kobocat bash
+```
+
+For all other users, enter the container using this command
 
 ``` sh
 $ docker exec -it {{kobocat container}} /bin/bash
@@ -87,7 +93,7 @@ $ docker exec -it {{kobocat container}} /bin/bash
 Run pip install the development dependancies
 
 ``` sh
-$ pip insall -r requirements/dev.pip
+$ pip install -r requirements/dev.pip
 ```
 Install libsqlite3-mod-spatialite for the testing database
 
@@ -96,6 +102,7 @@ $ apt-get update && apt-get install libsqlite3-mod-spatialite
 ```
 
 Run Pytest to run all automated tests
+
 ``` sh
 $ pytest
 ```
