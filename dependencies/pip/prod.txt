@@ -55,7 +55,6 @@ gdata-python3==3.0.1      # via -r dependencies/pip/requirements.in
 geojson-rewind==0.2.0     # via formpack
 gitdb==4.0.5              # via gitpython
 gitpython==3.1.7          # via transifex-client
-httplib2==0.18.1          # via -r dependencies/pip/requirements.in
 idna==2.10                # via requests
 jdcal==1.4.1              # via openpyxl
 jsonfield==3.1.0          # via -r dependencies/pip/requirements.in
