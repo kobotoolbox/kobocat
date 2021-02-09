@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-mkdir -p "${KOBOCAT_SRC_DIR}/onadata/static"
+gosu "${UWSGI_USER}" mkdir -p "${KOBOCAT_SRC_DIR}/onadata/static"
 
 echo "Collecting static files..."
 gosu "${UWSGI_USER}" "${VIRTUAL_ENV}/bin/python" manage.py collectstatic -v 0 --noinput
