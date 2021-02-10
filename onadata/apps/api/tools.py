@@ -206,20 +206,7 @@ def get_media_file_response(
 
     # When `request.user` is authenticated, their authentication is lost with
     # a HTTP redirection. We use KoBoCAT to proxy the response from KPI
-    try:
-        enketo_device_id = unquote(request.COOKIES.get('__enketo_meta_deviceid'))  # noqa
-    except TypeError:
-        enketo_device_id = ''
-
-    # Even if they are quite useless, we send the some client's headers with
-    # the request to get KPI validate the expected clients.
-    headers = {
-        'X-User-Agent': request.headers.get('User-Agent', enketo_device_id),
-        OPEN_ROSA_VERSION_HEADER: request.headers.get(OPEN_ROSA_VERSION_HEADER),
-        'X-Openrosa-Date': request.headers.get('Date'),
-        'X-Openrosa-Version-Value': OPEN_ROSA_VERSION,
-    }
-
+    headers = {}
     if not request.user.is_anonymous:
         token = Token.objects.get(user=request.user)
         headers['Authorization'] = f'Token {token.key}'
