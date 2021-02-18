@@ -44,7 +44,6 @@ from onadata.libs.utils.common_tags import (
     TAGS,
     NOTES
 )
-from .analyser_export import generate_analyser
 
 
 # this is Mongo Collection where we will store the parsed submissions
@@ -579,29 +578,6 @@ class ExportBuilder(object):
 
         wb.save(filename=path)
 
-    def to_analyser_export(self, path, data, username, xform_id_string, *args):
-        # Get the XLSForm.
-        xform = XForm.objects.get(user__username__iexact=username, id_string__exact=xform_id_string)
-        xlsform_io= xform.to_xlsform()
-
-        if xlsform_io is None:
-            raise RuntimeError('XLSForm `{}` for user `{}` could not be retrieved from storage.'.
-                               format(xform_id_string, username))
-
-        prefix = slugify('analyser_data__{}__{}'.format(username, xform_id_string))
-        with tempfile.NamedTemporaryFile('w+b', prefix=prefix, suffix='.xlsx',) as xls_data:
-            # Generate a new XLS export to work from.
-            self.to_xls_export(xls_data.name, data)
-            xls_data.file.seek(0)
-
-            # Generate the analyser file.
-            analyser_io= generate_analyser(xlsform_io, xls_data)
-
-        # Write the generated analyser file to the specified path
-        #   ...which itself points to a temp file.
-        with open(path, 'wb') as analyser_file:
-            analyser_file.write(analyser_io.read())
-
     def to_flat_csv_export(
             self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
@@ -720,7 +696,6 @@ def generate_export(export_type, extension, username, id_string,
         Export.CSV_EXPORT: 'to_flat_csv_export',
         Export.CSV_ZIP_EXPORT: 'to_zipped_csv',
         Export.SAV_ZIP_EXPORT: 'to_zipped_sav',
-        Export.ANALYSER_EXPORT: 'to_analyser_export'
     }
 
     xform = XForm.objects.get(
@@ -747,9 +722,6 @@ def generate_export(export_type, extension, username, id_string,
     # generate filename
     basename = "%s_%s" % (
         id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
-    if export_type == Export.ANALYSER_EXPORT:
-        # Analyser exports should be distinguished by more than just their file extension.
-        basename= '{}_ANALYSER_{}'.format(id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     filename = basename + "." + extension
 
     # check filename is unique
