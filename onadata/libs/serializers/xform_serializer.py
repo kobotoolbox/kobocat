@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
+import json
+
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
@@ -82,7 +84,12 @@ class XFormListSerializer(serializers.Serializer):
     manifestUrl = serializers.SerializerMethodField('get_manifest_url')
 
     def get_version(self, obj):
-        return None
+        # Returns version data
+        # The data returned may vary depending on the contents of the 
+        # version field in the settings of the XLS file when the asset was
+        # created or updated
+        obj_json = json.loads(obj.json)
+        return obj_json.get('version')
 
     @check_obj
     def get_hash(self, obj):
