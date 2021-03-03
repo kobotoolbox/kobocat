@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals, absolute_import
 
 # Userprofile Permissions
 CAN_ADD_USERPROFILE = 'add_userprofile'
