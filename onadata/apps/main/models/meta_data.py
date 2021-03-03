@@ -3,6 +3,7 @@ import mimetypes
 import os
 import re
 import requests
+import time
 from contextlib import closing
 from hashlib import md5
 
@@ -12,9 +13,11 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import URLValidator
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from six.moves.urllib.parse import urlparse
 
 from onadata.apps.logger.models import XForm
+from onadata.libs.utils.string import get_hash
 
 CHUNK_SIZE = 1024
 
@@ -101,7 +104,8 @@ def create_media(media):
 
 
 def media_resources(media_list, download=False):
-    """List of MetaData objects of type media
+    """
+    List of MetaData objects of type media
 
     @param media_list - list of MetaData objects of type `media`
     @param download - boolean, when True downloads media files when
@@ -130,6 +134,8 @@ class MetaData(models.Model):
     file_hash = models.CharField(max_length=50, blank=True, null=True)
     from_kpi = models.BooleanField(default=False)
     data_filename = models.CharField(max_length=255, blank=True, null=True)
+    date_created = models.DateTimeField(default=timezone.now)
+    date_modified = models.DateTimeField(default=timezone.now)
 
     class Meta:
         app_label = 'main'
@@ -144,15 +150,30 @@ class MetaData(models.Model):
         return re.match(pattern, self.data_value)
 
     def save(self, *args, **kwargs):
-        self._set_hash()
+        self.date_modified = timezone.now()
+        # if 'update_hash_only' is present in `kwargs`, we only want to update
+        # previously updated hash (and the modified datetime).
+        # Otherwise, we set the hash all the time (if it is empty)
+        update_hash_only = kwargs.pop('update_hash_only', None)
+        if update_hash_only:
+            kwargs['update_fields'] = ['date_modified', 'file_hash']
+        else:
+            self._set_hash()
+
         super().save(*args, **kwargs)
 
     @property
     def hash(self):
-        if self.file_hash is not None and self.file_hash != '':
-            return self.file_hash
-        else:
-            return self._set_hash()
+        hash_ = self._set_hash()
+        if self.is_paired_data:
+            timedelta = timezone.now() - self.date_modified
+            if timedelta.total_seconds() > settings.PAIRED_DATA_EXPIRATION:
+                self.file_hash = ''
+                # Regenerate the hash
+                hash_ = self._set_hash()
+                self.save(update_hash_only=True)
+
+        return hash_
 
     @property
     def filename(self):
@@ -174,29 +195,42 @@ class MetaData(models.Model):
         # Return `self.data_value` as fallback
         return self.data_value
 
-    def _set_hash(self):
-        # if `self.file_hash` already exists, keep it. (e.g. KPI sends file
-        # hash among other parameters when files are synchronized.
-        # In case of a remote URL, the hash is the md5 of the URL.
+    def _set_hash(self) -> str:
+        """
+        Sets `self.file_hash` if it is empty
+
+        Notes: KoBoCAT returns an empty string is the object is a URL, but KPI
+        does not. KPI always sets the hash when it synchronizes media files with
+        KoBoCAT. Thus, if `self.from_kpi` is True, the hash should be calculated
+        no matter what.
+        """
+
         if self.file_hash:
             return self.file_hash
 
         if not self.data_file:
-            return None
+            if not self.from_kpi:
+                return ''
+
+            # Object should be a URL at this point `POST`ed by KPI.
+            # We have to set the hash
+            key_ = f'{self.data_value}.{str(time.time())}'
+            self.file_hash = f'md5:{get_hash(key_)}'
+            return self.file_hash
 
         file_exists = self.data_file.storage.exists(self.data_file.name)
 
-        if (file_exists and self.data_file.name != '') \
-                or (not file_exists and self.data_file):
+        if (
+            (file_exists and self.data_file.name != '')
+            or (not file_exists and self.data_file)
+        ):
             try:
                 self.data_file.seek(os.SEEK_SET)
             except IOError:
                 return ''
             else:
                 data_file_content = self.data_file.read()
-                if isinstance(data_file_content, str):
-                    data_file_content = data_file_content.encode()
-                md5_hash = md5(data_file_content).hexdigest()
+                md5_hash = get_hash(data_file_content)
                 self.file_hash = f'md5:{md5_hash}'
 
                 return self.file_hash
