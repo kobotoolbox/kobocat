@@ -174,4 +174,4 @@ class XFormManifestSerializer(serializers.Serializer):
 
     @check_obj
     def get_hash(self, obj):
-        return "%s" % (obj.file_hash or 'md5:')
+        return "%s" % (obj.hash or 'md5:')
