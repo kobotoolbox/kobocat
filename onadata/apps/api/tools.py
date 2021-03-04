@@ -205,7 +205,7 @@ def get_media_file_response(
         return HttpResponseRedirect(metadata.data_value)
 
     # When `request.user` is authenticated, their authentication is lost with
-    # a HTTP redirection. We use KoBoCAT to proxy the response from KPI
+    # an HTTP redirection. We use KoBoCAT to proxy the response from KPI
     headers = {}
     if not request.user.is_anonymous:
         token = Token.objects.get(user=request.user)

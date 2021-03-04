@@ -3,9 +3,8 @@ import mimetypes
 import os
 import re
 import requests
-import time
 from contextlib import closing
-from hashlib import md5
+
 
 from django.core.exceptions import ValidationError
 from django.core.files.temp import NamedTemporaryFile
@@ -15,9 +14,10 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from six.moves.urllib.parse import urlparse
+from requests.exceptions import RequestException
 
 from onadata.apps.logger.models import XForm
-from onadata.libs.utils.string import get_hash
+from onadata.libs.utils.hash import get_hash
 
 CHUNK_SIZE = 1024
 
@@ -197,7 +197,8 @@ class MetaData(models.Model):
 
     def _set_hash(self) -> str:
         """
-        Sets `self.file_hash` if it is empty
+        Sets `self.file_hash` if it is empty and returns it if no errors occur.
+        Otherwise, it returns an empty string
 
         Notes: KoBoCAT returns an empty string is the object is a URL, but KPI
         does not. KPI always sets the hash when it synchronizes media files with
@@ -208,34 +209,25 @@ class MetaData(models.Model):
         if self.file_hash:
             return self.file_hash
 
-        if not self.data_file:
-            if not self.from_kpi:
-                return ''
-
-            # Object should be a URL at this point `POST`ed by KPI.
-            # We have to set the hash
-            key_ = f'{self.data_value}.{str(time.time())}'
-            self.file_hash = f'md5:{get_hash(key_)}'
-            return self.file_hash
-
-        file_exists = self.data_file.storage.exists(self.data_file.name)
-
-        if (
-            (file_exists and self.data_file.name != '')
-            or (not file_exists and self.data_file)
-        ):
+        if self.data_file:
             try:
-                self.data_file.seek(os.SEEK_SET)
-            except IOError:
+                self.file_hash = get_hash(self.data_file, prefix=True)
+            except (IOError, FileNotFoundError) as e:
                 return ''
             else:
-                data_file_content = self.data_file.read()
-                md5_hash = get_hash(data_file_content)
-                self.file_hash = f'md5:{md5_hash}'
-
                 return self.file_hash
 
-        return ''
+        if not self.from_kpi:
+            return ''
+
+        # Object should be a URL at this point `POST`ed by KPI.
+        # We have to set the hash
+        try:
+            self.file_hash = get_hash(self.data_value, prefix=True, fast=True)
+        except RequestException as e:
+            return ''
+        else:
+            return self.file_hash
 
     @staticmethod
     def public_link(xform, data_value=None):

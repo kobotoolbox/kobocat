@@ -563,6 +563,14 @@ DEFAULT_VALIDATION_STATUSES = [
 # Should match KPI setting
 PAIRED_DATA_EXPIRATION = 300
 
+# In bytes
+# Should match KPI setting
+HASH_BIG_FILE_SIZE_THRESHOLD = 0.5 * 1024 * 1024  # 512 kB
+
+# In bytes
+# Should match KPI setting
+HASH_BIG_FILE_CHUNK = 16 * 1024  # 16 kB
+
 ################################
 # Celery settings              #
 ################################

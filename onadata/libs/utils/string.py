@@ -1,7 +1,5 @@
 # coding: utf-8
 import base64
-import hashlib
-
 from django.utils.six import string_types
 
 
@@ -14,25 +12,6 @@ def base64_decodestring(obj):
         obj = obj.encode()
 
     return base64.b64decode(obj).decode()
-
-
-def get_hash(hashable, algorithm='md5'):
-
-    supported_algorithm = ['md5', 'sha1']
-    if algorithm not in supported_algorithm:
-        raise NotImplementedError('Only `{algorithms}` are supported'.format(
-            algorithms=', '.join(supported_algorithm)
-        ))
-
-    if algorithm == 'md5':
-        hashlib_def = hashlib.md5
-    else:
-        hashlib_def = hashlib.sha1
-
-    if isinstance(hashable, str):
-        hashable = hashable.encode()
-
-    return hashlib_def(hashable).hexdigest()
 
 
 def str2bool(v):
