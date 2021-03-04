@@ -41,7 +41,7 @@ class Export(models.Model):
         (XLS_EXPORT, 'Excel'),
         (CSV_EXPORT, 'CSV'),
         (ZIP_EXPORT, 'ZIP'),
-        (KML_EXPORT, 'kml')
+        (KML_EXPORT, 'kml'),
     ]
 
     EXPORT_TYPE_DICT = dict(export_type for export_type in EXPORT_TYPES)
