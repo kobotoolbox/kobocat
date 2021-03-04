@@ -81,4 +81,3 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             file_hash=file_hash,
             from_kpi=from_kpi,
         )
-
