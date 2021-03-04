@@ -2,6 +2,7 @@
 import pytz
 from datetime import datetime
 
+from django.db import transaction
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -123,10 +124,37 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
         self.object = self.get_object()
-        object_list = MetaData.objects.filter(data_type='media',
-                                              xform=self.object)
+        media_files = {}
+        expired_objects = False
+        # Retrieve all media files for the current form
+        queryset = MetaData.objects.filter(data_type='media',
+                                           xform=self.object)
+        object_list = queryset.all()
+
+        # Keep only media files that are not considered as expired.
+        # Expired files may have an out-of-date hash which needs to be refreshed
+        # before being exposed to the serializer
+        for obj in object_list:
+            if not obj.has_expired:
+                media_files[obj.pk] = obj
+                continue
+            expired_objects = True
+
+        # Retrieve all media files for the current form again except non
+        # expired ones. The expired objects should have an up-to-date hash.
+        if expired_objects:
+            refreshed_object_list = queryset.exclude(pk__in=media_files.keys())
+            for refreshed_object in refreshed_object_list.all():
+                media_files[refreshed_object.pk] = refreshed_object
+
+        # Sorted objects all the time because EE calculates a hash of the
+        # whole manifest to compare it to the next time.
+        # If no files changed, but the order did, the hash would not be the same
+        # and EE would display: "A new version of this form has been downloaded"
+        media_files = dict(sorted(media_files.items()))
         context = self.get_serializer_context()
-        serializer = XFormManifestSerializer(object_list, many=True,
+        serializer = XFormManifestSerializer(media_files.values(),
+                                             many=True,
                                              context=context)
 
         return Response(serializer.data, headers=self.get_openrosa_headers())

@@ -142,7 +142,7 @@ class MetaData(models.Model):
         unique_together = ('xform', 'data_type', 'data_value')
 
     @property
-    def is_paired_data(self):
+    def is_paired_data(self) -> bool:
         pattern = (
             rf'{settings.KOBOFORM_URL}/'
             r'api/v2/assets/[^\/]+/paired-data/pd[^\/]+/external\.xml$'
@@ -151,32 +151,44 @@ class MetaData(models.Model):
 
     def save(self, *args, **kwargs):
         self.date_modified = timezone.now()
-        # if 'update_hash_only' is present in `kwargs`, we only want to update
-        # previously updated hash (and the modified datetime).
-        # Otherwise, we set the hash all the time (if it is empty)
-        update_hash_only = kwargs.pop('update_hash_only', None)
-        if update_hash_only:
-            kwargs['update_fields'] = ['date_modified', 'file_hash']
-        else:
-            self._set_hash()
+        self._set_hash()
 
         super().save(*args, **kwargs)
 
     @property
-    def hash(self):
-        hash_ = self._set_hash()
-        if self.is_paired_data:
-            timedelta = timezone.now() - self.date_modified
-            if timedelta.total_seconds() > settings.PAIRED_DATA_EXPIRATION:
-                self.file_hash = ''
-                # Regenerate the hash
-                hash_ = self._set_hash()
-                self.save(update_hash_only=True)
-
-        return hash_
+    def hash(self) -> str:
+        return self._set_hash()
 
     @property
-    def filename(self):
+    def has_expired(self) -> bool:
+        """
+        It validates whether the file has been modified for the last X minutes.
+        (where `X` equals `settings.PAIRED_DATA_EXPIRATION`)
+
+        Notes: Only `xml-external` (paired data XML) files expire.
+        """
+        if not self.is_paired_data:
+            return False
+
+        timedelta = timezone.now() - self.date_modified
+        if timedelta.total_seconds() > settings.PAIRED_DATA_EXPIRATION:
+            # No need to download the whole file. `HEAD` will force the file
+            # to be resynchronized between KPI and KoBoCAT if needed
+            requests.head(self.data_value)
+            # Because of the way the synchronisation works (delete/create),
+            # We need to lock the row to be sure the object still exists when
+            # we update it.
+            # A simple `self.save()` could raise `DatabaseError` on race
+            # conditions.
+            MetaData.objects.select_for_update().update(
+                date_modified=timezone.now()
+            )
+            return True
+
+        return False
+
+    @property
+    def filename(self) -> str:
 
         # `self.__filename` has already been cached, return it.
         if getattr(self, '__filename', None):
