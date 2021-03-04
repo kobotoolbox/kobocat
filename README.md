@@ -76,3 +76,33 @@ To compile MO files and update live translations
 $ django-admin.py compilemessages ;
 $ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin.py compilemessages && cd - ; done
 ```
+## Testing in KoBoCAT
+
+For kobo-install users, enter the folder for kobo-install and run this command
+
+```
+./run.py -cf exec kobocat bash
+```
+
+For all other users, enter the container using this command
+
+``` sh
+$ docker exec -it {{kobocat container}} /bin/bash
+```
+
+Run pip install the development dependancies
+
+``` sh
+$ pip install -r requirements/dev.pip
+```
+Install libsqlite3-mod-spatialite for the testing database
+
+``` sh
+$ apt-get update && apt-get install libsqlite3-mod-spatialite
+```
+
+Run pytest to run all automated tests
+
+``` sh
+$ pytest
+```

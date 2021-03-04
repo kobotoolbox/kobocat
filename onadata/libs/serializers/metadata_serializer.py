@@ -85,4 +85,3 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             from_kpi=from_kpi,
             data_filename=data_filename,
         )
-
