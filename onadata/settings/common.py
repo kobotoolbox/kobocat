@@ -121,15 +121,6 @@ KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 # All internal communications between containers must be HTTP only.
 ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 
-# These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
-# See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
-KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
-KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
-
 # Default value for the `UserProfile.require_auth` attribute. Even though it's
 # set in kc_environ, include it here as well to support legacy installations
 REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = False
@@ -255,9 +246,7 @@ INSTALLED_APPS = (
     'onadata.apps.restservice',
     'onadata.apps.api',
     'guardian',
-    'onadata.apps.sms_support',
     'onadata.libs',
-    'onadata.apps.survey_report',
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',
@@ -507,11 +496,21 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
     'image/png',
     'image/svg+xml',
-    'audio/mpeg',
     'video/3gpp',
-    'audio/wav',
-    'audio/x-m4a',
+    'video/mp4',
+    'video/quicktime',
+    'video/ogg',
+    'video/webm',
+    'audio/aac',
+    'audio/aacp',
+    'audio/flac',
     'audio/mp3',
+    'audio/mp4',
+    'audio/mpeg',
+    'audio/ogg',
+    'audio/wav',
+    'audio/webm',
+    'audio/x-m4a',
     'text/csv',
     'application/zip'
 ]
@@ -572,6 +571,9 @@ CSRF_COOKIE_HTTPONLY = True
 if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+# Limit sessions to 1 week (the default is 2 weeks)
+SESSION_COOKIE_AGE = 604800
 
 
 # KPI running Django 2.2 inserts password hashes into our database, calculated

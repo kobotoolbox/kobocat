@@ -14,7 +14,6 @@ from django.contrib.sites.models import Site
 from django.contrib import messages
 from django.core.files.storage import get_storage_class
 from django.core.files import File
-from django.core.urlresolvers import reverse
 from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden,
@@ -39,28 +38,22 @@ from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.viewer_tools import enketo_url
-from onadata.libs.utils.viewer_tools import image_urls_dict
 from onadata.libs.utils.logger_tools import (
     safe_create_instance,
     OpenRosaResponseBadRequest,
     OpenRosaResponse,
     BaseOpenRosaResponse,
-    inject_instanceid,
-    remove_xform,
     publish_xml_form,
-    publish_form)
+    publish_form,
+)
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
-from onadata.libs.utils.decorators import is_owner
 from onadata.libs.utils.user_auth import (helper_auth_helper,
                                           has_permission,
-                                          has_edit_permission,
                                           HttpResponseNotAuthorized,
                                           add_cors_headers,
                                           )
-from onadata.libs.utils.viewer_tools import _get_form_url
-from ...koboform.pyxform_utils import convert_csv_to_xls
 from .tasks import generate_stats_zip
+from ...koboform.pyxform_utils import convert_csv_to_xls
 
 IO_ERROR_STRINGS = [
     'request data read error',
@@ -440,131 +433,6 @@ def download_jsonform(request, username, id_string):
         add_cors_headers(response)
         response.content = xform.json
     return response
-
-
-@is_owner
-@require_POST
-def delete_xform(request, username, id_string):
-    xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__exact=id_string)
-
-    # delete xform and submissions
-    remove_xform(xform)
-
-    audit = {}
-    audit_log(
-        Actions.FORM_DELETED, request.user, xform.user,
-        _("Deleted form '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-    return HttpResponseRedirect('/')
-
-
-@is_owner
-def toggle_downloadable(request, username, id_string):
-    xform = XForm.objects.get(user__username__iexact=username,
-                              id_string__exact=id_string)
-    xform.downloadable = not xform.downloadable
-    xform.save()
-    audit = {}
-    audit_log(
-        Actions.FORM_UPDATED, request.user, xform.user,
-        _("Made form '%(id_string)s' %(downloadable)s.") %
-        {
-            'id_string': xform.id_string,
-            'downloadable':
-            _("downloadable") if xform.downloadable else _("un-downloadable")
-        }, audit, request)
-    return HttpResponseRedirect("/%s" % username)
-
-
-def enter_data(request, username, id_string):
-    owner = get_object_or_404(User, username__iexact=username)
-    xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__exact=id_string)
-    if not has_edit_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
-
-    form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
-
-    try:
-        url = enketo_url(form_url, xform.id_string)
-        if not url:
-            return HttpResponseRedirect(reverse('show_form',
-                                        kwargs={'username': username,
-                                                'id_string': id_string}))
-        return HttpResponseRedirect(url)
-    except Exception as e:
-        data = {}
-        owner = User.objects.get(username__iexact=username)
-        data['profile'], created = \
-            UserProfile.objects.get_or_create(user=owner)
-        data['xform'] = xform
-        data['content_user'] = owner
-        data['form_view'] = True
-        data['message'] = {
-            'type': 'alert-error',
-            'text': "Enketo error, reason: %s" % e}
-        messages.add_message(
-            request, messages.WARNING,
-            _("Enketo error: enketo replied %s") % e, fail_silently=True)
-        return render(request, "profile.html", data)
-
-    return HttpResponseRedirect(reverse('show_form',
-                                kwargs={'username': username,
-                                        'id_string': id_string}))
-
-
-def edit_data(request, username, id_string, data_id):
-    context = RequestContext(request)
-    owner = User.objects.get(username__iexact=username)
-    xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__exact=id_string)
-    instance = get_object_or_404(
-        Instance, pk=data_id, xform=xform)
-    instance_attachments = image_urls_dict(instance)
-    if not has_edit_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
-    if not hasattr(settings, 'ENKETO_URL'):
-        return HttpResponseRedirect(reverse(
-            'show_form',
-            kwargs={'username': username, 'id_string': id_string}))
-
-    url = '%sdata/edit_url' % settings.ENKETO_URL
-    # see commit 220f2dad0e for tmp file creation
-    injected_xml = inject_instanceid(instance.xml, instance.uuid)
-    return_url = request.build_absolute_uri(
-        reverse(
-            'onadata.apps.viewer.views.instance',
-            kwargs={
-                'username': username,
-                'id_string': id_string}
-        ) + "#/" + str(instance.id))
-    form_url = _get_form_url(request, username, settings.ENKETO_PROTOCOL)
-
-    try:
-        url = enketo_url(
-            form_url, xform.id_string, instance_xml=injected_xml,
-            instance_id=instance.uuid, return_url=return_url,
-            instance_attachments=instance_attachments
-        )
-    except Exception as e:
-        context.message = {
-            'type': 'alert-error',
-            'text': "Enketo error, reason: %s" % e}
-        messages.add_message(
-            request, messages.WARNING,
-            _("Enketo error: enketo replied %s") % e, fail_silently=True)
-    else:
-        if url:
-            context.enketo = url
-            return HttpResponseRedirect(url)
-    return HttpResponseRedirect(
-        reverse('show_form', kwargs={
-            'username': username,
-            'id_string': id_string
-        }))
 
 
 def view_submission_list(request, username):

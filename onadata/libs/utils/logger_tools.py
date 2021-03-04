@@ -645,23 +645,25 @@ def update_mongo_for_xform(xform, only_update_missing=True):
     done = 0
     for id_, instance in instances.items():
         (pi, created) = ParsedInstance.objects.get_or_create(instance=instance)
-        if not pi.save(asynchronous=False):
-            print("\033[91m[ERROR] - Instance #{}/uuid:{} - Could not save the parsed instance\033[0m".format(
-                id_, instance.uuid))
+        try:
+            save_success = pi.save(asynchronous=False)
+        except InstanceEmptyError:
+            print(
+                "\033[91m[WARNING] - Skipping Instance #{}/uuid:{} because "
+                "it is empty\033[0m".format(id_, instance.uuid)
+            )
         else:
-            done += 1
-
-        # if 1000 records are done, flush mongo
-        if (done > 0 and done % 1000) == 0:
-            sys.stdout.write(
-                'Updated %d records, flushing MongoDB...\n' % done)
-            settings.MONGO_CONNECTION.admin.command({'fsync': 1})
+            if not save_success:
+                print(
+                    "\033[91m[ERROR] - Instance #{}/uuid:{} - Could not save "
+                    "the parsed instance\033[0m".format(id_, instance.uuid)
+                )
+            else:
+                done += 1
 
         progress = "\r%.2f %% done..." % ((float(done) / float(total)) * 100)
         sys.stdout.write(progress)
         sys.stdout.flush()
-    # flush mongo again when done
-    settings.MONGO_CONNECTION.admin.command({'fsync': 1})
     sys.stdout.write(
         "\nUpdated %s\n------------------------------------------\n"
         % xform.id_string)

@@ -9,7 +9,7 @@ from guardian.shortcuts import assign_perm
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
-from onadata.libs.permissions import (
+from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
     CAN_VIEW_XFORM
 )
@@ -106,14 +106,19 @@ class TestXFormListApi(TestAbstractViewSet):
     def test_get_xform_list_other_user_with_no_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         self.assertFalse(
             alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -131,7 +136,12 @@ class TestXFormListApi(TestAbstractViewSet):
     def test_get_xform_list_other_user_with_readonly_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         assign_perm(CAN_VIEW_XFORM, alice_profile.user, self.xform)
@@ -139,7 +149,7 @@ class TestXFormListApi(TestAbstractViewSet):
             alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -157,7 +167,12 @@ class TestXFormListApi(TestAbstractViewSet):
     def test_get_xform_list_other_user_with_dataentry_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         assign_perm(CAN_ADD_SUBMISSIONS, alice_profile.user, self.xform)
@@ -165,7 +180,7 @@ class TestXFormListApi(TestAbstractViewSet):
             alice_profile.user.has_perms([CAN_ADD_SUBMISSIONS], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -185,6 +200,30 @@ class TestXFormListApi(TestAbstractViewSet):
             self.assertTrue(response.has_header('Date'))
             self.assertEqual(response['Content-Type'],
                              'text/xml; charset=utf-8')
+
+    def test_get_xform_list_with_formid_parameter(self):
+        """
+        Test `formList` with `?formID=[id_string]` filter
+        """
+        # Test unrecognized `formID`
+        request = self.factory.get('/', {'formID': 'unrecognizedID'})
+        response = self.view(request, username=self.user.username)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])
+
+        # Test a valid `formID`
+        request = self.factory.get('/', {'formID': self.xform.id_string})
+        response = self.view(request, username=self.user.username)
+        self.assertEqual(response.status_code, 200)
+        path = os.path.join(
+            os.path.dirname(__file__), '..', 'fixtures', 'formList.xml'
+        )
+
+        with open(path) as f:
+            form_list_xml = f.read().strip()
+            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            content = response.render().content
+            self.assertEqual(content, form_list_xml % data)
 
     def test_retrieve_xform_xml(self):
         self.view = XFormListApi.as_view({

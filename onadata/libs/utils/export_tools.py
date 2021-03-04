@@ -3,10 +3,7 @@ import csv
 import json
 import os
 import re
-import six
-import tempfile
 from datetime import datetime, date, time, timedelta
-from zipfile import ZipFile
 
 from bson import json_util
 from django.conf import settings
@@ -20,7 +17,6 @@ from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
-from savReaderWriter import SavWriter
 
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.viewer.models.export import Export
@@ -42,8 +38,6 @@ from onadata.libs.utils.common_tags import (
     TAGS,
     NOTES
 )
-from onadata.libs.exceptions import J2XException
-from .analyser_export import generate_analyser
 
 
 # this is Mongo Collection where we will store the parsed submissions
@@ -437,74 +431,6 @@ class ExportBuilder(object):
 
         return row
 
-    def to_zipped_csv(self, path, data, *args):
-        def write_row(row, csv_writer, fields):
-            csv_writer.writerow(
-                [to_str(row, field) for field in fields])
-
-        csv_defs = {}
-        for section in self.sections:
-            csv_file = NamedTemporaryFile(suffix=".csv", mode='w')
-            csv_writer = csv.writer(csv_file)
-            csv_defs[section['name']] = {
-                'csv_file': csv_file, 'csv_writer': csv_writer}
-
-        # write headers
-        for section in self.sections:
-            fields = [element['title'] for element in section['elements']]\
-                + self.EXTRA_FIELDS
-            csv_defs[section['name']]['csv_writer'].writerow(
-                [f for f in fields])
-
-        index = 1
-        indices = {}
-        survey_name = self.survey.name
-        for d in data:
-            # decode mongo section names
-            joined_export = dict_to_joined_export(d, index, indices,
-                                                  survey_name)
-            output = ExportBuilder.decode_mongo_encoded_section_names(
-                joined_export)
-            # attach meta fields (index, parent_index, parent_table)
-            # output has keys for every section
-            if survey_name not in output:
-                output[survey_name] = {}
-            output[survey_name][INDEX] = index
-            output[survey_name][PARENT_INDEX] = -1
-            for section in self.sections:
-                # get data for this section and write to csv
-                section_name = section['name']
-                csv_def = csv_defs[section_name]
-                fields = [
-                    element['xpath'] for element in
-                    section['elements']] + self.EXTRA_FIELDS
-                csv_writer = csv_def['csv_writer']
-                # section name might not exist within the output, e.g. data was
-                # not provided for said repeat - write test to check this
-                row = output.get(section_name, None)
-                if type(row) == dict:
-                    write_row(
-                        self.pre_process_row(row, section),
-                        csv_writer, fields)
-                elif type(row) == list:
-                    for child_row in row:
-                        write_row(
-                            self.pre_process_row(child_row, section),
-                            csv_writer, fields)
-            index += 1
-
-        # write zipfile
-        with ZipFile(path, 'w') as zip_file:
-            for section_name, csv_def in csv_defs.items():
-                csv_file = csv_def['csv_file']
-                csv_file.seek(0)
-                zip_file.write(
-                    csv_file.name, "_".join(section_name.split("/")) + ".csv")
-
-        # close files when we are done
-        for section_name, csv_def in csv_defs.items():
-            csv_def['csv_file'].close()
-
     @classmethod
     def get_valid_sheet_name(cls, desired_name, existing_names):
         # a sheet name has to be <= 31 characters and not a duplicate of an
@@ -594,29 +520,6 @@ class ExportBuilder(object):
 
         wb.save(filename=path)
 
-    def to_analyser_export(self, path, data, username, xform_id_string, *args):
-        # Get the XLSForm.
-        xform = XForm.objects.get(user__username__iexact=username, id_string__exact=xform_id_string)
-        xlsform_io= xform.to_xlsform()
-
-        if xlsform_io is None:
-            raise RuntimeError('XLSForm `{}` for user `{}` could not be retrieved from storage.'.
-                               format(xform_id_string, username))
-
-        prefix = slugify('analyser_data__{}__{}'.format(username, xform_id_string))
-        with tempfile.NamedTemporaryFile('w+b', prefix=prefix, suffix='.xlsx',) as xls_data:
-            # Generate a new XLS export to work from.
-            self.to_xls_export(xls_data.name, data)
-            xls_data.file.seek(0)
-
-            # Generate the analyser file.
-            analyser_io= generate_analyser(xlsform_io, xls_data)
-
-        # Write the generated analyser file to the specified path
-        #   ...which itself points to a temp file.
-        with open(path, 'wb') as analyser_file:
-            analyser_file.write(analyser_io.read())
-
     def to_flat_csv_export(
             self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
@@ -628,94 +531,6 @@ class ExportBuilder(object):
             username, id_string, filter_query, self.GROUP_DELIMITER,
             self.SPLIT_SELECT_MULTIPLES, self.BINARY_SELECT_MULTIPLES)
         csv_builder.export_to(path)
-
-    def to_zipped_sav(self, path, data, *args):
-        def write_row(row, csv_writer, fields):
-            stringified_row = [to_str(row, field, True, False) for field in fields]
-            sav_writer.writerow(stringified_row)
-
-        sav_defs = {}
-
-        # write headers
-        for section in self.sections:
-            fields = [element['title'] for element in section['elements']]\
-                + self.EXTRA_FIELDS
-            c = 0
-            var_labels = {}
-            var_names = []
-            tmp_k = {}
-            for field in fields:
-                c += 1
-                var_name = 'var%d' % c
-                var_labels[var_name] = field
-                var_names.append(var_name)
-                tmp_k[field] = var_name
-
-            var_types = dict(
-                [(tmp_k[element['title']],
-                  0 if element['type'] in ['decimal', 'int'] else 255)
-                 for element in section['elements']]
-                + [(tmp_k[item],
-                    0 if item in ['_id', '_index', '_parent_index'] else 255)
-                   for item in self.EXTRA_FIELDS]
-            )
-            sav_file = NamedTemporaryFile(suffix=".sav")
-            sav_writer = SavWriter(sav_file.name, varNames=var_names,
-                                   varTypes=var_types,
-                                   varLabels=var_labels, ioUtf8=True)
-            sav_defs[section['name']] = {
-                'sav_file': sav_file, 'sav_writer': sav_writer}
-
-        index = 1
-        indices = {}
-        survey_name = self.survey.name
-        for d in data:
-            # decode mongo section names
-            joined_export = dict_to_joined_export(d, index, indices,
-                                                  survey_name)
-            output = ExportBuilder.decode_mongo_encoded_section_names(
-                joined_export)
-            # attach meta fields (index, parent_index, parent_table)
-            # output has keys for every section
-            if survey_name not in output:
-                output[survey_name] = {}
-            output[survey_name][INDEX] = index
-            output[survey_name][PARENT_INDEX] = -1
-            for section in self.sections:
-                # get data for this section and write to csv
-                section_name = section['name']
-                sav_def = sav_defs[section_name]
-                fields = [
-                    element['xpath'] for element in
-                    section['elements']] + self.EXTRA_FIELDS
-                sav_writer = sav_def['sav_writer']
-                row = output.get(section_name, None)
-                if type(row) == dict:
-                    write_row(
-                        self.pre_process_row(row, section),
-                        sav_writer, fields)
-                elif type(row) == list:
-                    for child_row in row:
-                        write_row(
-                            self.pre_process_row(child_row, section),
-                            sav_writer, fields)
-            index += 1
-
-        for section_name, sav_def in sav_defs.items():
-            sav_def['sav_writer'].closeSavFile(
-                sav_def['sav_writer'].fh, mode=b'wb')
-
-        # write zipfile
-        with ZipFile(path, 'w') as zip_file:
-            for section_name, sav_def in sav_defs.items():
-                sav_file = sav_def['sav_file']
-                sav_file.seek(0)
-                zip_file.write(
-                    sav_file.name, "_".join(section_name.split("/")) + ".sav")
-
-        # close files when we are done
-        for section_name, sav_def in sav_defs.items():
-            sav_def['sav_file'].close()
 
 
 def dict_to_flat_export(d, parent_index=0):
@@ -733,9 +548,6 @@ def generate_export(export_type, extension, username, id_string,
     export_type_func_map = {
         Export.XLS_EXPORT: 'to_xls_export',
         Export.CSV_EXPORT: 'to_flat_csv_export',
-        Export.CSV_ZIP_EXPORT: 'to_zipped_csv',
-        Export.SAV_ZIP_EXPORT: 'to_zipped_sav',
-        Export.ANALYSER_EXPORT: 'to_analyser_export'
     }
 
     xform = XForm.objects.get(
@@ -762,9 +574,6 @@ def generate_export(export_type, extension, username, id_string,
     # generate filename
     basename = "%s_%s" % (
         id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
-    if export_type == Export.ANALYSER_EXPORT:
-        # Analyser exports should be distinguished by more than just their file extension.
-        basename = '{}_ANALYSER_{}'.format(id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     filename = basename + "." + extension
 
     # check filename is unique
@@ -817,7 +626,7 @@ def query_mongo(username, id_string, query=None, hide_deleted=True):
 
 def should_create_new_export(xform, export_type):
     if Export.objects.filter(
-            xform=xform, export_type=export_type).count() == 0\
+            xform=xform, export_type=export_type).count() == 0 \
             or Export.exports_outdated(xform, export_type=export_type):
         return True
     return False

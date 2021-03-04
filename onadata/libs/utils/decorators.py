@@ -47,7 +47,9 @@ def apply_form_field_names(func):
     def wrapper(*args, **kwargs):
         def _get_decoded_record(record):
             if isinstance(record, dict):
-                for field in record:
+                # Avoid RuntimeError: dictionary keys changed during iteration
+                record_iter = dict(record)
+                for field in record_iter:
                     if isinstance(record[field], list):
                         tmp_items = []
                         items = record[field]
@@ -60,7 +62,7 @@ def apply_form_field_names(func):
             return record
 
         cursor = func(*args, **kwargs)
-        # Compare Class name instead of type by tests use MockMongo
+        # Compare by class name instead of type because tests use MockMongo
         if cursor.__class__.__name__ == 'Cursor' and 'id_string' in kwargs and \
                 'username' in kwargs:
             username = kwargs.get('username')

@@ -18,9 +18,18 @@ please refer to
 As features are migrated, we will list them here along with the last
 release where each was present:
 
-  - REST Services - an improved version [has been added to
-    KPI](https://github.com/kobotoolbox/kpi/pull/1864). Last KoBoCAT
+  - To ensure security and stability, many endpoints that were already
+    available in KPI, long-unsupported, or underutilized have been removed in
     release
+    [2.020.40](https://github.com/kobotoolbox/kobocat/releases/tag/2.020.40).
+    These were related to charts and stats, form cloning, form sharing, user
+    profiles, organizations / projects / teams, bamboo, and ziggy. For a full
+    list, please see [REMOVALS.md](REMOVALS.md). These endpoints were last
+    available in the release
+    [2.020.39](https://github.com/kobotoolbox/kobocat/releases/tag/2.020.39).
+  - REST Services - an improved version [has been added to
+    KPI](https://github.com/kobotoolbox/kpi/pull/1864). The last KoBoCAT
+    release to contain legacy REST services is
     [2.019.39](https://github.com/kobotoolbox/kobocat/releases/tag/2.019.39).
 
 ## About
@@ -66,4 +75,34 @@ To compile MO files and update live translations
 ``` sh
 $ django-admin.py compilemessages ;
 $ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin.py compilemessages && cd - ; done
+```
+## Testing in KoBoCAT
+
+For kobo-install users, enter the folder for kobo-install and run this command
+
+```
+./run.py -cf exec kobocat bash
+```
+
+For all other users, enter the container using this command
+
+``` sh
+$ docker exec -it {{kobocat container}} /bin/bash
+```
+
+Run pip install the development dependancies
+
+``` sh
+$ pip install -r requirements/dev.pip
+```
+Install libsqlite3-mod-spatialite for the testing database
+
+``` sh
+$ apt-get update && apt-get install libsqlite3-mod-spatialite
+```
+
+Run pytest to run all automated tests
+
+``` sh
+$ pytest
 ```

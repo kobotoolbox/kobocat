@@ -64,12 +64,11 @@
         </div>
         <div class="span8">
             <h3 class="short">
-                <a href="{% url "public_profile" content_user.username %}">{{ content_user.username }}</a>
+                {{ content_user.username }}
                 {% if profile.name %}
                 <span class="name">|&nbsp;{{ profile.name }}</span>
                 {% endif %}
             </h3>
-            <span><a href="{% url "public_profile" content_user.username %}">{% trans "View Profile Page" %}</a></span>
         </div>
         </div>
         <div class="row-fluid">

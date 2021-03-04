@@ -5,7 +5,11 @@ from rest_framework.permissions import (
     SAFE_METHODS
 )
 
-from onadata.libs.permissions import CAN_CHANGE_XFORM, CAN_VALIDATE_XFORM
+from onadata.libs.constants import (
+    CAN_CHANGE_XFORM,
+    CAN_VALIDATE_XFORM,
+    CAN_DELETE_DATA_XFORM,
+)
 from onadata.apps.logger.models import XForm
 
 
@@ -73,7 +77,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         # Those who can edit submissions can also delete them, following the
         # behavior of `onadata.apps.main.views.delete_data`
         self.perms_map = self.perms_map.copy()
-        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_CHANGE_XFORM]
+        self.perms_map['DELETE'] = ['%(app_label)s.' + CAN_DELETE_DATA_XFORM]
 
     def has_permission(self, request, view):
         lookup_field = view.lookup_field
@@ -81,7 +85,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         # Allow anonymous users to access access shared data
         allowed_anonymous_action = ['retrieve']
         if lookup:
-            # We need to grand access to anonymous on list endpoint too when
+            # We need to grant access to anonymous on list endpoint too when
             # a form pk is specified. e.g. `/api/v1/data/{pk}.json
             allowed_anonymous_action.append('list')
         if request.method in SAFE_METHODS and \
