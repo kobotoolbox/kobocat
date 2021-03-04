@@ -2,7 +2,6 @@
 import json
 import os
 import re
-from hashlib import md5
 from xml.sax import saxutils
 
 from django.conf import settings
@@ -27,11 +26,11 @@ from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
     CAN_VALIDATE_XFORM,
-    CAN_VIEW_XFORM,
     CAN_DELETE_DATA_XFORM,
     CAN_TRANSFER_OWNERSHIP,
 )
 from onadata.libs.models.base_model import BaseModel
+from onadata.libs.utils.hash import get_hash
 
 
 XFORM_TITLE_LENGTH = 255
@@ -241,7 +240,7 @@ class XForm(BaseModel):
 
     @property
     def hash(self):
-        return md5(self.xml.encode()).hexdigest()
+        return get_hash(self.xml)
 
     @property
     def can_be_replaced(self):

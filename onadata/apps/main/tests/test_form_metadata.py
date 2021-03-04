@@ -1,6 +1,5 @@
 # coding: utf-8
 import os
-import hashlib
 
 from django.core.files.base import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -12,6 +11,7 @@ from onadata.apps.main.views import (
     edit,
     download_media_data,
 )
+from onadata.libs.utils.hash import get_hash
 from .test_base import TestBase
 
 
@@ -94,10 +94,8 @@ class TestFormMetadata(TestBase):
             data_type='media', xform=self.xform, data_value=name,
             data_file=File(open(media_file, 'rb'), name),
             data_file_type='image/png')
-        f = open(media_file, 'rb')
-        md5_hash = hashlib.md5(f.read()).hexdigest()
-        media_hash = f'md5:{md5_hash}'
-        f.close()
+        with open(media_file, 'rb') as f:
+            media_hash = get_hash(f, prefix=True)
         meta_hash = m.hash
         self.assertEqual(meta_hash, media_hash)
         self.assertEqual(m.file_hash, media_hash)
