@@ -22,7 +22,7 @@ from onadata.apps.api.permissions import XFormPermissions
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.viewer.models.export import Export
 from onadata.libs import filters
-from onadata.libs.exceptions import NoRecordsFoundError, J2XException
+from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
 from onadata.libs.mixins.labels_mixin import LabelsMixin
@@ -43,8 +43,6 @@ EXPORT_EXT = {
     'xls': Export.XLS_EXPORT,
     'xlsx': Export.XLS_EXPORT,
     'csv': Export.CSV_EXPORT,
-    'csvzip': Export.CSV_ZIP_EXPORT,
-    'savzip': Export.SAV_ZIP_EXPORT,
 }
 
 
@@ -65,8 +63,6 @@ def _get_extension_from_export_type(export_type):
 
     if export_type == Export.XLS_EXPORT:
         extension = 'xlsx'
-    elif export_type in [Export.CSV_ZIP_EXPORT, Export.SAV_ZIP_EXPORT]:
-        extension = 'zip'
 
     return extension
 
@@ -121,9 +117,6 @@ def _generate_new_export(request, xform, query, export_type):
             }, audit, request)
     except NoRecordsFoundError:
         raise Http404(_("No records found to export"))
-    except J2XException as e:
-        # j2x exception
-        return {'error': str(e)}
     else:
         return export
 
@@ -166,8 +159,7 @@ def response_for_format(form, format=None):
 def should_regenerate_export(xform, export_type, request):
     return should_create_new_export(xform, export_type) or\
         'start' in request.GET or 'end' in request.GET or\
-        'query' in request.GET or 'meta' in request.GET or\
-        'token' in request.GET
+        'query' in request.GET
 
 
 def value_for_type(form, field, value):
@@ -192,8 +184,7 @@ def log_export(request, xform, export_type):
         }, audit, request)
 
 
-def custom_response_handler(request, xform, query, export_type,
-                            token=None, meta=None):
+def custom_response_handler(request, xform, query, export_type):
     export_type = _get_export_type(export_type)
 
     # check if we need to re-generate,
@@ -238,7 +229,6 @@ published using the `owner` parameter, which specifies the username to the
 account.
 
 - `xls_file`: the xlsform file.
-- `xls_url`: the url to an xlsform
 - `owner`: username to the target account (Optional)
 
 <pre class="prettyprint">
@@ -248,11 +238,6 @@ account.
 >       curl -X POST -F xls_file=@/path/to/form.xls \
 https://example.com/api/v1/forms
 >
-> OR post an xlsform url
->
->       curl -X POST -d \
-"xls_url=https://example.com/ukanga/forms/tutorial/form.xls" \
-https://example.com/api/v1/forms
 
 > Response
 >
@@ -261,9 +246,7 @@ https://example.com/api/v1/forms
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
 >           "description": "",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -318,9 +301,7 @@ https://example.com/api/v1/forms
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
 >           "description": "",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -354,9 +335,7 @@ https://example.com/api/v1/forms/28058
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
 >           "description": "Le description",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -371,7 +350,7 @@ https://example.com/api/v1/forms/28058
 
 You may overwrite the form's contents while preserving its submitted data,
 `id_string` and all other attributes, by sending a `PATCH` that includes
-`xls_file` or `text_xls_form`. Use with caution, as this may compromise the
+`xls_file`. Use with caution, as this may compromise the
 methodology of your study!
 
 <pre class="prettyprint">
@@ -540,22 +519,6 @@ https://example.com/api/v1/forms/28058/labels/hello%20world
 >
 >        HTTP 200 OK
 
-## Get webform/enketo link
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/forms/<code>{pk}</code>/enketo</pre>
-
-> Request
->
->       curl -X GET \
-https://example.com/api/v1/forms/28058/enketo
->
-> Response
->
->       {"enketo_url": "https://h6ic6.enketo.org/webform"}
->
->        HTTP 200 OK
-
 ## Get form data in xls, csv format.
 
 Get form data exported as xls, csv, csv zip, sav zip format.
@@ -564,11 +527,6 @@ Where:
 
 - `pk` - is the form unique identifier
 - `format` - is the data export format i.e csv, xls, csvzip, savzip
-
-Params for the custom xls report
-
-- `meta`  - the metadata id containing the template url
--  `token`  - the template url
 
 <pre class="prettyprint">
 <b>GET</b> /api/v1/forms/{pk}.{format}</code>
@@ -583,46 +541,6 @@ Params for the custom xls report
 > Response
 >
 >        HTTP 200 OK
-
-> Example 2 Custom XLS reports (beta)
->
->       curl -X GET https://example.com/api/v1/forms/28058.xls?meta=12121
->                   or
->       curl -X GET https://example.com/api/v1/forms/28058.xls?token={url}
->
-> XLS file is downloaded
->
-> Response
->
->        HTTP 200 OK
-
-## Clone a form to a specific user account
-
-You can clone a form to a specific user account using `GET` with
-
-- `username` of the user you want to clone the form to
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/forms/<code>{pk}</code>/clone
-</pre>
-
-> Example
->
->       curl -X GET https://example.com/api/v1/forms/123/clone \
--d username=alice
-
-> Response
->
->        HTTP 201 CREATED
->       {
->           "url": "https://example.com/api/v1/forms/124",
->           "formid": 124,
->           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1e",
->           "id_string": "Birds_cloned_1",
->           "sms_id_string": "Birds_cloned_1",
->           "title": "Birds_cloned_1",
->           ...
->       }
 
 ## Import CSV data to existing form
 
@@ -650,8 +568,6 @@ data (instance/submission per row)
         renderers.XLSRenderer,
         renderers.XLSXRenderer,
         renderers.CSVRenderer,
-        renderers.CSVZIPRenderer,
-        renderers.SAVZIPRenderer,
         renderers.RawXMLRenderer
     ]
     queryset = XForm.objects.all()
@@ -671,9 +587,8 @@ data (instance/submission per row)
         if isinstance(survey, XForm):
             xform = XForm.objects.get(pk=survey.pk)
             # The XForm has been created, but `publish_xlsform` relies on
-            # `onadata.apps.main.forms.QuickConverter`, which uses standard
-            # Django forms and only recognizes the `xls_file`, `xls_url`,
-            # `dropbox_xls_url`, and `text_xls_form` fields.
+            # `onadata.apps.main.forms.QuickConverterForm`, which uses standard
+            # Django forms and only recognizes the `xls_file` fields.
             # Use the DRF serializer to update the XForm with values for other
             # fields.
             serializer = XFormSerializer(
@@ -691,7 +606,7 @@ data (instance/submission per row)
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, pk, *args, **kwargs):
-        if 'xls_file' in request.FILES or 'text_xls_form' in request.data:
+        if 'xls_file' in request.FILES:
             # A new XLSForm has been uploaded and will replace the existing
             # form
             existing_xform = get_object_or_404(XForm, pk=pk)
@@ -725,25 +640,6 @@ data (instance/submission per row)
         response['Content-Disposition'] = 'attachment; filename=' + filename
 
         return response
-
-    @action(detail=True, methods=['GET'])
-    def enketo(self, request, **kwargs):
-        self.object = self.get_object()
-        form_url = _get_form_url(request, self.object.user.username)
-
-        data = {'message': _("Enketo not properly configured.")}
-        http_status = status.HTTP_400_BAD_REQUEST
-
-        try:
-            url = enketo_url(form_url, self.object.id_string)
-        except EnketoError:
-            pass
-        else:
-            if url:
-                http_status = status.HTTP_200_OK
-                data = {"enketo_url": url}
-
-        return Response(data, http_status)
 
     def retrieve(self, request, *args, **kwargs):
         xform = self.get_object()

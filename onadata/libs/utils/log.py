@@ -50,8 +50,6 @@ Actions = Enum(
     SUBMISSION_DELETED="submission-deleted",
     SUBMISSION_ACCESSED="submission-accessed",
     SUBMISSION_EDIT_REQUESTED="submission-edit-requested",
-    SMS_SUPPORT_ACTIVATED="sms-support-activated",
-    SMS_SUPPORT_DEACTIVATED="sms-support-deactivated",
 )
 
 

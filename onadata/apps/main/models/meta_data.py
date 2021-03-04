@@ -2,15 +2,17 @@
 import mimetypes
 import os
 import requests
-
 from contextlib import closing
+from hashlib import md5
+
 from django.core.exceptions import ValidationError
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import URLValidator
 from django.db import models
 from django.conf import settings
-from hashlib import md5
+from six.moves.urllib.parse import urlparse
+
 from onadata.apps.logger.models import XForm
 
 CHUNK_SIZE = 1024
@@ -77,7 +79,7 @@ def type_for_form(xform, data_type):
 def create_media(media):
     """Download media link"""
     if is_valid_url(media.data_value):
-        filename = media.data_value.split('/')[-1]
+        filename = media.filename
         data_file = NamedTemporaryFile()
         content_type = mimetypes.guess_type(filename)
         with closing(requests.get(media.data_value, stream=True)) as r:
@@ -126,6 +128,7 @@ class MetaData(models.Model):
     data_file = models.FileField(upload_to=upload_to, blank=True, null=True)
     data_file_type = models.CharField(max_length=255, blank=True, null=True)
     file_hash = models.CharField(max_length=50, blank=True, null=True)
+    from_kpi = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'main'
@@ -142,7 +145,29 @@ class MetaData(models.Model):
         else:
             return self._set_hash()
 
+    @property
+    def filename(self):
+
+        # `self.__filename` has already been cached, return it.
+        if getattr(self, '__filename', None):
+            return self.__filename
+
+        # If it is a remote URL, get the filename from it and return it
+        if self.data_type == 'media' and is_valid_url(self.data_value):
+            parsed_url = urlparse(self.data_value)
+            self.__filename = os.path.basename(parsed_url.path)
+            return self.__filename
+
+        # Return `self.data_value` as fallback
+        return self.data_value
+
     def _set_hash(self):
+        # if `self.file_hash` already exists, keep it. (e.g. KPI sends file
+        # hash among other parameters when files are synchronized.
+        # In case of a remote URL, the hash is the md5 of the URL.
+        if self.file_hash:
+            return self.file_hash
+
         if not self.data_file:
             return None
 
@@ -228,25 +253,3 @@ class MetaData(models.Model):
             media = MetaData(data_type=data_type, xform=xform,
                              data_value=uri)
             media.save()
-
-    @staticmethod
-    def mapbox_layer_upload(xform, data=None):
-        data_type = 'mapbox_layer'
-        if data and not MetaData.objects.filter(xform=xform,
-                                                data_type='mapbox_layer'):
-            s = ''
-            for key in data:
-                s = s + data[key] + '||'
-            mapbox_layer = MetaData(data_type=data_type, xform=xform,
-                                    data_value=s)
-            mapbox_layer.save()
-        if type_for_form(xform, data_type):
-            values = type_for_form(xform, data_type)[0].data_value.split('||')
-            data_values = {}
-            data_values['map_name'] = values[0]
-            data_values['link'] = values[1]
-            data_values['attribution'] = values[2]
-            data_values['id'] = type_for_form(xform, data_type)[0].id
-            return data_values
-        else:
-            return None

@@ -1,4 +1,6 @@
 # coding: utf-8
+import os
+
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -19,7 +21,6 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     public = BooleanField(source='shared')
     public_data = BooleanField(source='shared_data')
     require_auth = BooleanField()
-    submission_count_for_today = serializers.ReadOnlyField()
     tags = TagListSerializer(read_only=True)
     title = serializers.CharField(max_length=255)
     url = serializers.HyperlinkedIdentityField(view_name='xform-detail',
@@ -47,7 +48,9 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             'user',
             'has_start_time',
             'shared',
-            'shared_data'
+            'shared_data',
+            'allows_sms',
+            'sms_id_string'
         )
 
     @check_obj
@@ -84,6 +87,12 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
                                       many=True, context=self.context).data
 
         return []
+
+    def get_allows_sms(self, obj):
+        return False
+
+    def get_sms_id_string(self, obj):
+        return obj.id_string
 
 
 class XFormListSerializer(serializers.Serializer):
@@ -135,18 +144,20 @@ class XFormListSerializer(serializers.Serializer):
 
 class XFormManifestSerializer(serializers.Serializer):
 
-    filename = serializers.ReadOnlyField(source='data_value')
+    filename = serializers.SerializerMethodField()
     hash = serializers.SerializerMethodField()
     downloadUrl = serializers.SerializerMethodField('get_url')
 
-    class Meta:
-        fields = '__all__'
+    def get_filename(self, obj):
+        # If file has been synchronized from KPI and it is a remote URL,
+        # manifest.xml should return only the name, not the full URL.
+        # See https://github.com/kobotoolbox/kobocat/issues/344
+        if obj.from_kpi:
+            return obj.filename
 
-        read_only_fields = (
-            'filename',
-            'hash',
-            'downloadUrl',
-        )
+        # To be retro-compatible, return `data_value` if file has been
+        # uploaded from KC directly
+        return obj.data_value
 
     @check_obj
     def get_url(self, obj):
@@ -154,10 +165,13 @@ class XFormManifestSerializer(serializers.Serializer):
                   'username': obj.xform.user.username,
                   'metadata': obj.pk}
         request = self.context.get('request')
-        format = obj.data_value[obj.data_value.rindex('.') + 1:]
+        _, extension = os.path.splitext(obj.filename)
+        # if `obj` is a remote url, it is possible it does not have any
+        # extensions. Thus, only force format when extension exists.
+        if extension:
+            kwargs['format'] = extension[1:].lower()
 
-        return reverse('xform-media', kwargs=kwargs,
-                       request=request, format=format.lower())
+        return reverse('xform-media', kwargs=kwargs, request=request)
 
     @check_obj
     def get_hash(self, obj):
