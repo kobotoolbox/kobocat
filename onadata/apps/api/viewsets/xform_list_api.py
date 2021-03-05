@@ -141,16 +141,17 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             expired_objects = True
 
         # Retrieve all media files for the current form again except non
-        # expired ones. The expired objects should have an up-to-date hash.
+        # expired ones. The expired objects should have an up-to-date hash now.
         if expired_objects:
             refreshed_object_list = queryset.exclude(pk__in=media_files.keys())
             for refreshed_object in refreshed_object_list.all():
                 media_files[refreshed_object.pk] = refreshed_object
 
-        # Sorted objects all the time because EE calculates a hash of the
-        # whole manifest to compare it to the next time.
-        # If no files changed, but the order did, the hash would not be the same
-        # and EE would display: "A new version of this form has been downloaded"
+        # Sort objects all the time because EE calculates a hash of the
+        # whole manifest to detect any changes the next time EE downloads it.
+        # If no files changed, but the order did, the hash of the manifest
+        # would be different and EE would display:
+        # > "A new version of this form has been downloaded"
         media_files = dict(sorted(media_files.items()))
         context = self.get_serializer_context()
         serializer = XFormManifestSerializer(media_files.values(),

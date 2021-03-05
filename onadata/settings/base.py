@@ -559,16 +559,17 @@ DEFAULT_VALIDATION_STATUSES = [
     },
 ]
 
-# Expiration time in sec. after which paired data xml file must be regenerated
-# Should match KPI setting
+# Expiration time in sec. after which the hash of paired data xml file should be
+# validated.
+# Does not need to match KPI setting
 PAIRED_DATA_EXPIRATION = 300
 
-# In bytes
-# Should match KPI setting
+# Minimum size (in bytes) of files to allow fast calculation of hashes
+# Should match KoBoCAT setting
 HASH_BIG_FILE_SIZE_THRESHOLD = 0.5 * 1024 * 1024  # 512 kB
 
-# In bytes
-# Should match KPI setting
+# Chunk size in bytes to read per iteration when hash of a file is calculated
+# Should match KoBoCAT setting
 HASH_BIG_FILE_CHUNK = 16 * 1024  # 16 kB
 
 ################################
