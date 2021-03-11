@@ -63,14 +63,6 @@ class XForm(BaseModel):
     downloadable = models.BooleanField(default=True)
     encrypted = models.BooleanField(default=False)
 
-    # the following fields are filled in automatically
-    allows_sms = models.BooleanField(default=False)
-    sms_id_string = models.SlugField(
-        editable=False,
-        verbose_name=ugettext_lazy("SMS ID"),
-        max_length=MAX_ID_LENGTH,
-        default=''
-    )
     id_string = models.SlugField(
         editable=False,
         verbose_name=ugettext_lazy("ID"),
@@ -196,13 +188,6 @@ class XForm(BaseModel):
                 not re.search(r"^[\w-]+$", self.id_string):
             raise XLSFormError(_('In strict mode, the XForm ID must be a '
                                'valid slug and contain no spaces.'))
-
-        # `sms_id_string` and `allows_sms` are deprecated fields.
-        # We keep them to avoid altering `logger_xform` which can be really big
-        # to avoid a long downtime during a migration.
-        if not self.pk or not self.sms_id_string:
-            self.sms_id_string = self.id_string
-            self.allows_sms = False
 
         super(XForm, self).save(*args, **kwargs)
 
