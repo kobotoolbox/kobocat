@@ -83,16 +83,6 @@ def _parse_int(num):
         pass
 
 
-def _html_submission_response(request, instance):
-    data = {
-        'username': instance.xform.user.username,
-        'id_string': instance.xform.id_string,
-        'domain': Site.objects.get(id=settings.SITE_ID).domain
-    }
-
-    return render(request, "submission.html", data)
-
-
 def _submission_response(request, instance):
     data = {
         'message': _("Successful submission."),
@@ -308,11 +298,7 @@ def submission(request, username=None):
                 "id_string": instance.xform.id_string
             }, audit, request)
 
-        # response as html if posting with a UUID
-        if not username and uuid:
-            response = _html_submission_response(request, instance)
-        else:
-            response = _submission_response(request, instance)
+        response = _submission_response(request, instance)
 
         # ODK needs two things for a form to be considered successful
         # 1) the status code needs to be 201 (created)
