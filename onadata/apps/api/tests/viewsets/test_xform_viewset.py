@@ -4,7 +4,6 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import os
 import re
 from datetime import datetime
-from xml.dom import minidom, Node
 
 import pytz
 import requests
@@ -13,6 +12,7 @@ from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from httmock import HTTMock, all_requests
 from rest_framework import status
+from xml.dom import minidom, Node
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
@@ -29,7 +29,7 @@ def enketo_mock(url, request):
     response = requests.Response()
     response.status_code = 201
     response._content = \
-        '{\n  "url": "https:\\/\\/dmfrm.enketo.org\\/webform",\n'\
+        '{\n  "url": "https:\\/\\/dmfrm.enketo.org\\/webform",\n' \
         '  "code": "200"\n}'
     return response
 
@@ -39,7 +39,7 @@ def enketo_error_mock(url, request):
     response = requests.Response()
     response.status_code = 400
     response._content = \
-        '{\n  "message": "no account exists for this OpenRosa server",\n'\
+        '{\n  "message": "no account exists for this OpenRosa server",\n' \
         '  "code": "200"\n}'
     return response
 
@@ -79,7 +79,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         self._login_user_and_profile(extra_post_data=alice_data)
         self.assertEqual(self.user.username, 'alice')
-        self.assertNotEqual(previous_user,  self.user)
+        self.assertNotEqual(previous_user, self.user)
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -94,7 +94,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
         self._login_user_and_profile(extra_post_data=alice_data)
         self.assertEqual(self.user.username, 'alice')
-        self.assertNotEqual(previous_user,  self.user)
+        self.assertNotEqual(previous_user, self.user)
 
         assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
         view = XFormViewSet.as_view({
@@ -158,7 +158,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         }
         request = self.factory.get('/', **self.extra)
         # test for unsupported format
-        response = view(request, pk=formid, format='csvzip')
+        response = view(request, pk=formid, format='xlsx')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # test for supported formats
@@ -181,13 +181,13 @@ class TestXFormViewSet(TestAbstractViewSet):
             n for n in
             response_doc.getElementsByTagName("h:head")[0].childNodes
             if n.nodeType == Node.ELEMENT_NODE and
-            n.tagName == "model"][0]
+               n.tagName == "model"][0]
 
         # check for UUID and remove
         uuid_nodes = [
             node for node in model_node.childNodes
             if node.nodeType == Node.ELEMENT_NODE
-            and node.getAttribute("nodeset") == "/transportation_2011_07_25/formhub/uuid"]
+               and node.getAttribute("nodeset") == "/transportation_2011_07_25/formhub/uuid"]
         self.assertEqual(len(uuid_nodes), 1)
         uuid_node = uuid_nodes[0]
         uuid_node.setAttribute("calculate", "''")
@@ -238,34 +238,6 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
-    def test_enketo_url_no_account(self):
-        self.publish_xls_form()
-        view = XFormViewSet.as_view({
-            'get': 'enketo'
-        })
-        formid = self.xform.pk
-        # no tags
-        request = self.factory.get('/', **self.extra)
-        with HTTMock(enketo_error_mock):
-            response = view(request, pk=formid)
-            data = {'message': "Enketo not properly configured."}
-
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertEqual(response.data, data)
-
-    def test_enketo_url(self):
-        self.publish_xls_form()
-        view = XFormViewSet.as_view({
-            'get': 'enketo'
-        })
-        formid = self.xform.pk
-        # no tags
-        request = self.factory.get('/', **self.extra)
-        with HTTMock(enketo_mock):
-            response = view(request, pk=formid)
-            data = {"enketo_url": "https://dmfrm.enketo.org/webform"}
-            self.assertEqual(response.data, data)
-
     def test_publish_xlsform(self):
         view = XFormViewSet.as_view({
             'post': 'create'
@@ -276,11 +248,9 @@ class TestXFormViewSet(TestAbstractViewSet):
             'public_data': False,
             'description': 'transportation_2011_07_25',
             'downloadable': True,
-            'allows_sms': False,
             'encrypted': False,
-            'sms_id_string': 'transportation_2011_07_25',
             'id_string': 'transportation_2011_07_25',
-            'title': 'transportation_2011_07_25',
+            'title': 'transportation_2011_07_25'
         }
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
@@ -293,7 +263,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             xform = self.user.xforms.get(uuid=response.data.get('uuid'))
             data.update({
                 'url':
-                'http://testserver/api/v1/forms/%s' % xform.pk
+                    'http://testserver/api/v1/forms/%s' % xform.pk
             })
             self.assertDictContainsSubset(data, response.data)
             self.assertTrue(xform.user.pk == self.user.pk)
@@ -390,7 +360,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertFalse(self.xform.__getattribute__(key))
         self.assertEqual(response.data,
                          {'shared':
-                          ["'String' value must be either True or False."]})
+                              ["'String' value must be either True or False."]})
 
     def test_set_form_bad_key(self):
         self.publish_xls_form()
@@ -429,7 +399,6 @@ class TestXFormViewSet(TestAbstractViewSet):
             'require_auth': False,
             'description': '',
             'downloadable': False,
-            'allows_sms': False,
             'uuid': '',
             'instances_with_geopoints': False,
             'num_of_submissions': 0,
@@ -474,3 +443,24 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = view(request, pk=self.xform.id)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIsNotNone(response.data.get('error'))
+
+    def test_cannot_publish_id_string_starting_with_number(self):
+        data = {
+            'owner': self.user.username,
+            'public': False,
+            'public_data': False,
+            'description': '2011_07_25_transportation',
+            'downloadable': True,
+            'encrypted': False,
+            'id_string': '2011_07_25_transportation',
+            'title': '2011_07_25_transportation',
+        }
+
+        xls_path = os.path.join(settings.ONADATA_DIR, 'apps', 'main', 'tests',
+                                'fixtures', 'transportation',
+                                'transportation.id_starts_with_num.xls')
+        count = XForm.objects.count()
+        response = self.publish_xls_form(xls_path, data, assert_=False)
+        self.assertTrue('Names must begin with a letter' in response.content)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(XForm.objects.count(), count)

@@ -379,8 +379,6 @@ Delete a specific submission in a form
         renderers.XLSRenderer,
         renderers.XLSXRenderer,
         renderers.CSVRenderer,
-        renderers.CSVZIPRenderer,
-        renderers.SAVZIPRenderer,
         renderers.RawXMLRenderer
     ]
 

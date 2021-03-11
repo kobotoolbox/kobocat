@@ -30,19 +30,6 @@ class CSVRenderer(BaseRenderer):
     format = 'csv'
     charset = 'utf-8'
 
-
-class CSVZIPRenderer(BaseRenderer):
-    media_type = 'application/octet-stream'
-    format = 'csvzip'
-    charset = None
-
-
-class SAVZIPRenderer(BaseRenderer):
-    media_type = 'application/octet-stream'
-    format = 'savzip'
-    charset = None
-
-
 # TODO add KML, ZIP(attachments) support
 
 
