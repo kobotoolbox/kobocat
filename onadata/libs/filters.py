@@ -61,7 +61,7 @@ class TagFilter(filters.BaseFilterBackend):
         return queryset
 
 
-class XFormPermissionFilterMixin(object):
+class XFormPermissionFilterMixin:
 
     def _xform_filter_queryset(self, request, queryset, view, keyword):
         """Use XForm permissions"""

@@ -5,7 +5,7 @@ from onadata.libs.utils.common_tags import NESTED_RESERVED_ATTRIBUTES
 from onadata.libs.utils.string import base64_encodestring
 
 
-class MongoHelper(object):
+class MongoHelper:
 
     KEY_WHITELIST = ['$or', '$and', '$exists', '$in', '$gt', '$gte',
                      '$lt', '$lte', '$regex', '$options', '$all']

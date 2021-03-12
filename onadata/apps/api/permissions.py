@@ -113,7 +113,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             request, view, obj)
 
 
-class HasXFormObjectPermissionMixin(object):
+class HasXFormObjectPermissionMixin:
     """Use XForm permissions for Attachment objects"""
     def has_permission(self, request, view):
         model_cls = None

@@ -4,7 +4,7 @@ import glob
 import re
 
 
-class XFormInstanceFS(object):
+class XFormInstanceFS:
     def __init__(self, filepath):
         self.path = filepath
         self.directory, self.filename = os.path.split(self.path)

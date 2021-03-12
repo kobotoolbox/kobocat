@@ -87,7 +87,7 @@ def get_prefix_from_xpath(xpath):
             '%s cannot be prefixed, it returns %s' % (xpath, str(parts)))
 
 
-class AbstractDataFrameBuilder(object):
+class AbstractDataFrameBuilder:
     IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ID, ATTACHMENTS, GEOLOCATION,
                        DELETEDAT, SUBMITTED_BY]
     # fields NOT within the form def that we want to include
@@ -675,7 +675,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             csv_file.close()
 
 
-class XLSDataFrameWriter(object):
+class XLSDataFrameWriter:
     def __init__(self, records, columns):
         self.dataframe = DataFrame(records, columns=columns)
 
@@ -685,7 +685,7 @@ class XLSDataFrameWriter(object):
                                 index=index)
 
 
-class CSVDataFrameWriter(object):
+class CSVDataFrameWriter:
     def __init__(self, records, columns):
         # TODO: if records is empty, raise a known exception
         # catch it in the view and handle

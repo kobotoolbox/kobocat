@@ -77,7 +77,7 @@ def node_value(node, tag_name):
     return tag.childNodes[0].nodeValue
 
 
-class BriefcaseClient(object):
+class BriefcaseClient:
     def __init__(self, url, username, password, user):
         self.url = url
         self.user = user
@@ -275,7 +275,7 @@ class BriefcaseClient(object):
                 self.download_instances(form_id, cursor)
 
     def _upload_xform(self, path, file_name):
-        class PublishXForm(object):
+        class PublishXForm:
             def __init__(self, xml_file, user):
                 self.xml_file = xml_file
                 self.user = user

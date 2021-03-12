@@ -8,7 +8,7 @@ from xlwt import Workbook
 from onadata.libs.utils.export_tools import question_types_to_exclude
 
 
-class XlsWriter(object):
+class XlsWriter:
 
     def __init__(self):
         self.set_file()

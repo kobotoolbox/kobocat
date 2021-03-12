@@ -4,7 +4,7 @@
 import csv
 
 
-class CsvReader(object):
+class CsvReader:
     """
     Typical usage:
 

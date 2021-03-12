@@ -4,7 +4,7 @@ from datetime import datetime
 from onadata.libs.utils.viewer_tools import get_client_ip
 
 
-class Enum(object):
+class Enum:
     __name__ = "Enum"
 
     def __init__(self, **enums):
