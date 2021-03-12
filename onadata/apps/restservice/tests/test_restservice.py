@@ -12,7 +12,7 @@ from onadata.apps.restservice.models import RestService
 class RestServiceTest(TestBase):
 
     def setUp(self):
-        super(RestServiceTest, self).setUp()
+        super().setUp()
         xls_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'fixtures',

@@ -9,7 +9,7 @@ from time import sleep
 
 from django.conf import settings
 from django.core.files.storage import get_storage_class, FileSystemStorage
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from xlrd import open_workbook
 
@@ -40,7 +40,7 @@ def _main_fixture_path(instance_name):
 class TestExports(TestBase):
 
     def setUp(self):
-        super(TestExports, self).setUp()
+        super().setUp()
         self._submission_time = parse_datetime('2013-02-18 15:54:01Z')
 
     def test_unique_xls_sheet_name(self):

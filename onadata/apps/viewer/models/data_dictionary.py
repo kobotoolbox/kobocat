@@ -62,7 +62,7 @@ class DataDictionary(XForm):
 
     def __init__(self, *args, **kwargs):
         self.instances_for_export = lambda d: d.instances.all()
-        super(DataDictionary, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def set_uuid_in_xml(self, file_name=None, id_string=None):
         """
@@ -163,7 +163,7 @@ class DataDictionary(XForm):
             self._mark_start_time_boolean()
             set_uuid(self)
             self.set_uuid_in_xml(id_string=survey.id_string)
-        super(DataDictionary, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def file_name(self):
         return os.path.split(self.xls.name)[-1]

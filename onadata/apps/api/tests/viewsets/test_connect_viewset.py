@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django_digest.test import DigestAuth, BasicAuth
 from rest_framework import authentication
 
@@ -12,7 +10,7 @@ from onadata.libs.authentication import DigestAuthentication
 
 class TestConnectViewSet(TestAbstractViewSet):
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = ConnectViewSet.as_view({
             "get": "list",
         })

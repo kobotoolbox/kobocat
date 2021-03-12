@@ -388,7 +388,7 @@ class Instance(models.Model):
         if self.validation_status is None:
             self.validation_status = {}
 
-        super(Instance, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def set_deleted(self, deleted_at=timezone.now()):
         self.deleted_at = deleted_at

@@ -1,26 +1,15 @@
 # coding: utf-8
 import os
-import requests
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.xform_instance_parser import get_uuid_from_xml
 from onadata.libs.utils.logger_tools import inject_instanceid
 
-from httmock import urlmatch, HTTMock
-
-
-@urlmatch(netloc=r'(.*\.)?enketo\.formhub\.org$')
-def enketo_edit_mock(url, request):
-    response = requests.Response()
-    response.status_code = 201
-    response._content = '{"edit_url": "https://hmh2a.enketo.formhub.org"}'
-    return response
-
 
 class TestWebforms(TestBase):
     def setUp(self):
-        super(TestWebforms, self).setUp()
+        super().setUp()
         self._publish_transportation_form_and_submit_instance()
 
     def __load_fixture(self, *path):

@@ -187,4 +187,4 @@ Accept: image/png </pre>
         except OSError:
             pass
 
-        return super(MetaDataViewSet, self).perform_destroy(*args, **kwargs)
+        return super().perform_destroy(*args, **kwargs)

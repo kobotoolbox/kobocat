@@ -2,7 +2,6 @@
 import json
 import os
 import re
-from io import StringIO
 from hashlib import md5
 from xml.sax import saxutils
 
@@ -10,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import get_storage_class
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils.encoding import smart_text
@@ -95,7 +94,6 @@ class XForm(BaseModel):
         verbose_name_plural = ugettext_lazy("XForms")
         ordering = ("id_string",)
         permissions = (
-            (CAN_VIEW_XFORM, _('Can view associated data')),
             (CAN_ADD_SUBMISSIONS, _('Can make submissions to the form')),
             (CAN_TRANSFER_OWNERSHIP, _('Can transfer form ownership.')),
             (CAN_VALIDATE_XFORM, _('Can validate submissions')),
@@ -167,7 +165,7 @@ class XForm(BaseModel):
                 self.encrypted = False
 
     def update(self, *args, **kwargs):
-        super(XForm, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self._set_title()
@@ -188,7 +186,7 @@ class XForm(BaseModel):
             raise XLSFormError(_('In strict mode, the XForm ID must be a '
                                'valid slug and contain no spaces.'))
 
-        super(XForm, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return getattr(self, "id_string", "")
@@ -256,7 +254,7 @@ class XForm(BaseModel):
                 if file_path.endswith('.csv'):
                     return convert_csv_to_xls(ff.read())
                 else:
-                    return StringIO(ff.read())
+                    return BytesIO(ff.read())
 
     @property
     def settings(self):

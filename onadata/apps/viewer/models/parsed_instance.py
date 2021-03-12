@@ -364,7 +364,7 @@ class ParsedInstance(models.Model):
         self.start_time = None
         self.end_time = None
         self._set_geopoint()
-        super(ParsedInstance, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         # insert into Mongo.
         # Signal has been removed because of a race condition.

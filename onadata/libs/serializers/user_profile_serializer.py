@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from rest_framework import serializers
 
 from onadata.apps.main.models import UserProfile
@@ -44,7 +42,7 @@ class UserProfileSerializer(serializers.Serializer):
         """
         Serialize objects -> primitives.
         """
-        ret = super(UserProfileSerializer, self).to_representation(obj)
+        ret = super().to_representation(obj)
 
         request = self.context['request'] \
             if 'request' in self.context else None

@@ -7,7 +7,7 @@ import requests
 from django.contrib.auth import authenticate
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import UploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import RequestFactory
 from django_digest.test import Client as DigestClient
 from httmock import urlmatch, HTTMock

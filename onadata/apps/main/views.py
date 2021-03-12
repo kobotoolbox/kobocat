@@ -1,5 +1,4 @@
 # coding: utf-8
-import json
 import os
 
 from django.conf import settings
@@ -7,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 from django.http import HttpResponseNotFound

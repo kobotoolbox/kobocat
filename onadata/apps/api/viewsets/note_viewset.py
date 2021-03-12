@@ -65,11 +65,9 @@ A `GET` request will return the list of notes applied to a data point.
                                                CAN_VIEW_XFORM,
                                                XForm,
                                                accept_global_perms=False)
-
         viewable_notes = Note.objects.filter(
-            Q(instance__xform=viewable_xforms) | Q(instance__xform__shared_data=True)
+            Q(instance__xform__in=viewable_xforms) | Q(instance__xform__shared_data=True)
         )
-
         return viewable_notes
 
     # This used to be post_save. Part of it is here, permissions validation

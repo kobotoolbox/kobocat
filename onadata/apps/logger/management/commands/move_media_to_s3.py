@@ -22,7 +22,7 @@ class Command(BaseCommand):
         try:
             fs = get_storage_class(
                 'django.core.files.storage.FileSystemStorage')()
-            s3 = get_storage_class('storages.backends.s3boto.S3BotoStorage')()
+            s3 = get_storage_class('storages.backends.s3boto3.S3Boto3Storage')()
         except:
             print(_("Missing necessary libraries. Try running: pip install -r"
                     "requirements/s3.pip"))

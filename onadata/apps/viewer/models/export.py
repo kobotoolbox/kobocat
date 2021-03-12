@@ -89,7 +89,7 @@ class Export(models.Model):
                 time_of_last_submission_update()
         if self.filename:
             self.internal_status = Export.SUCCESSFUL
-        super(Export, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @classmethod
     def _delete_oldest_export(cls, xform, export_type):

@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 
 from onadata import koboform
@@ -35,11 +35,11 @@ class ConditionalRedirects(MiddlewareMixin):
 
         if koboform.active and koboform.autoredirect:
             login_url = koboform.redirect_url(login_url)
-            if view_name is 'login':
+            if view_name == 'login':
                 return HttpResponseRedirect(koboform.login_url(next_kobocat_url='/'))
-            if view_name is 'logout':
+            if view_name == 'logout':
                 return HttpResponseRedirect(koboform.redirect_url('/accounts/logout/'))
-            if view_name is 'FHRegistrationView':
+            if view_name == 'FHRegistrationView':
                 return HttpResponseRedirect(koboform.redirect_url('/accounts/register/'))
 
         if view_name in DISABLED_VIEWS:

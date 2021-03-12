@@ -3,7 +3,7 @@ import dj_database_url
 
 from mongomock import MongoClient as MockMongoClient
 
-from onadata.settings.common import *
+from onadata.settings.base import *
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 TEMPLATE_DEBUG = os.environ.get('TEMPLATE_DEBUG', 'True') == 'True'
@@ -112,9 +112,7 @@ if 'RAVEN_DSN' in os.environ:
     except ImportError:
         print('Please install Raven to enable Sentry logging.')
     else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'raven.contrib.django.raven_compat',
-        )
+        INSTALLED_APPS.append('raven.contrib.django.raven_compat')
         RAVEN_CONFIG = {
             'dsn': os.environ['RAVEN_DSN'],
         }

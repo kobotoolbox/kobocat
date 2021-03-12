@@ -1,6 +1,4 @@
 # coding: utf-8
-from collections import defaultdict
-
 from guardian.shortcuts import get_users_with_perms
 
 

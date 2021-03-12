@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.models.export import Export
@@ -13,7 +13,7 @@ from onadata.apps.viewer.views import export_list
 class TestExportList(TestBase):
 
     def setUp(self):
-        super(TestExportList, self).setUp()
+        super().setUp()
         self._publish_transportation_form()
         survey = self.surveys[0]
         self._make_submission(
@@ -75,7 +75,7 @@ class TestExportList(TestBase):
 class TestDataExportURL(TestBase):
 
     def setUp(self):
-        super(TestDataExportURL, self).setUp()
+        super().setUp()
         self._publish_transportation_form()
 
     def _filename_from_disposition(self, content_disposition):

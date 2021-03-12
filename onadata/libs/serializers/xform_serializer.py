@@ -1,7 +1,6 @@
 # coding: utf-8
 import os
 
-from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
@@ -73,7 +72,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     # Again, this is to match unit tests
     @property
     def data(self):
-        data = super(XFormSerializer, self).data
+        data = super().data
         if 'num_of_submissions' in data and data['num_of_submissions'] is None:
             data['num_of_submissions'] = 0
         return data

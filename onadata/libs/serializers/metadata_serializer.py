@@ -1,5 +1,4 @@
 # coding: utf-8
-from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
@@ -36,6 +35,8 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             'data_type',
             'data_file',
             'data_file_type',
+            'file_hash',
+            'url',
             'from_kpi',
         )
 
@@ -55,7 +56,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             msg = {'data_value': "This field is required."}
             raise serializers.ValidationError(msg)
 
-        return super(MetaDataSerializer, self).validate(attrs)
+        return super().validate(attrs)
 
     def create(self, validated_data):
         data_type = validated_data.get('data_type')

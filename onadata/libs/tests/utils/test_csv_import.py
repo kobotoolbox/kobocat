@@ -12,7 +12,7 @@ from onadata.apps.main.tests.test_base import TestBase
 class CSVImportTestCase(TestBase):
 
     def setUp(self):
-        super(CSVImportTestCase, self).setUp()
+        super().setUp()
         self.fixtures_dir = os.path.join(settings.ONADATA_DIR,
                                          'libs', 'tests', 'fixtures')
         self.good_csv = open(os.path.join(self.fixtures_dir, 'good.csv'), 'rb')

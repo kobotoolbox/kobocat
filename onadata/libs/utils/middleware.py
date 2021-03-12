@@ -43,7 +43,7 @@ class LocaleMiddlewareWithTweaks(LocaleMiddleware):
             # this might fail if i18n is disabled.
             pass
 
-        super(LocaleMiddlewareWithTweaks, self).process_request(request)
+        super().process_request(request)
 
 
 class SqlLogging(MiddlewareMixin):
@@ -55,21 +55,6 @@ class SqlLogging(MiddlewareMixin):
                     query['time'], " ".join(query['sql'].split())))
 
         return response
-
-
-class BrokenClientMiddleware(MiddlewareMixin):
-    """
-    ODK Collect sends HTTP-violating localized date strings, e.g.
-    'mar., 25 ao\xfbt 2015 07:11:56 GMT+00:00', which wreak havoc on oauthlib.
-    This middleware detects and discards HTTP_DATE headers that contain invalid
-    characters.
-    """
-    def process_request(self, request):
-        if 'HTTP_DATE' in request.META:
-            try:
-                request.META['HTTP_DATE'].decode()
-            except UnicodeDecodeError:
-                del request.META['HTTP_DATE']
 
 
 class UsernameInResponseHeaderMiddleware(MiddlewareMixin):

@@ -4,7 +4,7 @@ import hashlib
 
 from django.core.files.base import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.views import (
@@ -114,7 +114,7 @@ class TestFormMetadata(TestBase):
         media_file = os.path.join(
             self.this_directory, 'fixtures', 'transportation',
             'transportation.csv')
-        f = InMemoryUploadedFile(open(media_file),
+        f = InMemoryUploadedFile(open(media_file, 'rb'),
                                  'media',
                                  'transportation.csv',
                                  'application/octet-stream',

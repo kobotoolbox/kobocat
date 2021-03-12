@@ -1,14 +1,10 @@
+# coding: utf-8
 import os
-import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from guardian.shortcuts import assign_perm, remove_perm
 
-from onadata.apps.logger.models import XForm
-#from onadata.apps.viewer.views import map_view
-from onadata.apps.main.views import show, edit, profile
-from onadata.apps.main.models import MetaData
-
+from onadata.apps.main.views import show
 from .test_base import TestBase
 
 

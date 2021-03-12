@@ -1,4 +1,5 @@
 # coding: utf-8
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from django_digest import HttpDigestAuthenticator
 from rest_framework.authentication import (
@@ -34,7 +35,7 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
         # The parent class can discern whether basic authentication is even
         # being attempted; if it isn't, we need to gracefully defer to other
         # authenticators
-        user_auth = super(HttpsOnlyBasicAuthentication, self).authenticate(
+        user_auth = super().authenticate(
             request)
         if settings.TESTING_MODE is False and \
                 user_auth is not None and not request.is_secure():

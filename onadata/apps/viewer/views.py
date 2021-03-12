@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
 from django.core.files.storage import get_storage_class
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Q
 from django.http import (
     HttpResponseForbidden, HttpResponseRedirect, HttpResponseNotFound,
@@ -362,7 +362,7 @@ def kml_export(request, username, id_string):
 
 def attachment_url(request, size='medium'):
     media_file = request.GET.get('media_file')
-    # TODO: how to make sure we have the right media file,
+
     # this assumes duplicates are the same file.
     #
     # Django seems to already handle that. It appends datetime to the filename.

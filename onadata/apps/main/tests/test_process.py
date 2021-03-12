@@ -7,7 +7,7 @@ import os
 import re
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf import settings
 from django_digest.test import Client as DigestClient
 from django.core.files.uploadedfile import UploadedFile
@@ -19,7 +19,7 @@ from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.xform import XFORM_TITLE_LENGTH
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
-from onadata.libs.tests.utils.xml import pyxform_version_agnostic
+from onadata.libs.tests.utils.xml import pyxform_version_agnostic, is_equal_xml
 from onadata.libs.utils.common_tags import UUID, SUBMISSION_TIME
 from .test_base import TestBase
 
@@ -46,10 +46,10 @@ class TestProcess(TestBase):
     }
 
     def setUp(self):
-        super(TestProcess, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(TestProcess, self).tearDown()
+        super().tearDown()
 
     @unittest.skip('Fails under Django 1.6')
     def test_process(self, username=None, password=None):
@@ -178,8 +178,8 @@ class TestProcess(TestBase):
         uuid_node.setAttribute("calculate", "''")
 
         # check content without UUID
-        self.assertEqual(pyxform_version_agnostic(response_doc.toxml()),
-                         pyxform_version_agnostic(expected_doc.toxml()))
+        is_equal_xml(pyxform_version_agnostic(response_doc.toxml()),
+                     pyxform_version_agnostic(expected_doc.toxml()))
 
     def _check_csv_export(self):
         self._check_data_dictionary()

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+# coding: utf-8
 import sys
 
 from django.db import migrations
@@ -135,6 +133,15 @@ def reverse_func(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    """
+    This migration has changed between KoBoCAT 1.0 and KoBoCAT 2.0.
+    Permissions on Note model are altered in this migration in this branch.
+    With Django 2.2 "view" permission is included by default.
+    So `view_xform` and `view_notes` must be removed here because they were
+    added by previous migrations in Django 1.8.
+    It avoids an IntegrityError when Django tries to add `view_xform`|`view_notes`
+    twice.
+    """
 
     dependencies = [
         ('logger', '0014_attachment_add_media_file_size'),
@@ -148,7 +155,6 @@ class Migration(migrations.Migration):
                 'verbose_name': 'XForm',
                 'verbose_name_plural': 'XForms',
                 'permissions': (
-                    ('view_xform', 'Can view associated data'),
                     ('report_xform', 'Can make submissions to the form'),
                     ('move_xform', 'Can move form between projects'),
                     ('transfer_xform', 'Can transfer form ownership'),
@@ -156,6 +162,10 @@ class Migration(migrations.Migration):
                     ('delete_data_xform', 'Can delete submissions'),
                 ),
             },
+        ),
+        migrations.AlterModelOptions(
+            name='note',
+            options={'permissions': ()},
         ),
         migrations.RunPython(forwards_func, reverse_func),
     ]

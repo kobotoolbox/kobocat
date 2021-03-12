@@ -542,7 +542,7 @@ class BaseOpenRosaResponse(HttpResponse):
     status_code = 201
 
     def __init__(self, *args, **kwargs):
-        super(BaseOpenRosaResponse, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self[OPEN_ROSA_VERSION_HEADER] = OPEN_ROSA_VERSION
         tz = pytz.timezone(settings.TIME_ZONE)
@@ -556,7 +556,7 @@ class OpenRosaResponse(BaseOpenRosaResponse):
     status_code = 201
 
     def __init__(self, *args, **kwargs):
-        super(OpenRosaResponse, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # wrap content around xml
         self.content = '''<?xml version='1.0' encoding='UTF-8' ?>
 <OpenRosaResponse xmlns="http://openrosa.org/http/response">

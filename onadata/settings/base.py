@@ -22,6 +22,7 @@ from django.utils.six import string_types
 from pymongo import MongoClient
 
 from onadata.libs.utils.redis_helper import RedisHelper
+from pyxform.xform2json import logger
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ONADATA_DIR = BASE_DIR
@@ -148,12 +149,9 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'onadata.libs.utils.middleware.LocaleMiddlewareWithTweaks',
-    # BrokenClientMiddleware must come before AuthenticationMiddleware
-    'onadata.libs.utils.middleware.BrokenClientMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
@@ -217,7 +215,7 @@ STATICFILES_DIRS = [
 # needed by guardian
 ANONYMOUS_USER_ID = -1
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.contenttypes',
     # Always put `contenttypes` before `auth`; see
     # https://code.djangoproject.com/ticket/10827
@@ -250,7 +248,7 @@ INSTALLED_APPS = (
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',
-)
+]
 
 OAUTH2_PROVIDER = {
     # this is the list of available scopes
@@ -307,7 +305,7 @@ SWAGGER_SETTINGS = {
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = (
-    'dev.ona.io',
+    'http://kc.kobo.local',
 )
 
 USE_THOUSAND_SEPARATOR = True
@@ -393,7 +391,7 @@ LOGGING = {
             'class': 'onadata.libs.utils.log.AuditLogHandler',
             'formatter': 'verbose',
             'model': 'onadata.apps.main.models.audit.AuditLog'
-        },
+        }
     },
     'loggers': {
         'django.request': {
@@ -527,7 +525,7 @@ try:
     from django.db import migrations
 except ImportError:
     # Native migrations unavailable; use South instead
-    INSTALLED_APPS += ('south',)
+    INSTALLED_APPS.append['south']
 
 SOUTH_MIGRATION_MODULES = {
     'taggit': 'taggit.south_migrations',
@@ -591,3 +589,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
 # The maximum size (in bytes) that an upload will be before it gets streamed to the file system
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# Monkey Patch PyXForm. @ToDo remove after upgrading to v1.1.0
+logger.removeHandler(logging.NullHandler)
+logger.addHandler(logging.NullHandler())

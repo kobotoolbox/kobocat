@@ -15,13 +15,13 @@ from onadata.libs.constants import (
     CAN_VIEW_XFORM
 )
 from onadata.libs.serializers.xform_serializer import XFormSerializer
-from onadata.libs.tests.utils.xml import pyxform_version_agnostic
+from onadata.libs.tests.utils.xml import pyxform_version_agnostic, is_equal_xml
 
 
 class TestXFormViewSet(TestAbstractViewSet):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = XFormViewSet.as_view({
             'get': 'list',
         })
@@ -170,8 +170,8 @@ class TestXFormViewSet(TestAbstractViewSet):
         uuid_node.setAttribute("calculate", "''")
 
         # check content without UUID
-        self.assertEqual(pyxform_version_agnostic(response_doc.toxml()),
-                         pyxform_version_agnostic(expected_doc.toxml()))
+        is_equal_xml(pyxform_version_agnostic(response_doc.toxml()),
+                     pyxform_version_agnostic(expected_doc.toxml()))
 
     def test_form_tags(self):
         self.publish_xls_form()

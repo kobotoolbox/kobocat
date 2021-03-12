@@ -11,6 +11,3 @@ class Note(models.Model):
 
     class Meta:
         app_label = 'logger'
-        permissions = (
-            ('view_note', 'View note'),
-        )

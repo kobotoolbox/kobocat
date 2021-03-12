@@ -7,7 +7,7 @@ import dj_database_url
 from celery.signals import after_setup_logger
 from django.utils.six.moves.urllib.parse import quote_plus
 
-from onadata.settings.common import *
+from onadata.settings.base import *
 
 
 def celery_logger_setup_handler(logger, **kwargs):
@@ -106,9 +106,8 @@ KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
 KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
 
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'onadata.koboform.context_processors.koboform_integration',
-) + TEMPLATE_CONTEXT_PROCESSORS
+TEMPLATES[0]['OPTIONS']['context_processors'].insert(
+    0, 'onadata.koboform.context_processors.koboform_integration')
 
 MIDDLEWARE.insert(0, 'onadata.koboform.redirect_middleware.ConditionalRedirects')
 
@@ -124,7 +123,7 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # print "SECRET_KEY=%s" % SECRET_KEY
 # print "CSRF_COOKIE_DOMAIN=%s " % CSRF_COOKIE_DOMAIN
 
-# MongoDB - moved here from common.py
+# MongoDB - moved here from base.py
 if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
     MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
         format(
@@ -187,9 +186,7 @@ if (os.getenv("RAVEN_DSN") or "") != "":
     except ImportError:
         print('Please install Raven to enable Sentry logging.')
     else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'raven.contrib.django.raven_compat',
-        )
+        INSTALLED_APPS.append('raven.contrib.django.raven_compat')
         RAVEN_CONFIG = {
             'dsn': os.environ['RAVEN_DSN'],
         }

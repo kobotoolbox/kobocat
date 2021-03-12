@@ -1,11 +1,13 @@
 # coding: utf-8
-from .kc_environ import *
-
+from .prod import *
 
 LOGGING['handlers']['console'] = {
     'level': 'DEBUG',
     'class': 'logging.StreamHandler',
-    'formatter': 'verbose'
+    'formatter': 'verbose',
+    'stream': sys.stdout,
 }
-
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+LOGGING['root'] = {
+    'handlers': ['console'],
+    'level': 'DEBUG'
+}

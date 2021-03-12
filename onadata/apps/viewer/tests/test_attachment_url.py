@@ -1,5 +1,5 @@
 # coding: utf-8
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Attachment
@@ -16,7 +16,7 @@ class TestAttachmentUrl(TestBase):
         self._publish_transportation_form()
         self._submit_transport_instance_w_attachment()
         self.url = reverse(
-            attachment_url, kwargs={'size': 'original'})
+            'attachment_url', kwargs={'size': 'original'})
 
     def test_attachment_url(self):
         self.assertEqual(

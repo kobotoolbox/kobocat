@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files.storage import get_storage_class
 from django.utils.encoding import smart_str
 from django_digest.test import DigestAuth

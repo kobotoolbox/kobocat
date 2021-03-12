@@ -24,7 +24,6 @@ from django.http import (HttpResponse,
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
-from django.template import RequestContext
 from django.utils.six import string_types, text_type
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST

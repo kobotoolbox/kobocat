@@ -4,7 +4,7 @@ import time
 import csv
 import tempfile
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.utils import timezone
 from xlrd import open_workbook

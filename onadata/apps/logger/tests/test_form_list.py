@@ -9,7 +9,7 @@ from onadata.apps.logger.views import formList
 
 class TestFormList(TestBase):
     def setUp(self):
-        super(TestFormList, self).setUp()
+        super().setUp()
         self.factory = RequestFactory()
 
     def test_returns_200_for_owner(self):

@@ -14,6 +14,15 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='export',
             name='export_type',
-            field=models.CharField(default=b'xls', max_length=10, choices=[(b'xls', b'Excel'), (b'csv', b'CSV'), (b'zip', b'ZIP'), (b'kml', b'kml')]),
+            field=models.CharField(
+                default='xls',
+                max_length=10,
+                choices=[
+                    ('xls', 'Excel'),
+                    ('csv', 'CSV'),
+                    ('zip', 'ZIP'),
+                    ('kml', 'kml'),
+                ],
+            ),
         ),
     ]

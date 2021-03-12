@@ -2,7 +2,7 @@
 import os
 from unittest import skip
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files.storage import get_storage_class
 
 from onadata.apps.main.views import show

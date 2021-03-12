@@ -56,7 +56,7 @@ class Attachment(models.Model):
             # the storage engine when running reports
             self.media_file_size = self.media_file.size
 
-        super(Attachment, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @property
     def file_hash(self):
