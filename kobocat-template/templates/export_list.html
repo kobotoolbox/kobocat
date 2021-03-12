@@ -7,7 +7,7 @@
 
 <div class="sub-header-bar">
   <div class="container__wide">
-    <a class="sub-header__back" href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
+    <a class="sub-header__back" href="{% url "show_form" xform.user.username xform.id_string %}"><i class="fa fa-chevron-left"></i> {% trans "Return to" %} {{ xform.title }}</a>
   </div>
 </div>
 
@@ -25,7 +25,7 @@
 <section id="export-downloads">
 
     {% if user.is_authenticated %}
-    <form action="{% url "onadata.apps.viewer.views.create_export" username xform.id_string export_type %}" method="post" enctype="application/x-www-form-urlencoded">
+    <form action="{% url "create_export" username xform.id_string export_type %}" method="post" enctype="application/x-www-form-urlencoded">
         {% csrf_token %}
             <span style='float:middle;'>
               <div>
@@ -40,7 +40,7 @@
     {% endif %}
 
     <div id="advanced-export-modal" class="modal hide fade">
-      <form action="{% url "onadata.apps.viewer.views.create_export" username xform.id_string export_type %}" method="post" enctype="application/x-www-form-urlencoded">
+      <form action="{% url "create_export" username xform.id_string export_type %}" method="post" enctype="application/x-www-form-urlencoded">
         {% csrf_token %}
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -80,7 +80,7 @@
         <td>
             {% if not export.is_pending %}
                 {% if export.is_successful %}
-                    <a href="{% url "onadata.apps.viewer.views.export_download" username xform.id_string export.export_type export.filename %}">{{ export.filename }}</a>
+                    <a href="{% url "export_download" username xform.id_string export.export_type export.filename %}">{{ export.filename }}</a>
                 {% else %}
                     Failed
                 {% endif %}
@@ -91,7 +91,7 @@
         </td>
         <td>{{ export.created_on }}</td>
         <td>
-            <form action="{% url "onadata.apps.viewer.views.delete_export" username xform.id_string export_type %}" method="post" enctype="application/x-www-form-urlencoded">
+            <form action="{% url "delete_export" username xform.id_string export_type %}" method="post" enctype="application/x-www-form-urlencoded">
               {% csrf_token %}
                 <div id="delete-{{ export.id|stringformat:"d" }}" class="modal hide fade">
                     <div class="modal-header">
@@ -132,6 +132,6 @@
 <script type="text/javascript" charset="utf-8" src="{% static "js/underscore-min.js" %}"></script>
 <script type="text/javascript" charset="utf-8" src="{% static "js/export_list.js" %}"></script>
 <script type="text/javascript">
-    var progress_url = '{% url "onadata.apps.viewer.views.export_progress" username xform.id_string export_type %}';
+    var progress_url = '{% url "export_progress" username xform.id_string export_type %}';
 </script>
 {% endblock %}

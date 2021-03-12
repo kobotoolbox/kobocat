@@ -3,8 +3,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-from optparse import make_option
-
 from django.core.management.base import BaseCommand
 from django.db.models import Q, Func
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -19,13 +17,15 @@ class SubstrFromPattern(Func):
 
 class Command(BaseCommand):
 
-    help = ugettext_lazy("Updates indexed field `media_file_basename` which is empty or null")
-    option_list = BaseCommand.option_list + (
-        make_option(
+    help = ugettext_lazy("Updates indexed field `media_file_basename` "
+                         "which is empty or null")
+
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--batchsize',
-            type='int',
+            type=int,
             default=1000,
-            help=ugettext_lazy("Number of records to process per query")),)
+            help=ugettext_lazy("Number of records to process per query"))
 
     def handle(self, *args, **kwargs):
         batchsize = kwargs.get("batchsize")

@@ -2,7 +2,6 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os
-from optparse import make_option
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
@@ -19,26 +18,32 @@ class Command(BaseCommand):
     help = ugettext_lazy("Publish an XLS file with the option of replacing an"
                          "existing one")
 
-    option_list = BaseCommand.option_list + (
-        make_option('-r', '--replace',
-                    action='store_true',
-                    dest='replace',
-                    help=ugettext_lazy("Replace existing form if any")),)
+    def add_arguments(self, parser):
+        parser.add_argument('xls_filepath',
+                            help=ugettext_lazy("Path to the xls file"))
+
+        parser.add_argument('username',
+                            help=ugettext_lazy("Username to publish the form to"))
+
+        parser.add_argument('-r', '--replace',
+                            action='store_true',
+                            dest='replace',
+                            help=ugettext_lazy("Replace existing form if any"))
 
     def handle(self, *args, **options):
         try:
-            xls_filepath = args[0]
-        except IndexError:
+            xls_filepath = options['xls_filepath']
+        except KeyError:
             raise CommandError(_("You must provide the path to the xls file."))
         # make sure path exists
-        if not os.path.exists(xls_filepath):
+        if not xls_filepath or not os.path.exists(xls_filepath):
             raise CommandError(
                 _("The xls file '%s' does not exist.") %
                 xls_filepath)
 
         try:
-            username = args[1]
-        except IndexError:
+            username = options['username']
+        except KeyError:
             raise CommandError(_(
                 "You must provide the username to publish the form to."))
         # make sure user exists

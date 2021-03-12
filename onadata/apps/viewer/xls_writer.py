@@ -1,6 +1,9 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from collections import defaultdict
+
+from django.utils.six import text_type
 from pyxform import Section, Question
 from xlwt import Workbook
 
@@ -22,7 +25,7 @@ class XlsWriter(object):
         if file_object is not None:
             self._file = file_object
         else:
-            from StringIO import StringIO
+            from io import StringIO
             self._file = StringIO()
 
     def reset_workbook(self):
@@ -85,7 +88,7 @@ class XlsWriter(object):
             self.add_sheet(table_name)
             for i, row in enumerate(table):
                 for j, value in enumerate(row):
-                    self._sheets[table_name].write(i, j, unicode(value))
+                    self._sheets[table_name].write(i, j, text_type(value))
         return self._workbook
 
     def save_workbook_to_file(self):

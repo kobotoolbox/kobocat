@@ -5,9 +5,8 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext as _, ugettext_lazy
-from optparse import make_option
 
 from onadata.apps.logger.models.instance import Instance
 
@@ -15,12 +14,13 @@ from onadata.apps.logger.models.instance import Instance
 class Command(BaseCommand):
 
     help = ugettext_lazy("Updates is_synced_with_mongo property of Instance model")
-    option_list = BaseCommand.option_list + (
-        make_option(
+
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--batchsize',
-            type='int',
+            type=int,
             default=100,
-            help=ugettext_lazy("Number of records to process per query")),)
+            help=ugettext_lazy("Number of records to process per query"))
 
     def handle(self, *args, **kwargs):
         batchsize = kwargs.get("batchsize", 100)

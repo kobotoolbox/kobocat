@@ -7,8 +7,9 @@ import sys
 
 import dateutil.parser
 import six
-from django.utils.encoding import smart_unicode, smart_str
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
+from django.utils.six import text_type
 from xml.dom import minidom, Node
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
@@ -19,35 +20,23 @@ class XLSFormError(Exception):
 
 
 class DuplicateInstance(Exception):
-    def __unicode__(self):
-        return _("Duplicate Instance")
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return _("Duplicate Instance")
 
 
 class InstanceInvalidUserError(Exception):
-    def __unicode__(self):
-        return _("Could not determine the user.")
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return _("Could not determine the user.")
 
 
 class InstanceParseError(Exception):
-    def __unicode__(self):
-        return _("The instance could not be parsed.")
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return _("The instance could not be parsed.")
 
 
 class InstanceEmptyError(InstanceParseError):
-    def __unicode__(self):
-        return _("Empty instance")
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return _("Empty instance")
 
 
 class InstanceMultipleNodeError(Exception):
@@ -134,7 +123,7 @@ def get_deprecated_uuid_from_xml(xml):
 
 def clean_and_parse_xml(xml_string):
     clean_xml_str = xml_string.strip()
-    clean_xml_str = re.sub(r">\s+<", "><", smart_unicode(clean_xml_str))
+    clean_xml_str = re.sub(r">\s+<", "><", smart_str(clean_xml_str))
     xml_obj = minidom.parseString(smart_str(clean_xml_str))
     return xml_obj
 
@@ -162,7 +151,7 @@ def _xml_node_to_dict(node, repeats=[]):
                 continue
             child_name = child.nodeName
             child_xpath = xpath_from_xml_node(child)
-            assert d.keys() == [child_name]
+            assert list(d) == [child_name]
             node_type = dict
             # check if name is in list of repeats and make it a list if so
             if child_xpath in repeats:
@@ -218,14 +207,14 @@ def _flatten_dict(d, prefix):
                     # hack: removing [1] index to be consistent across
                     # surveys that have a single repitition of the
                     # loop versus mutliple.
-                    item_prefix[-1] += "[%s]" % unicode(i + 1)
+                    item_prefix[-1] += "[%s]" % text_type(i + 1)
                 if type(item) == dict:
                     for pair in _flatten_dict(item, item_prefix):
                         yield pair
                 else:
-                    yield (item_prefix, item)
+                    yield item_prefix, item
         else:
-            yield (new_prefix, value)
+            yield new_prefix, value
 
 
 def _flatten_dict_nest_repeats(d, prefix):

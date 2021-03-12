@@ -97,8 +97,9 @@ class TestFormShow(TestBase):
             'id_string': self.xform.id_string
         }), {'callback': callback})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.startswith(callback + '('), True)
-        self.assertEqual(response.content.endswith(')'), True)
+        content = response.content.decode()
+        self.assertEqual(content.startswith(callback + '('), True)
+        self.assertEqual(content.endswith(')'), True)
 
     def test_dl_json_for_basic_auth(self):
         extra = {
@@ -232,15 +233,14 @@ class TestFormShow(TestBase):
         response = self.client.get(reverse(show, kwargs={
             'uuid': self.xform.uuid}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'],
-                         '%s%s' % (self.base_url, self.url))
+        self.assertEqual(response['Location'], self.url)
 
     def test_publish_xml_xlsform_download(self):
         count = XForm.objects.count()
         path = os.path.join(
             self.this_directory, '..', '..', 'api', 'tests', 'fixtures',
             'forms', 'contributions', 'contributions.xml')
-        f = open(path)
+        f = open(path, 'rb')
         xml_file = ContentFile(f.read())
         f.close()
         xml_file.name = 'contributions.xml'

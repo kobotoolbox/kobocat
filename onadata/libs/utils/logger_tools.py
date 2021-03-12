@@ -1,50 +1,53 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-from datetime import date, datetime
 import os
-import pytz
 import re
+import sys
 import tempfile
 import traceback
-from xml.dom import Node
+from datetime import date, datetime
 from xml.parsers.expat import ExpatError
 
+import pytz
 from dict2xml import dict2xml
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
-from django.core.servers.basehttp import FileWrapper
-from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.models.signals import pre_delete
-from django.http import HttpResponse, HttpResponseNotFound, \
-    StreamingHttpResponse, Http404
+from django.http import (
+    HttpResponse,
+    HttpResponseNotFound,
+    StreamingHttpResponse,
+    Http404
+)
 from django.shortcuts import get_object_or_404
-from django.utils.encoding import DjangoUnicodeDecodeError
-from django.utils.translation import ugettext as _
 from django.utils import timezone
+from django.utils.encoding import DjangoUnicodeDecodeError, smart_str
+from django.utils.translation import ugettext as _
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
-import sys
+from xml.dom import Node
+from wsgiref.util import FileWrapper
 
-from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
 from onadata.apps.logger.models import Attachment
+from onadata.apps.logger.models import Instance
+from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
     hash_attachment_contents,
 )
-from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models.instance import (
     InstanceHistory,
     get_id_string_from_xml_str,
     update_xform_submission_count,
 )
-from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.xform import XLSFormError
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
@@ -55,12 +58,12 @@ from onadata.apps.logger.xform_instance_parser import (
     get_uuid_from_xml,
     get_deprecated_uuid_from_xml,
     get_submission_date_from_xml)
+from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
-from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo,\
+from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, \
     xform_instances, ParsedInstance
 from onadata.libs.utils import common_tags
 from onadata.libs.utils.model_tools import queryset_iterator, set_uuid
-
 
 OPEN_ROSA_VERSION_HEADER = 'X-OpenRosa-Version'
 HTTP_OPEN_ROSA_VERSION_HEADER = 'HTTP_X_OPENROSA_VERSION'
@@ -160,7 +163,7 @@ def _has_edit_xform_permission(xform, user):
 
 
 def check_edit_submission_permissions(request_user, xform):
-    if xform and request_user and request_user.is_authenticated():
+    if xform and request_user and request_user.is_authenticated:
         requires_auth = UserProfile.objects.get_or_create(
             user=xform.user)[0].require_auth
         has_edit_perms = _has_edit_xform_permission(xform, request_user)
@@ -291,12 +294,12 @@ def create_instance(username, xml_file, media_files,
     """
     instance = None
     submitted_by = request.user \
-        if request and request.user.is_authenticated() else None
+        if request and request.user.is_authenticated else None
 
     if username:
         username = username.lower()
 
-    xml = xml_file.read()
+    xml = smart_str(xml_file.read())
     xml_hash = Instance.get_hash(xml)
     xform = get_xform_from_submission(xml, username, uuid)
     check_submission_permissions(request, xform)
@@ -458,7 +461,7 @@ def publish_form(callback):
     except (PyXFormError, XLSFormError) as e:
         return {
             'type': 'alert-error',
-            'text': unicode(e)
+            'text': str(e)
         }
     except IntegrityError as e:
         return {
@@ -475,7 +478,7 @@ def publish_form(callback):
         # form.publish returned None, not sure why...
         return {
             'type': 'alert-error',
-            'text': unicode(e)
+            'text': str(e)
         }
     except ProcessTimedOut as e:
         # catch timeout errors
@@ -490,13 +493,13 @@ def publish_form(callback):
         # ODK validation errors are vanilla errors and it masks a lot of regular
         # errors if we try to catch it so let's catch it, BUT reraise it
         # if we don't see typical ODK validation error messages in it.
-        if "ODK Validate Errors" not in e.message:
+        if "ODK Validate Errors" not in str(e):
             raise
 
         # error in the XLS file; show an error to the user
         return {
             'type': 'alert-error',
-            'text': unicode(e)
+            'text': str(e)
         }
 
 
@@ -516,7 +519,7 @@ def publish_xls_form(xls_file, user, id_string=None):
 
 
 def publish_xml_form(xml_file, user, id_string=None):
-    xml = xml_file.read()
+    xml = smart_str(xml_file.read())
     survey = create_survey_element_from_xml(xml)
     form_json = survey.to_json()
     if id_string:
@@ -634,7 +637,7 @@ def update_mongo_for_xform(xform, only_update_missing=True):
         instance_ids = instance_ids.difference(mongo_ids)
     else:
         # clear mongo records
-        mongo_instances.remove({common_tags.USERFORM_ID: userform_id})
+        mongo_instances.delete_many({common_tags.USERFORM_ID: userform_id})
     # get instances
     sys.stdout.write(
         "Total no of instances to update: %d\n" % len(instance_ids))
@@ -702,8 +705,8 @@ def mongo_sync_status(remongo=False, update_all=False, user=None, xform=None):
         user = xform.user
         instance_count = Instance.objects.filter(xform=xform).count()
         userform_id = "%s_%s" % (user.username, xform.id_string)
-        mongo_count = mongo_instances.find(
-            {common_tags.USERFORM_ID: userform_id}).count()
+        mongo_count = mongo_instances.count_documents(
+            {common_tags.USERFORM_ID: userform_id})
 
         if instance_count != mongo_count or update_all:
             line = "user: %s, id_string: %s\nInstance count: %d\t"\
@@ -746,9 +749,9 @@ def remove_xform(xform):
 
     # delete instances from mongo db
     query = {
-        ParsedInstance.USERFORM_ID:
-        "%s_%s" % (xform.user.username, xform.id_string)}
-    xform_instances.remove(query, j=True)
+        ParsedInstance.USERFORM_ID: f'{xform.user.username}_{xform.id_string}'
+    }
+    xform_instances.delete_many(query)
 
     # delete xform, and all related models
     xform.delete()

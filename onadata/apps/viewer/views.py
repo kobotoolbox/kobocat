@@ -401,7 +401,7 @@ def attachment_url(request, size='medium'):
         # the url
         xform = attachment.instance.xform
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             # This is not a DRF view, but we need to honor things like
             # `DigestAuthentication` (ODK Briefcase uses it!) and
             # `TokenAuthentication`. Let's try all the DRF authentication

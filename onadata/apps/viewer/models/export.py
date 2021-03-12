@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
 from tempfile import NamedTemporaryFile
 
@@ -20,11 +21,8 @@ def export_delete_callback(sender, **kwargs):
 
 class Export(models.Model):
     class ExportTypeError(Exception):
-        def __unicode__(self):
-            return _("Invalid export type specified")
-
         def __str__(self):
-            return unicode(self).encode('utf-8')
+            return _("Invalid export type specified")
 
     XLS_EXPORT = 'xls'
     CSV_EXPORT = 'csv'
@@ -55,7 +53,7 @@ class Export(models.Model):
     # max no. of export files a user can keep
     MAX_EXPORTS = 10
 
-    xform = models.ForeignKey(XForm)
+    xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=255, null=True, blank=True)
     # need to save an the filedir since when an xform is deleted, it cascades

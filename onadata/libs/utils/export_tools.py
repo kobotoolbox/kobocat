@@ -1,14 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import csv
-from datetime import datetime, date
 import json
 import os
 import re
-import six
-import tempfile
-from zipfile import ZipFile
+from datetime import datetime, date, time, timedelta
 
 from bson import json_util
 from django.conf import settings
@@ -18,11 +14,10 @@ from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
 from django.shortcuts import render_to_response
 from django.utils.text import slugify
-from openpyxl.date_time import SharedDate
+from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
-from savReaderWriter import SavWriter
 
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.viewer.models.export import Export
@@ -57,17 +52,23 @@ MULTIPLE_SELECT_BIND_TYPE = "select"
 GEOPOINT_BIND_TYPE = "geopoint"
 
 
-def encode_if_str(row, key, encode_dates=False):
+def to_str(row, key, encode_dates=False, empty_on_none=True):
     val = row.get(key)
 
-    if isinstance(val, six.string_types):
-        return val.encode('utf-8')
+    if empty_on_none and val is None:
+        return ''
 
     if encode_dates and isinstance(val, datetime):
-        return val.strftime('%Y-%m-%dT%H:%M:%S%z').encode('utf-8')
+        return val.strftime('%Y-%m-%dT%H:%M:%S%z')
 
     if encode_dates and isinstance(val, date):
-        return val.strftime('%Y-%m-%d').encode('utf-8')
+        return val.strftime('%Y-%m-%d')
+
+    if isinstance(val, bytes):
+        return val.decode()
+
+    if not isinstance(val, str):
+        return str(val)
 
     return val
 
@@ -124,7 +125,7 @@ class DictOrganizer(object):
     def get_observation_from_dict(self, d):
         result = {}
         assert len(d.keys()) == 1
-        root_name = d.keys()[0]
+        root_name = list(d)[0]
         kwargs = {
             "d": d[root_name],
             "obs": result,
@@ -143,7 +144,7 @@ def dict_to_joined_export(data, index, indices, name):
     output = {}
     # TODO: test for _geolocation and attachment lists
     if isinstance(data, dict):
-        for key, val in data.iteritems():
+        for key, val in data.items():
             if isinstance(val, list) and key not in [NOTES, TAGS]:
                 output[key] = []
                 for child in val:
@@ -157,7 +158,7 @@ def dict_to_joined_export(data, index, indices, name):
                          PARENT_TABLE_NAME: name}
                     # iterate over keys within new_output and append to
                     # main output
-                    for out_key, out_val in new_output.iteritems():
+                    for out_key, out_val in new_output.items():
                         if isinstance(out_val, list):
                             if out_key not in output:
                                 output[out_key] = []
@@ -207,7 +208,17 @@ class ExportBuilder(object):
     def string_to_date_with_xls_validation(cls, date_str):
         date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
         try:
-            SharedDate().datetime_to_julian(date_obj)
+            # SharedDate().datetime_to_julian(date_obj)
+            # Copy code from v2.0.5. Could not find where SharedDate is in
+            # latest version of openpyxl (and if it's useful)
+            if isinstance(date_obj, datetime):
+                to_excel(date_obj)
+            elif isinstance(date_obj, date):
+                to_excel(date_obj)
+            elif isinstance(date_obj, time):
+                time_to_days(date_obj)
+            elif isinstance(date_obj, timedelta):
+                timedelta_to_days(date_obj)
         except ValueError:
             return date_str
         else:
@@ -324,14 +335,14 @@ class ExportBuilder(object):
             self.GROUP_DELIMITER)
 
     def section_by_name(self, name):
-        matches = filter(lambda s: s['name'] == name, self.sections)
+        matches = [s for s in self.sections if s['name'] == name]
         assert(len(matches) == 1)
         return matches[0]
 
     @classmethod
     def split_select_multiples(cls, row, select_multiples):
         # for each select_multiple, get the associated data and split it
-        for xpath, choices in select_multiples.iteritems():
+        for xpath, choices in select_multiples.items():
             # get the data matching this xpath
             data = row.get(xpath)
             selections = []
@@ -354,7 +365,7 @@ class ExportBuilder(object):
     @classmethod
     def split_gps_components(cls, row, gps_fields):
         # for each gps_field, get associated data and split it
-        for xpath, gps_components in gps_fields.iteritems():
+        for xpath, gps_components in gps_fields.items():
             data = row.get(xpath)
             if data:
                 gps_parts = data.split()
@@ -364,7 +375,7 @@ class ExportBuilder(object):
 
     @classmethod
     def decode_mongo_encoded_fields(cls, row, encoded_fields):
-        for xpath, encoded_xpath in encoded_fields.iteritems():
+        for xpath, encoded_xpath in encoded_fields.items():
             if row.get(encoded_xpath):
                 val = row.pop(encoded_xpath)
                 row.update({xpath: val})
@@ -372,7 +383,7 @@ class ExportBuilder(object):
 
     @classmethod
     def decode_mongo_encoded_section_names(cls, data):
-        return dict([(MongoHelper.decode(k), v) for k, v in data.iteritems()])
+        return dict([(MongoHelper.decode(k), v) for k, v in data.items()])
 
     @classmethod
     def convert_type(cls, value, data_type):
@@ -450,14 +461,14 @@ class ExportBuilder(object):
                 data.get(PARENT_TABLE_NAME))
             work_sheet.append([data.get(f) for f in fields])
 
-        wb = Workbook(optimized_write=True)
+        wb = Workbook(write_only=True)
         work_sheets = {}
         # map of section_names to generated_names
         work_sheet_titles = {}
         for section in self.sections:
             section_name = section['name']
             work_sheet_title = ExportBuilder.get_valid_sheet_name(
-                "_".join(section_name.split("/")), work_sheet_titles.values())
+                "_".join(section_name.split("/")), list(work_sheet_titles.values()))
             work_sheet_titles[section_name] = work_sheet_title
             work_sheets[section_name] = wb.create_sheet(
                 title=work_sheet_title)

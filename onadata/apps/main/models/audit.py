@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.six import string_types
 
 from onadata.apps.viewer.models.parsed_instance import DATETIME_FORMAT
 from onadata.apps.api.mongo_helper import MongoHelper
@@ -21,7 +22,7 @@ class AuditLog(object):
         self.data = data
 
     def save(self):
-        return audit.save(self.data)
+        return audit.insert_one(self.data)
 
     @classmethod
     def query_mongo(cls, username, query=None, fields=None, sort=None, start=0,
@@ -32,13 +33,13 @@ class AuditLog(object):
         # check for the created_on key in query and turn its values into dates
         if type(query) == dict and cls.CREATED_ON in query:
             if type(query[cls.CREATED_ON]) is dict:
-                for op, val in query[cls.CREATED_ON].iteritems():
+                for op, val in query[cls.CREATED_ON].items():
                     try:
                         query[cls.CREATED_ON][op] = datetime.strptime(
                             val, DATETIME_FORMAT)
                     except ValueError:
                         pass
-            elif isinstance(query[cls.CREATED_ON], basestring):
+            elif isinstance(query[cls.CREATED_ON], string_types):
                 val = query[cls.CREATED_ON]
                 try:
                     created_on = datetime.strptime(val, DATETIME_FORMAT)
@@ -52,20 +53,22 @@ class AuditLog(object):
                     query[cls.CREATED_ON] = {"$gte": start_time,
                                              "$lte": end_time}
 
-        # TODO: current mongo (2.0.4 of this writing)
-        # cant mix including and excluding fields in a single query
+        if count:
+            return [{"count": audit.count_documents(query)}]
+
         fields_to_select = None
+        # TODO: current mongo (3.4 of this writing)
+        # cant mix including and excluding fields in a single query
         if type(fields) == list and len(fields) > 0:
             fields_to_select = dict([(MongoHelper.encode(field), 1)
                                      for field in fields])
+
         cursor = audit.find(query, fields_to_select)
-        if count:
-            return [{"count": cursor.count()}]
 
         cursor.skip(max(start, 0)).limit(limit)
         if type(sort) == dict and len(sort) == 1:
             sort = MongoHelper.to_safe_dict(sort, reading=True)
-            sort_key = sort.keys()[0]
+            sort_key = list(sort)[0]
             sort_dir = int(sort[sort_key])  # -1 for desc, 1 for asc
             cursor.sort(sort_key, sort_dir)
         # set batch size for cursor iteration

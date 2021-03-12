@@ -1,6 +1,7 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 # vim: set fileencoding=utf-8
+from __future__ import unicode_literals, print_function, division, absolute_import
+
 # this system uses structured settings as defined in
 # http://www.slideshare.net/jacobian/the-best-and-worst-of-django
 #
@@ -19,6 +20,7 @@ import sys  # nopep8, used by included files
 
 from django.conf.global_settings import PASSWORD_HASHERS
 from django.core.exceptions import SuspiciousOperation
+from django.utils.six import string_types
 from pymongo import MongoClient
 
 from onadata.libs.utils.redis_helper import RedisHelper
@@ -134,43 +136,15 @@ LOGIN_REDIRECT_URL = '/login_redirect/'
 # Examples: "http://foo.com/static/admin/", "/static/admin/".
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
-# Additional locations of static files
-STATICFILES_DIRS = (
-    # Put strings here, like "/home/html/static" or "C:/www/django/static".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
-
 # List of finder classes that know how to find static files in
 # various locations.
-STATICFILES_FINDERS = (
+STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
-)
+]
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    # 'django.template.loaders.eggs.Loader',
-)
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.i18n',
-    'django.core.context_processors.media',
-    'django.core.context_processors.static',
-    'django.core.context_processors.tz',
-    'django.core.context_processors.request',
-    'django.contrib.messages.context_processors.messages',
-    'readonly.context_processors.readonly',
-    'onadata.apps.main.context_processors.google_analytics',
-    'onadata.apps.main.context_processors.site_name',
-    'onadata.apps.main.context_processors.base_url'
-)
-
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -183,33 +157,73 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # Django 1.8 removes TransactionMiddleware (was deprecated in 1.6). See:
-    # https://docs.djangoproject.com/en/1.6/topics/db/transactions/#transaction-middleware
-    #'django.middleware.transaction.TransactionMiddleware',
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
     'onadata.libs.utils.middleware.UsernameInResponseHeaderMiddleware',
-)
-
+]
 
 ROOT_URLCONF = 'onadata.apps.main.urls'
 USE_TZ = True
 
+# include the kobocat-template directory
+TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
+    'KOBOCAT_TEMPLATES_PATH',
+    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
+)
 
-TEMPLATE_DIRS = (
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': False,
+        'DIRS': [
+            os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
+            os.path.join(ONADATA_DIR, 'libs/templates')
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.template.context_processors.request',
+                'django.contrib.messages.context_processors.messages',
+                'readonly.context_processors.readonly',
+                'onadata.apps.main.context_processors.google_analytics',
+                'onadata.apps.main.context_processors.site_name',
+                'onadata.apps.main.context_processors.base_url'
+            ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
+        },
+    }
+]
+
+DIRS = [
+    os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
     os.path.join(ONADATA_DIR, 'libs/templates'),
-    # Put strings here, like "/home/html/django_templates"
-    # or "C:/www/django/templates".
+]
+
+# Additional locations of static files
+STATICFILES_DIRS = [
+    # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-)
+    os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static')
+]
+
 
 # needed by guardian
 ANONYMOUS_USER_ID = -1
 
 INSTALLED_APPS = (
-    'django.contrib.auth',
     'django.contrib.contenttypes',
+    # Always put `contenttypes` before `auth`; see
+    # https://code.djangoproject.com/ticket/10827
+    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
@@ -261,7 +275,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'onadata.libs.authentication.DigestAuthentication',
-        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
@@ -510,16 +524,6 @@ try:
 except ImportError:
     pass
 
-if isinstance(TEMPLATE_OVERRIDE_ROOT_DIR, basestring):
-    # site templates overrides
-    TEMPLATE_DIRS = (
-        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),
-    ) + TEMPLATE_DIRS
-    # site static files path
-    STATICFILES_DIRS += (
-        os.path.join(ONADATA_DIR, TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),
-    )
-
 # Transition from South to native migrations
 try:
     from django.db import migrations
@@ -560,9 +564,6 @@ DEFAULT_VALIDATION_STATUSES = [
 if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
     USE_X_FORWARDED_HOST = True
 
-SESSION_ENGINE = "redis_sessions.session"
-SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
-
 # "Although the setting offers little practical benefit, it's sometimes
 # required by security auditors."
 # -- https://docs.djangoproject.com/en/2.2/ref/settings/#csrf-cookie-httponly
@@ -581,9 +582,9 @@ SESSION_COOKIE_AGE = 604800
 # using 150,000 iterations. Django 1.8 uses only 20,000 iterations by default;
 # increase this to match 2.2. See
 # https://github.com/kobotoolbox/kobocat/issues/612
-PASSWORD_HASHERS = (
-    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations',
-) + PASSWORD_HASHERS
+PASSWORD_HASHERS = [
+    'onadata.libs.utils.hashers.PBKDF2PasswordHasher150KIterations'
+] + PASSWORD_HASHERS
 
 
 # The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised

@@ -72,7 +72,7 @@ class TestAbstractViewSet(TestCase):
 
         xform_list_url = reverse('xform-list')
 
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             response = self.client.post(xform_list_url, data=post_data)
 
@@ -82,11 +82,10 @@ class TestAbstractViewSet(TestCase):
         self.assertEqual(response.status_code, 201)
         self.xform = XForm.objects.all().order_by('pk').reverse()[0]
         data.update({
-            'url':
-                'http://testserver/api/v1/forms/%s' % (self.xform.pk)
+            'url': f'http://testserver/api/v1/forms/{self.xform.pk}'
         })
 
-        self.assertDictContainsSubset(data, response.data)
+        self.assertEqual(dict(response.data, **data), response.data)
         self.form_data = response.data
 
     def user_profile_data(self):
@@ -113,9 +112,9 @@ class TestAbstractViewSet(TestCase):
         `auth_permission`.  Without this, actions on individual instances are
         immediately denied and object-level permissions are never considered.
         """
-        if user.is_anonymous():
+        if user.is_anonymous:
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
-        user.user_permissions = Permission.objects.all()
+        user.user_permissions.set(Permission.objects.all())
         if save:
             user.save()
 
@@ -126,8 +125,8 @@ class TestAbstractViewSet(TestCase):
         user.user_permissions.add(add_userprofile)
 
     def _create_user_profile(self, extra_post_data={}):
-        self.profile_data = dict(
-            self.profile_data.items() + extra_post_data.items())
+        self.profile_data = dict(self.profile_data)
+        self.profile_data.update(extra_post_data)
         user, created = User.objects.get_or_create(
             username=self.profile_data['username'],
             first_name=self.profile_data['name'],
@@ -157,11 +156,11 @@ class TestAbstractViewSet(TestCase):
             'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
 
     def _add_uuid_to_submission_xml(self, path, xform):
-        tmp_file = NamedTemporaryFile(delete=False)
+        tmp_file = NamedTemporaryFile(delete=False, mode='w')
         split_xml = None
 
-        with open(path) as _file:
-            split_xml = re.split(r'(<transport>)', _file.read())
+        with open(path, 'rb') as _file:
+            split_xml = re.split(r'(<transport>)', _file.read().decode())
 
         split_xml[1:1] = [
             '<formhub><uuid>%s</uuid></formhub>' % xform.uuid
@@ -185,7 +184,7 @@ class TestAbstractViewSet(TestCase):
 
         if add_uuid:
             path = self._add_uuid_to_submission_xml(path, self.xform)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             post_data = {'xml_submission_file': f}
 
             if media_file is not None:
@@ -249,7 +248,7 @@ class TestAbstractViewSet(TestCase):
             media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             self._make_submission(os.path.join(
                 self.main_directory, 'fixtures',
                 'transportation', 'instances', s, s + '.xml'), media_file=f)
@@ -281,7 +280,7 @@ class TestAbstractViewSet(TestCase):
         }
 
         if path and data_value:
-            with open(path) as media_file:
+            with open(path, 'rb') as media_file:
                 data.update({
                     'data_file': media_file,
                 })

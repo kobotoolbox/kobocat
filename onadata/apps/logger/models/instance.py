@@ -13,6 +13,7 @@ from django.db.models import F
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
+from django.utils.encoding import smart_text
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
@@ -125,9 +126,9 @@ class Instance(models.Model):
     xml = models.TextField()
     xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,
                                 default=DEFAULT_XML_HASH)
-    user = models.ForeignKey(User, related_name='instances', null=True)
-    xform = models.ForeignKey(XForm, null=True, related_name='instances')
-    survey_type = models.ForeignKey(SurveyType)
+    user = models.ForeignKey(User, related_name='instances', null=True, on_delete=models.CASCADE)
+    xform = models.ForeignKey(XForm, null=True, related_name='instances', on_delete=models.CASCADE)
+    survey_type = models.ForeignKey(SurveyType, on_delete=models.CASCADE)
 
     # shows when we first received this instance
     date_created = models.DateTimeField(auto_now_add=True)
@@ -147,7 +148,6 @@ class Instance(models.Model):
 
     # store an geographic objects associated with this instance
     geom = models.GeometryCollectionField(null=True)
-    objects = models.GeoManager()
 
     tags = TaggableManager()
 
@@ -246,15 +246,15 @@ class Instance(models.Model):
         set_uuid(self)
 
     def _populate_xml_hash(self):
-        '''
+        """
         Populate the `xml_hash` attribute of this `Instance` based on the content of the `xml`
         attribute.
-        '''
+        """
         self.xml_hash = self.get_hash(self.xml)
 
     @classmethod
     def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None, repopulate=False):
-        '''
+        """
         Populate the `xml_hash` field for `Instance` instances limited to the specified users
         and/or DB primary keys.
 
@@ -265,7 +265,7 @@ class Instance(models.Model):
         :param bool repopulate: Optional argument to force repopulation of existing hashes.
         :returns: Total number of `Instance`s updated.
         :rtype: int
-        '''
+        """
 
         filter_kwargs = dict()
         if usernames:
@@ -361,13 +361,12 @@ class Instance(models.Model):
         """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param basestring input_string: The string to be hashed.
+        :param string_types input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
         """
-        if isinstance(input_string, unicode):
-            input_string = input_string.encode('utf-8')
-        return sha256(input_string).hexdigest()
+        input_string = smart_text(input_string)
+        return sha256(input_string.encode()).hexdigest()
 
     @property
     def point(self):
@@ -429,7 +428,7 @@ class InstanceHistory(models.Model):
         app_label = 'logger'
 
     xform_instance = models.ForeignKey(
-        Instance, related_name='submission_history')
+        Instance, related_name='submission_history', on_delete=models.CASCADE)
     xml = models.TextField()
     # old instance id
     uuid = models.CharField(max_length=249, default='')

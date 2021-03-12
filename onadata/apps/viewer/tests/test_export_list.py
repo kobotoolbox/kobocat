@@ -34,7 +34,7 @@ class TestExportList(TestBase):
         self.assertNotIn(
             '<input title="" data-original-title="" \
             class="btn large btn-primary" \
-            value="New Export" type="submit">', response.content)
+            value="New Export" type="submit">', response.content.decode())
         self.assertEqual(response.status_code, 200)
 
     @unittest.skip('Fails under Django 1.6')

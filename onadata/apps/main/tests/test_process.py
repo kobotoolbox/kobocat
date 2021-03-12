@@ -21,6 +21,7 @@ from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.xform import XFORM_TITLE_LENGTH
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
+from onadata.libs.tests.utils.xml import pyxform_version_agnostic
 from onadata.libs.utils.common_tags import UUID, SUBMISSION_TIME
 from .test_base import TestBase
 
@@ -66,8 +67,8 @@ class TestProcess(TestBase):
         """
         Update stuff like submission time so we can compare within out fixtures
         """
-        for uuid, submission_time in self.uuid_to_submission_times.iteritems():
-            xform_instances.update(
+        for uuid, submission_time in self.uuid_to_submission_times.items():
+            xform_instances.update_one(
                 {UUID: uuid}, {'$set': {SUBMISSION_TIME: submission_time}})
 
     def test_uuid_submit(self):
@@ -76,7 +77,7 @@ class TestProcess(TestBase):
         path = os.path.join(
             self.this_directory, 'fixtures', 'transportation',
             'instances', survey, survey + '.xml')
-        with open(path) as f:
+        with open(path, 'rb') as f:
             post_data = {'xml_submission_file': f, 'uuid': self.xform.uuid}
             url = '/submission'
             self.response = self.client.post(url, post_data)
@@ -140,7 +141,7 @@ class TestProcess(TestBase):
         self.manifest_url = \
             'http://testserver/%s/xformsManifest/%s'\
             % (self.user.username, self.xform.pk)
-        md5_hash = md5(self.xform.xml).hexdigest()
+        md5_hash = md5(self.xform.xml.encode()).hexdigest()
         expected_content = """<?xml version="1.0" encoding="utf-8"?>
 <xforms xmlns="http://openrosa.org/xforms/xformsList"><xform><formID>transportation_2011_07_25</formID><name>transportation_2011_07_25</name><majorMinorVersion></majorMinorVersion><version></version><hash>md5:%(hash)s</hash><descriptionText>transportation_2011_07_25</descriptionText><downloadUrl>%(download_url)s</downloadUrl><manifestUrl>%(manifest_url)s</manifestUrl></xform></xforms>"""  # noqa
         expected_content = expected_content % {
@@ -179,7 +180,8 @@ class TestProcess(TestBase):
         uuid_node.setAttribute("calculate", "''")
 
         # check content without UUID
-        self.assertEqual(response_doc.toxml(), expected_doc.toxml())
+        self.assertEqual(pyxform_version_agnostic(response_doc.toxml()),
+                         pyxform_version_agnostic(expected_doc.toxml()))
 
     def _check_csv_export(self):
         self._check_data_dictionary()
@@ -200,7 +202,7 @@ class TestProcess(TestBase):
 
         # test to make sure the headers in the actual csv are as expected
         actual_csv = self._get_csv_()
-        self.assertEqual(sorted(actual_csv.next()), sorted(expected_list))
+        self.assertEqual(sorted(next(actual_csv)), sorted(expected_list))
 
     def _check_data_for_csv_export(self):
 
@@ -226,14 +228,15 @@ class TestProcess(TestBase):
              }
         ]
         for d_from_db in self.data_dictionary.get_data_for_excel():
-            for k, v in d_from_db.items():
+            d_from_db_iter = dict(d_from_db)
+            for k, v in d_from_db_iter.items():
                 if (k != '_xform_id_string' and k != 'meta/instanceID') and v:
                     new_key = k[len('transport/'):]
                     d_from_db[new_key] = d_from_db[k]
                 del d_from_db[k]
             self.assertTrue(d_from_db in data)
             data.remove(d_from_db)
-        self.assertEquals(data, [])
+        self.assertEqual(data, [])
 
     def _check_group_xpaths_do_not_appear_in_dicts_for_export(self):
         uuid = 'uuid:f3d8dc65-91a6-4d0f-9e97-802128083390'
@@ -303,7 +306,7 @@ class TestProcess(TestBase):
         actual_csv = self._get_response_content(response)
         actual_lines = actual_csv.split("\n")
         actual_csv = csv.reader(actual_lines)
-        headers = actual_csv.next()
+        headers = next(actual_csv)
         data = [
             {'meta/instanceID': 'uuid:5b2cc313-fc09-437e-8149-fcd32f695d41',
              '_uuid': '5b2cc313-fc09-437e-8149-fcd32f695d41',
@@ -346,7 +349,8 @@ class TestProcess(TestBase):
         dd = DataDictionary.objects.get(pk=self.xform.pk)
         for row, expected_dict in zip(actual_csv, data):
             d = dict(zip(headers, row))
-            for k, v in d.items():
+            d_iter = dict(d)
+            for k, v in d_iter.items():
                 if v in ["n/a", "False"] or k in dd._additional_headers():
                     del d[k]
             l = []
@@ -393,9 +397,9 @@ class TestProcess(TestBase):
             self.assertEqual(actual_row, expected_row)
 
     def _check_delete(self):
-        self.assertEquals(self.user.xforms.count(), 1)
+        self.assertEqual(self.user.xforms.count(), 1)
         self.user.xforms.all()[0].delete()
-        self.assertEquals(self.user.xforms.count(), 0)
+        self.assertEqual(self.user.xforms.count(), 0)
 
     def test_405_submission(self):
         url = reverse('submissions')
@@ -420,7 +424,7 @@ class TestProcess(TestBase):
         self._publish_transportation_form()
         src = os.path.join(self.this_directory, "fixtures",
                            "transportation", "screenshot.png")
-        uf = UploadedFile(file=open(src), content_type='image/png')
+        uf = UploadedFile(file=open(src, 'rb'), content_type='image/png')
         count = MetaData.objects.count()
         MetaData.media_upload(self.xform, uf)
         # assert successful insert of new metadata record

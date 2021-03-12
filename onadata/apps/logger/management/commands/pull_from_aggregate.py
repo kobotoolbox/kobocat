@@ -6,23 +6,25 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext as _
-from optparse import make_option
 
 from onadata.libs.utils.briefcase_client import BriefcaseClient
 
 
 class Command(BaseCommand):
     help = _("Insert all existing parsed instances into MongoDB")
-    option_list = BaseCommand.option_list + (
-        make_option('--url',
-                    help=_("server url to pull forms and submissions")),
-        make_option('-u', '--username',
-                    help=_("Username")),
-        make_option('-p', '--password',
-                    help=_("Password")),
-        make_option('--to',
-                    help=_("username in this server")),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument('--url',
+                            help=_("server url to pull forms and submissions"))
+
+        parser.add_argument('-u', '--username',
+                            help=_("Username"))
+
+        parser.add_argument('-p', '--password',
+                            help=_("Password"))
+
+        parser.add_argument('--to',
+                            help=_("username in this server"))
 
     def handle(self, *args, **kwargs):
         url = kwargs.get('url')

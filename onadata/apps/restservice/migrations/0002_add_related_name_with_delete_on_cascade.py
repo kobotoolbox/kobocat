@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='restservice',
             name='xform',
-            field=models.ForeignKey(related_name='restservices', to='logger.XForm'),
+            field=models.ForeignKey(related_name='restservices', to='logger.XForm', on_delete=models.CASCADE),
         ),
     ]

@@ -18,7 +18,7 @@ class TestFormErrors(TestBase):
             self.this_directory, "fixtures",
             "transportation", "transportation.xls")
         response = self._publish_xls_file(self.xls_path)
-        self.assertEquals(response.status_code, 201)
+        self.assertEqual(response.status_code, 201)
         self.xform = XForm.objects.all()[0]
 
     def test_bad_id_string(self):
@@ -27,8 +27,8 @@ class TestFormErrors(TestBase):
         xls_path = os.path.join(self.this_directory, "fixtures",
                                 "transportation", "transportation.bad_id.xls")
         response = self._publish_xls_file(xls_path)
-        self.assertEquals(response.status_code, 400)
-        self.assertEquals(XForm.objects.count(), count)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(XForm.objects.count(), count)
 
     @skip
     def test_dl_no_xls(self):

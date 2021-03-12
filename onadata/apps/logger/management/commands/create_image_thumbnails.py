@@ -3,7 +3,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-from optparse import make_option
 from django.contrib.auth.models import User
 
 from django.core.management.base import BaseCommand, CommandError
@@ -21,14 +20,17 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 class Command(BaseCommand):
     help = ugettext_lazy("Creates thumbnails for "
                          "all form images and stores them")
-    option_list = BaseCommand.option_list + (
-        make_option('-u', '--username',
-                    help=ugettext_lazy("Username of the form user")),
-        make_option('-i', '--id_string',
-                    help=ugettext_lazy("id string of the form")),
-        make_option('-f', '--force', action='store_false',
-                    help=ugettext_lazy("regenerate thumbnails if they exist."))
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument('-u', '--username',
+                            help=ugettext_lazy("Username of the form user"))
+
+        parser.add_argument('-i', '--id_string',
+                            help=ugettext_lazy("id string of the form"))
+
+        parser.add_argument('-f', '--force', action='store_false',
+                            help=ugettext_lazy("regenerate thumbnails if they "
+                                               "exist."))
 
     def handle(self, *args, **kwargs):
         attachments_qs = Attachment.objects.select_related(
@@ -77,6 +79,6 @@ class Command(BaseCommand):
                     else:
                         print(_('Problem with the file %(file)s')
                               % {'file': filename})
-                except (IOError, OSError), e:
+                except (IOError, OSError) as e:
                     print(_('Error on %(filename)s: %(error)s')
                           % {'filename': filename, 'error': e})

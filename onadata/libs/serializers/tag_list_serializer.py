@@ -1,10 +1,14 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
 
 class TagListSerializer(serializers.Field):
+
+    class Meta:
+        fields = '__all__'
 
     def to_internal_value(self, data):
         if type(data) is not list:

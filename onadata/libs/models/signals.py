@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import django.dispatch
+from django.utils.six import string_types
 
 from onadata.apps.logger.models import XForm
 
@@ -26,7 +28,7 @@ def add_tags_to_xform_instances(sender, **kwargs):
 def delete_tag_from_xform_instances(sender, **kwargs):
     xform = kwargs.get('xform', None)
     tag = kwargs.get('tag', None)
-    if isinstance(xform, XForm) and isinstance(tag, basestring):
+    if isinstance(xform, XForm) and isinstance(tag, string_types):
         # update existing instances with the new tag
         for instance in xform.instances.all():
             if tag in instance.tags.names():

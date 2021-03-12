@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.response import Response
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 
 from onadata.apps.api.tools import get_media_file_response
 from onadata.apps.logger.models.xform import XForm
@@ -71,7 +71,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         username = self.kwargs.get('username')
         if username is None:
             # If no username is specified, the request must be authenticated
-            if self.request.user.is_anonymous():
+            if self.request.user.is_anonymous:
                 # raises a permission denied exception, forces authentication
                 self.permission_denied(self.request)
             else:
@@ -122,7 +122,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
         return Response(self.object.xml, headers=self.get_openrosa_headers())
 
-    @detail_route(methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
         self.object = self.get_object()
         object_list = MetaData.objects.filter(data_type='media',
@@ -133,7 +133,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
         return Response(serializer.data, headers=self.get_openrosa_headers())
 
-    @detail_route(methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def media(self, request, *args, **kwargs):
         self.object = self.get_object()
         pk = kwargs.get('metadata')

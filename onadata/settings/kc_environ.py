@@ -69,7 +69,7 @@ if len(sys.argv) >= 2 and (sys.argv[1] == "test"):
 else:
     TESTING_MODE = False
 
-MEDIA_URL = '/' + os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/') + '/'
+MEDIA_URL = f"/{os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/')}/"
 STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
@@ -93,19 +93,11 @@ else:
     MEDIA_ROOT = os.path.join(PROJECT_ROOT, MEDIA_URL.lstrip('/'))
 
 if PRINT_EXCEPTION and DEBUG:
-    MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
+    MIDDLEWARE.append('onadata.libs.utils.middleware.ExceptionLoggingMiddleware')
 
 # Clear out the test database
 if TESTING_MODE:
     MONGO_DB.instances.drop()
-
-# include the kobocat-template directory
-TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
-    'KOBOCAT_TEMPLATES_PATH',
-    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
-)
-TEMPLATE_DIRS = (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'), ) + TEMPLATE_DIRS
-STATICFILES_DIRS += (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'), )
 
 KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
 KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
@@ -119,7 +111,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'onadata.koboform.context_processors.koboform_integration',
 ) + TEMPLATE_CONTEXT_PROCESSORS
 
-MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
+MIDDLEWARE.insert(0, 'onadata.koboform.redirect_middleware.ConditionalRedirects')
 
 # Domain must not exclude KPI when sharing sessions
 if os.environ.get('SESSION_COOKIE_DOMAIN'):
@@ -205,10 +197,11 @@ if (os.getenv("RAVEN_DSN") or "") != "":
 
         # Set the `server_name` attribute. See https://docs.sentry.io/hosted/clients/python/advanced/
         server_name = os.environ.get('RAVEN_SERVER_NAME')
-        server_name = server_name or '.'.join(filter(None, (
+        server_name = server_name or '.'.join([_f for _f in (
             os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', None),
             os.environ.get('PUBLIC_DOMAIN_NAME', None)
-        )))
+        ) if _f])
+
         if server_name:
             RAVEN_CONFIG.update({'name': server_name})
 
@@ -298,5 +291,8 @@ if ISSUE_242_MINIMUM_INSTANCE_ID is not None:
         },
         'options': {'queue': 'kobocat_queue'}
     }
+# ##### END ISSUE 242 FIX ######
 
-###### END ISSUE 242 FIX ######
+SESSION_ENGINE = "redis_sessions.session"
+SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
+

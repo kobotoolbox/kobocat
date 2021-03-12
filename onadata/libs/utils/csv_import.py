@@ -1,14 +1,16 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-import unicodecsv as ucsv
-import uuid
-import json
 
-import cStringIO
+import json
+import uuid
 from datetime import datetime
+
+import io
+import unicodecsv as ucsv
 from django.contrib.auth.models import User
-from onadata.libs.utils.logger_tools import dict2xml, safe_create_instance
+
 from onadata.apps.logger.models import Instance
+from onadata.libs.utils.logger_tools import dict2xml, safe_create_instance
 
 
 def get_submission_meta_dict(xform, instance_id):
@@ -64,14 +66,14 @@ def submit_csv(username, xform, csv_file):
     and converts those to xml submissions and finally submits them by calling
     :py:func:`onadata.libs.utils.logger_tools.safe_create_instance`
 
-    :param str username: the subission user
+    :param str username: the submission user
     :param onadata.apps.logger.models.XForm xfrom: The submission's XForm.
     :param (str or file): A CSV formatted file with submission rows.
-    :return: If sucessful, a dict with import summary else dict with error str.
+    :return: If successful, a dict with import summary else dict with error str.
     :rtype: Dict
     """
-    if isinstance(csv_file, (str, unicode)):
-        csv_file = cStringIO.StringIO(csv_file)
+    if isinstance(csv_file, str):
+        csv_file = io.StringIO(csv_file)
     elif csv_file is None or not hasattr(csv_file, 'read'):
         return {'error': ('Invalid param type for `csv_file`. '
                           'Expected file or String '
@@ -89,7 +91,8 @@ def submit_csv(username, xform, csv_file):
         submitted_by = row.get('_submitted_by')
         submission_date = row.get('_submission_time', submission_time)
 
-        for key in row.keys():  # seems faster than a comprehension
+        row_iter = dict(row)
+        for key in row_iter:  # seems faster than a comprehension
             # remove metadata (keys starting with '_')
             if key.startswith('_'):
                 del row[key]
@@ -111,8 +114,8 @@ def submit_csv(username, xform, csv_file):
         row_uuid = row.get('meta').get('instanceID')
         rollback_uuids.append(row_uuid.replace('uuid:', ''))
 
-        xml_file = cStringIO.StringIO(dict2xmlsubmission(row, xform, row_uuid,
-                                      submission_date))
+        xml_file = io.StringIO(
+            dict2xmlsubmission(row, xform, row_uuid, submission_date))
 
         try:
             error, instance = safe_create_instance(username, xml_file, [],

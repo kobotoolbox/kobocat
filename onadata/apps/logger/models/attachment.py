@@ -27,11 +27,13 @@ def upload_to(attachment, filename):
 
 
 def hash_attachment_contents(contents):
-    return '%s' % md5(contents).hexdigest()
+    if isinstance(contents, str):
+        contents = contents.encode()
+    return md5(contents).hexdigest()
 
 
 class Attachment(models.Model):
-    instance = models.ForeignKey(Instance, related_name="attachments")
+    instance = models.ForeignKey(Instance, related_name="attachments", on_delete=models.CASCADE)
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
     media_file_basename = models.CharField(
         max_length=260, null=True, blank=True, db_index=True)

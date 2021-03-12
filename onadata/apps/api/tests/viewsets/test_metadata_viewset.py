@@ -77,7 +77,7 @@ class TestMetaDataViewSet(TestAbstractViewSet):
     def test_windows_csv_file_upload_to_metadata(self):
         data_value = 'transportation.csv'
         path = os.path.join(self.fixture_dir, data_value)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(
                 f, 'media', data_value, 'text/csv', 2625, None)
             data = {

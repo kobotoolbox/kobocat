@@ -82,7 +82,7 @@ def generate_stats_zip(output_filename):
     default_storage = get_storage_class()()
     with default_storage.open(output_filename, 'wb') as output_file:
         zip_file = zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED)
-        for filename, report_settings in REPORTS.iteritems():
+        for filename, report_settings in REPORTS.items():
             model_name_plural = report_settings[
                 'model']._meta.verbose_name_plural
             fieldnames = [

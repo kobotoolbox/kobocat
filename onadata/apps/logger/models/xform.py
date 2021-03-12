@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import json
 import os
 import re
-from cStringIO import StringIO
+from io import StringIO
 from hashlib import md5
 from xml.sax import saxutils
 
@@ -16,6 +16,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils.encoding import smart_text
+
 from django.utils.translation import ugettext_lazy, ugettext as _
 from guardian.shortcuts import (
     assign_perm,
@@ -56,7 +57,7 @@ class XForm(BaseModel):
     description = models.TextField(default='', null=True)
     xml = models.TextField()
 
-    user = models.ForeignKey(User, related_name='xforms', null=True)
+    user = models.ForeignKey(User, related_name='xforms', null=True, on_delete=models.CASCADE)
     require_auth = models.BooleanField(default=False)
     shared = models.BooleanField(default=False)
     shared_data = models.BooleanField(default=False)
@@ -191,7 +192,7 @@ class XForm(BaseModel):
 
         super(XForm, self).save(*args, **kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         return getattr(self, "id_string", "")
 
     def submission_count(self, force_update=False):
@@ -229,7 +230,7 @@ class XForm(BaseModel):
 
     @property
     def hash(self):
-        return '%s' % md5(self.xml.encode('utf8')).hexdigest()
+        return md5(self.xml.encode()).hexdigest()
 
     @property
     def can_be_replaced(self):

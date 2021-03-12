@@ -51,7 +51,7 @@ class TestConnectViewSet(TestAbstractViewSet):
         response = view(request)
         self.assertTrue(response.has_header('WWW-Authenticate'))
         self.assertTrue(
-            response['WWW-Authenticate'].startswith('Digest nonce='))
+            response['WWW-Authenticate'].startswith('Digest realm="DJANGO", qop="auth", nonce='))
         request = self.factory.get('/')
         request.META.update(auth(request.META, response))
         request.session = self.client.session

@@ -1,23 +1,21 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-from django.db.models import Q
+
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
 from django.utils import six
 from rest_framework import filters
+from rest_framework_guardian import filters as guardian_filters
 from rest_framework.exceptions import ParseError
 
 from onadata.apps.logger.models import XForm, Instance
-from onadata.apps.main.models import MetaData
 
 
-class AnonDjangoObjectPermissionFilter(filters.DjangoObjectPermissionsFilter):
+class AnonDjangoObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
         """
         Anonymous user has no object permissions, return queryset as it is.
         """
-        if request.user.is_anonymous():
+        if request.user.is_anonymous:
             return queryset
 
         return super(AnonDjangoObjectPermissionFilter, self)\
@@ -88,7 +86,7 @@ class XFormPermissionFilterMixin(object):
 
 
 class MetaDataFilter(XFormPermissionFilterMixin,
-                     filters.DjangoObjectPermissionsFilter):
+                     guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
         queryset = self._xform_filter_queryset(request, queryset, view, 'xform')
         data_type = request.query_params.get('data_type')
@@ -98,7 +96,7 @@ class MetaDataFilter(XFormPermissionFilterMixin,
 
 
 class AttachmentFilter(XFormPermissionFilterMixin,
-                       filters.DjangoObjectPermissionsFilter):
+                       guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
         queryset = self._xform_filter_queryset(request, queryset, view,
                                                'instance__xform')

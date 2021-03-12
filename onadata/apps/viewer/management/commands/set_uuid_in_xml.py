@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext as _, ugettext_lazy
 
@@ -19,4 +20,4 @@ class Command(BaseCommand):
                 dd.set_uuid_in_xml(id_string=dd.id_string)
                 super(DataDictionary, dd).save()
             if (i + 1) % 10 == 0:
-                print _('Updated %(nb)d XForms...') % {'nb': i}
+                print(_('Updated %(nb)d XForms...') % {'nb': i})

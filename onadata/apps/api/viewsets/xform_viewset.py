@@ -14,7 +14,7 @@ from django.utils import six
 from django.utils.translation import ugettext as _
 from rest_framework import exceptions
 from rest_framework import status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ModelViewSet
@@ -577,9 +577,6 @@ data (instance/submission per row)
     lookup_field = 'pk'
     extra_lookup_fields = None
     permission_classes = [XFormPermissions, ]
-    # TODO: Figure out what `updatable_fields` does; if nothing, remove it
-    #updatable_fields = set(('description', 'downloadable', 'require_auth',
-    #                         'shared', 'shared_data', 'title'))
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.TagFilter,
                        filters.XFormOwnerFilter,
@@ -605,7 +602,6 @@ data (instance/submission per row)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             headers = self.get_success_headers(serializer.data)
-
             return Response(serializer.data, status=status.HTTP_201_CREATED,
                             headers=headers)
 
@@ -633,7 +629,7 @@ data (instance/submission per row)
         # Let the superclass handle updates to the other fields
         return super(XFormViewSet, self).update(request, pk, *args, **kwargs)
 
-    @detail_route(methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def form(self, request, format='json', **kwargs):
         form = self.get_object()
         if format not in ['json', 'xml', 'xls', 'csv']:
@@ -661,7 +657,7 @@ data (instance/submission per row)
                                        query,
                                        export_type)
 
-    @detail_route(methods=['POST'])
+    @action(detail=True, methods=['POST'])
     def csv_import(self, request, *args, **kwargs):
         """
         Endpoint for CSV data imports

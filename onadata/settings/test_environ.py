@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 import dj_database_url
-from django.utils.six.moves.urllib.parse import quote_plus
+
 from mongomock import MongoClient as MockMongoClient
 
 from onadata.settings.common import *
@@ -20,7 +20,7 @@ DATABASES = {
 # Moreover, `apt-get update && apt-get install libsqlite3-mod-spatialite`
 #  should be executed inside the container
 DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
-SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
+SPATIALITE_LIBRARY_PATH = os.environ.get('SPATIALITE_LIBRARY_PATH', 'mod_spatialite')
 
 
 MONGO_CONNECTION_URL = 'mongodb://fakehost/formhub_test'
@@ -59,15 +59,7 @@ BROKER_BACKEND = 'memory'
 ENKETO_API_TOKEN = 'abc'
 
 if PRINT_EXCEPTION and DEBUG:
-    MIDDLEWARE_CLASSES += ('utils.middleware.ExceptionLoggingMiddleware',)
-
-# include the kobocat-template directory
-TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
-    'KOBOCAT_TEMPLATES_PATH',
-    os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
-)
-TEMPLATE_DIRS = (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'templates'),) + TEMPLATE_DIRS
-STATICFILES_DIRS += (os.path.join(TEMPLATE_OVERRIDE_ROOT_DIR, 'static'),)
+    MIDDLEWARE.append('onadata.libs.utils.middleware.ExceptionLoggingMiddleware')
 
 KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
 KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
@@ -75,11 +67,7 @@ KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
 # KOBOFORM_LOGIN_AUTOREDIRECT=True
 KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://localhost:8000")
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'onadata.koboform.context_processors.koboform_integration',
-) + TEMPLATE_CONTEXT_PROCESSORS
-
-# MIDDLEWARE_CLASSES = ('onadata.koboform.redirect_middleware.ConditionalRedirects', ) + MIDDLEWARE_CLASSES
+TEMPLATES[0]['OPTIONS']['context_processors'].append('onadata.koboform.context_processors.koboform_integration')
 
 # Domain must not exclude KPI when sharing sessions
 if os.environ.get('SESSION_COOKIE_DOMAIN'):
@@ -143,3 +131,5 @@ LOGGING['loggers']['django.db.backends'] = {
             'level': 'WARNING',
             'propagate': True
         }
+
+GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_anonymous_user_instance'

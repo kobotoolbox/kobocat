@@ -43,8 +43,8 @@ class Migration(migrations.Migration):
                 ('xpath', models.CharField(max_length=50)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('instance', models.ForeignKey(related_name='modifications', to='logger.Instance')),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True)),
+                ('instance', models.ForeignKey(related_name='modifications', to='logger.Instance', on_delete=models.CASCADE)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                 ('end_time', models.DateTimeField(null=True)),
                 ('lat', models.FloatField(null=True)),
                 ('lng', models.FloatField(null=True)),
-                ('instance', models.OneToOneField(related_name='parsed_instance', to='logger.Instance')),
+                ('instance', models.OneToOneField(related_name='parsed_instance', to='logger.Instance', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -70,7 +70,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='export',
             name='xform',
-            field=models.ForeignKey(to='logger.XForm'),
+            field=models.ForeignKey(to='logger.XForm', on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='export',

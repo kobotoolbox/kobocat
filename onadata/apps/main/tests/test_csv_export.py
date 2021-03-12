@@ -37,11 +37,11 @@ class TestExport(TestBase):
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
         with open(os.path.join(
-                self.fixture_dir, 'tutorial_w_repeats.csv')) as f1:
+                self.fixture_dir, 'tutorial_w_repeats.csv'), 'rb') as f1:
             with storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
-                self.assertEquals(actual_content, expected_content)
+                self.assertEqual(actual_content, expected_content)
 
     def test_csv_nested_repeat_output(self):
         path = os.path.join(self.fixture_dir, 'double_repeat.xls')
@@ -58,7 +58,7 @@ class TestExport(TestBase):
             '/double_repeat/bed_net[2]/member[2]/name',
             '/double_repeat/meta/instanceID'
         ]
-        self.assertEquals(dd.xpaths(repeat_iterations=2), xpaths)
+        self.assertEqual(dd.xpaths(repeat_iterations=2), xpaths)
         # test csv
         export = generate_export(Export.CSV_EXPORT, 'csv', self.user.username,
                                  'double_repeat')
@@ -66,11 +66,11 @@ class TestExport(TestBase):
         self.assertTrue(storage.exists(export.filepath))
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
-        with open(os.path.join(self.fixture_dir, 'export.csv')) as f1:
+        with open(os.path.join(self.fixture_dir, 'export.csv'), 'rb') as f1:
             with storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
-                self.assertEquals(actual_content, expected_content)
+                self.assertEqual(actual_content, expected_content)
 
     def test_dotted_fields_csv_export_output(self):
         path = os.path.join(os.path.dirname(__file__), 'fixtures', 'userone',
@@ -89,8 +89,8 @@ class TestExport(TestBase):
         self.assertEqual(ext, '.csv')
         with open(os.path.join(
                 os.path.dirname(__file__), 'fixtures', 'userone',
-                'userone_with_dot_name_fields.csv')) as f1:
+                'userone_with_dot_name_fields.csv'), 'rb') as f1:
             with storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
-                self.assertEquals(actual_content, expected_content)
+                self.assertEqual(actual_content, expected_content)

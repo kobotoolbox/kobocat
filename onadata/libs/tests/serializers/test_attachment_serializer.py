@@ -61,4 +61,4 @@ class TestAttachmentSerializer(TransactionTestCase):
 
     def test_get_field_xpath_of_an_object(self):
         path = get_path(self.data, self.question)
-        self.assertEquals(path, "group1/group2/photograph")
+        self.assertEqual(path, "group1/group2/photograph")

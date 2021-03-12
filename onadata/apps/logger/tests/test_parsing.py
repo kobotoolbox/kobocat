@@ -170,7 +170,7 @@ class TestXFormInstanceParser(TestBase):
             "multiple_nodes_error.xml"
         )
         self._make_submission(xml_submission_file_path)
-        self.assertEquals(201, self.response.status_code)
+        self.assertEqual(201, self.response.status_code)
 
     def test_xml_repeated_group_to_dict(self):
         xml_file = os.path.join(
@@ -187,4 +187,5 @@ class TestXFormInstanceParser(TestBase):
             self.assertEqual(2, len(dict_['#document']['form']['question_group']))
             with open(json_file) as jfile:
                 import json
-                self.assertEqual(jfile.read(), json.dumps(dict_))
+                jfile_content = jfile.read()
+                self.assertEqual(jfile_content.strip(), json.dumps(dict_).strip())

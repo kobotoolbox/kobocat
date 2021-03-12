@@ -3,14 +3,9 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 import os
 import re
-from datetime import datetime
 
-import pytz
-import requests
 from django.conf import settings
-from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from httmock import HTTMock, all_requests
 from rest_framework import status
 from xml.dom import minidom, Node
 
@@ -22,26 +17,7 @@ from onadata.libs.constants import (
     CAN_VIEW_XFORM
 )
 from onadata.libs.serializers.xform_serializer import XFormSerializer
-
-
-@all_requests
-def enketo_mock(url, request):
-    response = requests.Response()
-    response.status_code = 201
-    response._content = \
-        '{\n  "url": "https:\\/\\/dmfrm.enketo.org\\/webform",\n' \
-        '  "code": "200"\n}'
-    return response
-
-
-@all_requests
-def enketo_error_mock(url, request):
-    response = requests.Response()
-    response.status_code = 400
-    response._content = \
-        '{\n  "message": "no account exists for this OpenRosa server",\n' \
-        '  "code": "200"\n}'
-    return response
+from onadata.libs.tests.utils.xml import pyxform_version_agnostic
 
 
 class TestXFormViewSet(TestAbstractViewSet):
@@ -111,8 +87,10 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # should be both bob's and alice's form
-        self.assertEqual(sorted(response.data),
-                         sorted([bobs_form_data, self.form_data]))
+
+        sorted_response_data = sorted(response.data, key=lambda x: x['formid'])
+        self.assertEqual(sorted_response_data,
+                         [bobs_form_data, self.form_data])
 
         # apply filter, see only bob's forms
         request = self.factory.get('/', data={'owner': 'bob'}, **self.extra)
@@ -164,7 +142,8 @@ class TestXFormViewSet(TestAbstractViewSet):
         # test for supported formats
         response = view(request, pk=formid, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertDictContainsSubset(data, response.data)
+        self.assertEqual(dict(response.data, **data),
+                         response.data)
         response = view(request, pk=formid, format='xml')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_doc = minidom.parseString(response.data)
@@ -193,7 +172,8 @@ class TestXFormViewSet(TestAbstractViewSet):
         uuid_node.setAttribute("calculate", "''")
 
         # check content without UUID
-        self.assertEqual(response_doc.toxml(), expected_doc.toxml())
+        self.assertEqual(pyxform_version_agnostic(response_doc.toxml()),
+                         pyxform_version_agnostic(expected_doc.toxml()))
 
     def test_form_tags(self):
         self.publish_xls_form()
@@ -255,17 +235,17 @@ class TestXFormViewSet(TestAbstractViewSet):
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.xls")
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             xform = self.user.xforms.get(uuid=response.data.get('uuid'))
             data.update({
-                'url':
-                    'http://testserver/api/v1/forms/%s' % xform.pk
+                'url': f'http://testserver/api/v1/forms/{xform.pk}'
             })
-            self.assertDictContainsSubset(data, response.data)
+            self.assertEqual(dict(response.data, **data),
+                             response.data)
             self.assertTrue(xform.user.pk == self.user.pk)
 
     def test_publish_invalid_xls_form(self):
@@ -275,7 +255,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.bad_id.xls")
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
@@ -290,7 +270,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         path = os.path.join(
             settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
             "transportation", "transportation.no_choices.xls")
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
@@ -461,6 +441,6 @@ class TestXFormViewSet(TestAbstractViewSet):
                                 'transportation.id_starts_with_num.xls')
         count = XForm.objects.count()
         response = self.publish_xls_form(xls_path, data, assert_=False)
-        self.assertTrue('Names must begin with a letter' in response.content)
+        self.assertTrue('Names must begin with a letter' in response.content.decode())
         self.assertEqual(response.status_code, 400)
         self.assertEqual(XForm.objects.count(), count)

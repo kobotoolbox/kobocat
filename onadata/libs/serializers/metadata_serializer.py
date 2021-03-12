@@ -30,6 +30,15 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MetaData
+        fields = (
+            'id',
+            'xform',
+            'data_value',
+            'data_type',
+            'data_file',
+            'data_file_type',
+            'from_kpi',
+        )
 
     # was previously validate_data_value but the signature change in DRF3.
     def validate(self, attrs):

@@ -29,17 +29,17 @@ class CsvReader(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """
         A CsvReader object is iterable (since we have defined __iter__
         and next methods. Each iteration of this object returns a row
         of data.
         """
-        row = self._csv_reader.next()
+        row = next(self._csv_reader)
         return [cell for cell in row]
 
     def _set_headers(self):
-        self._headers = self.next()
+        self._headers = next(self)
 
     def iter_dicts(self):
         self._set_headers()

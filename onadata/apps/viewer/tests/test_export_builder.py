@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import csv
 import datetime
 import os
@@ -10,12 +11,13 @@ import zipfile
 
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
+from django.utils.six import string_types
 from openpyxl import load_workbook
 from pyxform.builder import create_survey_from_xls
 from savReaderWriter import SavReader
 
-from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.api.mongo_helper import MongoHelper
+from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.tests.export_helpers import viewer_fixture_path
 from onadata.libs.utils.export_tools import (
     dict_to_joined_export,
@@ -520,8 +522,8 @@ class TestExportBuilder(TestBase):
                 ]
             }
         childrens_section = export_builder.section_by_name('children')
-        match = filter(lambda x: expected_section['elements'][0]['xpath']
-                       == x['xpath'], childrens_section['elements'])[0]
+        match = [x for x in childrens_section['elements']
+                 if x['xpath'] == expected_section['elements'][0]['xpath']][0]
         self.assertEqual(
             expected_section['elements'][0]['title'], match['title'])
 
@@ -541,17 +543,15 @@ class TestExportBuilder(TestBase):
                 ]
             }
         main_section = export_builder.section_by_name('childrens_survey')
-        match = filter(
-            lambda x: (expected_section['elements'][0]['xpath']
-                       == x['xpath']), main_section['elements'])[0]
+        match = [x for x in main_section['elements'] if x['xpath'] == expected_section['elements'][0]['xpath']][0]
         self.assertEqual(
             expected_section['elements'][0]['title'], match['title'])
 
-    def test_to_xls_export_works(self):
+    def test_to_xlsx_export_works(self):
         survey = self._create_childrens_survey()
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
-        xls_file = NamedTemporaryFile(suffix='.xls')
+        xls_file = NamedTemporaryFile(suffix='.xlsx')
         filename = xls_file.name
         export_builder.to_xls_export(filename, self.data)
         xls_file.seek(0)
@@ -561,10 +561,10 @@ class TestExportBuilder(TestBase):
         expected_sheet_names = ['childrens_survey', 'children',
                                 'children_cartoons',
                                 'children_cartoons_characters']
-        self.assertEqual(wb.get_sheet_names(), expected_sheet_names)
+        self.assertEqual(wb.sheetnames, expected_sheet_names)
 
         # check header columns
-        main_sheet = wb.get_sheet_by_name('childrens_survey')
+        main_sheet = wb['childrens_survey']
         expected_column_headers = [
             'name', 'age', 'geo/geolocation', 'geo/_geolocation_latitude',
             'geo/_geolocation_longitude', 'geo/_geolocation_altitude',
@@ -576,7 +576,7 @@ class TestExportBuilder(TestBase):
         self.assertEqual(sorted(column_headers),
                          sorted(expected_column_headers))
 
-        childrens_sheet = wb.get_sheet_by_name('children')
+        childrens_sheet = wb['children']
         expected_column_headers = [
             'children/name', 'children/age', 'children/fav_colors',
             'children/fav_colors/red', 'children/fav_colors/blue',
@@ -589,7 +589,7 @@ class TestExportBuilder(TestBase):
         self.assertEqual(sorted(column_headers),
                          sorted(expected_column_headers))
 
-        cartoons_sheet = wb.get_sheet_by_name('children_cartoons')
+        cartoons_sheet = wb['children_cartoons']
         expected_column_headers = [
             'children/cartoons/name', 'children/cartoons/why', '_id',
             '_uuid', '_submission_time', '_index', '_parent_index',
@@ -598,7 +598,7 @@ class TestExportBuilder(TestBase):
         self.assertEqual(sorted(column_headers),
                          sorted(expected_column_headers))
 
-        characters_sheet = wb.get_sheet_by_name('children_cartoons_characters')
+        characters_sheet = wb['children_cartoons_characters']
         expected_column_headers = [
             'children/cartoons/characters/name',
             'children/cartoons/characters/good_or_evil', '_id', '_uuid',
@@ -610,19 +610,19 @@ class TestExportBuilder(TestBase):
 
         xls_file.close()
 
-    def test_to_xls_export_respects_custom_field_delimiter(self):
+    def test_to_xlsx_export_respects_custom_field_delimiter(self):
         survey = self._create_childrens_survey()
         export_builder = ExportBuilder()
         export_builder.GROUP_DELIMITER = ExportBuilder.GROUP_DELIMITER_DOT
         export_builder.set_survey(survey)
-        xls_file = NamedTemporaryFile(suffix='.xls')
+        xls_file = NamedTemporaryFile(suffix='.xlsx')
         filename = xls_file.name
         export_builder.to_xls_export(filename, self.data)
         xls_file.seek(0)
         wb = load_workbook(filename)
 
         # check header columns
-        main_sheet = wb.get_sheet_by_name('childrens_survey')
+        main_sheet = wb['childrens_survey']
         expected_column_headers = [
             'name', 'age', 'geo.geolocation', 'geo._geolocation_latitude',
             'geo._geolocation_longitude', 'geo._geolocation_altitude',
@@ -663,7 +663,7 @@ class TestExportBuilder(TestBase):
             'childrens_survey_with_a_very_long_name.xls'))
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
-        xls_file = NamedTemporaryFile(suffix='.xls')
+        xls_file = NamedTemporaryFile(suffix='.xlsx')
         filename = xls_file.name
         export_builder.to_xls_export(filename, self.data)
         xls_file.seek(0)
@@ -674,7 +674,7 @@ class TestExportBuilder(TestBase):
                                 'childrens_survey_with_a_very_l1',
                                 'childrens_survey_with_a_very_l2',
                                 'childrens_survey_with_a_very_l3']
-        self.assertEqual(wb.get_sheet_names(), expected_sheet_names)
+        self.assertEqual(wb.sheetnames, expected_sheet_names)
         xls_file.close()
 
     def test_child_record_parent_table_is_updated_when_sheet_is_renamed(self):
@@ -689,16 +689,15 @@ class TestExportBuilder(TestBase):
         wb = load_workbook(filename)
 
         # get the children's sheet
-        ws1 = wb.get_sheet_by_name('childrens_survey_with_a_very_l1')
-
+        ws1 = wb['childrens_survey_with_a_very_l1']
         # parent_table is in cell K2
-        parent_table_name = ws1.cell('K2').value
+        parent_table_name = ws1.cell(row=2, column=11).value
         expected_parent_table_name = 'childrens_survey_with_a_very_lo'
         self.assertEqual(parent_table_name, expected_parent_table_name)
 
         # get cartoons sheet
-        ws2 = wb.get_sheet_by_name('childrens_survey_with_a_very_l2')
-        parent_table_name = ws2.cell('G2').value
+        ws2 = wb['childrens_survey_with_a_very_l2']
+        parent_table_name = ws2.cell(row=2, column=7).value
         expected_parent_table_name = 'childrens_survey_with_a_very_l1'
         self.assertEqual(parent_table_name, expected_parent_table_name)
         xls_file.close()
@@ -757,7 +756,7 @@ class TestExportBuilder(TestBase):
         data = dict_to_joined_export(submission_2, 1, indices, survey_name)
         new_row = export_builder.pre_process_row(data[survey_name],
                                                  export_builder.sections[0])
-        self.assertIsInstance(new_row['amount'], basestring)
+        self.assertIsInstance(new_row['amount'], string_types)
         self.assertEqual(new_row['amount'], '')
 
     def test_xls_convert_dates_before_1900(self):

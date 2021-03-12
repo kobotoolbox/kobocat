@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
+import datetime
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -16,7 +18,7 @@ from onadata.apps.main.signals import set_api_permissions
 
 class UserProfile(models.Model):
     # This field is required.
-    user = models.OneToOneField(User, related_name='profile')
+    user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
 
     # Other fields here
     name = models.CharField(max_length=255, blank=True)
@@ -34,11 +36,11 @@ class UserProfile(models.Model):
     )
     address = models.CharField(max_length=255, blank=True)
     phonenumber = models.CharField(max_length=30, blank=True)
-    created_by = models.ForeignKey(User, null=True, blank=True)
+    created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     num_of_submissions = models.IntegerField(default=0)
     metadata = JSONField(default={}, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s[%s]' % (self.name, self.user.username)
 
     @property
@@ -66,6 +68,8 @@ class UserProfile(models.Model):
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
+
+
 post_save.connect(create_auth_token, sender=User, dispatch_uid='auth_token')
 
 post_save.connect(set_api_permissions, sender=User,
@@ -79,6 +83,8 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
 
             if instance.created_by:
                 assign_perm(perm.codename, instance.created_by, instance)
+
+
 post_save.connect(set_object_permissions, sender=UserProfile,
                   dispatch_uid='set_object_permissions')
 
@@ -90,5 +96,18 @@ def default_user_profile_require_auth(
     instance.require_auth = \
         settings.REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT
     instance.save()
-post_save.connect(default_user_profile_require_auth, sender=UserProfile,
-                      dispatch_uid='default_user_profile_require_auth')
+
+
+post_save.connect(default_user_profile_require_auth,
+                  sender=UserProfile,
+                  dispatch_uid='default_user_profile_require_auth')
+
+
+def get_anonymous_user_instance(User):
+    """
+    Force `AnonymousUser` to be saved with `pk` == `ANONYMOUS_USER_ID`
+    :param User: User class
+    :return: User instance
+    """
+    return User(pk=settings.ANONYMOUS_USER_ID,
+                username='AnonymousUser')

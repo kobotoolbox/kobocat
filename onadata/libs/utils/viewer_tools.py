@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 import os
+import json
 import traceback
 import requests
 import zipfile
@@ -12,6 +14,7 @@ from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
 
 from onadata.libs.utils import common_tags
@@ -39,6 +42,7 @@ def get_path(path, suffix):
     return fileName + suffix + fileExtension
 
 
+# TODO VERIFY IF STILL USED
 def image_urls(instance):
     image_urls_dict_ = image_urls_dict(instance)
     return image_urls_dict_.values()
@@ -139,7 +143,7 @@ def report_exception(subject, info, exc_info=None):
 def django_file(path, field_name, content_type):
     # adapted from here: http://groups.google.com/group/django-users/browse_th\
     # read/thread/834f988876ff3c45/
-    f = open(path)
+    f = open(path, 'rb')
     return InMemoryUploadedFile(
         file=f,
         field_name=field_name,
@@ -193,15 +197,17 @@ def enketo_url(form_url, id_string, instance_xml=None,
             'instance_id': instance_id,
             'return_url': return_url
         })
-        for key, value in instance_attachments.iteritems():
+        for key, value in instance_attachments.items():
             values.update({
                 'instance_attachments[' + key + ']': value
             })
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
+
     if req.status_code in [200, 201]:
         try:
-            response = req.json()
+            # ToDo find out why req.json() does not work
+            response = json.loads(smart_str(req.content))
         except ValueError:
             pass
         else:
@@ -213,7 +219,7 @@ def enketo_url(form_url, id_string, instance_xml=None,
                 return response['url']
     else:
         try:
-            response = req.json()
+            response = json.loads(smart_str(req.content))
         except ValueError:
             pass
         else:
@@ -233,7 +239,7 @@ def create_attachments_zipfile(attachments, output_file=None):
                 try:
                     with storage.open(attachment.media_file.name, 'rb') as source_file:
                         zip_file.writestr(attachment.media_file.name, source_file.read())
-                except Exception, e:
+                except Exception as e:
                     report_exception("Error adding file \"{}\" to archive.".format(attachment.media_file.name), e)
 
     return output_file

@@ -2,7 +2,6 @@
 from __future__ import unicode_literals, print_function, division, absolute_import
 
 import os
-import codecs
 
 from django.core.urlresolvers import reverse
 from django.contrib.auth import authenticate
@@ -42,8 +41,8 @@ class TestEncryptedForms(TestBase):
                 'instances_encrypted', filename)
         count = Instance.objects.count()
         acount = Attachment.objects.count()
-        with open(files['submission.xml.enc']) as ef:
-            with codecs.open(files['submission.xml']) as f:
+        with open(files['submission.xml.enc'], 'rb') as ef:
+            with open(files['submission.xml'], 'rb') as f:
                 post_data = {
                     'xml_submission_file': f,
                     'submission.xml.enc': ef}

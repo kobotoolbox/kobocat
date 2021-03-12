@@ -27,7 +27,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
 from django.template import RequestContext
-from django.utils import six
+from django.utils.six import string_types, text_type
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
@@ -64,7 +64,7 @@ IO_ERROR_STRINGS = [
 
 
 def _bad_request(e):
-    strerror = unicode(e)
+    strerror = text_type(e)
 
     return strerror and strerror in IO_ERROR_STRINGS
 
@@ -84,18 +84,19 @@ def _parse_int(num):
 
 
 def _submission_response(request, instance):
-    data = {}
-    data['message'] = _("Successful submission.")
-    data['formid'] = instance.xform.id_string
-    data['encrypted'] = instance.xform.encrypted
-    data['instanceID'] = 'uuid:%s' % instance.uuid
-    data['submissionDate'] = instance.date_created.isoformat()
-    data['markedAsCompleteDate'] = instance.date_modified.isoformat()
+    data = {
+        'message': _("Successful submission."),
+        'formid': instance.xform.id_string,
+        'encrypted': instance.xform.encrypted,
+        'instanceID': f'uuid:{instance.uuid}',
+        'submissionDate': instance.date_created.isoformat(),
+        'markedAsCompleteDate': instance.date_modified.isoformat()
+    }
 
-    context = RequestContext(request, data)
+    #context = RequestContext(request, data)
     t = loader.get_template('submission.xml')
 
-    return BaseOpenRosaResponse(t.render(context))
+    return BaseOpenRosaResponse(t.render(data, request=request))
 
 
 @require_POST
@@ -267,13 +268,13 @@ def submission(request, username=None):
     # request.FILES is a django.utils.datastructures.MultiValueDict
     # for each key we have a list of values
     try:
-        xml_file_list = request.FILES.pop("xml_submission_file", [])
+        xml_file_list = list(request.FILES.pop("xml_submission_file", []))
         if len(xml_file_list) != 1:
             return OpenRosaResponseBadRequest(
                 _("There should be a single XML submission file.")
             )
         # save this XML file and media files as attachments
-        media_files = request.FILES.values()
+        media_files = list(request.FILES.values())
 
         # get uuid from post request
         uuid = request.POST.get('uuid')
@@ -312,10 +313,10 @@ def submission(request, username=None):
         else:
             raise
     finally:
-        if len(xml_file_list):
-            [_file.close() for _file in xml_file_list]
-        if len(media_files):
-            [_file.close() for _file in media_files]
+        for xml_file in xml_file_list:
+            xml_file.close()
+        for media_file in media_files:
+            media_file.close()
 
 
 def download_xform(request, username, id_string):
@@ -471,7 +472,7 @@ def view_download_submission(request, username):
         return authenticator.build_challenge_response()
     data = {}
     formId = request.GET.get('formId', None)
-    if not isinstance(formId, six.string_types):
+    if not isinstance(formId, string_types):
         return HttpResponseBadRequest()
 
     id_string = formId[0:formId.find('[')]

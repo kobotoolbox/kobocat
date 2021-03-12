@@ -37,9 +37,10 @@ class TestFormMetadata(TestBase):
         data_type = 'media'
         path = os.path.join(self.this_directory, "fixtures",
                             "transportation", name)
-        with open(path) as doc_file:
-            self.post_data = {}
-            self.post_data[data_type] = doc_file
+        with open(path, 'rb') as doc_file:
+            self.post_data = {
+                data_type: doc_file
+            }
             self.client.post(self.edit_url, self.post_data)
 
         self.doc = MetaData.objects.filter(data_type=data_type).reverse()[0]
@@ -93,10 +94,11 @@ class TestFormMetadata(TestBase):
             self.this_directory, 'fixtures', 'transportation', name)
         m = MetaData.objects.create(
             data_type='media', xform=self.xform, data_value=name,
-            data_file=File(open(media_file), name),
+            data_file=File(open(media_file, 'rb'), name),
             data_file_type='image/png')
-        f = open(media_file)
-        media_hash = 'md5:%s' % hashlib.md5(f.read()).hexdigest()
+        f = open(media_file, 'rb')
+        md5_hash = hashlib.md5(f.read()).hexdigest()
+        media_hash = f'md5:{md5_hash}'
         f.close()
         meta_hash = m.hash
         self.assertEqual(meta_hash, media_hash)
@@ -106,7 +108,7 @@ class TestFormMetadata(TestBase):
         uri = 'https://devtrac.ona.io/fieldtrips.csv'
         count = MetaData.objects.filter(data_type='media').count()
         self.client.post(self.edit_url, {'media_url': uri})
-        self.assertEquals(count + 1,
+        self.assertEqual(count + 1,
                           len(MetaData.objects.filter(data_type='media')))
 
     def test_windows_csv_file_upload(self):

@@ -1,12 +1,12 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import base64
 import os
 import re
 import socket
-import urllib2
-from cStringIO import StringIO
+from io import BytesIO
+from urllib.request import urlopen
+from urllib.error import URLError
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
@@ -23,6 +23,7 @@ from rest_framework.test import APIRequestFactory
 from onadata.apps.logger.models import XForm, Instance, Attachment
 from onadata.apps.logger.views import submission
 from onadata.apps.main.models import UserProfile
+from onadata.libs.utils.string import base64_encodestring
 
 
 class TestBase(TestCase):
@@ -52,9 +53,9 @@ class TestBase(TestCase):
         # `auth_permission`.  Without this, actions
         # on individual instances are immediately denied and object-level permissions
         # are never considered.
-        if user.is_anonymous():
+        if user.is_anonymous:
             user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
-        user.user_permissions = Permission.objects.all()
+        user.user_permissions.set(Permission.objects.all())
         if save:
             user.save()
 
@@ -93,10 +94,10 @@ class TestBase(TestCase):
 
         xform_list_url = reverse('xform-list')
 
-        if not path.startswith('/%s/' % self.user.username):
+        if not path.startswith(f'/{self.user.username}/'):
             path = os.path.join(self.this_directory, path)
 
-        with open(path) as xls_file:
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
             response = self.client.post(xform_list_url, data=post_data)
             return response
@@ -173,11 +174,11 @@ class TestBase(TestCase):
         tmp_file = None
 
         if add_uuid:
-            tmp_file = NamedTemporaryFile(delete=False)
+            tmp_file = NamedTemporaryFile(delete=False, mode='w')
             split_xml = None
 
-            with open(path) as _file:
-                split_xml = re.split(r'(<transport>)', _file.read())
+            with open(path, 'rb') as _file:
+                split_xml = re.split(r'(<transport>)', _file.read().decode())
 
             split_xml[1:1] = [
                 '<formhub><uuid>%s</uuid></formhub>' % self.xform.uuid
@@ -186,7 +187,7 @@ class TestBase(TestCase):
             path = tmp_file.name
             tmp_file.close()
 
-        with open(path) as f:
+        with open(path, 'rb') as f:
             post_data = {'xml_submission_file': f}
 
             if username is None:
@@ -215,8 +216,8 @@ class TestBase(TestCase):
             os.unlink(tmp_file.name)
 
     def _make_submission_w_attachment(self, path, attachment_path):
-        with open(path) as f:
-            a = open(attachment_path)
+        with open(path, 'rb') as f:
+            a = open(attachment_path, 'rb')
             post_data = {'xml_submission_file': f, 'media_file': a}
             url = '/%s/submission' % self.user.username
             auth = DigestAuth('bob', 'bob')
@@ -260,9 +261,9 @@ class TestBase(TestCase):
 
     def _check_url(self, url, timeout=1):
         try:
-            urllib2.urlopen(url, timeout=timeout)
+            urlopen(url, timeout=timeout)
             return True
-        except (urllib2.URLError, socket.timeout):
+        except (URLError, socket.timeout):
             pass
         return False
 
@@ -273,7 +274,7 @@ class TestBase(TestCase):
     def _set_auth_headers(self, username, password):
         return {
             'HTTP_AUTHORIZATION':
-                'Basic ' + base64.b64encode('%s:%s' % (username, password)),
+                'Basic ' + base64_encodestring('%s:%s' % (username, password)),
         }
 
     def _get_authenticated_client(
@@ -289,7 +290,7 @@ class TestBase(TestCase):
     def _get_response_content(self, response):
         contents = ''
         if response.streaming:
-            actual_content = StringIO()
+            actual_content = BytesIO()
             for content in response.streaming_content:
                 actual_content.write(content)
             contents = actual_content.getvalue()

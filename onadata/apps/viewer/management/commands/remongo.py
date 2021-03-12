@@ -1,9 +1,9 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext_lazy
-from optparse import make_option
 
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.libs.utils.common_tags import USERFORM_ID
@@ -11,16 +11,19 @@ from onadata.libs.utils.common_tags import USERFORM_ID
 
 class Command(BaseCommand):
     help = ugettext_lazy("Insert all existing parsed instances into MongoDB")
-    option_list = BaseCommand.option_list + (
-        make_option(
+
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--batchsize',
-            type='int',
+            type=int,
             default=100,
-            help=ugettext_lazy("Number of records to process per query")),
-        make_option('-u', '--username',
-                    help=ugettext_lazy("Username of the form user")),
-        make_option('-i', '--id_string',
-                    help=ugettext_lazy("id string of the form")))
+            help=ugettext_lazy("Number of records to process per query"))
+
+        parser.add_argument('-u', '--username',
+                            help=ugettext_lazy("Username of the form user"))
+
+        parser.add_argument('-i', '--id_string',
+                            help=ugettext_lazy("id string of the form"))
 
     def handle(self, *args, **kwargs):
         ids = None
