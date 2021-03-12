@@ -1,12 +1,10 @@
 #!/bin/bash
 set -e
 
-source /etc/profile
-
-mkdir -p "${KOBOCAT_SRC_DIR}/onadata/static"
+gosu "${UWSGI_USER}" mkdir -p "${KOBOCAT_SRC_DIR}/onadata/static"
 
 echo "Collecting static files..."
-python manage.py collectstatic -v 0 --noinput
+gosu "${UWSGI_USER}" "${VIRTUAL_ENV}/bin/python" manage.py collectstatic -v 0 --noinput
 echo "Done"
 
 # `chown -R` becomes very slow once a fair amount of media has been collected,
@@ -18,10 +16,10 @@ echo '%%%%%%% NOTICE %%%%%%%'
 echo '% To avoid long delays, we no longer reset ownership *recursively*'
 echo '% every time this container starts. If you have trouble with'
 echo '% permissions, please run the following command inside the'
-echo '% `kobocat` container:'
+echo '% KoBoCAT container:'
 echo "%	chown -R \"${UWSGI_USER}\" \"${KOBOCAT_SRC_DIR}\""
 echo '%%%%%%%%%%%%%%%%%%%%%%'
 
 echo "Syncing to nginx folder..."
-rsync -aq --delete --chown=www-data "${KPI_SRC_DIR}/onadata/static/" "${NGINX_STATIC_DIR}/"
+rsync -aq --delete --chown=www-data "${KOBOCAT_SRC_DIR}/onadata/static/" "${NGINX_STATIC_DIR}/"
 echo "Done"
