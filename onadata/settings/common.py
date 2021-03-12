@@ -1,7 +1,5 @@
 # coding: utf-8
 # vim: set fileencoding=utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 # this system uses structured settings as defined in
 # http://www.slideshare.net/jacobian/the-best-and-worst-of-django
 #

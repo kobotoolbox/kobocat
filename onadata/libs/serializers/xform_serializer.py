@@ -1,8 +1,7 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 

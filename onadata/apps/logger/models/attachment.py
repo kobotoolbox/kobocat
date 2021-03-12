@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import mimetypes
 import os
 from hashlib import md5

@@ -1,5 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
+from collections import defaultdict
 
 from guardian.shortcuts import get_users_with_perms
 

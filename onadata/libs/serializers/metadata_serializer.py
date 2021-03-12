@@ -1,6 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
+from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
@@ -81,4 +80,3 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             file_hash=file_hash,
             from_kpi=from_kpi,
         )
-

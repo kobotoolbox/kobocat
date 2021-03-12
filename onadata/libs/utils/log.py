@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import logging
 from datetime import datetime
 from onadata.libs.utils.viewer_tools import get_client_ip

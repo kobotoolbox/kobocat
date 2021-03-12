@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 # this preset is used for automated testing of formhub
 from common import *  # nopep8
 
