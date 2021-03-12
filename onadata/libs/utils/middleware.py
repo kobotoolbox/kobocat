@@ -1,19 +1,11 @@
 # coding: utf-8
-import traceback
 
 from django.db import connection
 from django.http import HttpResponseNotAllowed
-from django.template import RequestContext
 from django.template import loader
 from django.middleware.locale import LocaleMiddleware
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation.trans_real import parse_accept_lang_header
-
-
-class ExceptionLoggingMiddleware(MiddlewareMixin):
-
-    def process_exception(self, request, exception):
-        print(traceback.format_exc())
 
 
 class HTTPResponseNotAllowedMiddleware(MiddlewareMixin):

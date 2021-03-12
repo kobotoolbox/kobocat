@@ -30,7 +30,7 @@ class ServiceDefinition(RestServiceInterface):
             # Build the url in the service to avoid saving hardcoded
             # domain name in the DB
             url = "{}{}".format(
-                settings.KPI_INTERNAL_URL,
+                settings.KOBOFORM_INTERNAL_URL,
                 endpoint
             )
             response = requests.post(url, headers=headers, json=post_data)

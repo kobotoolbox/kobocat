@@ -5,6 +5,7 @@ from unittest import skip
 from django.core.files.base import ContentFile
 from django.urls import reverse
 
+from onadata import koboform
 from onadata.apps.main.views import show, form_photos, \
     show_form_settings
 from onadata.apps.logger.models import XForm
@@ -58,14 +59,21 @@ class TestFormShow(TestBase):
             response['Content-Disposition'],
             "attachment; filename=exp_one.xlsx")
 
-    def test_dl_xls_to_anon_if_public(self):
+    def test_dl_xls_redirect_to_login_to_anon_if_public(self):
         self.xform.shared = True
         self.xform.save()
         response = self.anon.get(reverse(download_xlsform, kwargs={
             'username': self.user.username,
             'id_string': self.xform.id_string
         }))
-        self.assertEqual(response.status_code, 200)
+
+        login_url = reverse('auth_login')
+        if koboform.active and koboform.autoredirect:
+            redirect_to = koboform.login_url()
+        else:
+            redirect_to = login_url
+        self.assertEqual(response.url, redirect_to)
+        self.assertEqual(response.status_code, 302)
 
     def test_dl_xls_for_basic_auth(self):
         extra = {

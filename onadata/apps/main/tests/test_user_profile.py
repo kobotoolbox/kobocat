@@ -6,6 +6,7 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.urls import reverse
 
+from onadata import koboform
 from onadata.apps.main.views import profile
 
 
@@ -78,10 +79,16 @@ class TestUserProfile(TestCase):
         self._login_user_and_profile({'username': 'admin'})
         self.assertEqual(User.objects.count(), users_before)
 
-    def test_404_if_user_does_not_exist(self):
+    def test_redirect_to_login_if_user_does_not_exist(self):
         response = self.client.get(reverse(profile,
                                            kwargs={'username': 'nonuser'}))
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 302)
+        login_url = reverse('auth_login')
+        if koboform.active and koboform.autoredirect:
+            redirect_to = koboform.login_url()
+        else:
+            redirect_to = login_url
+        self.assertEqual(response.url, redirect_to)
 
     @unittest.skip("We don't use twitter in kobocat tests")
     def test_show_single_at_sign_in_twitter_link(self):
