@@ -234,16 +234,6 @@ class TestFormShow(TestBase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], self.url)
 
-    # TODO PLD disabling this test
-    @skip('Insensitivity is not enforced upon creation of id_strings.')
-    def test_form_urls_case_insensitive(self):
-        url = reverse(show, kwargs={
-            'username': self.user.username.upper(),
-            'id_string': self.xform.id_string.upper()
-        })
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
     def test_publish_xml_xlsform_download(self):
         count = XForm.objects.count()
         path = os.path.join(
