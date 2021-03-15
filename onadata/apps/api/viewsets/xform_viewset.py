@@ -388,7 +388,6 @@ https://example.com/api/v1/forms/28058
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
 >           ...
 >       }, ...]
@@ -464,7 +463,6 @@ List forms tagged `smart` or `brand new` or both.
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
 >           ...
 >       }, ...]
@@ -671,4 +669,3 @@ data (instance/submission per row)
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
             status.HTTP_400_BAD_REQUEST)
-

@@ -89,7 +89,7 @@ class XForm(BaseModel):
 
     class Meta:
         app_label = 'logger'
-        unique_together = (("user", "id_string"), ("user", "sms_id_string"))
+        unique_together = (("user", "id_string"),)
         verbose_name = ugettext_lazy("XForm")
         verbose_name_plural = ugettext_lazy("XForms")
         ordering = ("id_string",)
