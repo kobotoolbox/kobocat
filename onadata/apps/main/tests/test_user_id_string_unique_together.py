@@ -26,7 +26,10 @@ class TestUserIdStringUniqueTogether(TestBase):
         # second time
         response = self._publish_xls_file(xls_path)
         response_content = smart_text(response.content)
-        self.assertIn("already exists.", response_content)
+        self.assertIn(
+            "UNIQUE constraint failed: logger_xform.user_id, logger_xform.id_string",
+            response_content,
+        )
         self.assertEqual(XForm.objects.count(), 1)
         self.client.logout()
 
