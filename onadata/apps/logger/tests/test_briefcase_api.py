@@ -283,7 +283,7 @@ class TestBriefcaseAPI(TestBase):
             response = form_upload(request, username=self.user.username)
             self.assertContains(
                 response,
-                'Form with this id or SMS-keyword already exists',
+                'UNIQUE constraint failed: logger_xform.user_id, logger_xform.id_string',
                 status_code=400)
 
     def test_submission_with_instance_id_on_root_node(self):

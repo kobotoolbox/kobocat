@@ -350,7 +350,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
 
             self.assertEqual(
                 response.data,
-                {'message': 'Form with this id or SMS-keyword already exists.'}
+                {'message': 'UNIQUE constraint failed: logger_xform.user_id, logger_xform.id_string'}
             )
 
     def test_upload_head_request(self):

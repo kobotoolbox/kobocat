@@ -101,8 +101,6 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
             xform.num_of_submissions = 0
         # Update `date_modified` to detect outdated exports
         # with deleted instances
-        xform.date_modified = timezone.now()
-
         xform.save(update_fields=['num_of_submissions', 'date_modified'])
         profile_qs = User.profile.get_queryset()
         try:
