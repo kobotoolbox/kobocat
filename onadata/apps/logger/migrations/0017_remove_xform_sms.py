@@ -12,10 +12,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='xform',
-            unique_together={('user', 'id_string')},
-        ),
+        # This AlterUniqueTogether step can fail with
+        #   ValueError: Found wrong number (0) of constraints for logger_xform(user_id, sms_id_string)
+        # when the database specifies the constraint in the opposite order,
+        # i.e. (sms_id_string, user_id). Let's try ignoring the
+        # `unique_together` change and simply depend upon the database
+        # automatically removing the constraint when the `sms_id_string` column
+        # is dropped. See also https://code.djangoproject.com/ticket/23906.
+        #
+        # migrations.AlterUniqueTogether(
+        #     name='xform',
+        #     unique_together={('user', 'id_string')},
+        # ),
         migrations.RemoveField(
             model_name='xform',
             name='allows_sms',
