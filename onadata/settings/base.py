@@ -559,6 +559,11 @@ DEFAULT_VALIDATION_STATUSES = [
     },
 ]
 
+# By default, PostgreSQL is considered as the default engine. Some DB queries
+# rely on PostgreSQL engine to be executed. It needs to be set to `False` to
+# make them run with SQLite (i.e. running unit tests locally)
+USE_POSTGRESQL = True
+
 ################################
 # Celery settings              #
 ################################
@@ -747,4 +752,3 @@ def patched_check_java_version():
 
 
 pyxform.validators.odk_validate.check_java_version = patched_check_java_version
-

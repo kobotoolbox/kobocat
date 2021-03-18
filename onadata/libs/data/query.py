@@ -46,7 +46,7 @@ def _get_fields_of_type(xform, types):
 
 
 def _json_query(field):
-    if settings.TESTING_MODE:
+    if not settings.USE_POSTGRESQL:
         return "json_extract(json, '$.{}')".format(field)
     else:
         return "json->>'%s'" % field
@@ -55,11 +55,13 @@ def _json_query(field):
 def _postgres_count_group(field, name, xform):
     string_args = _query_args(field, name, xform)
     if is_date_field(xform, field):
-        if settings.TESTING_MODE:
+        if not settings.USE_POSTGRESQL:
             string_args['json'] = "date(%(json)s)" % string_args
         else:
-            string_args['json'] = "to_char(to_date(%(json)s, 'YYYY-MM-DD'), 'YYYY" \
-                                  "-MM-DD')" % string_args
+            string_args['json'] = (
+                "to_char(to_date(%(json)s, 'YYYY-MM-DD'), 'YYYY"
+                "-MM-DD')" % string_args
+            )
 
     return "SELECT %(json)s AS \"%(name)s\", COUNT(*) AS count FROM "\
            "%(table)s WHERE %(restrict_field)s=%(restrict_value)s "\
