@@ -172,15 +172,16 @@ class MetaData(models.Model):
 
         timedelta = timezone.now() - self.date_modified
         if timedelta.total_seconds() > settings.PAIRED_DATA_EXPIRATION:
-            # No need to download the whole file. `HEAD` will force the file
-            # to be resynchronized between KPI and KoBoCAT if needed
+            # No need to download the whole file. Sending a `HEAD` request to
+            # KPI will cause KPI to delete and recreate the file in KoBoCAT if
+            # needed
             requests.head(self.data_value)
-            # Because of the way the synchronisation works (delete/create),
-            # We need to lock the row to be sure the object still exists when
-            # we update it.
-            # A simple `self.save()` could raise `DatabaseError` on race
-            # conditions.
-            MetaData.objects.select_for_update().update(
+            # We update the modification time here to avoid requesting that KPI
+            # resynchronize this file multiple times per the
+            # `PAIRED_DATA_EXPIRATION` period. However, this introduces a race
+            # condition where it's possible that KPI *deletes* this file before
+            # we attempt to update it. We avoid that by locking the row
+            MetaData.objects.filter(pk=self.pk).select_for_update().update(
                 date_modified=timezone.now()
             )
             return True
