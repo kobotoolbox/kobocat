@@ -1,7 +1,0 @@
-pytest==3.10
-pytest-django
-pytest-env
-mongomock
-mock
-httmock
-simplejson
