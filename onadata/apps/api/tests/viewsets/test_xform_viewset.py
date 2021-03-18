@@ -1,7 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import json
 import os
 import re
 from datetime import datetime
@@ -12,15 +11,14 @@ import requests
 from django.conf import settings
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from httmock import urlmatch, HTTMock, all_requests
+from httmock import HTTMock, all_requests
 from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.logger.models import XForm
-from onadata.apps.main.models import MetaData
-from onadata.libs.permissions import (
+from onadata.libs.constants import (
     CAN_VIEW_XFORM
 )
 from onadata.libs.serializers.xform_serializer import XFormSerializer
@@ -58,39 +56,6 @@ class TestXFormViewSet(TestAbstractViewSet):
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_submission_count_for_today_in_form_list(self):
-
-        self.publish_xls_form()
-
-        request = self.factory.get('/', **self.extra)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('submission_count_for_today', response.data[0].keys())
-        self.assertEqual(response.data[0]['submission_count_for_today'], 0)
-        self.assertEqual(response.data[0]['num_of_submissions'], 0)
-
-        paths = [os.path.join(
-            self.main_directory, 'fixtures', 'transportation',
-            'instances_w_uuid', s, s + '.xml')
-            for s in ['transport_2011-07-25_19-05-36']]
-
-        # instantiate date that is NOT naive; timezone is enabled
-        current_timezone_name = timezone.get_current_timezone_name()
-        current_timezone = pytz.timezone(current_timezone_name)
-        today = datetime.today()
-        current_date = current_timezone.localize(
-            datetime(today.year,
-                     today.month,
-                     today.day))
-        self._make_submission(paths[0], forced_submission_time=current_date)
-        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
-
-        request = self.factory.get('/', **self.extra)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data[0]['submission_count_for_today'], 1)
-        self.assertEqual(response.data[0]['num_of_submissions'], 1)
 
     def test_form_list_anon(self):
         self.publish_xls_form()

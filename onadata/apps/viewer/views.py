@@ -738,7 +738,7 @@ def attachment_url(request, size='medium'):
 
 
 def instance(request, username, id_string):
-    xform, is_owner, can_edit, can_view = get_xform_and_perms(
+    xform, is_owner, can_edit, can_view, can_delete_data = get_xform_and_perms(
         username, id_string, request)
     # no access
     if not (xform.shared_data or can_view or
@@ -759,5 +759,6 @@ def instance(request, username, id_string):
         'username': username,
         'id_string': id_string,
         'xform': xform,
-        'can_edit': can_edit
+        'can_edit': can_edit,
+        'can_delete_data': can_delete_data
     })

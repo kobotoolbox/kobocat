@@ -30,8 +30,14 @@ from taggit.managers import TaggableManager
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
+from onadata.libs.constants import (
+    CAN_ADD_SUBMISSIONS,
+    CAN_VALIDATE_XFORM,
+    CAN_VIEW_XFORM,
+    CAN_DELETE_DATA_XFORM,
+    CAN_TRANSFER_OWNERSHIP,
+)
 from onadata.libs.models.base_model import BaseModel
-
 
 try:
     from formpack.utils.xls_to_ss_structure import xls_to_dicts
@@ -107,10 +113,11 @@ class XForm(BaseModel):
         verbose_name_plural = ugettext_lazy("XForms")
         ordering = ("id_string",)
         permissions = (
-            ("view_xform", _("Can view associated data")),
-            ("report_xform", _("Can make submissions to the form")),
-            ("transfer_xform", _("Can transfer form ownership.")),
-            ("validate_xform", _("Can validate submissions.")),
+            (CAN_VIEW_XFORM, _('Can view associated data')),
+            (CAN_ADD_SUBMISSIONS, _('Can make submissions to the form')),
+            (CAN_TRANSFER_OWNERSHIP, _('Can transfer form ownership.')),
+            (CAN_VALIDATE_XFORM, _('Can validate submissions')),
+            (CAN_DELETE_DATA_XFORM, _('Can delete submissions')),
         )
 
     def file_name(self):
@@ -222,20 +229,6 @@ class XForm(BaseModel):
         return self.num_of_submissions
     submission_count.short_description = ugettext_lazy("Submission Count")
 
-    @property
-    def submission_count_for_today(self):
-        current_timzone_name = timezone.get_current_timezone_name()
-        current_timezone = pytz.timezone(current_timzone_name)
-        today = datetime.today()
-        current_date = current_timezone.localize(
-            datetime(today.year,
-                     today.month,
-                     today.day))
-        count = self.instances.filter(
-            deleted_at__isnull=True,
-            date_created=current_date).count()
-        return count
-
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""
         return self.instances.filter(deleted_at__isnull=True,
@@ -277,11 +270,11 @@ class XForm(BaseModel):
         return cls.objects.filter(shared=True)
 
     def _xls_file_io(self):
-        '''
+        """
         pulls the xls file from remote storage
 
         this should be used sparingly
-        '''
+        """
         file_path = self.xls.name
         default_storage = get_storage_class()()
 
@@ -292,12 +285,11 @@ class XForm(BaseModel):
                 else:
                     return StringIO(ff.read())
 
-
     def to_kpi_content_schema(self):
-        '''
-        parses xlsform structure into json representation
+        """
+        Parses xlsform structure into json representation
         of spreadsheet structure.
-        '''
+        """
         if not xls_to_dicts:
             raise ImportError('formpack module needed')
         content = xls_to_dicts(self._xls_file_io())
@@ -306,9 +298,11 @@ class XForm(BaseModel):
                       json.dumps(content, indent=4)))
 
     def to_xlsform(self):
-        '''Generate an XLS format XLSForm copy of this form.'''
-        file_path= self.xls.name
-        default_storage= get_storage_class()()
+        """
+        Generate an XLS format XLSForm copy of this form.
+        """
+        file_path = self.xls.name
+        default_storage = get_storage_class()()
 
         if file_path != '' and default_storage.exists(file_path):
             with default_storage.open(file_path) as xlsform_file:
