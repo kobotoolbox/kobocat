@@ -45,7 +45,7 @@ jobs:
     - name: Install Python dependencies
       run: pip install -r dependencies/pip/dev.txt
     - name: Run pytest
-      run: pytest -vv -s
+      run: pytest -vv -rf
       env:
         DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         TEST_DATABASE_URL: postgis://kobo:kobo@localhost:5432/kobocat_test

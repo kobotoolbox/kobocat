@@ -26,9 +26,11 @@ class TestUserIdStringUniqueTogether(TestBase):
         # second time
         response = self._publish_xls_file(xls_path)
         response_content = smart_text(response.content)
+        # SQLite returns `UNIQUE constraint failed` whereas PostgreSQL
+        # returns 'duplicate key ... violates unique constraint'
         self.assertIn(
-            "UNIQUE constraint failed: logger_xform.user_id, logger_xform.id_string",
-            response_content,
+            'unique constraint',
+            response_content.lower(),
         )
         self.assertEqual(XForm.objects.count(), 1)
         self.client.logout()

@@ -49,7 +49,7 @@ def _json_query(field):
     if not settings.USE_POSTGRESQL:
         return "json_extract(json, '$.{}')".format(field)
     else:
-        return "json->>'%s'" % field
+        return f"json::jsonb->>'{field}'"
 
 
 def _postgres_count_group(field, name, xform):

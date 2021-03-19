@@ -281,10 +281,14 @@ class TestBriefcaseAPI(TestBase):
             auth = DigestAuth(self.login_username, self.login_password)
             request.META.update(auth(request.META, response))
             response = form_upload(request, username=self.user.username)
-            self.assertContains(
-                response,
-                'UNIQUE constraint failed: logger_xform.user_id, logger_xform.id_string',
-                status_code=400)
+            self.assertTrue(response.status_code, 400)
+            # SQLite returns `UNIQUE constraint failed` whereas PostgreSQL
+            # returns 'duplicate key ... violates unique constraint'
+            response_content = response.content.decode()
+            self.assertIn(
+                'unique constraint',
+                response_content.lower(),
+            )
 
     def test_submission_with_instance_id_on_root_node(self):
         self._publish_xml_form()

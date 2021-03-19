@@ -25,9 +25,6 @@ if not os.getenv('USE_POSTGRESQL', False):
     #  should be executed inside the container
     DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
     SPATIALITE_LIBRARY_PATH = os.environ.get('SPATIALITE_LIBRARY_PATH', 'mod_spatialite')
-else:
-    DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-print('DATABASES', DATABASES, flush=True)
 
 MEDIA_ROOT = '/tmp/test_media/'
 
