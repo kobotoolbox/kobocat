@@ -13,6 +13,7 @@ try:
 except ImportError:
     from pandas import ExcelWriter
 
+from pyxform.constants import SELECT_ALL_THAT_APPLY
 from pyxform.survey_element import SurveyElement
 from pyxform.section import Section, RepeatingSection
 from pyxform.question import Question
@@ -34,15 +35,15 @@ from onadata.libs.utils.common_tags import (
     SUBMITTED_BY,
     VALIDATION_STATUS
 )
+from onadata.libs.constants import (
+    MULTIPLE_SELECT_BIND_TYPE,
+    GEOPOINT_BIND_TYPE
+)
 from onadata.libs.utils.export_tools import question_types_to_exclude
 
 
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
-
-# the bind type of select multiples that we use to compare
-MULTIPLE_SELECT_BIND_TYPE = "select"
-GEOPOINT_BIND_TYPE = "geopoint"
 
 # column group delimiters
 GROUP_DELIMITER_SLASH = '/'
@@ -123,7 +124,8 @@ class AbstractDataFrameBuilder:
         return dict([(e.get_abbreviated_xpath(), [c.get_abbreviated_xpath()
                     for c in e.children])
                     for e in dd.get_survey_elements()
-                    if e.bind.get("type") == "select"])
+                    if e.bind.get("type") == MULTIPLE_SELECT_BIND_TYPE\
+                        and e.type == SELECT_ALL_THAT_APPLY])
 
     @classmethod
     def _split_select_multiples(cls, record, select_multiples,
@@ -167,7 +169,7 @@ class AbstractDataFrameBuilder:
     @classmethod
     def _collect_gps_fields(cls, dd):
         return [e.get_abbreviated_xpath() for e in dd.get_survey_elements()
-                if e.bind.get("type") == "geopoint"]
+                if e.bind.get("type") == GEOPOINT_BIND_TYPE]
 
     @classmethod
     def _tag_edit_string(cls, record):
