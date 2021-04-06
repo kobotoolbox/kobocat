@@ -18,6 +18,8 @@ from onadata.libs.utils.export_tools import (
 )
 from onadata.libs.utils.logger_tools import mongo_sync_status, report_exception
 
+from django.contrib.auth.models import User
+from onadata.apps.logger.models.submission_counter import SubmissionCounter
 
 def create_async_export(xform, export_type, query, force_xlsx, options=None):
     username = xform.user.username
@@ -283,3 +285,10 @@ def log_stuck_exports_and_mark_failed():
         # Export.save() is a busybody; bypass it with update()
         stuck_exports.filter(pk=stuck_export.pk).update(
             internal_status=Export.FAILED)
+
+@task()
+def create_monthly_counters():
+    users = User.objects.all()
+    for user in users:
+        SubmissionCounter.objects.create(user=user)
+        

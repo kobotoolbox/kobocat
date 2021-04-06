@@ -19,6 +19,7 @@ from onadata.apps.logger.exceptions import FormInactiveError
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.models.submission_counter import SubmissionCounter
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
@@ -88,6 +89,17 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
         UserProfile.objects.filter(pk=profile.pk).update(
             num_of_submissions=F('num_of_submissions') + 1,
         )
+
+def update_user_submissions_counter(sender, instance):
+    if not created:
+        return
+    if getattr(instance, 'defer_counting', False):
+        return
+    with transaction.atomic():
+        xform = Xform.objects.only('user_id').get(pk=instance.xform_id)
+        counter =  .objects.filter(
+            user=xform.user_id).order_by('timestamp').first()
+        counter.update(submission_counter=F('submission_counter') + 1,)
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
