@@ -82,7 +82,7 @@ python-crontab==2.5.1     # via django-celery-beat
 python-dateutil==2.8.1    # via botocore, pandas, python-crontab
 python-slugify==4.0.1     # via transifex-client
 pytz==2020.1              # via -r dependencies/pip/requirements.in, celery, django, django-timezone-field, pandas
-pyxform                   # via -r dependencies/pip/requirements.in, formpack
+pyxform==1.4.0            # via -r dependencies/pip/requirements.in, formpack
 redis==3.5.3              # via -r dependencies/pip/requirements.in, celery, django-redis-sessions
 requests==2.24.0          # via django-oauth-toolkit, transifex-client
 s3transfer==0.3.3         # via boto3

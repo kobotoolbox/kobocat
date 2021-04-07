@@ -37,7 +37,7 @@ Pillow
 psycopg2-binary
 pymongo
 lxml
-pyxform
+pyxform==1.4.0   # same version as KPI
 django-reversion<3.0.2
 xlrd
 xlwt
