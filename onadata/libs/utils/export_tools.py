@@ -46,6 +46,7 @@ xform_instances = settings.MONGO_DB.instances
 QUESTION_TYPES_TO_EXCLUDE = [
     'note',
 ]
+GEOPOINT_BIND_TYPE = "geopoint"
 
 
 def to_str(row, key, encode_dates=False, empty_on_none=True):

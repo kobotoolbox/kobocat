@@ -41,6 +41,8 @@ from onadata.libs.utils.export_tools import question_types_to_exclude
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
 
+GEOPOINT_BIND_TYPE = "geopoint"
+
 # column group delimiters
 GROUP_DELIMITER_SLASH = '/'
 GROUP_DELIMITER_DOT = '.'
@@ -164,7 +166,7 @@ class AbstractDataFrameBuilder:
     @classmethod
     def _collect_gps_fields(cls, dd):
         return [e.get_abbreviated_xpath() for e in dd.get_survey_elements()
-                if e.bind.get("type") == GEOPOINT_BIND_TYPE]
+                if e.bind.get("type") == "geopoint"]
 
     @classmethod
     def _tag_edit_string(cls, record):
