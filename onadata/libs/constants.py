@@ -35,8 +35,3 @@ CAN_DELETE_PROJECT = 'delete_project'
 
 CAN_ADD_DATADICTIONARY = 'add_datadictionary'
 CAN_CHANGE_DATADICTIONARY = 'change_datadictionary'
-CAN_DELETE_DATADICTIONARY = 'delete_datadictionary'
-
-# Bind types
-MULTIPLE_SELECT_BIND_TYPE = 'string'
-GEOPOINT_BIND_TYPE = 'geopoint'

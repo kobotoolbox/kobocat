@@ -38,10 +38,6 @@ from onadata.libs.utils.common_tags import (
     TAGS,
     NOTES
 )
-from onadata.libs.constants import (
-    MULTIPLE_SELECT_BIND_TYPE,
-    GEOPOINT_BIND_TYPE
-)
 
 
 # this is Mongo Collection where we will store the parsed submissions
@@ -277,8 +273,7 @@ class ExportBuilder:
                                 {child_xpath: MongoHelper.encode(child_xpath)})
 
                     # if its a select multiple, make columns out of its choices
-                    if child.bind.get("type") == MULTIPLE_SELECT_BIND_TYPE\
-                            and child.type == SELECT_ALL_THAT_APPLY\
+                    if child.type == SELECT_ALL_THAT_APPLY\
                             and self.SPLIT_SELECT_MULTIPLES:
                         for c in child.children:
                             _xpath = c.get_abbreviated_xpath()
