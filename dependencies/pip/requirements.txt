@@ -4,20 +4,15 @@
 #
 #    pip-compile dependencies/pip/requirements.in
 #
--e git+https://github.com/dimagi/django-digest@52ba7edeb326efd97d5670273bb6fa8b0539e501
-    #egg=django_digest
+-e git+https://github.com/dimagi/django-digest@52ba7edeb326efd97d5670273bb6fa8b0539e501#egg=django_digest
     # via -r dependencies/pip/requirements.in
--e git+https://github.com/jnm/django-storages@s3boto3_accurate_tell
-    #egg=django_storages
+-e git+https://github.com/jnm/django-storages@s3boto3_accurate_tell#egg=django_storages
     # via -r dependencies/pip/requirements.in
--e git+https://github.com/dimagi/python-digest@5c94bb74516b977b60180ee832765c0695ff2b56
-    #egg=python_digest
+-e git+https://github.com/dimagi/python-digest@5c94bb74516b977b60180ee832765c0695ff2b56#egg=python_digest
     # via -r dependencies/pip/requirements.in
--e git+https://github.com/dresiu/recaptcha-client-1.0.6-py3@48078f8131e2f3c2054d2099ef48cfe9a5745d0c
-    #egg=recaptcha-client
+-e git+https://github.com/dresiu/recaptcha-client-1.0.6-py3@48078f8131e2f3c2054d2099ef48cfe9a5745d0c#egg=recaptcha-client
     # via -r dependencies/pip/requirements.in
--e git+https://github.com/kobotoolbox/ssrf-protect@755efe16694273ce66060a51e04f973dc034ca4e
-    #egg=ssrf_protect
+-e git+https://github.com/kobotoolbox/ssrf-protect@755efe16694273ce66060a51e04f973dc034ca4e#egg=ssrf_protect
     # via -r dependencies/pip/requirements.in
 amqp==2.6.0
     # via -r dependencies/pip/requirements.in, kombu
