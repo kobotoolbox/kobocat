@@ -97,7 +97,7 @@ def update_user_submissions_counter(sender, instance):
         return
     with transaction.atomic():
         xform = Xform.objects.only('user_id').get(pk=instance.xform_id)
-        counter =  .objects.filter(
+        counter = SubmissionCounter.objects.filter(
             user=xform.user_id).order_by('timestamp').first()
         counter.update(submission_counter=F('submission_counter') + 1,)
 
