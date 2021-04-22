@@ -90,18 +90,23 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
             num_of_submissions=F('num_of_submissions') + 1,
         )
 
+
 def update_user_submissions_counter(sender, instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
         return
     # Performance ... Add better comment
-    user_id = XForm.objects.values_list('user_id', flat=True).get(pk=instance.xform_id)
+    user_id = XForm.objects.values_list('user_id', flat=True).get(
+        pk=instance.xform_id
+    )
     today = date.today()
     first_day_of_month = today.replace(day=1)
-    queryset = SubmissionCounter.objects.filter(user_id=user_id, timestamp=first_day_of_month)
+    queryset = SubmissionCounter.objects.filter(
+        user_id=user_id, timestamp=first_day_of_month
+    )
     if not queryset.exists():
-        SubmissionCounter.objets.create(user_id=user_id)
+        SubmissionCounter.objects.create(user_id=user_id)
 
     queryset.update(count=F('count') + 1)
 
