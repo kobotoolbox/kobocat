@@ -395,9 +395,7 @@ Delete a specific submission in a form
         """
         xform = self.__validate_permission_on_bulk_action(request,
                                                           CAN_DELETE_DATA_XFORM)
-        payload = self.__get_payload(request)
-
-        postgres_query, mongo_query = self.__build_db_queries(xform, payload)
+        postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
         # Delete Postgres & Mongo
         updated_records_count = Instance.objects.filter(**postgres_query).delete()
@@ -411,10 +409,8 @@ Delete a specific submission in a form
 
         xform = self.__validate_permission_on_bulk_action(request,
                                                           CAN_VALIDATE_XFORM)
-        payload = self.__get_payload(request)
-
         try:
-            new_validation_status_uid = payload['validation_status.uid']
+            new_validation_status_uid = request.data['validation_status.uid']
         except KeyError:
             raise ValidationError({
                 'payload': _('No `validation_status.uid` provided')
@@ -424,11 +420,13 @@ Delete a specific submission in a form
         new_validation_status = get_validation_status(
             new_validation_status_uid, xform, request.user.username)
 
-        postgres_query, mongo_query = self.__build_db_queries(xform, payload)
+        postgres_query, mongo_query = self.__build_db_queries(xform,
+                                                              request.data)
 
         # Update Postgres & Mongo
-        updated_records_count = Instance.objects.\
-            filter(**postgres_query).update(validation_status=new_validation_status)
+        updated_records_count = Instance.objects.filter(
+            **postgres_query
+        ).update(validation_status=new_validation_status)
         ParsedInstance.bulk_update_validation_statuses(mongo_query,
                                                        new_validation_status)
         return Response({
@@ -646,9 +644,17 @@ Delete a specific submission in a form
 
     @staticmethod
     def __get_payload(request):
+        print('GET PAYLOAD', request.data, flush=True)
+        try:
+            print('GET PAYLOAD JSON', json.loads(request.data.dict()), flush=True)
+        except ValueError:
+            print('NO DECODE', flush=True)
+
         try:
             payload = json.loads(request.data.get('payload', '{}'))
         except ValueError:
+            print('ValueError', request.data.get('payload'), flush=True)
+            print('ValueError', type(request.data.get('payload')), flush=True)
             payload = None
         if not isinstance(payload, dict):
             raise ValidationError({'payload': _('Invalid format')})
@@ -656,7 +662,7 @@ Delete a specific submission in a form
         return payload
 
     @staticmethod
-    def __build_db_queries(xform_, payload):
+    def __build_db_queries(xform_, request_data):
 
         """
         Gets instance ids based on the request payload.
@@ -664,7 +670,7 @@ Delete a specific submission in a form
 
         Args:
             xform_ (XForm)
-            payload (dict)
+            request_data (dict)
 
         Returns:
             tuple(<dict>, <dict>): PostgreSQL filters, Mongo filters.
@@ -677,11 +683,16 @@ Delete a specific submission in a form
                                                     xform_.id_string)
         postgres_query = {'xform_id': xform_.id}
         instance_ids = None
-
+        # Remove empty values
+        payload = {
+            key_: value_ for key_, value_ in request_data.items() if value_
+        }
         ###################################################
         # Submissions can be retrieve in 3 different ways #
         ###################################################
-        # First of all, users can't mix `query` and `submission_ids` in `payload`
+        # First of all,
+        # users cannot send `query` and `submission_ids` in POST/PATCH request
+        #
         if all(key_ in payload for key_ in ('query', 'submission_ids')):
             raise ValidationError({
                 'payload': _("`query` and `instance_ids` can't be used together")
