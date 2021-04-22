@@ -288,7 +288,7 @@ def log_stuck_exports_and_mark_failed():
 
 @task()
 def create_monthly_counters():
-    users = User.objects.all()
-    for user in users:
-        SubmissionCounter.objects.create(user=user)
+    user_ids = User.objects.values_list('pk', flat=True)
+    for user_id in user_ids:
+        SubmissionCounter.objects.create(user_id=user_id)
         

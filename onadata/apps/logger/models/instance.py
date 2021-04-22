@@ -1,5 +1,5 @@
 # coding: utf-8
-from datetime import datetime
+from datetime import date, datetime
 from hashlib import sha256
 
 import reversion
@@ -90,16 +90,20 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
             num_of_submissions=F('num_of_submissions') + 1,
         )
 
-def update_user_submissions_counter(sender, instance):
+def update_user_submissions_counter(sender, instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
         return
-    with transaction.atomic():
-        xform = Xform.objects.only('user_id').get(pk=instance.xform_id)
-        counter = SubmissionCounter.objects.filter(
-            user=xform.user_id).order_by('timestamp').first()
-        counter.update(submission_counter=F('submission_counter') + 1,)
+    # Performance ... Add better comment
+    user_id = XForm.objects.values_list('user_id', flat=True).get(pk=instance.xform_id)
+    today = date.today()
+    first_day_of_month = today.replace(day=1)
+    queryset = SubmissionCounter.objects.filter(user_id=user_id, timestamp=first_day_of_month)
+    if not queryset.exists():
+        SubmissionCounter.objets.create(user_id=user_id)
+
+    queryset.update(count=F('count') + 1)
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
@@ -424,6 +428,9 @@ class Instance(models.Model):
 
 post_save.connect(update_xform_submission_count, sender=Instance,
                   dispatch_uid='update_xform_submission_count')
+
+post_save.connect(update_user_submissions_counter, sender=Instance,
+                  dispatch_uid='update_user_submissions_counter')
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
