@@ -13,6 +13,13 @@ from django.core.management import call_command
 
 from .models import Instance, XForm
 
+@task()
+def create_monthly_counters():
+    user_ids = User.objects.values_list('pk', flat=True)
+    for user_id in user_ids:
+        SubmissionCounter.objects.create(user_id=user_id)
+
+
 # ## ISSUE 242 TEMPORARY FIX ##
 # See https://github.com/kobotoolbox/kobocat/issues/242
 

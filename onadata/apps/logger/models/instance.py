@@ -96,7 +96,9 @@ def update_user_submissions_counter(sender, instance, created, **kwargs):
         return
     if getattr(instance, 'defer_counting', False):
         return
-    # Performance ... Add better comment
+
+    # Querying the database this way because it's faster than querying
+    # the instance model for the data
     user_id = XForm.objects.values_list('user_id', flat=True).get(
         pk=instance.xform_id
     )

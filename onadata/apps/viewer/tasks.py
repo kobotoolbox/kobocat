@@ -286,9 +286,4 @@ def log_stuck_exports_and_mark_failed():
         stuck_exports.filter(pk=stuck_export.pk).update(
             internal_status=Export.FAILED)
 
-@task()
-def create_monthly_counters():
-    user_ids = User.objects.values_list('pk', flat=True)
-    for user_id in user_ids:
-        SubmissionCounter.objects.create(user_id=user_id)
         

@@ -8,14 +8,6 @@ class SubmissionCounter(models.Model):
     count = models.IntegerField(default=0)
     timestamp = models.DateTimeField()
 
-    @property
-    def month(self):
-        return self.timestamp.strftime('%m')
-    
-    @property
-    def year(self):
-        return self.timestamp.strftime('%Y')
-
     def save(self, *args, **kwargs):
         today = datetime.date.today()
         first_day_of_month = today.replace(day=1)
