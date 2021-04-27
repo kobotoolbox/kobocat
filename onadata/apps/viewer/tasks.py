@@ -18,9 +18,6 @@ from onadata.libs.utils.export_tools import (
 )
 from onadata.libs.utils.logger_tools import mongo_sync_status, report_exception
 
-from django.contrib.auth.models import User
-from onadata.apps.logger.models.submission_counter import SubmissionCounter
-
 def create_async_export(xform, export_type, query, force_xlsx, options=None):
     username = xform.user.username
     id_string = xform.id_string
