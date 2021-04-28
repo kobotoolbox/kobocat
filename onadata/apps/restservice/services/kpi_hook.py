@@ -16,7 +16,7 @@ class ServiceDefinition(RestServiceInterface):
 
         # Will be used internally by KPI to fetch data with KoBoCatBackend
         post_data = {
-            'instance_id': data.get('instance_id')
+            'submission_id': data.get('instance_id')
         }
         headers = {'Content-Type': 'application/json'}
 
