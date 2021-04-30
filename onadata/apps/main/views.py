@@ -1418,7 +1418,7 @@ def username_list(request):
 
 def _make_authenticated_request(user):
     """
-    This is a hack to allow for kobocat to make autenticated requests to KPI's
+    This is a hack to allow for kobocat to make authenticated requests to KPI's
     migrate endpoint.
     Returns response from KPI.
     """
