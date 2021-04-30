@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import json
 import os
 from datetime import datetime
+import requests
 
 from bson import json_util
 from django.conf import settings
@@ -30,6 +31,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
 from guardian.shortcuts import assign_perm, remove_perm, get_users_with_perms
 from rest_framework.authtoken.models import Token
+from rest_framework import status
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import Instance, XForm
@@ -215,6 +217,26 @@ def profile(request, username):
                 data['message'] = form_result
         else:
             data['message'] = form_result
+
+    # If the "Sync XForms" button is pressed in the UI, a call to KPI's
+    # `/migrate` endpoint is made to sync kobocat and KPI.
+    elif request.GET.get('sync_xforms') == 'true':
+        migrate_response = _make_authenticated_request(content_user)
+        if migrate_response.status_code == status.HTTP_200_OK:
+            message = _(
+                'The migration process has started, please check the '
+                'project list in the <a href={}>new interface</a> and ensure '
+                'your projects have synced.'
+            ).format(settings.KOBOFORM_URL)
+        else:
+            message = _(
+                'Something went wrong trying to migrate your forms. Please try '
+                'again or reach out on the <a'
+                'href="https://community.kobotoolbox.org/">community fourm</a> '
+                'for assistace.'
+            )
+
+        data['messages'] = [message]
 
     # profile view...
     # for the same user -> dashboard
@@ -1393,3 +1415,19 @@ def username_list(request):
         data = [user['username'] for user in users]
 
     return HttpResponse(json.dumps(data), content_type='application/json')
+
+def _make_authenticated_request(user):
+    """
+    This is a hack to allow for kobocat to make autenticated requests to KPI's
+    migrate endpoint.
+    Returns response from KPI.
+    """
+    token_key, created = Token.objects.get_or_create(user=user)
+    url = _get_migrate_url(user.username)
+    return requests.get(url, headers={'Authorization': f'Token {token_key}'})
+
+
+def _get_migrate_url(username):
+    return '{kf_url}/api/v2/users/{username}/migrate/'.format(
+        kf_url=settings.KOBOFORM_URL, username=username
+    )
