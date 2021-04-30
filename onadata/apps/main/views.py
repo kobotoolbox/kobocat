@@ -232,7 +232,7 @@ def profile(request, username):
             message = _(
                 'Something went wrong trying to migrate your forms. Please try '
                 'again or reach out on the <a'
-                'href="https://community.kobotoolbox.org/">community form</a> '
+                'href="https://community.kobotoolbox.org/">community forum</a> '
                 'for assistance.'
             )
 
