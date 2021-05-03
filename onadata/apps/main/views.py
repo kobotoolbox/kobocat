@@ -222,21 +222,22 @@ def profile(request, username):
     # `/migrate` endpoint is made to sync kobocat and KPI.
     elif request.GET.get('sync_xforms') == 'true':
         migrate_response = _make_authenticated_request(content_user)
+        message = {}
         if migrate_response.status_code == status.HTTP_200_OK:
-            message = _(
+            message['text'] = _(
                 'The migration process has started, please check the '
                 'project list in the <a href={}>new interface</a> and ensure '
                 'your projects have synced.'
             ).format(settings.KOBOFORM_URL)
         else:
-            message = _(
+            message['text'] = _(
                 'Something went wrong trying to migrate your forms. Please try '
                 'again or reach out on the <a'
                 'href="https://community.kobotoolbox.org/">community forum</a> '
                 'for assistance.'
             )
 
-        data['messages'] = [message]
+        data['message'] = message
 
     # profile view...
     # for the same user -> dashboard
