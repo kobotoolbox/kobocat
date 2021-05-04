@@ -133,22 +133,21 @@ def add_tags_to_instance(request, instance):
             instance.save()
 
 
-def add_validation_status_to_instance(request, instance):
+def add_validation_status_to_instance(
+    request: Request, instance: 'Instance'
+) -> bool:
     """
-    Saves instance validation status if it's valid (belong to XForm/Asset validation statuses)
-
-    :param request: REST framework's Request object
-    :param instance: Instance object
-    :return: Boolean
+    Save instance validation status if it is valid.
+    To be valid, it has to belong to XForm validation statuses
     """
-    validation_status_uid = request.data.get("validation_status.uid")
+    validation_status_uid = request.data.get('validation_status.uid')
     success = False
 
     # Payload must contain validation_status property.
     if validation_status_uid:
 
         validation_status = get_validation_status(
-            validation_status_uid, instance.asset, request.user.username)
+            validation_status_uid, instance.xform, request.user.username)
         if validation_status:
             instance.validation_status = validation_status
             instance.save()

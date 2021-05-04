@@ -1,5 +1,6 @@
 # coding: utf-8
 import json
+from typing import Union
 
 from django.db.models import Q
 from django.http import Http404
@@ -27,11 +28,6 @@ from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
 from onadata.apps.api.permissions import XFormDataPermissions
-from onadata.libs.constants import (
-    CAN_CHANGE_XFORM,
-    CAN_VALIDATE_XFORM,
-    CAN_DELETE_DATA_XFORM
-)
 from onadata.libs.serializers.data_serializer import (
     DataSerializer, DataListSerializer, DataInstanceSerializer)
 from onadata.libs import filters
@@ -381,7 +377,7 @@ Delete a specific submission in a form
     ]
 
     content_negotiation_class = renderers.InstanceContentNegotiation
-    filter_backends = (filters.AnonDjangoObjectPermissionFilter,
+    filter_backends = (filters.RowLevelObjectPermissionFilter,
                        filters.XFormOwnerFilter)
     permission_classes = (XFormDataPermissions,)
     lookup_field = 'pk'
@@ -393,8 +389,7 @@ Delete a specific submission in a form
         """
         Bulk delete instances
         """
-        xform = self.__validate_permission_on_bulk_action(request,
-                                                          CAN_DELETE_DATA_XFORM)
+        xform = self.get_object()
         postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
         # Delete Postgres & Mongo
@@ -407,8 +402,8 @@ Delete a specific submission in a form
 
     def bulk_validation_status(self, request, *args, **kwargs):
 
-        xform = self.__validate_permission_on_bulk_action(request,
-                                                          CAN_VALIDATE_XFORM)
+        xform = self.get_object()
+
         try:
             new_validation_status_uid = request.data['validation_status.uid']
         except KeyError:
@@ -447,7 +442,12 @@ Delete a specific submission in a form
 
         return serializer_class
 
-    def get_object(self):
+    def get_object(self) -> Union[XForm, Instance]:
+        """
+        Return a `XForm` object or a `Instance` object if its primary key is
+        present in the url. If no results are found, a HTTP 404 error is raised
+        """
+
         obj = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
@@ -478,7 +478,6 @@ Delete a specific submission in a form
         if not qs:
             filter_kwargs['shared_data'] = True
             qs = XForm.objects.filter(**filter_kwargs)
-
             if not qs:
                 raise Http404(_("No data matches with given query."))
 
@@ -516,27 +515,29 @@ Delete a specific submission in a form
         instance = self.get_object()
         data = {}
 
-        if request.method != "GET":
-            if request.user.has_perm(CAN_VALIDATE_XFORM, instance.asset):
-                if request.method == "PATCH" and \
-                        not add_validation_status_to_instance(request, instance):
+        if request.method != 'GET':
+            if (
+                request.method == 'PATCH'
+                and not add_validation_status_to_instance(request, instance)
+            ):
+                http_status = status.HTTP_400_BAD_REQUEST
+            elif request.method == 'DELETE':
+                if remove_validation_status_from_instance(instance):
+                    http_status = status.HTTP_204_NO_CONTENT
+                    data = None
+                else:
                     http_status = status.HTTP_400_BAD_REQUEST
-                elif request.method == "DELETE":
-                    if remove_validation_status_from_instance(instance):
-                        http_status = status.HTTP_204_NO_CONTENT
-                        data = None
-                    else:
-                        http_status = status.HTTP_400_BAD_REQUEST
-            else:
-                raise PermissionDenied(_("You do not have validate permissions."))
 
         if http_status == status.HTTP_200_OK:
             data = instance.validation_status
 
         return Response(data, status=http_status)
 
-    @action(detail=True, methods=['GET', 'POST', 'DELETE'],
-                  extra_lookup_fields=['label', ])
+    @action(
+        detail=True,
+        methods=['GET', 'POST', 'DELETE'],
+        extra_lookup_fields=['label'],
+    )
     def labels(self, request, *args, **kwargs):
         http_status = status.HTTP_400_BAD_REQUEST
         instance = self.get_object()
@@ -600,20 +601,11 @@ Delete a specific submission in a form
             return super().retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if isinstance(self.object, XForm):
-            raise ParseError(_("Data id not provided."))
-        elif isinstance(self.object, Instance):
-            # Redundant permissions check that duplicates
-            # `XFormDataPermissions`, left here to minimize changes. We're
-            # deleting an `Instance`, not an `XForm`, so the correct permission
-            # to verify is 'delete_data_xform' (`CAN_DELETE_DATA_XFORM`). This matches
-            # the behavior of `onadata.apps.main.views.delete_data`
-            if request.user.has_perm(CAN_DELETE_DATA_XFORM, self.object.xform):
-                self.object.delete()
-            else:
-                raise PermissionDenied(_("You do not have delete "
-                                         "permissions."))
+        instance = self.get_object()
+        if isinstance(instance, XForm):
+            raise ParseError(_('Data id not provided'))
+        elif isinstance(instance, Instance):
+            instance.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -641,25 +633,6 @@ Delete a specific submission in a form
             return res
 
         return custom_response_handler(request, xform, query, export_type)
-
-    @staticmethod
-    def __get_payload(request):
-        print('GET PAYLOAD', request.data, flush=True)
-        try:
-            print('GET PAYLOAD JSON', json.loads(request.data.dict()), flush=True)
-        except ValueError:
-            print('NO DECODE', flush=True)
-
-        try:
-            payload = json.loads(request.data.get('payload', '{}'))
-        except ValueError:
-            print('ValueError', request.data.get('payload'), flush=True)
-            print('ValueError', type(request.data.get('payload')), flush=True)
-            payload = None
-        if not isinstance(payload, dict):
-            raise ValidationError({'payload': _('Invalid format')})
-
-        return payload
 
     @staticmethod
     def __build_db_queries(xform_, request_data):
@@ -747,13 +720,3 @@ Delete a specific submission in a form
             raise NoConfirmationProvidedException()
 
         return postgres_query, mongo_query
-
-    def __validate_permission_on_bulk_action(self, request, permission):
-
-        xform = self.get_object()
-        if not request.user.has_perm(permission, xform):
-            raise PermissionDenied(
-                _("You do not have sufficient rights to perform this operation.")
-            )
-        return xform
-

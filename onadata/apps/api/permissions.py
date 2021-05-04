@@ -6,11 +6,15 @@ from rest_framework.permissions import (
 )
 
 from onadata.libs.constants import (
+    CAN_DELETE_DATA_XFORM,
     CAN_CHANGE_XFORM,
     CAN_VALIDATE_XFORM,
-    CAN_DELETE_DATA_XFORM,
+    CAN_VIEW_XFORM,
 )
-from onadata.apps.logger.models import XForm
+from onadata.apps.logger.models import (
+    XForm,
+    OneTimeAuthRequest,
+)
 
 
 class ViewDjangoObjectPermissions(DjangoObjectPermissions):
@@ -85,26 +89,57 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             # We need to grant access to anonymous on list endpoint too when
             # a form pk is specified. e.g. `/api/v1/data/{pk}.json
             allowed_anonymous_action.append('list')
-        if request.method in SAFE_METHODS and \
-                view.action in allowed_anonymous_action:
+        if (
+            request.method in SAFE_METHODS
+            and view.action in allowed_anonymous_action
+        ):
             return True
         return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
+
+        user = request.user
+        is_granted_once = OneTimeAuthRequest.grant_access(request)
+        # If a one-time authentication request token has been detected,
+        # we return its validity.
+        # Otherwise, the permissions validation keeps going as normal
+        if is_granted_once is not None:
+            return is_granted_once
+
+        # Grant access if user is owner or super user
+        if user.is_superuser or user == obj.user:
+            return True
+
         # Allow anonymous users to access shared data
-        if request.method in SAFE_METHODS and \
-                view.action in ['retrieve', 'list']:
+        if (
+            request.method in SAFE_METHODS
+            and view.action in ['retrieve', 'list']
+        ):
             if obj.shared_data:
                 return True
 
-        if request.method == 'DELETE' and view.action == 'labels':
-            user = request.user
-            return user.has_perms([CAN_CHANGE_XFORM], obj)
+        perms_actions_map = {
+            'bulk_delete': {
+                'DELETE': [f'logger.{CAN_DELETE_DATA_XFORM}'],
+            },
+            'bulk_validation_status': {
+                'PATCH': [f'logger.{CAN_VALIDATE_XFORM}'],
+            },
+            'labels': {
+                'DELETE': [f'logger.{CAN_CHANGE_XFORM}']
+            },
+            'validation_status': {
+                'DELETE': [f'logger.{CAN_VALIDATE_XFORM}'],
+                'PATCH': [f'logger.{CAN_VALIDATE_XFORM}'],
+            },
+        }
 
-        if request.method in ['PATCH', 'DELETE'] \
-                and view.action.endswith('validation_status'):
-            user = request.user
-            return user.has_perms([CAN_VALIDATE_XFORM], obj)
+        try:
+            required_perms = perms_actions_map[view.action][request.method]
+        except KeyError:
+            pass
+        else:
+            return user.has_perms(required_perms, obj)
 
         return super().has_object_permission(request, view, obj)
 
