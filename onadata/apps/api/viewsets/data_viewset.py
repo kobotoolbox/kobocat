@@ -393,11 +393,12 @@ Delete a specific submission in a form
         postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
         # Delete Postgres & Mongo
-        updated_records_count = Instance.objects.filter(**postgres_query).delete()
-        ParsedInstance.bulk_delete(mongo_query)
+        all_count, results = Instance.objects.filter(**postgres_query).delete()
+        identifier = f'{Instance._meta.app_label}.Instance'
+        deleted_records_count = results[identifier]
         return Response({
             'detail': _('{} submissions have been deleted').format(
-                updated_records_count)
+                deleted_records_count)
         }, status.HTTP_200_OK)
 
     def bulk_validation_status(self, request, *args, **kwargs):
