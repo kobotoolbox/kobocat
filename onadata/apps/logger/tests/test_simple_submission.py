@@ -60,7 +60,7 @@ class TestSimpleSubmission(TestCase):
         self.xform2 = DataDictionary()
         self.xform2.user = self.user
         self.xform2.json = '{"id_string": "start_time", "children": [{"name":'\
-                           '"starttime", "type": "start"}], "name": "start_t'\
+                           '"start_time", "type": "start"}], "name": "start_t'\
                            'ime", "title": "start_time", "type": "survey"}'\
                            .strip()
 
