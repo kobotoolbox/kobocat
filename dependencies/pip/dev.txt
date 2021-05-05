@@ -266,7 +266,7 @@ pytz==2020.1
     #   django
     #   django-timezone-field
     #   pandas
-pyxform==1.4.0
+pyxform==1.5.0
     # via
     #   -r dependencies/pip/requirements.in
     #   formpack
