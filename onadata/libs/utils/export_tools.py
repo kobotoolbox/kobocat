@@ -44,7 +44,6 @@ from onadata.libs.utils.common_tags import (
     TAGS,
     NOTES
 )
-from onadata.settings.common import CELERY_TASK_TIME_LIMIT
 
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
@@ -769,7 +768,7 @@ def query_mongo(username, id_string, query=None, hide_deleted=True):
         # display only active elements
         # join existing query with deleted_at_query on an $and
         query = {"$and": [query, {"_deleted_at": None}]}
-    return xform_instances.find(query, max_time_ms=CELERY_TASK_TIME_LIMIT*1000)
+    return xform_instances.find(query, max_time_ms=settings.MONGO_DB_MAX_TIME_MS)
 
 
 def should_create_new_export(xform, export_type):

@@ -31,7 +31,6 @@ from onadata.libs.utils.common_tags import (
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
 from onadata.apps.api.mongo_helper import MongoHelper
-from onadata.settings.common import CELERY_TASK_TIME_LIMIT
 
 
 # this is Mongo Collection where we will store the parsed submissions
@@ -218,7 +217,7 @@ class ParsedInstance(models.Model):
         return xform_instances.find(
             query,
             fields_to_select,
-            max_time_ms=CELERY_TASK_TIME_LIMIT*1000,
+            max_time_ms=settings.MONGO_DB_MAX_TIME_MS,
         )
 
     @classmethod
