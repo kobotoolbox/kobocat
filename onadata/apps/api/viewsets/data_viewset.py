@@ -573,23 +573,20 @@ Delete a specific submission in a form
 
     @action(detail=True, methods=['GET'])
     def enketo(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        object_ = self.get_object()
         data = {}
-        if isinstance(self.object, XForm):
-            raise ParseError(_("Data id not provided."))
-        elif isinstance(self.object, Instance):
-            if request.user.has_perm("change_xform", self.object.xform):
-                return_url = request.query_params.get('return_url')
-                if not return_url:
-                    raise ParseError(_("return_url not provided."))
+        if isinstance(object_, XForm):
+            raise ParseError(_('Data id not provided.'))
+        elif isinstance(object_, Instance):
+            return_url = request.query_params.get('return_url')
+            if not return_url:
+                raise ParseError(_('`return_url` not provided.'))
 
-                try:
-                    data["url"] = get_enketo_edit_url(
-                        request, self.object, return_url)
-                except EnketoError as e:
-                    data['detail'] = "{}".format(e)
-            else:
-                raise PermissionDenied(_("You do not have edit permissions."))
+            try:
+                data['url'] = get_enketo_edit_url(
+                    request, object_, return_url)
+            except EnketoError as e:
+                data['detail'] = str(e)
 
         return Response(data=data)
 

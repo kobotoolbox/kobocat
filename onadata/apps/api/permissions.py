@@ -97,7 +97,6 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
-
         user = request.user
         is_granted_once = OneTimeAuthRequest.grant_access(request)
         # If a one-time authentication request token has been detected,
@@ -124,6 +123,9 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             },
             'bulk_validation_status': {
                 'PATCH': [f'logger.{CAN_VALIDATE_XFORM}'],
+            },
+            'enketo': {
+                'GET': [f'logger.{CAN_CHANGE_XFORM}']
             },
             'labels': {
                 'DELETE': [f'logger.{CAN_CHANGE_XFORM}']
