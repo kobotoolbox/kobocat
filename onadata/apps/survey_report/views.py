@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
+from onadata.settings.common import CELERY_TASK_TIME_LIMIT
 
 import uuid
 
@@ -37,7 +38,10 @@ def get_instances_for_user_and_form(user, form_id, submission=None):
     query = {'_userform_id': userform_id, '_deleted_at': {'$exists': False}}
     if submission:
         query['_id'] = submission
-    return settings.MONGO_DB.instances.find(query)
+    return settings.MONGO_DB.instances.find(
+        query, 
+        max_time_ms=CELERY_TASK_TIME_LIMIT*1000,
+    )
 
 
 def build_formpack(username, id_string):
