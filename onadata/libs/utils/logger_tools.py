@@ -169,6 +169,9 @@ def _has_edit_xform_permission(
     request: 'rest_framework.request.Request', xform: XForm
 ) -> bool:
     if isinstance(xform, XForm) and isinstance(request.user, User):
+        if request.user.has_perm('logger.change_xform', xform):
+            return True
+
         is_granted_once = OneTimeAuthRequest.grant_access(
             request, from_header=False
         )
@@ -177,7 +180,6 @@ def _has_edit_xform_permission(
         # Otherwise, the permissions validation keeps going as normal
         if is_granted_once is not None:
             return is_granted_once
-        return request.user.has_perm('logger.change_xform', xform)
 
     return False
 
