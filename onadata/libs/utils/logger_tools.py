@@ -34,9 +34,12 @@ from xml.dom import Node
 from wsgiref.util import FileWrapper
 
 from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
-from onadata.apps.logger.models import Attachment
-from onadata.apps.logger.models import Instance
-from onadata.apps.logger.models import XForm
+from onadata.apps.logger.models import (
+    Attachment,
+    OneTimeAuthRequest,
+    Instance,
+    XForm,
+)
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
     hash_attachment_contents,
@@ -75,8 +78,14 @@ uuid_regex = re.compile(r'<formhub>\s*<uuid>\s*([^<]+)\s*</uuid>\s*</formhub>',
 mongo_instances = settings.MONGO_DB.instances
 
 
-def _get_instance(xml, new_uuid, submitted_by, status, xform,
-                  defer_counting=False):
+def _get_instance(
+    request: 'rest_framework.request.Request',
+    xml: str,
+    new_uuid: str,
+    status: str,
+    xform: XForm,
+    defer_counting: bool = False,
+) -> Instance:
     """
     `defer_counting=False` will set a Python-only attribute of the same name on
     the *new* `Instance` if one is created. This will prevent
@@ -89,7 +98,7 @@ def _get_instance(xml, new_uuid, submitted_by, status, xform,
 
     if instances:
         # edits
-        check_edit_submission_permissions(submitted_by, xform)
+        check_edit_submission_permissions(request, xform)
         instance = instances[0]
         InstanceHistory.objects.create(
             xml=instance.xml, xform_instance=instance, uuid=old_uuid)
@@ -98,6 +107,9 @@ def _get_instance(xml, new_uuid, submitted_by, status, xform,
         instance.uuid = new_uuid
         instance.save()
     else:
+        submitted_by = (
+            request.user if request and request.user.is_authenticated else None
+        )
         # new submission
         # Avoid `Instance.objects.create()` so that we can set a Python-only
         # attribute, `defer_counting`, before saving
@@ -153,29 +165,48 @@ def get_xform_from_submission(xml, username, uuid=None):
                              user__username=username)
 
 
-def _has_edit_xform_permission(xform, user):
-    if isinstance(xform, XForm) and isinstance(user, User):
-        return user.has_perm('logger.change_xform', xform)
+def _has_edit_xform_permission(
+    request: 'rest_framework.request.Request', xform: XForm
+) -> bool:
+    if isinstance(xform, XForm) and isinstance(request.user, User):
+        is_granted_once = OneTimeAuthRequest.grant_access(
+            request, from_header=False
+        )
+        # If a one-time authentication request token has been detected,
+        # we return its validity.
+        # Otherwise, the permissions validation keeps going as normal
+        if is_granted_once is not None:
+            return is_granted_once
+        return request.user.has_perm('logger.change_xform', xform)
 
     return False
 
 
-def check_edit_submission_permissions(request_user, xform):
-    if xform and request_user and request_user.is_authenticated:
-        requires_auth = UserProfile.objects.get_or_create(
-            user=xform.user)[0].require_auth
-        has_edit_perms = _has_edit_xform_permission(xform, request_user)
+def check_edit_submission_permissions(
+    request: 'rest_framework.request.Request', xform: XForm
+):
+    if not xform or not (request and request.user.is_authenticated):
+        return
 
-        if requires_auth and not has_edit_perms:
-            raise PermissionDenied(
-                _("%(request_user)s is not allowed to make edit submissions "
-                  "to %(form_user)s's %(form_title)s form." % {
-                      'request_user': request_user,
-                      'form_user': xform.user,
-                      'form_title': xform.title}))
+    requires_auth = UserProfile.objects.get_or_create(user=xform.user)[0].require_auth  # noqa
+    has_edit_perms = _has_edit_xform_permission(request, xform)
+
+    if requires_auth and not has_edit_perms:
+        raise PermissionDenied(
+            _(
+                "%(request_user)s is not allowed to make edit submissions "
+                "to %(form_user)s's %(form_title)s form."
+            ).format(
+                request_user=request.user,
+                form_user=xform.user,
+                form_title=xform.title,
+            )
+        )
 
 
-def check_submission_permissions(request, xform):
+def check_submission_permissions(
+    request: 'rest_framework.request.Request', xform: XForm
+):
     """
     Check that permission is required and the request user has permission.
 
@@ -191,10 +222,16 @@ def check_submission_permissions(request, xform):
     :raises: PermissionDenied based on the above criteria.
     """
     profile = UserProfile.objects.get_or_create(user=xform.user)[0]
-    if request and (profile.require_auth or xform.require_auth
-                    or request.path == '/submission')\
-            and xform.user != request.user\
-            and not request.user.has_perm('report_xform', xform):
+    if (
+        request
+        and (
+            profile.require_auth
+            or xform.require_auth
+            or request.path == '/submission'
+        )
+        and xform.user != request.user
+        and not request.user.has_perm('report_xform', xform)
+    ):
         raise PermissionDenied(
             _("%(request_user)s is not allowed to make submissions "
               "to %(form_user)s's %(form_title)s form." % {
@@ -229,8 +266,16 @@ def save_attachments(instance, media_files):
     return any_new_attachment
 
 
-def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
-                    date_created_override):
+def save_submission(
+    request: 'rest_framework.request.Request',
+    xform: XForm,
+    xml: str,
+    media_files: list,
+    new_uuid: str,
+    status: str,
+    date_created_override: datetime,
+) -> Instance:
+
     if not date_created_override:
         date_created_override = get_submission_date_from_xml(xml)
 
@@ -248,7 +293,7 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     # attribute set to `True` *if* a new instance was created. We are
     # responsible for calling `update_xform_submission_count()` if the returned
     # `Instance` has `defer_counting = True`.
-    instance = _get_instance(xml, new_uuid, submitted_by, status, xform,
+    instance = _get_instance(request, xml, new_uuid, status, xform,
                              defer_counting=True)
 
     save_attachments(instance, media_files)
@@ -281,18 +326,21 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     return instance
 
 
-@transaction.atomic # paranoia; redundant since `ATOMIC_REQUESTS` set to `True`
-def create_instance(username, xml_file, media_files,
-                    status='submitted_via_web', uuid=None,
-                    date_created_override=None, request=None):
+@transaction.atomic  # paranoia; redundant since `ATOMIC_REQUESTS` set to `True`
+def create_instance(
+    username: str,
+    xml_file: str,
+    media_files: list,
+    status: list = 'submitted_via_web',
+    uuid: str = None,
+    date_created_override: datetime = None,
+    request: 'rest_framework.request.Request' = None,
+) -> Instance:
     """
     Submission cases:
         If there is a username and no uuid, submitting an old ODK form.
         If there is a username and a uuid, submitting a new ODK form.
     """
-    instance = None
-    submitted_by = request.user \
-        if request and request.user.is_authenticated else None
 
     if username:
         username = username.lower()
@@ -338,9 +386,8 @@ def create_instance(username, xml_file, media_files,
             existing_instance.parsed_instance.save(asynchronous=False)
             return existing_instance
     else:
-        instance = save_submission(xform, xml, media_files, new_uuid,
-                                   submitted_by, status,
-                                   date_created_override)
+        instance = save_submission(request, xform, xml, media_files, new_uuid,
+                                   status, date_created_override)
         return instance
 
 

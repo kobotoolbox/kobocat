@@ -152,13 +152,14 @@ Here is some example JSON, it would replace `[the JSON]` above:
             BasicAuthentication,
             TokenAuthentication
         ]
-        # Do not use `SessionAuthentication`, which implicitly requires CSRF prevention
-        # (which in turn requires that the CSRF token be submitted as a cookie and in the
-        # body of any "unsafe" requests).
+        # Do not use `SessionAuthentication`, which implicitly requires CSRF
+        # prevention (which in turn requires that the CSRF token be submitted
+        # as a cookie and in the body of any "unsafe" requests).
         self.authentication_classes = authentication_classes + [
-            auth_class for auth_class in self.authentication_classes
-                if not auth_class in authentication_classes and \
-                    not issubclass(auth_class, SessionAuthentication)
+            auth_class
+            for auth_class in self.authentication_classes
+            if auth_class not in authentication_classes
+            and not issubclass(auth_class, SessionAuthentication)
         ]
 
     def create(self, request, *args, **kwargs):
