@@ -14,17 +14,24 @@ class TestConnectViewSet(TestAbstractViewSet):
         self.view = ConnectViewSet.as_view({
             "get": "list",
         })
+
+        # PostgreSQL behaves differently than SQLite. After each test, table is
+        # truncated but PostgreSQL does not reset its sequences but SQLite does.
+        # `self.user_profile_data()` does contain the real value of user's id.
+        # let's use it.
+        user_profile_data = self.user_profile_data()
+
         self.data = {
-            'id': 1,
-            'username': 'bob',
-            'name': 'Bob',
-            'email': 'bob@columbia.edu',
-            'city': 'Bobville',
-            'country': 'US',
-            'organization': 'Bob Inc.',
-            'website': 'bob.com',
-            'twitter': 'boberama',
-            'gravatar': self.user.profile.gravatar,
+            'id': user_profile_data['id'],
+            'username': user_profile_data['username'],
+            'name': user_profile_data['name'],
+            'email': user_profile_data['email'],
+            'city': user_profile_data['city'],
+            'country': user_profile_data['country'],
+            'organization': user_profile_data['organization'],
+            'website': user_profile_data['website'],
+            'twitter': user_profile_data['twitter'],
+            'gravatar': user_profile_data['gravatar'],
             'require_auth': False,
             'api_token': self.user.auth_token.key,
             'temp_token': self.client.session.session_key,

@@ -15,6 +15,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
 
+        parser.add_argument('username', nargs='?', default=None)
+        parser.add_argument('id_string', nargs='?', default=None)
+
         parser.add_argument('-r', '--remongo',
                             action='store_true',
                             dest='remongo',
@@ -33,24 +36,19 @@ class Command(BaseCommand):
                                 "Only makes sense when used with the -r option")
                             )
 
-    def handle(self, *args, **kwargs):
+    def handle(self, username, id_string, remongo, update_all, *args, **kwargs):
         user = xform = None
-        if len(args) > 0:
-            username = args[0]
+        if username:
             try:
                 user = User.objects.get(username=username)
             except User.DoesNotExist:
                 raise CommandError("User %s does not exist" % username)
-        if len(args) > 1:
-            id_string = args[1]
+        if username and id_string:
             try:
                 xform = XForm.objects.get(user=user, id_string=id_string)
             except XForm.DoesNotExist:
                 raise CommandError("Xform %s does not exist for user %s" %
                                    (id_string, user.username))
-
-        remongo = kwargs["remongo"]
-        update_all = kwargs["update_all"]
 
         report_string = mongo_sync_status(remongo, update_all, user, xform)
         self.stdout.write(report_string)

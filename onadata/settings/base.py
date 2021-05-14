@@ -572,6 +572,11 @@ HASH_BIG_FILE_SIZE_THRESHOLD = 0.5 * 1024 * 1024  # 512 kB
 # Should match KoBoCAT setting
 HASH_BIG_FILE_CHUNK = 16 * 1024  # 16 kB
 
+# PostgreSQL is considered as the default engine. Some DB queries
+# rely on PostgreSQL engine to be executed. It needs to be set to `False` if
+# the database is SQLite (e.g.: running unit tests locally).
+USE_POSTGRESQL = True
+
 ################################
 # Celery settings              #
 ################################
