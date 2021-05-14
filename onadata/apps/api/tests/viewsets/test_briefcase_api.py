@@ -347,10 +347,11 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             request.META.update(auth(request.META, response))
             response = view(request, username=self.user.username)
             self.assertEqual(response.status_code, 400)
-
-            self.assertEqual(
-                response.data,
-                {'message': 'UNIQUE constraint failed: logger_xform.user_id, logger_xform.id_string'}
+            # SQLite returns `UNIQUE constraint failed` whereas PostgreSQL
+            # returns 'duplicate key ... violates unique constraint'
+            self.assertIn(
+                'unique constraint',
+                response.data['message'].lower(),
             )
 
     def test_upload_head_request(self):
