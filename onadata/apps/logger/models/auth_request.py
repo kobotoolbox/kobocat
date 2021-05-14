@@ -31,9 +31,9 @@ class OneTimeAuthRequest(models.Model):
     def grant_access(
         cls,
         request: 'rest_framework.request.Request',
-        from_header: bool = True,
+        use_referrer: bool = True,
     ):
-        token = cls.is_signed_request(request, from_header)
+        token = cls.is_signed_request(request, use_referrer)
         if token is None:
             # No token is detected, the authentication should be
             # delegated to other mechanisms present in permission classes
@@ -77,32 +77,33 @@ class OneTimeAuthRequest(models.Model):
     def is_signed_request(
         cls,
         request: 'rest_framework.request.Request',
-        from_headers: bool = True,
+        use_referrer: bool = False,
     ) -> Union[str, None]:
         """
         Search for a OneTimeAuthRequest token in the request headers.
         If there is a match, it is returned. Otherwise, it returns `None`.
 
-        If `from_headers` is `False`, the match comparison is made on the HTTP
-        referrer
+        If `use_referrer` is `True`, the comparison is also made on the
+        HTTP referrer.
         """
-        if from_headers:
-            try:
-                token = request.headers[cls.HEADER]
-            except KeyError:
+        try:
+            token = request.headers[cls.HEADER]
+        except KeyError:
+            if not use_referrer:
                 return None
         else:
-            try:
-                referrer = request.META['HTTP_REFERER']
-            except KeyError:
-                return None
-            else:
-                # There is not reason that the referrer could something else
-                # than Enketo Express edit URL.
-                edit_url = f'{settings.ENKETO_URL}/edit'
-                if not referrer.startswith(edit_url):
-                    return None
-                parts = Signer().sign(referrer).split(':')
-                token = parts[-1]
+            return token
 
-        return token
+        try:
+            referrer = request.META['HTTP_REFERER']
+        except KeyError:
+            return None
+        else:
+            # There is not reason that the referrer could something else
+            # than Enketo Express edit URL.
+            edit_url = f'{settings.ENKETO_URL}/edit'
+            if not referrer.startswith(edit_url):
+                return None
+
+            parts = Signer().sign(referrer).split(':')
+            return parts[-1]

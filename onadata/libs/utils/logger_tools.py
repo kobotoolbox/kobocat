@@ -173,7 +173,7 @@ def _has_edit_xform_permission(
             return True
 
         is_granted_once = OneTimeAuthRequest.grant_access(
-            request, from_header=False
+            request, use_referrer=True
         )
         # If a one-time authentication request token has been detected,
         # we return its validity.
@@ -196,8 +196,8 @@ def check_edit_submission_permissions(
     if requires_auth and not has_edit_perms:
         raise PermissionDenied(
             _(
-                "%(request_user)s is not allowed to make edit submissions "
-                "to %(form_user)s's %(form_title)s form."
+                "{request_user} is not allowed to make edit submissions "
+                "to {form_user}'s {form_title} form."
             ).format(
                 request_user=request.user,
                 form_user=xform.user,
