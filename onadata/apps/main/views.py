@@ -221,7 +221,7 @@ def profile(request, username):
     # If the "Sync XForms" button is pressed in the UI, a call to KPI's
     # `/migrate` endpoint is made to sync kobocat and KPI.
     elif request.GET.get('sync_xforms') == 'true':
-        migrate_response = _make_authenticated_request(content_user)
+        migrate_response = _make_authenticated_request(request, content_user)
         message = {}
         if migrate_response.status_code == status.HTTP_200_OK:
             message['text'] = _(
@@ -1417,15 +1417,15 @@ def username_list(request):
 
     return HttpResponse(json.dumps(data), content_type='application/json')
 
-def _make_authenticated_request(user):
+def _make_authenticated_request(request, user):
     """
-    This is a hack to allow for kobocat to make authenticated requests to KPI's
-    migrate endpoint.
+    Make an authenticated request to KPI using the current session.
     Returns response from KPI.
     """
-    token_key, created = Token.objects.get_or_create(user=user)
-    url = _get_migrate_url(user.username)
-    return requests.get(url, headers={'Authorization': f'Token {token_key}'})
+    return requests.get(
+        url=_get_migrate_url(user.username),
+        cookies={settings.SESSION_COOKIE_NAME: request.session.session_key}
+    )
 
 
 def _get_migrate_url(username):
