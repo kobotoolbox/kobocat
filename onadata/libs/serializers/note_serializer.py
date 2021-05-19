@@ -8,8 +8,6 @@ from onadata.apps.logger.models.instance import Instance
 
 class NoteSerializer(serializers.ModelSerializer):
 
-    # ToDo Verify why calling this here?
-    serializers.ModelSerializer()
     instance = serializers.PrimaryKeyRelatedField(queryset=Instance.objects.all())
 
     class Meta:
