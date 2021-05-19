@@ -97,7 +97,13 @@ class ParsedInstance(models.Model):
         query = cls._get_mongo_cursor_query(query, hide_deleted, username, id_string)
 
         if count:
-            return [{"count": xform_instances.count_documents(query)}]
+            return [
+                {
+                    'count': xform_instances.count_documents(
+                        query, maxTimeMS=settings.MONGO_DB_MAX_TIME_MS
+                    )
+                }
+            ]
 
         cursor = cls._get_mongo_cursor(query, fields)
 
@@ -149,7 +155,13 @@ class ParsedInstance(models.Model):
 
         query = cls._get_mongo_cursor_query(query, hide_deleted)
         if count:
-            return [{"count": xform_instances.count_documents(query)}]
+            return [
+                {
+                    'count': xform_instances.count_documents(
+                        query, maxTimeMS=settings.MONGO_DB_MAX_TIME_MS
+                    )
+                }
+            ]
 
         cursor = cls._get_mongo_cursor(query, fields)
 
@@ -172,7 +184,13 @@ class ParsedInstance(models.Model):
         query = cls._get_mongo_cursor_query(query, hide_deleted)
 
         if count:
-            return [{"count": xform_instances.count_documents(query)}]
+            return [
+                {
+                    'count': xform_instances.count_documents(
+                        query, maxTimeMS=settings.MONGO_DB_MAX_TIME_MS
+                    )
+                }
+            ]
 
         return cls._get_mongo_cursor(query, fields)
 
