@@ -201,7 +201,11 @@ class ParsedInstance(models.Model):
             fields_to_select = dict(
                 [(MongoHelper.encode(field), 1) for field in fields])
 
-        return xform_instances.find(query, fields_to_select)
+        return xform_instances.find(
+            query,
+            fields_to_select,
+            max_time_ms=settings.MONGO_DB_MAX_TIME_MS,
+        )
 
     @classmethod
     def _get_mongo_cursor_query(cls, query, hide_deleted, username=None, id_string=None):
