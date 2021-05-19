@@ -214,7 +214,11 @@ class ParsedInstance(models.Model):
             fields_to_select = dict(
                 [(MongoHelper.encode(field), 1) for field in fields])
 
-        return xform_instances.find(query, fields_to_select)
+        return xform_instances.find(
+            query,
+            fields_to_select,
+            max_time_ms=settings.MONGO_DB_MAX_TIME_MS,
+        )
 
     @classmethod
     def _get_paginated_and_sorted_cursor(cls, cursor, start, limit, sort):
