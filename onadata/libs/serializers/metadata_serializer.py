@@ -1,5 +1,14 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
+from __future__ import (
+    unicode_literals,
+    print_function,
+    division,
+    absolute_import,
+)
+
+import mimetypes
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
@@ -51,14 +60,27 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_type = validated_data.get('data_type')
         data_file = validated_data.get('data_file')
         xform = validated_data.get('xform')
-        data_value = data_file.name if data_file else validated_data.get('data_value')
-        data_file_type = data_file.content_type if data_file else None
+        data_value = (
+            data_file.name if data_file else validated_data.get('data_value')
+        )
+
+        allowed_types = settings.SUPPORTED_MEDIA_UPLOAD_TYPES
+        content_type = (
+            data_file.content_type
+            if data_file and data_file.content_type in allowed_types
+            else mimetypes.guess_type(data_value)[0]
+        )
+
+        if content_type not in allowed_types:
+            raise serializers.ValidationError(
+                {'content_type': _('Invalid content type.')}
+            )
 
         return MetaData.objects.create(
             data_type=data_type,
             xform=xform,
             data_value=data_value,
             data_file=data_file,
-            data_file_type=data_file_type
+            data_file_type=content_type
         )
 
