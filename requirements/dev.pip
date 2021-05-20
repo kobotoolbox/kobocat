@@ -8,7 +8,7 @@ ipdb
 ipython
 shell_command
 statsd
-twill==2.0.3
+twill
 Werkzeug
 sqlparse
 pytest==3.10
