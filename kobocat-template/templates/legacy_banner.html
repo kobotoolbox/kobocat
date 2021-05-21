@@ -1,0 +1,362 @@
+{% load i18n %} 
+
+{% load static %} 
+
+{% with learn_more_url="https://community.kobotoolbox.org/t/changes-to-legacy-interface-self-serve-migration-feature-into-the-new-interface/18108" %}
+
+<script type="text/javascript">
+  (function () {
+    window.addEventListener("DOMContentLoaded", function () {
+      const bannerWhatEl = document.getElementById("legacy-banner-what");
+      // NOTE: Remember to change this id to a new unique one and update the 
+      // list of previously used:
+      // - "legacy-banner-popup"
+      const popupId = "legacy-banner-popup-upgrade";
+      const popupEl = document.getElementById(popupId);
+      const popupContinueEl = document.getElementById(
+        "legacy-banner-popup-continue"
+      );
+      const hiddenClass = "legacy-banner-popup--hidden";
+
+      function closePopup(evt) {
+        evt.preventDefault();
+        popupEl.classList.add(hiddenClass);
+        localStorage.setItem(popupId, "seen");
+        return false;
+      }
+
+      function openPopup() {
+        popupEl.classList.remove(hiddenClass);
+        return true;
+      }
+
+      popupContinueEl.addEventListener("click", closePopup);
+      bannerWhatEl.addEventListener("click", openPopup);
+
+      // if popup wasn't seen on this machine, display it immediately
+      if (localStorage.getItem(popupId) !== "seen") {
+        openPopup();
+      }
+    });
+  })();
+</script>
+
+<style media="screen">
+  .legacy-warning {
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+
+  .legacy-warning .container {
+    max-width: 100%;
+  }
+
+  .legacy-banner-popup {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: hsla(0, 0%, 0%, 0.25);
+    z-index: 9000;
+  }
+
+  .legacy-banner-popup,
+  .legacy-banner-popup * {
+    box-sizing: border-box;
+  }
+
+  .legacy-banner-popup__content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 90%;
+    max-width: 90%;
+    width: 1000px;
+    overflow: auto;
+    background: hsl(0, 0%, 100%);
+    border-left: 5px solid #fe556a;
+    padding: 0 40px;
+    border-radius: 6px;
+    box-shadow: 0 5px 10px 0 hsla(0, 0%, 0%, 0.25);
+  }
+
+  .legacy-banner-popup.legacy-banner-popup--hidden {
+    display: none;
+  }
+
+  .legacy-banner-bar {
+    margin-top: -30px;
+    background: #ffffff;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  .legacy-banner-bar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background-image: linear-gradient(rgba(110, 115, 140, 0.2), transparent);
+  }
+
+  .legacy-banner-bar .legacy-banner {
+    max-width: calc(984px + 20px);
+    padding: 30px 0;
+  }
+
+  .legacy-banner,
+  .legacy-banner * {
+    box-sizing: border-box;
+  }
+
+  .legacy-banner__header {
+    font-size: 18px;
+    line-height: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #fe556a;
+  }
+
+  .legacy-banner-popup .legacy-banner__header {
+    margin-top: 40px;
+    margin-bottom: 30px;
+  }
+
+  .legacy-banner-popup .legacy-banner__header span {
+    display: block;
+  }
+
+  .legacy-banner__text {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .legacy-banner-bar .legacy-banner__text {
+    overflow: hidden;
+    margin: 15px 0 0 0;
+  }
+
+  .legacy-banner-popup .legacy-banner__text {
+    clear: both;
+  }
+  
+  .legacy-banner__text.legacy-banner__text--list {
+    list-style: none;
+  }
+  
+  .legacy-banner__text.legacy-banner__text--list li {
+    position: relative;
+  }
+  
+  .legacy-banner__text.legacy-banner__text--list li:not(:first-of-type) {
+    margin-top: 20px;
+  }
+  
+  .legacy-banner__text.legacy-banner__text--list li::before {
+    color: #cbced7;
+    font-size: 20px;
+    content: "\25B2";
+    position: absolute;
+    left: -1em;
+    transform: rotate(90deg);
+  }
+
+  .legacy-banner__icon {
+    float: left;
+    width: auto;
+    height: auto;
+    margin-bottom: 10px;
+    width: 20px;
+    margin-right: 10px;
+  }
+
+  .legacy-banner__button {
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 9px;
+    color: hsl(207, 90%, 54%) !important;
+    background-color: transparent;
+    border: 1px solid currentColor;
+    height: auto;
+    min-height: 40px;
+    line-height: 30px;
+    padding: 5px 40px;
+    margin: 0;
+  }
+
+  .legacy-banner__button:hover {
+    color: hsl(207, 90%, 34%) !important;
+  }
+
+  .legacy-banner__button:active {
+    transform: translateY(1px);
+  }
+  
+  .legacy-banner__button.legacy-banner__button--red {
+    color: hsl(353, 99%, 66%) !important;
+  }
+  
+  .legacy-banner__button.legacy-banner__button--red:hover {
+    color: hsl(353, 99%, 46%) !important;
+  }
+
+  .legacy-banner-bar .legacy-banner__button {
+    float: right;
+    margin: 25px 0 25px 30px;
+  }
+  
+  .legacy-banner-popup .legacy-banner__button {
+    padding-left: 50px;
+    padding-right: 50px;
+  }
+  
+  .legacy-banner-popup__footer {
+    margin: 40px auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .legacy-banner-popup__footer * + * {
+    margin-left: 10px;
+  }
+</style>
+
+<div
+  id="legacy-banner-popup-upgrade"
+  class="legacy-banner-popup legacy-banner-popup--hidden"
+>
+  <section class="legacy-banner-popup__content">
+    <section class="legacy-banner">
+      <h1 class="legacy-banner__header">
+        <svg
+          class="legacy-banner__icon"
+          viewbox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M11 11H9V6H11V11Z"
+            fill="#FF556A"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M11 13C11 13.552 10.552 14 10 14C9.448 14 9 13.552 9 13C9 12.448 9.448 12 10 12C10.552 12 11 12.448 11 13Z"
+            fill="#FF556A"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M10 2C5.589 2 2 5.589 2 10C2 14.411 5.589 18 10 18C14.411 18 18 14.411 18 10C18 5.589 14.411 2 10 2ZM10 20C4.486 20 0 15.515 0 10C0 4.486 4.486 0 10 0C15.514 0 20 4.486 20 10C20 15.515 15.514 20 10 20Z"
+            fill="#FF556A"
+          />
+        </svg>
+        <span>{% trans "Upgrade to the legacy interface on April xx, 2021" %}</span>
+      </h1>
+
+      <p class="legacy-banner__text">
+        {% trans "On April xx, 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). Thank you to everyone who has participated in our survey over the last months and for responding <a href='https://community.kobotoolbox.org/t/contemplating-the-future-of-kobocat/2743' >to the forum discussion</a >. This updated version has allowed us to upgrade kobocat’s source code and dependencies to ensure proper data security in the long run, and lower the amount of work needed to maintain it. After this date, you will notice the following changes:"%}
+      </p>
+
+      <ul class="legacy-banner__text legacy-banner__text--list">
+        <li>
+          {% trans "Form uploads will only be supported through the regular interface. Note that even if a setting form configuration is not supported yet in the formbuilder, you can deploy the form from there and it will work the same way as deployed through the legacy interface."%}
+        </li>
+        <li>
+          {% trans "You will be able to sync all your forms that were deployed directly in the legacy interface to make them available as projects in the regular interface (as requested <a href='https://community.kobotoolbox.org/t/how-to-tranfer-data-from-legacy-interface-to-the-shiny-interface/13642' >on the forum</a >)."%}
+        </li>
+        <li>
+          {% trans "Form media and all other settings will be handled directly in the regular interface."%}
+        </li>
+        <li>
+          {% trans "You can continue to export data from the legacy interface (XLS, CSV, KML, ZIP)"%}
+        </li>
+      </ul>
+
+      <p class="legacy-banner__text">
+        {% trans "The API will continue to work as before. The the legacy interface will continue to be available for a few more months. After this, the kobocat component will serve for its core responsibility, receiving and storing survey submission data."%}
+      </p>
+
+      <footer class="legacy-banner-popup__footer">
+        <a
+          id="legacy-banner-popup-learn"
+          class="legacy-banner__button"
+          href="{{ legacy_survey_url }}"
+          target="_blank"
+        >
+          {% trans "Learn more" %}
+        </a>
+
+        <button
+          id="legacy-banner-popup-continue"
+          class="legacy-banner__button legacy-banner__button--red"
+          href="#"
+          target="_blank"
+        >
+          {% trans "Continue" %}
+        </button>
+      </footer>
+    </section>
+  </section>
+</div>
+
+<div class="legacy-banner-bar">
+  <section class="legacy-banner container">
+    <button
+      class="legacy-banner__button"
+      id="legacy-banner-what"
+      href="#"
+      target="_blank"
+    >
+      {% trans "What changes?" %}
+    </button>
+
+    <h1 class="legacy-banner__header">
+      <svg
+        class="legacy-banner__icon"
+        viewbox="0 0 20 20"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M11 11H9V6H11V11Z"
+          fill="#FF556A"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M11 13C11 13.552 10.552 14 10 14C9.448 14 9 13.552 9 13C9 12.448 9.448 12 10 12C10.552 12 11 12.448 11 13Z"
+          fill="#FF556A"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M10 2C5.589 2 2 5.589 2 10C2 14.411 5.589 18 10 18C14.411 18 18 14.411 18 10C18 5.589 14.411 2 10 2ZM10 20C4.486 20 0 15.515 0 10C0 4.486 4.486 0 10 0C15.514 0 20 4.486 20 10C20 15.515 15.514 20 10 20Z"
+          fill="#FF556A"
+        />
+      </svg>
+      <span>{% trans "Upgrade to the legacy interface on April xx, 2021" %}</span>
+    </h1>
+
+    <p class="legacy-banner__text">
+      {% trans "On April xx, 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). After this date, the legacy interface will continue to be available for a few more months, with a number of changes." %}
+    </p>
+  </section>
+</div>
+
+{% endwith %}
