@@ -629,7 +629,9 @@ def update_mongo_for_xform(xform, only_update_missing=True):
         mongo_ids = set(
             [rec[common_tags.ID] for rec in mongo_instances.find(
                 {common_tags.USERFORM_ID: userform_id},
-                {common_tags.ID: 1})])
+                {common_tags.ID: 1},
+                max_time_ms=settings.MONGO_DB_MAX_TIME_MS
+)])
         sys.stdout.write("Total no of mongo instances: %d\n" % len(mongo_ids))
         # get the difference
         instance_ids = instance_ids.difference(mongo_ids)
@@ -704,7 +706,9 @@ def mongo_sync_status(remongo=False, update_all=False, user=None, xform=None):
         instance_count = Instance.objects.filter(xform=xform).count()
         userform_id = "%s_%s" % (user.username, xform.id_string)
         mongo_count = mongo_instances.count_documents(
-            {common_tags.USERFORM_ID: userform_id})
+            {common_tags.USERFORM_ID: userform_id},
+            maxTimeMS=settings.MONGO_DB_MAX_TIME_MS
+        )
 
         if instance_count != mongo_count or update_all:
             line = "user: %s, id_string: %s\nInstance count: %d\t"\
