@@ -9,6 +9,20 @@
     <header class="single-project__header">
         <hgroup class="container">
             <h1>{{ xform.title }}</h1>
+            <div class="single-project__documents">
+                <div class="single-project__documents-label">{% trans "Background Documents" %}</div>
+      
+                {% for doc in supporting_docs %}
+                    <div class="single-project__document">
+                      {% if can_edit %}
+                        <a href="{% url "delete_metadata" content_user.username xform.id_string doc.id %}?del=true" title="{% trans "remove" %}"> <i class="fa fa-trash-o"></i> </a>
+                      {% endif %}
+                      <a href="{% url "download_metadata" content_user.username xform.id_string doc.id %}">{{ doc.data_value }}</a>
+                    </p>
+                {% endfor %}
+      
+      
+              </div>
         </hgroup>
     </header>
 

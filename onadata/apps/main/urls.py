@@ -22,6 +22,8 @@ from onadata.apps.main.views import (
     show,
     edit,
     form_photos,
+    delete_metadata,
+    download_metadata,
     download_media_data,
     show_form_settings
 )
@@ -98,6 +100,10 @@ urlpatterns = [
             edit, name='edit_form'),
     re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/photos',
             form_photos, name='form_photos'),
+    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/doc/(?P<data_'
+            'id>\d+)', download_metadata, name='download_metadata'),
+    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delete-doc/(?P<'
+            'data_id>\d+)', delete_metadata, name='delete_metadata'),
     re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/'
             r'(?P<data_id>\d+)', download_media_data, name='download_media_data'),
     re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/form_settings$',

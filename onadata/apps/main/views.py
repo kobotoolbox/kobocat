@@ -146,6 +146,7 @@ def show(request, username=None, id_string=None, uuid=None):
     data['xform'] = xform
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
+    data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
 
     if is_owner:
@@ -180,6 +181,7 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
     data['source'] = MetaData.source(xform)
+    data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
 
     if is_owner:
@@ -230,6 +232,17 @@ def edit(request, username, id_string):
                 }, audit, request)
             for aFile in request.FILES.getlist("media"):
                 MetaData.media_upload(xform, aFile)
+        elif request.FILES.get('doc'):
+            audit = {
+                'xform': xform.id_string
+            }
+            audit_log(
+                Actions.FORM_UPDATED, request.user, owner,
+                _("Supporting document added to '%(id_string)s'.") %
+                {
+                    'id_string': xform.id_string
+                }, audit, request)
+            MetaData.supporting_docs(xform, request.FILES.get('doc'))
 
         xform.update()
 
@@ -356,3 +369,67 @@ def form_photos(request, username, id_string):
     data['profilei'], created = UserProfile.objects.get_or_create(user=owner)
 
     return render(request, 'form_photos.html', data)
+
+
+def download_metadata(request, username, id_string, data_id):
+    xform = get_object_or_404(XForm,
+                              user__username__iexact=username,
+                              id_string__exact=id_string)
+    owner = xform.user
+    if username == request.user.username or xform.shared:
+        data = get_object_or_404(MetaData, pk=data_id)
+        file_path = data.data_file.name
+        filename, extension = os.path.splitext(file_path.split('/')[-1])
+        extension = extension.strip('.')
+        dfs = get_storage_class()()
+        if dfs.exists(file_path):
+            audit = {
+                'xform': xform.id_string
+            }
+            audit_log(
+                Actions.FORM_UPDATED, request.user, owner,
+                _("Document '%(filename)s' for '%(id_string)s' downloaded.") %
+                {
+                    'id_string': xform.id_string,
+                    'filename': "%s.%s" % (filename, extension)
+                }, audit, request)
+            response = response_with_mimetype_and_name(
+                data.data_file_type,
+                filename, extension=extension, show_date=False,
+                file_path=file_path)
+            return response
+        else:
+            return HttpResponseNotFound()
+
+    return HttpResponseForbidden(_('Permission denied.'))
+
+
+@login_required()
+def delete_metadata(request, username, id_string, data_id):
+    xform = get_object_or_404(XForm,
+                              user__username__iexact=username,
+                              id_string__exact=id_string)
+    owner = xform.user
+    data = get_object_or_404(MetaData, pk=data_id)
+    dfs = get_storage_class()()
+    req_username = request.user.username
+    if request.GET.get('del', False) and username == req_username:
+        # try:
+            dfs.delete(data.data_file.name)
+            data.delete()
+            audit = {
+                'xform': xform.id_string
+            }
+            audit_log(
+                Actions.FORM_UPDATED, request.user, owner,
+                _("Document '%(filename)s' deleted from '%(id_string)s'.") %
+                {
+                    'id_string': xform.id_string,
+                    'filename': os.path.basename(data.data_file.name)
+                }, audit, request)
+            return HttpResponseRedirect(reverse(show, kwargs={
+                'username': username,
+                'id_string': id_string
+            }))
+        # except Exception:
+        #     return
