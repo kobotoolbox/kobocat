@@ -13,7 +13,6 @@ from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
     CAN_VIEW_XFORM
 )
-from onadata.libs.tests.utils.xml import pyxform_version_agnostic
 
 
 class TestXFormListApi(TestAbstractViewSet):
@@ -252,8 +251,7 @@ class TestXFormListApi(TestAbstractViewSet):
             form_xml = f.read().strip()
             data = {"form_uuid": self.xform.uuid}
             content = smart_str(response.render().content).strip()
-            self.assertEqual(pyxform_version_agnostic(content),
-                             pyxform_version_agnostic(form_xml % data))
+            self.assertEqual(content, form_xml % data)
 
     def _load_metadata(self, xform=None):
         data_value = "screenshot.png"
