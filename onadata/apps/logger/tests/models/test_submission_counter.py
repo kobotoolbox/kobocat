@@ -39,9 +39,8 @@ class TestSubmissionCounter(TestBase):
         Test that the data stored is the same as the data expected
         """
         create_monthly_counters()
-        counter = SubmissionCounter.objects.get(pk=1)
+        counter = SubmissionCounter.objects.last()
         today = datetime.now()
-        print(today.year, today.month)
         self.assertEqual(counter.timestamp.year, today.year)
         self.assertEqual(counter.timestamp.month, today.month)
         self.assertEqual(counter.timestamp.day, 1)
