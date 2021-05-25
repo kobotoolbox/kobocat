@@ -3,7 +3,6 @@ import os
 
 from django.conf import settings
 from django_digest.test import DigestAuth
-from django.utils.encoding import smart_str
 from guardian.shortcuts import assign_perm
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
@@ -40,7 +39,7 @@ class TestXFormListApi(TestAbstractViewSet):
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(smart_str(content), form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -61,7 +60,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         xml = '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
         xml += 'xmlns="http://openrosa.org/xforms/xformsList"></xforms>'
-        content = smart_str(response.render().content)
+        content = response.render().content.decode('utf-8')
         self.assertEqual(content, xml)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
@@ -85,7 +84,7 @@ class TestXFormListApi(TestAbstractViewSet):
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(smart_str(content), form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -121,7 +120,7 @@ class TestXFormListApi(TestAbstractViewSet):
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        content = smart_str(response.render().content)
+        content = response.render().content.decode('utf-8')
         self.assertNotIn(self.xform.id_string, content)
         self.assertEqual(
             content, '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
@@ -152,7 +151,7 @@ class TestXFormListApi(TestAbstractViewSet):
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        content = smart_str(response.render().content)
+        content = response.render().content.decode('utf-8')
         self.assertNotIn(self.xform.id_string, content)
         self.assertEqual(
             content, '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
@@ -192,7 +191,7 @@ class TestXFormListApi(TestAbstractViewSet):
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(smart_str(content), form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -250,7 +249,7 @@ class TestXFormListApi(TestAbstractViewSet):
         with open(path) as f:
             form_xml = f.read().strip()
             data = {"form_uuid": self.xform.uuid}
-            content = smart_str(response.render().content).strip()
+            content = response.render().content.decode('utf-8').strip()
             self.assertEqual(content, form_xml % data)
 
     def _load_metadata(self, xform=None):
@@ -282,7 +281,7 @@ class TestXFormListApi(TestAbstractViewSet):
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
         data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
-        content = smart_str(response.render().content).strip()
+        content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
@@ -306,7 +305,7 @@ class TestXFormListApi(TestAbstractViewSet):
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
         data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
-        content = smart_str(response.render().content).strip()
+        content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
