@@ -221,7 +221,7 @@ class TestXFormListApi(TestAbstractViewSet):
         with open(path) as f:
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
-            content = response.render().content
+            content = response.render().content.decode('utf-8')
             self.assertEqual(content, form_list_xml % data)
 
     def test_retrieve_xform_xml(self):
@@ -247,7 +247,7 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'Transportation Form.xml')
 
-        with open(path, 'r') as f:
+        with open(path) as f:
             form_xml = f.read().strip()
             data = {"form_uuid": self.xform.uuid}
             content = smart_str(response.render().content).strip()
