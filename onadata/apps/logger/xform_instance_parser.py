@@ -122,7 +122,7 @@ def get_deprecated_uuid_from_xml(xml):
 def clean_and_parse_xml(xml_string):
     clean_xml_str = xml_string.strip()
     clean_xml_str = re.sub(r">\s+<", "><", smart_str(clean_xml_str))
-    xml_obj = minidom.parseString(smart_str(clean_xml_str))
+    xml_obj = minidom.parseString(clean_xml_str)
     return xml_obj
 
 

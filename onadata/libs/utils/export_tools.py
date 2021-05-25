@@ -14,6 +14,7 @@ from django.shortcuts import render_to_response
 from django.utils.text import slugify
 from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
+from pyxform.constants import SELECT_ALL_THAT_APPLY
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
 
@@ -44,8 +45,6 @@ xform_instances = settings.MONGO_DB.instances
 QUESTION_TYPES_TO_EXCLUDE = [
     'note',
 ]
-# the bind type of select multiples that we use to compare
-MULTIPLE_SELECT_BIND_TYPE = "select"
 GEOPOINT_BIND_TYPE = "geopoint"
 
 
@@ -274,7 +273,7 @@ class ExportBuilder:
                                 {child_xpath: MongoHelper.encode(child_xpath)})
 
                     # if its a select multiple, make columns out of its choices
-                    if child.bind.get("type") == MULTIPLE_SELECT_BIND_TYPE\
+                    if child.type == SELECT_ALL_THAT_APPLY\
                             and self.SPLIT_SELECT_MULTIPLES:
                         for c in child.children:
                             _xpath = c.get_abbreviated_xpath()

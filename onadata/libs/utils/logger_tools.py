@@ -558,10 +558,14 @@ class OpenRosaResponse(BaseOpenRosaResponse):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # wrap content around xml
-        self.content = '''<?xml version='1.0' encoding='UTF-8' ?>
-<OpenRosaResponse xmlns="http://openrosa.org/http/response">
-        <message nature="">%s</message>
-</OpenRosaResponse>''' % self.content
+        self.content = (
+            b"<?xml version='1.0' encoding='UTF-8' ?>\n"
+            b'<OpenRosaResponse xmlns="http://openrosa.org/http/response">\n'
+            b'        <message nature="">'
+        ) + self.content + (
+            b'</message>\n'
+            b'</OpenRosaResponse>'
+        )
 
 
 class OpenRosaResponseNotFound(OpenRosaResponse):
