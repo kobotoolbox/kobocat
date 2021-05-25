@@ -1,12 +1,12 @@
+# coding: utf-8
 from datetime import datetime
 
 from mock import patch
 
-from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models.submission_counter import SubmissionCounter
-from onadata.apps.logger.models.instance import Instance
-from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.tasks import create_monthly_counters
+from onadata.apps.main.tests.test_base import TestBase
+
 
 class TestSubmissionCounter(TestBase):
 
@@ -25,7 +25,6 @@ class TestSubmissionCounter(TestBase):
         counters = SubmissionCounter.objects.only('user__username')
         self.assertEqual(counters.count(), 4)
 
-
     def test_counter_increment(self):
         """
         Tests that when a submission is revieved, the counter increments
@@ -34,7 +33,6 @@ class TestSubmissionCounter(TestBase):
         self._publish_transportation_form_and_submit_instance()
         counters = SubmissionCounter.objects.get(user__username='bob')
         self.assertEqual(counters.count, 1)
-        
 
     def test_data_retrieval(self):
         """

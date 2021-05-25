@@ -1,10 +1,16 @@
+# coding: utf-8
 import datetime
-from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 
+
 class SubmissionCounter(models.Model):
-    user = models.ForeignKey(User, related_name='submissioncounter', null=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User,
+        related_name='submissioncounter',
+        null=True,
+        on_delete=models.CASCADE,
+    )
     count = models.IntegerField(default=0)
     timestamp = models.DateTimeField()
 

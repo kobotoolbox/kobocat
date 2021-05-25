@@ -11,9 +11,9 @@ from django.contrib.auth.models import User
 from django.core.files.storage import get_storage_class
 from django.core.management import call_command
 
-from django.contrib.auth.models import User
 from .models.submission_counter import SubmissionCounter
 from .models import Instance, XForm
+
 
 @task()
 def create_monthly_counters():
