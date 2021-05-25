@@ -197,7 +197,8 @@ class TestExportBuilder(TestBase):
 
     def _create_childrens_survey(self):
         return create_survey_from_xls(_logger_fixture_path(
-            'childrens_survey.xls'))
+            'childrens_survey.xls'),
+            default_name='childrens_survey')
 
     def test_build_sections_from_survey(self):
         survey = self._create_childrens_survey()
@@ -817,7 +818,8 @@ class TestExportBuilder(TestBase):
 
     def test_to_xls_export_generates_valid_sheet_names(self):
         survey = create_survey_from_xls(_logger_fixture_path(
-            'childrens_survey_with_a_very_long_name.xls'))
+            'childrens_survey_with_a_very_long_name.xls'),
+            default_name='childrens_survey_with_a_very_long_name')
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
         xls_file = NamedTemporaryFile(suffix='.xls')
@@ -836,7 +838,8 @@ class TestExportBuilder(TestBase):
 
     def test_child_record_parent_table_is_updated_when_sheet_is_renamed(self):
         survey = create_survey_from_xls(_logger_fixture_path(
-            'childrens_survey_with_a_very_long_name.xls'))
+            'childrens_survey_with_a_very_long_name.xls'),
+            default_name='childrens_survey_with_a_very_long_name.xls')
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
         xls_file = NamedTemporaryFile(suffix='.xlsx')
@@ -896,7 +899,8 @@ class TestExportBuilder(TestBase):
         }
 
         survey = create_survey_from_xls(viewer_fixture_path(
-            'test_data_types/test_data_types.xls'))
+            'test_data_types/test_data_types.xls'),
+            default_name='test_data_types/test_data_types')
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
         # format submission 1 for export
@@ -919,7 +923,8 @@ class TestExportBuilder(TestBase):
 
     def test_xls_convert_dates_before_1900(self):
         survey = create_survey_from_xls(viewer_fixture_path(
-            'test_data_types/test_data_types.xls'))
+            'test_data_types/test_data_types.xls'),
+            default_name='test_data_types/test_data_types.xls')
         export_builder = ExportBuilder()
         export_builder.set_survey(survey)
         data = [

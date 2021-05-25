@@ -85,7 +85,7 @@ python-digest==1.7
 -e git+https://github.com/onaio/python-json2xlsclient.git@5a39387752d819cb6387f75569dbea9a5288aa6f#egg=python_json2xlsclient
 python-slugify==1.2.6
 pytz==2018.9
-pyxform==0.13.1
+-e git+https://github.com/jnm/pyxform@v1.5.1-py2-jnm#egg=pyxform
 recaptcha-client==1.0.6
 redis==3.2.0
 requests==2.21.0
