@@ -19,7 +19,7 @@ START = "start"            # This tag was used in Phase II
 END_TIME = "end_time"
 END = "end"
 
-# value of INSTANCE_DOC_NAME that indicates a registration form
+# value of INSTANCE_DOC_NAME that indicates a regisration form
 REGISTRATION = "registration"
 # keys that we'll look for in the registration form
 NAME = "name"
