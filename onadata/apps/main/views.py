@@ -181,7 +181,6 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['content_user'] = xform.user
     data['base_url'] = "https://%s" % request.get_host()
     data['source'] = MetaData.source(xform)
-    data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
 
     if is_owner:
@@ -232,17 +231,6 @@ def edit(request, username, id_string):
                 }, audit, request)
             for aFile in request.FILES.getlist("media"):
                 MetaData.media_upload(xform, aFile)
-        # elif request.FILES.get('doc'):
-        #     audit = {
-        #         'xform': xform.id_string
-        #     }
-        #     audit_log(
-        #         Actions.FORM_UPDATED, request.user, owner,
-        #         _("Supporting document added to '%(id_string)s'.") %
-        #         {
-        #             'id_string': xform.id_string
-        #         }, audit, request)
-        #     MetaData.supporting_docs(xform, request.FILES.get('doc'))
 
         xform.update()
 
