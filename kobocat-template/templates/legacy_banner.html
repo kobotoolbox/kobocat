@@ -191,7 +191,7 @@
     height: auto;
     min-height: 40px;
     line-height: 30px;
-    padding: 5px 40px;
+    padding: 5px 30px;
     margin: 0;
   }
 
@@ -203,22 +203,23 @@
     transform: translateY(1px);
   }
   
-  .legacy-banner__button.legacy-banner__button--red {
-    color: hsl(353, 99%, 66%) !important;
+  .legacy-banner__button.legacy-banner__button--borderless {
+    border-color: transparent;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .legacy-banner__button.legacy-banner__button--gray {
+    color: hsl(229, 17%, 43%) !important;
   }
   
-  .legacy-banner__button.legacy-banner__button--red:hover {
-    color: hsl(353, 99%, 46%) !important;
+  .legacy-banner__button.legacy-banner__button--gray:hover {
+    color: hsl(229, 17%, 33%) !important;
   }
 
   .legacy-banner-bar .legacy-banner__button {
     float: right;
     margin: 25px 0 25px 30px;
-  }
-  
-  .legacy-banner-popup .legacy-banner__button {
-    padding-left: 50px;
-    padding-right: 50px;
   }
   
   .legacy-banner-popup__footer {
@@ -229,11 +230,18 @@
     justify-content: center;
   }
   
+  .legacy-banner-popup__footer-left {
+    flex: 1;
+  }
+  
   .legacy-banner-popup__footer * + * {
-    margin-left: 10px;
+    margin-left: 20px;
   }
 </style>
 
+<!-- 
+THE POPUP 
+-->
 <div
   id="legacy-banner-popup-upgrade"
   class="legacy-banner-popup legacy-banner-popup--hidden"
@@ -265,11 +273,11 @@
             fill="#FF556A"
           />
         </svg>
-        <span>{% trans "Upgrade to the legacy interface on April xx, 2021" %}</span>
+        <span>{% trans "Upgrade to the legacy interface on 14 June 2021" %}</span>
       </h1>
 
       <p class="legacy-banner__text">
-        {% trans "On April xx, 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). Thank you to everyone who has participated in our survey over the last months and for responding <a href='https://community.kobotoolbox.org/t/contemplating-the-future-of-kobocat/2743' >to the forum discussion</a >. This updated version has allowed us to upgrade kobocat’s source code and dependencies to ensure proper data security in the long run, and lower the amount of work needed to maintain it. After this date, you will notice the following changes:"%}
+        {% trans "On 14 June 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). Thank you to everyone who has participated in our survey over the last months and for responding <a href='https://community.kobotoolbox.org/t/contemplating-the-future-of-kobocat/2743' >to the forum discussion</a >. This updated version has allowed us to upgrade kobocat’s source code and dependencies to ensure proper data security in the long run, and lower the amount of work needed to maintain it. After this date, you will notice the following changes:"%}
       </p>
 
       <ul class="legacy-banner__text legacy-banner__text--list">
@@ -292,10 +300,21 @@
       </p>
 
       <footer class="legacy-banner-popup__footer">
+        <div class="legacy-banner-popup__footer-left">
+          <a
+            id="legacy-banner-popup-new"
+            class="legacy-banner__button"
+            href="{{ koboform_url }}"
+            target="_blank"
+          >
+            {% trans "Go to new interface" %}
+          </a>
+        </div>
+        
         <a
           id="legacy-banner-popup-learn"
-          class="legacy-banner__button"
-          href="{{ legacy_survey_url }}"
+          class="legacy-banner__button legacy-banner__button--borderless"
+          href="{{ learn_more_url }}"
           target="_blank"
         >
           {% trans "Learn more" %}
@@ -303,17 +322,20 @@
 
         <button
           id="legacy-banner-popup-continue"
-          class="legacy-banner__button legacy-banner__button--red"
+          class="legacy-banner__button legacy-banner__button--gray"
           href="#"
           target="_blank"
         >
-          {% trans "Continue" %}
+          {% trans "Continue to legacy interface" %}
         </button>
       </footer>
     </section>
   </section>
 </div>
 
+<!-- 
+THE BANNER 
+-->
 <div class="legacy-banner-bar">
   <section class="legacy-banner container">
     <button
@@ -350,11 +372,11 @@
           fill="#FF556A"
         />
       </svg>
-      <span>{% trans "Upgrade to the legacy interface on April xx, 2021" %}</span>
+      <span>{% trans "Upgrade to the legacy interface on 14 June 2021" %}</span>
     </h1>
 
     <p class="legacy-banner__text">
-      {% trans "On April xx, 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). After this date, the legacy interface will continue to be available for a few more months, with a number of changes." %}
+      {% trans "On 14 June 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). After this date, the legacy interface will continue to be available for a few more months, with a number of changes." %}
     </p>
   </section>
 </div>
