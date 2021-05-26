@@ -45,6 +45,7 @@ from onadata.apps.logger.models.instance import (
     InstanceHistory,
     get_id_string_from_xml_str,
     update_xform_submission_count,
+    update_user_submissions_counter,
 )
 from onadata.apps.logger.models.xform import XLSFormError
 from onadata.apps.logger.xform_instance_parser import (
@@ -277,6 +278,8 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
         del instance.defer_counting
         update_xform_submission_count(sender=None, instance=instance,
                                       created=True)
+        update_user_submissions_counter(sender=None, instance=instance,
+                                        created=True)
 
     return instance
 
