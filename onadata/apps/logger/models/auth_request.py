@@ -99,7 +99,7 @@ class OneTimeAuthRequest(models.Model):
         except KeyError:
             return None
         else:
-            # There is not reason that the referrer could something else
+            # There is no reason that the referrer could be something else
             # than Enketo Express edit URL.
             edit_url = f'{settings.ENKETO_URL}/edit'
             if not referrer.startswith(edit_url):
