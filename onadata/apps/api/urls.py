@@ -39,7 +39,6 @@ class MultiLookupRouter(routers.DefaultRouter):
         # Dynamically generated routes.
         # Generated using @action or @link decorators on methods of the viewset
 
-        # FIXME find out with what value `detail` should be set
         self.lookups_routes.append(routers.Route(
             url=[
                 r'^{prefix}/{lookups}/{methodname}{trailing_slash}$',

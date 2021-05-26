@@ -21,7 +21,7 @@ from httmock import all_requests, HTTMock
 def enketo_mock(url, request):
     response = requests.Response()
     response.status_code = 201
-    response._content = '{"url": "https://hmh2a.enketo.formhub.org"}'
+    response._content = b'{"url": "https://hmh2a.enketo.formhub.org"}'
     return response
 
 

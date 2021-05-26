@@ -5,7 +5,6 @@ import io
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
-from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
 
 from rest_framework import permissions
@@ -211,9 +210,11 @@ Here is some example JSON, it would replace `[the JSON]` above:
         elif not is_json_request:
             return error
         else:
-            error_msg = xml_error_re.search(smart_str(error.content)).groups()[0]
+            error_msg = xml_error_re.search(
+                error.content.decode('utf-8')
+            ).groups()[0]
             status_code = error.status_code
 
-        return Response({'error': smart_str(error_msg)},
+        return Response({'error': error_msg},
                         headers=self.get_openrosa_headers(request),
                         status=status_code)
