@@ -38,21 +38,24 @@ class ConditionalRedirects(MiddlewareMixin):
         if koboform.active and koboform.autoredirect:
             login_url = koboform.redirect_url(login_url)
             if view_name == 'login':
-                return HttpResponseRedirect(koboform.login_url(next_kobocat_url='/'))
+                return HttpResponseRedirect(
+                    koboform.login_url(next_kobocat_url='/')
+                )
             if view_name == 'logout':
-                return HttpResponseRedirect(koboform.redirect_url('/accounts/logout/'))
-            if view_name == 'FHRegistrationView':
-                return HttpResponseRedirect(koboform.redirect_url('/accounts/register/'))
+                return HttpResponseRedirect(
+                    koboform.redirect_url('/accounts/logout/')
+                )
 
         if view_name in DISABLED_VIEWS:
             if is_logged_in:
-                redirect_to = reverse('user_profile', kwargs={'username': request.user.username})
+                redirect_to = reverse(
+                    'user_profile', kwargs={'username': request.user.username}
+                )
             else:
                 if koboform.active and koboform.autoredirect:
                     redirect_to = koboform.login_url(next_kobocat_url=request.path)
                 else:
                     redirect_to = login_url
-                # redirect_to = '%s?next=/kobocat%s' % (login_url, request.path)
             return HttpResponseRedirect(redirect_to)
         elif not is_logged_in and (view_name in REDIRECT_IF_NOT_LOGGED_IN):
             return HttpResponseRedirect(login_url)
