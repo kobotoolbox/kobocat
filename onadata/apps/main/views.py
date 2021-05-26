@@ -232,17 +232,17 @@ def edit(request, username, id_string):
                 }, audit, request)
             for aFile in request.FILES.getlist("media"):
                 MetaData.media_upload(xform, aFile)
-        elif request.FILES.get('doc'):
-            audit = {
-                'xform': xform.id_string
-            }
-            audit_log(
-                Actions.FORM_UPDATED, request.user, owner,
-                _("Supporting document added to '%(id_string)s'.") %
-                {
-                    'id_string': xform.id_string
-                }, audit, request)
-            MetaData.supporting_docs(xform, request.FILES.get('doc'))
+        # elif request.FILES.get('doc'):
+        #     audit = {
+        #         'xform': xform.id_string
+        #     }
+        #     audit_log(
+        #         Actions.FORM_UPDATED, request.user, owner,
+        #         _("Supporting document added to '%(id_string)s'.") %
+        #         {
+        #             'id_string': xform.id_string
+        #         }, audit, request)
+        #     MetaData.supporting_docs(xform, request.FILES.get('doc'))
 
         xform.update()
 
@@ -432,4 +432,4 @@ def delete_metadata(request, username, id_string, data_id):
                 'id_string': id_string
             }))
         # except Exception:
-        #     return
+        #     return HttpResponseServerError()
