@@ -1,8 +1,6 @@
 # coding: utf-8
 import os
 
-from django.utils.encoding import smart_text
-
 from onadata.apps.logger.models import XForm
 from .test_base import TestBase
 
@@ -25,12 +23,11 @@ class TestUserIdStringUniqueTogether(TestBase):
 
         # second time
         response = self._publish_xls_file(xls_path)
-        response_content = smart_text(response.content)
         # SQLite returns `UNIQUE constraint failed` whereas PostgreSQL
         # returns 'duplicate key ... violates unique constraint'
         self.assertIn(
             'unique constraint',
-            response_content.lower(),
+            response.json()['text'].lower(),
         )
         self.assertEqual(XForm.objects.count(), 1)
         self.client.logout()

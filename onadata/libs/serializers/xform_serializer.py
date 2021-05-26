@@ -116,8 +116,8 @@ class XFormListSerializer(serializers.Serializer):
     def get_version(self, obj):
         # Returns version data
         # The data returned may vary depending on the contents of the
-        # version field in the settings of the XLS file when the asset
-        # was created or updated
+        # version field in the settings of the XLS file when the asset was
+        # created or updated
         obj_json = json.loads(obj.json)
         return obj_json.get('version')
 

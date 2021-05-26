@@ -20,6 +20,7 @@ from onadata.apps.main.views import (
 
     # form specific
     show,
+    api,
     edit,
     form_photos,
     download_media_data,
@@ -94,6 +95,8 @@ urlpatterns = [
     # form specific
     re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)$',
             show, name='show_form'),
+    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/api$',
+            api, name='mongo_view_api'),
     re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/edit$',
             edit, name='edit_form'),
     re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/photos',

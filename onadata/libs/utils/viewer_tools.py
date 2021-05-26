@@ -12,7 +12,6 @@ from django.conf import settings
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
-from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
 
 from onadata.libs.utils import common_tags
@@ -206,8 +205,7 @@ def enketo_url(form_url, id_string, instance_xml=None,
 
     if req.status_code in [200, 201]:
         try:
-            # ToDo find out why req.json() does not work
-            response = json.loads(smart_str(req.content))
+            response = req.json()
         except ValueError:
             pass
         else:
@@ -219,7 +217,7 @@ def enketo_url(form_url, id_string, instance_xml=None,
                 return response['url']
     else:
         try:
-            response = json.loads(smart_str(req.content))
+            response = req.json()
         except ValueError:
             pass
         else:

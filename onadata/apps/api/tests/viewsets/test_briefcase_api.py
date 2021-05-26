@@ -3,7 +3,6 @@ import os
 
 from django.urls import reverse
 from django.core.files.storage import get_storage_class
-from django.utils.encoding import smart_str
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
 
@@ -224,7 +223,7 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             text = text.replace('{{xform_uuid}}',
                                 self.xform.uuid)
             self.assertContains(response, instance_id, status_code=200)
-            self.assertMultiLineEqual(smart_str(response.content), text)
+            self.assertMultiLineEqual(response.content.decode('utf-8'), text)
 
     def test_view_download_submission_other_user(self):
         view = BriefcaseApi.as_view({'get': 'retrieve'})

@@ -4,7 +4,6 @@ import os
 import simplejson as json
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.utils.encoding import smart_str
 from django_digest.test import DigestAuth
 from guardian.shortcuts import assign_perm
 
@@ -163,8 +162,8 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             '..',
             'fixtures',
             'transport_submission_bad.json')
-        with open(path, 'rb') as f:
-            data = json.loads(smart_str(f.read()))
+        with open(path) as f:
+            data = json.loads(f.read())
             request = self.factory.post('/submission', data, format='json')
             response = self.view(request)
             self.assertEqual(response.status_code, 401)
@@ -175,8 +174,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             response = self.view(request)
             rendered_response = response.render()
             self.assertTrue('error' in rendered_response.data)
-            self.assertTrue(smart_str(rendered_response.data['error']).
-                            startswith("b'Received empty submission"))
+            self.assertTrue(
+                rendered_response.data['error'].startswith(
+                    'Received empty submission'
+                )
+            )
             self.assertTrue(rendered_response.status_code == 400)
             self.assertTrue(rendered_response.has_header('X-OpenRosa-Version'))
             self.assertTrue(

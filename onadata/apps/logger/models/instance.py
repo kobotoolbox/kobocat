@@ -1,5 +1,5 @@
 # coding: utf-8
-from datetime import datetime
+from datetime import date, datetime
 from hashlib import sha256
 
 import reversion
@@ -19,6 +19,7 @@ from onadata.apps.logger.exceptions import FormInactiveError
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.models.submission_counter import SubmissionCounter
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
@@ -88,6 +89,28 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
         UserProfile.objects.filter(pk=profile.pk).update(
             num_of_submissions=F('num_of_submissions') + 1,
         )
+
+
+def update_user_submissions_counter(sender, instance, created, **kwargs):
+    if not created:
+        return
+    if getattr(instance, 'defer_counting', False):
+        return
+
+    # Querying the database this way because it's faster than querying
+    # the instance model for the data
+    user_id = XForm.objects.values_list('user_id', flat=True).get(
+        pk=instance.xform_id
+    )
+    today = date.today()
+    first_day_of_month = today.replace(day=1)
+    queryset = SubmissionCounter.objects.filter(
+        user_id=user_id, timestamp=first_day_of_month
+    )
+    if not queryset.exists():
+        SubmissionCounter.objects.create(user_id=user_id)
+
+    queryset.update(count=F('count') + 1)
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
@@ -412,6 +435,9 @@ class Instance(models.Model):
 
 post_save.connect(update_xform_submission_count, sender=Instance,
                   dispatch_uid='update_xform_submission_count')
+
+post_save.connect(update_user_submissions_counter, sender=Instance,
+                  dispatch_uid='update_user_submissions_counter')
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
