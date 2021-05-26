@@ -10,9 +10,6 @@
 # ToDo Remove when `kobokitten-remove-ui-CUD-actions-unicode is merged.
 git+https://github.com/kobotoolbox/formpack.git@52f77e3519fd1079ce3451f9a5c7c27002e9f3f0#egg=formpack
 
-# captcha
--e git+https://github.com/dresiu/recaptcha-client-1.0.6-py3@48078f8131e2f3c2054d2099ef48cfe9a5745d0c#egg=recaptcha-client
-
 # spss
 https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#egg=savreaderwriter
 
