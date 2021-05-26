@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 
+from bson import json_util
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -8,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
 from django.urls import reverse
 from django.http import HttpResponse
+from django.http import HttpResponseBadRequest
 from django.http import HttpResponseForbidden
 from django.http import HttpResponseNotFound
 from django.http import HttpResponseRedirect
@@ -16,6 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_http_methods
 from rest_framework.authtoken.models import Token
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
@@ -25,11 +28,15 @@ from onadata.apps.main.forms import (
 )
 from onadata.apps.main.forms import QuickConverterForm
 from onadata.apps.main.models import UserProfile, MetaData
+from onadata.apps.viewer.models.parsed_instance import \
+    DATETIME_FORMAT, ParsedInstance
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
+    add_cors_headers,
     check_and_set_user_and_form,
     get_xform_and_perms,
+    helper_auth_helper,
     set_profile_data,
 )
 
@@ -186,6 +193,65 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
         data['media_form'] = MediaForm()
 
     return render(request, "show_form_settings.html", data)
+
+
+@require_http_methods(["GET", "OPTIONS"])
+def api(request, username=None, id_string=None):
+    """
+    Returns all results as JSON.  If a parameter string is passed,
+    it takes the 'query' parameter, converts this string to a dictionary, an
+    that is then used as a MongoDB query string.
+
+    NOTE: only a specific set of operators are allow, currently $or and $and.
+    Please send a request if you'd like another operator to be enabled.
+
+    NOTE: Your query must be valid JSON, double check it here,
+    http://json.parser.online.fr/
+
+    E.g. api?query='{"last_name": "Smith"}'
+    """
+    if request.method == "OPTIONS":
+        response = HttpResponse()
+        add_cors_headers(response)
+
+        return response
+    helper_auth_helper(request)
+    helper_auth_helper(request)
+    xform, owner = check_and_set_user_and_form(username, id_string, request)
+
+    if not xform:
+        return HttpResponseForbidden(_('Not shared.'))
+
+    try:
+        args = {
+            'username': username,
+            'id_string': id_string,
+            'query': request.GET.get('query'),
+            'fields': request.GET.get('fields'),
+            'sort': request.GET.get('sort')
+        }
+        if 'start' in request.GET:
+            args["start"] = int(request.GET.get('start'))
+        if 'limit' in request.GET:
+            args["limit"] = int(request.GET.get('limit'))
+        if 'count' in request.GET:
+            args["count"] = True if int(request.GET.get('count')) > 0\
+                else False
+        cursor = ParsedInstance.query_mongo(**args)
+    except ValueError as e:
+        return HttpResponseBadRequest(e.__str__())
+
+    records = list(record for record in cursor)
+    response_text = json_util.dumps(records)
+
+    if 'callback' in request.GET and request.GET.get('callback') != '':
+        callback = request.GET.get('callback')
+        response_text = ("%s(%s)" % (callback, response_text))
+
+    response = HttpResponse(response_text, content_type='application/json')
+    add_cors_headers(response)
+
+    return response
 
 
 @login_required
