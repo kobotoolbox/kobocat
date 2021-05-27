@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-from django.db.models import Q
+
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
@@ -9,7 +9,6 @@ from rest_framework import filters
 from rest_framework.exceptions import ParseError
 
 from onadata.apps.logger.models import XForm, Instance
-from onadata.apps.main.models import MetaData
 
 
 class AnonDjangoObjectPermissionFilter(filters.DjangoObjectPermissionsFilter):
@@ -68,7 +67,7 @@ class TagFilter(filters.BaseFilterBackend):
 class XFormPermissionFilterMixin(object):
 
     @staticmethod
-    def _get_xform(request, view):
+    def _get_xform(request, queryset, view, keyword):
         xform_id = request.query_params.get('xform')
         if not xform_id:
             lookup_field = view.lookup_field
@@ -76,10 +75,10 @@ class XFormPermissionFilterMixin(object):
             if not lookup:
                 return
             try:
-                xform_id = MetaData.objects.values_list(
-                    'xform_id', flat=True
+                xform_id = queryset.values_list(
+                    '{keyword}_id'.format(keyword=keyword), flat=True
                 ).get(pk=lookup)
-            except MetaData.DoesNotExist:
+            except ObjectDoesNotExist:
                 raise Http404
 
         try:
@@ -89,31 +88,29 @@ class XFormPermissionFilterMixin(object):
                 'Invalid value for formid {form_id}.'.format(form_id=xform_id)
             )
 
-        if not XForm.objects.filter(pk=xform_id).exists():
-            raise Http404
-
-        return xform_id
+        return get_object_or_404(XForm, pk=xform_id)
 
     def _xform_filter_queryset(self, request, queryset, view, keyword):
         """Use XForm permissions"""
 
         xform_qs = XForm.objects.all()
-
-        xform_id = self._get_xform(request, view)
-        anonymous_xform_qs = XForm.objects.none()
+        xform = self._get_xform(request, queryset, view, keyword)
 
         # Anonymous user should not be able to list any data from publicly
         # shared xforms except if they know the direct link.
         # if `xform` is provided (i.e.: `/api/v1/metadata.json?xform=1`) or
         # they access a metadata object (i.e.: `/api/v1/metadata/1.json`)
-        # directly, we include all publicly shared XForm
-        if xform_id:
-            xform_qs = xform_qs.filter(pk=xform_id)
-            anonymous_xform_qs = XForm.objects.filter(shared=True)
+        # directly, we include all publicly shared xforms
+        if xform:
+            if xform.shared:
+                kwargs = {keyword: xform.pk}
+                return queryset.filter(**kwargs)
+
+            xform_qs = xform_qs.filter(pk=xform.pk)
 
         xforms = super(XFormPermissionFilterMixin, self).filter_queryset(
             request, xform_qs, view
-        ) | anonymous_xform_qs
+        )
 
         kwargs = {'{keyword}__in'.format(keyword=keyword): xforms}
         return queryset.filter(**kwargs)

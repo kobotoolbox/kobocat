@@ -1,7 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
-import json
 import os
 
 from django.conf import settings
@@ -146,13 +145,19 @@ class TestMetaDataViewSet(TestAbstractViewSet):
         self._add_test_metadata()
         self.view = MetaDataViewSet.as_view({'get': 'list'})
         data = {'xform': self.xform.pk}
+
+        # Access with anonymous user
         request = self.factory.get('/', data)
         response = self.view(request)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])
 
+        # Access with user bob
         request = self.factory.get('/', data, **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
+        self.assertTrue('xform' in response.data[0])
+        self.assertTrue(response.data[0]['xform'], self.xform.pk)
 
         data['xform'] = 1234509909
         request = self.factory.get('/', data, **self.extra)
@@ -178,9 +183,8 @@ class TestMetaDataViewSet(TestAbstractViewSet):
             self.xform, 'media', self.data_value, self.path, test=False
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        json_ = json.loads(response.render().content)
-        self.assertTrue('xform' in json_.keys())
-        self.assertTrue(json_['xform'], 'Project not found')
+        self.assertTrue('xform' in response.data)
+        self.assertTrue(response.data['xform'], 'Project not found')
 
         # Try with view permission
         assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
@@ -188,10 +192,9 @@ class TestMetaDataViewSet(TestAbstractViewSet):
             self.xform, 'media', self.data_value, self.path, test=False
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        json_ = json.loads(response.render().content)
-        self.assertTrue('xform' in json_.keys())
+        self.assertTrue('xform' in response.data)
         self.assertTrue(
-            json_['xform'],
+            response.data['xform'],
             'You do not have sufficient permissions to perform this action',
         )
 

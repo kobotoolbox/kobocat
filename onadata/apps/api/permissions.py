@@ -180,7 +180,7 @@ class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
 
     def has_object_permission(self, request, view, obj):
 
-        # Grant access to publicly shared XForms.
+        # Grant access to publicly shared xforms.
         if (
             request.method in SAFE_METHODS
             and view.action == 'retrieve'
