@@ -3,8 +3,6 @@
 {% load static %}
 
 {% block before-content %}
-  {% include "legacy_survey.html" %}
-  
   {% if show_dashboard %} 
   <header class="projects-list__header">
     <hgroup class="container">
@@ -22,6 +20,8 @@
     </div>
   </header>
   {% endif %}
+  
+  {% include "legacy_banner.html" %}
 {% endblock %}
 
 <div class="projects__list">

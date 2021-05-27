@@ -35,7 +35,8 @@ body {
 }
 /* for fixed top */
 body {
-  padding-top: 55px !important;
+  /* same as .header-bar height */
+  padding-top: 40px !important;
 }
 .centered, tr td.centered {
   text-align: center;
@@ -226,11 +227,11 @@ ul.inline ul.dropdown-menu {
   background-position: center;
   border-bottom-width: 2px;
   border-bottom-style: solid;
-  
+
 }
 
 ul.breadcrumb  {
-  margin: 0px 0 0 0; 
+  margin: 0px 0 0 0;
 
 }
 .navbar .brand {
