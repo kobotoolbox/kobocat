@@ -1,12 +1,13 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
-from django.core.exceptions import ValidationError
+
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
 
 from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.logger.models import XForm
+from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
 
 METADATA_TYPES = (
     ('data_license', _("Data License")),
@@ -42,16 +43,31 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         if media == 'media' and data_file is None:
             URLValidator(message=_("Invalid url %s." % value))(value)
         if value is None:
-            msg = {'data_value': "This field is required."}
+            msg = {'data_value': _('This field is required.')}
             raise serializers.ValidationError(msg)
 
         return super(MetaDataSerializer, self).validate(attrs)
+
+    def validate_xform(self, xform):
+        request = self.context.get('request')
+
+        if not request.user.has_perm(CAN_VIEW_XFORM, xform):
+            raise serializers.ValidationError(_('Project not found'))
+
+        if not request.user.has_perm(CAN_CHANGE_XFORM, xform):
+            raise serializers.ValidationError(_(
+                'You do not have sufficient permissions to perform this action'
+            ))
+
+        return xform
 
     def create(self, validated_data):
         data_type = validated_data.get('data_type')
         data_file = validated_data.get('data_file')
         xform = validated_data.get('xform')
-        data_value = data_file.name if data_file else validated_data.get('data_value')
+        data_value = (
+            data_file.name if data_file else validated_data.get('data_value')
+        )
         data_file_type = data_file.content_type if data_file else None
 
         return MetaData.objects.create(

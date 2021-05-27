@@ -1,10 +1,13 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function, division, absolute_import
 
+import json
 import os
 
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from guardian.shortcuts import assign_perm
+from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import (
     TestAbstractViewSet)
@@ -12,6 +15,7 @@ from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.models.meta_data import MetaData
 from onadata.libs.serializers.xform_serializer import XFormSerializer
+from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
 
 
 class TestMetaDataViewSet(TestAbstractViewSet):
@@ -159,3 +163,52 @@ class TestMetaDataViewSet(TestAbstractViewSet):
         request = self.factory.get('/', data, **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 400)
+
+    def test_add_metadata_to_not_allowed_xform(self):
+        # Create a project with a different user
+        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        self._login_user_and_profile(extra_post_data=alice_data)
+        # `self.xform` is now owned by alice
+        self.publish_xls_form()
+
+        # Log in as the default user (i.e.: bob)
+        self._login_user_and_profile(extra_post_data=self.default_profile_data)
+        # Try to add metadata to alice's XForm. It should be rejected
+        response = self._add_form_metadata(
+            self.xform, 'media', self.data_value, self.path, test=False
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        json_ = json.loads(response.render().content)
+        self.assertTrue('xform' in json_.keys())
+        self.assertTrue(json_['xform'], 'Project not found')
+
+        # Try with view permission
+        assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
+        response = self._add_form_metadata(
+            self.xform, 'media', self.data_value, self.path, test=False
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        json_ = json.loads(response.render().content)
+        self.assertTrue('xform' in json_.keys())
+        self.assertTrue(
+            json_['xform'],
+            'You do not have sufficient permissions to perform this action',
+        )
+
+    def test_add_metadata_to_shared_xform(self):
+        # Create a project with a different user
+        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        self._login_user_and_profile(extra_post_data=alice_data)
+        # `self.xform` is now owned by alice
+        self.publish_xls_form()
+
+        # Log in as the default user (i.e.: bob)
+        self._login_user_and_profile(
+            extra_post_data=self.default_profile_data)
+
+        # Give bob write access to alice's xform
+        assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
+        assign_perm(CAN_CHANGE_XFORM, self.user, self.xform)
+
+        # Try to add metadata to alice's XForm.
+        self._add_test_metadata()
