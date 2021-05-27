@@ -140,13 +140,11 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
 class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
 
     # Users can read MetaData objects with 'view_xform' permissions and
-    # they can edit MetaData objjects with 'change_xform'.
+    # they can edit MetaData objects with 'change_xform'.
     # DRF get the app label and the model name from the queryset, so we
     # override them the find a match among user's XForm permissions.
     APP_LABEL = 'logger'
     MODEL_NAME = 'xform'
-
-    authenticated_users_only = True
 
     def __init__(self, *args, **kwargs):
         super(MetaDataObjectPermissions, self).__init__(
@@ -157,9 +155,41 @@ class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
         self.perms_map['PUT'] = self.perms_map['PATCH']
         self.perms_map['DELETE'] = self.perms_map['PATCH']
 
+    def has_permission(self, request, view):
+
+        allowed_anonymous_action = ['retrieve']
+
+        try:
+            request.GET['xform']
+        except KeyError:
+            pass
+        else:
+            # Allow anonymous user to list metadata when `xform` parameter is
+            # specified.
+            allowed_anonymous_action.append('list')
+
+        if (
+            request.method in SAFE_METHODS
+            and view.action in allowed_anonymous_action
+        ):
+            return True
+
+        return super(MetaDataObjectPermissions, self).has_permission(
+            request=request, view=view
+        )
+
     def has_object_permission(self, request, view, obj):
+
+        # Grant access to publicly shared XForms.
+        if (
+            request.method in SAFE_METHODS
+            and view.action == 'retrieve'
+            and obj.xform.shared_data
+        ):
+            return True
+
         return super(MetaDataObjectPermissions, self).has_object_permission(
-            request, view, obj.xform
+            request=request, view=view, obj=obj.xform
         )
 
 
