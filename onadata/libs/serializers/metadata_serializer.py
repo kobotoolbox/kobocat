@@ -1,4 +1,7 @@
 # coding: utf-8
+import mimetypes
+
+from django.conf import settings
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
@@ -46,16 +49,21 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         Ensure we have a valid url if we are adding a media uri
         instead of a media file
         """
-        value = attrs.get("data_value")
+        value = attrs.get('data_value')
         media = attrs.get('data_type')
         data_file = attrs.get('data_file')
+        data_file_type = attrs.get('data_file_type')
 
         if media == 'media' and data_file is None:
             URLValidator(message=_("Invalid url %s." % value))(value)
+
         if value is None:
-            msg = {'data_value': "This field is required."}
+            msg = {'data_value': _('This field is required.')}
             raise serializers.ValidationError(msg)
 
+        attrs['data_file_type'] = self._validate_data_file_type(
+            data_file_type=data_file_type, data_file=data_file, data_value=value
+        )
         return super().validate(attrs)
 
     def create(self, validated_data):
@@ -69,9 +77,6 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             data_file.name if data_file else validated_data.get('data_value')
         )
 
-        if not data_file_type:
-            data_file_type = data_file.content_type if data_file else None
-
         return MetaData.objects.create(
             data_type=data_type,
             xform=xform,
@@ -81,3 +86,24 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             file_hash=file_hash,
             from_kpi=from_kpi,
         )
+
+    def _validate_data_file_type(self, data_file_type, data_file, data_value):
+
+        data_value = (
+            data_file.name if data_file else data_value
+        )
+        allowed_types = settings.SUPPORTED_MEDIA_UPLOAD_TYPES
+
+        if not data_file_type:
+            data_file_type = (
+                data_file.content_type
+                if data_file and data_file.content_type in allowed_types
+                else mimetypes.guess_type(data_value)[0]
+            )
+
+        if data_file_type not in allowed_types:
+            raise serializers.ValidationError(
+                {'data_file_type': _('Invalid content type.')}
+            )
+
+        return data_file_type
