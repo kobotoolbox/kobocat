@@ -1,9 +1,6 @@
-# KoBoCAT endpoint removals as of release [kobocat 2.0 - TBD]
+# KoBoCAT endpoint removals as of release 2.021.22
 
-The last release to contain any of the endpoints listed below was [release preceding kobocat 2.0 - TBD].
-
-NB: this assumes that `/<username>/forms/<id_string>/api` and `/<username>/forms/<id_string>/doc/<data_id>`
-have been restored!
+The last release to contain any of the endpoints listed below was [2.021.21](https://github.com/kobotoolbox/kpi/releases/tag/2.021.21).
 
 ## Submission Data Access and Management
 
