@@ -218,7 +218,7 @@ def profile(request, username):
         else:
             data['message'] = form_result
 
-    # If the "Sync XForms" button is pressed in the UI, a call to KPI's
+    # If the "Sync forms" button is pressed in the UI, a call to KPI's
     # `/migrate` endpoint is made to sync kobocat and KPI.
     elif request.GET.get('sync_xforms') == 'true':
         migrate_response = _make_authenticated_request(request, content_user)
