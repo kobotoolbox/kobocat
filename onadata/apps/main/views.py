@@ -469,17 +469,12 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['media_upload'] = MetaData.media_upload(xform)
     # https://html.spec.whatwg.org/multipage/input.html#attr-input-accept
     # e.g. .csv,.xml,text/csv,text/xml
-    data['media_upload_types'] = ','.join(
-        [
-            ','.join(
-                [
-                    '.{}'.format(ct.split('/')[-1])
-                    for ct in settings.SUPPORTED_MEDIA_UPLOAD_TYPES
-                ]
-            ),
-            ','.join(settings.SUPPORTED_MEDIA_UPLOAD_TYPES),
-        ]
-    )
+    media_upload_types = []
+    for supported_type in settings.SUPPORTED_MEDIA_UPLOAD_TYPES:
+        extension = '.{}'.format(supported_type.split('/')[-1])
+        media_upload_types.append(extension)
+        media_upload_types.append(supported_type)
+    data['media_upload_types'] = ','.join(media_upload_types)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)

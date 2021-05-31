@@ -1,10 +1,5 @@
 # coding: utf-8
-from __future__ import (
-    unicode_literals,
-    print_function,
-    division,
-    absolute_import,
-)
+from __future__ import unicode_literals, print_function, division, absolute_import
 
 import mimetypes
 
@@ -54,17 +49,35 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             msg = {'data_value': "This field is required."}
             raise serializers.ValidationError(msg)
 
+        attrs['content_type'] = self._validate_content_type(
+            data_file=data_file, data_value=value
+        )
+
         return super(MetaDataSerializer, self).validate(attrs)
 
     def create(self, validated_data):
         data_type = validated_data.get('data_type')
         data_file = validated_data.get('data_file')
         xform = validated_data.get('xform')
+        content_type = validated_data.get('content_type')
         data_value = (
             data_file.name if data_file else validated_data.get('data_value')
         )
 
+        return MetaData.objects.create(
+            data_type=data_type,
+            xform=xform,
+            data_value=data_value,
+            data_file=data_file,
+            data_file_type=content_type
+        )
+
+    def _validate_content_type(self, data_file, data_value):
+        data_value = (
+            data_file.name if data_file else data_value
+        )
         allowed_types = settings.SUPPORTED_MEDIA_UPLOAD_TYPES
+
         content_type = (
             data_file.content_type
             if data_file and data_file.content_type in allowed_types
@@ -76,11 +89,5 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
                 {'content_type': _('Invalid content type.')}
             )
 
-        return MetaData.objects.create(
-            data_type=data_type,
-            xform=xform,
-            data_value=data_value,
-            data_file=data_file,
-            data_file_type=content_type
-        )
+        return content_type
 
