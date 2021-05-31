@@ -2,7 +2,7 @@
 <h:html xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns:odk="http://www.opendatakit.org/xforms" xmlns:orx="http://openrosa.org/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <h:head>
     <h:title>transportation_2011_07_25</h:title>
-    <model>
+    <model odk:xforms-version="1.0.0">
       <instance>
         <transportation_2011_07_25 id="transportation_2011_07_25">
           <formhub>
@@ -46,18 +46,18 @@
           </meta>
         </transportation_2011_07_25>
       </instance>
-      <bind nodeset="/transportation_2011_07_25/transport/available_transportation_types_to_referral_facility" type="select"/>
+      <bind nodeset="/transportation_2011_07_25/transport/available_transportation_types_to_referral_facility" type="string"/>
       <bind nodeset="/transportation_2011_07_25/transport/available_transportation_types_to_referral_facility_other" relevant="selected(../available_transportation_types_to_referral_facility, 'other')" type="string"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/ambulance/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'ambulance')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/bicycle/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'bicycle')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/boat_canoe/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'boat_canoe')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/bus/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'bus')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/donkey_mule_cart/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'donkey_mule_cart')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/keke_pepe/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'keke_pepe')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/lorry/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'lorry')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/motorbike/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'motorbike')" type="select1"/>
-      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/taxi/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'taxi')" type="select1"/>
-      <bind calculate="concat('uuid:', uuid())" nodeset="/transportation_2011_07_25/meta/instanceID" readonly="true()" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/ambulance/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'ambulance')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/bicycle/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'bicycle')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/boat_canoe/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'boat_canoe')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/bus/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'bus')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/donkey_mule_cart/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'donkey_mule_cart')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/keke_pepe/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'keke_pepe')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/lorry/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'lorry')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/motorbike/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'motorbike')" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/taxi/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'taxi')" type="string"/>
+      <bind jr:preload="uid" nodeset="/transportation_2011_07_25/meta/instanceID" readonly="true()" type="string"/>
       <bind calculate="''" nodeset="/transportation_2011_07_25/formhub/uuid" type="string" />
     </model>
   </h:head>

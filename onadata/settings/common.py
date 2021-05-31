@@ -451,6 +451,9 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
 
+
+MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 60 * 1000
+
 # duration to keep zip exports before deletion (in seconds)
 ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
 
@@ -503,6 +506,7 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'audio/webm',
     'audio/x-m4a',
     'text/csv',
+    'application/xml',
     'application/zip'
 ]
 

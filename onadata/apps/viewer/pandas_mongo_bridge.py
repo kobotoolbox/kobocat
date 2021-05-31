@@ -13,6 +13,7 @@ try:
 except ImportError:
     from pandas import ExcelWriter
 
+from pyxform.constants import SELECT_ALL_THAT_APPLY
 from pyxform.survey_element import SurveyElement
 from pyxform.section import Section, RepeatingSection
 from pyxform.question import Question
@@ -40,8 +41,6 @@ from onadata.libs.utils.export_tools import question_types_to_exclude
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
 
-# the bind type of select multiples that we use to compare
-MULTIPLE_SELECT_BIND_TYPE = "select"
 GEOPOINT_BIND_TYPE = "geopoint"
 
 # column group delimiters
@@ -123,7 +122,7 @@ class AbstractDataFrameBuilder(object):
         return dict([(e.get_abbreviated_xpath(), [c.get_abbreviated_xpath()
                     for c in e.children])
                     for e in dd.get_survey_elements()
-                    if e.bind.get("type") == "select"])
+                    if e.type == SELECT_ALL_THAT_APPLY])
 
     @classmethod
     def _split_select_multiples(cls, record, select_multiples,
@@ -438,9 +437,9 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
                 child_bind_type = child.bind.get("type")
                 if isinstance(child, Question) and not \
                         question_types_to_exclude(child.type)\
-                        and not child_bind_type == MULTIPLE_SELECT_BIND_TYPE:
+                        and not child.type == SELECT_ALL_THAT_APPLY:
                     self._add_column_to_section(section_name, child)
-                elif child_bind_type == MULTIPLE_SELECT_BIND_TYPE:
+                elif child.type == SELECT_ALL_THAT_APPLY:
                     self.select_multiples[child.get_abbreviated_xpath()] = \
                         [option.get_abbreviated_xpath()
                          for option in child.children]

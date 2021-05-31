@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import json
 import os
 from datetime import datetime
+import requests
 
 from bson import json_util
 from django.conf import settings
@@ -30,6 +31,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
 from guardian.shortcuts import assign_perm, remove_perm, get_users_with_perms
 from rest_framework.authtoken.models import Token
+from rest_framework import status
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import Instance, XForm
@@ -215,6 +217,27 @@ def profile(request, username):
                 data['message'] = form_result
         else:
             data['message'] = form_result
+
+    # If the "Sync XForms" button is pressed in the UI, a call to KPI's
+    # `/migrate` endpoint is made to sync kobocat and KPI.
+    elif request.GET.get('sync_xforms') == 'true':
+        migrate_response = _make_authenticated_request(request, content_user)
+        message = {}
+        if migrate_response.status_code == status.HTTP_200_OK:
+            message['text'] = _(
+                'The migration process has started, please check the '
+                'project list in the <a href={}>new interface</a> and ensure '
+                'your projects have synced.'
+            ).format(settings.KOBOFORM_URL)
+        else:
+            message['text'] = _(
+                'Something went wrong trying to migrate your forms. Please try '
+                'again or reach out on the <a'
+                'href="https://community.kobotoolbox.org/">community forum</a> '
+                'for assistance.'
+            )
+
+        data['message'] = message
 
     # profile view...
     # for the same user -> dashboard
@@ -467,6 +490,14 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['data_license'] = MetaData.data_license(xform).data_value
     data['supporting_docs'] = MetaData.supporting_docs(xform)
     data['media_upload'] = MetaData.media_upload(xform)
+    # https://html.spec.whatwg.org/multipage/input.html#attr-input-accept
+    # e.g. .csv,.xml,text/csv,text/xml
+    media_upload_types = []
+    for supported_type in settings.SUPPORTED_MEDIA_UPLOAD_TYPES:
+        extension = '.{}'.format(supported_type.split('/')[-1])
+        media_upload_types.append(extension)
+        media_upload_types.append(supported_type)
+    data['media_upload_types'] = ','.join(media_upload_types)
 
     if is_owner:
         set_xform_owner_data(data, xform, request, username, id_string)
@@ -1393,3 +1424,19 @@ def username_list(request):
         data = [user['username'] for user in users]
 
     return HttpResponse(json.dumps(data), content_type='application/json')
+
+def _make_authenticated_request(request, user):
+    """
+    Make an authenticated request to KPI using the current session.
+    Returns response from KPI.
+    """
+    return requests.get(
+        url=_get_migrate_url(user.username),
+        cookies={settings.SESSION_COOKIE_NAME: request.session.session_key}
+    )
+
+
+def _get_migrate_url(username):
+    return '{kf_url}/api/v2/users/{username}/migrate/'.format(
+        kf_url=settings.KOBOFORM_URL, username=username
+    )

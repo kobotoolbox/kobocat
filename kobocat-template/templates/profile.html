@@ -3,15 +3,25 @@
 {% load static %}
 
 {% block before-content %}
-  {% include "legacy_survey.html" %}
-  
   {% if show_dashboard %} 
   <header class="projects-list__header">
     <hgroup class="container">
           <h1>{%  trans "Projects" %}</h1>
     </hgroup>
+    <div class="container">
+        <form  method="get">
+            <input type="hidden" name="sync_xforms" value="true"/>
+            <span style='float:middle;'>
+                <div>
+                    <input type="submit" class="btn btn-primary" value="{% trans 'Sync XForms' %}" />
+                </div>
+            </span>
+        </form>
+    </div>
   </header>
   {% endif %}
+  
+  {% include "legacy_banner.html" %}
 {% endblock %}
 
 <div class="projects__list">
