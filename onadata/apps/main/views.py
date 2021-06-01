@@ -4,8 +4,8 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import json
 import os
 from datetime import datetime
-import requests
 
+import requests
 from bson import json_util
 from django.conf import settings
 from django.contrib import messages
@@ -225,9 +225,10 @@ def profile(request, username):
         message = {}
         if migrate_response.status_code == status.HTTP_200_OK:
             message['text'] = _(
-                'The migration process has started, please check the '
-                'project list in the <a href={}>new interface</a> and ensure '
-                'your projects have synced.'
+                'The migration process has started and may take several '
+                'minutes. Please check the project list in the '
+                '<a href={}>new interface</a> and ensure your projects have '
+                'synced.'
             ).format(settings.KOBOFORM_URL)
         else:
             message['text'] = _(
