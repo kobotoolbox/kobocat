@@ -53,13 +53,13 @@ class ObjectPermissionsWithViewRestricted(DjangoObjectPermissions):
 
         app_label = (
             model_cls._meta.app_label
-            if not getattr(self, 'APP_LABEL', None)
+            if not hasattr(self, 'APP_LABEL')
             else self.APP_LABEL
         )
 
         model_name = (
             model_cls._meta.model_name
-            if not getattr(self, 'MODEL_NAME', None)
+            if not hasattr(self, 'MODEL_NAME')
             else self.MODEL_NAME
         )
         kwargs = {
