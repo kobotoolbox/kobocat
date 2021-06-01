@@ -49,6 +49,28 @@ class ObjectPermissionsWithViewRestricted(DjangoObjectPermissions):
         # explicitly assigned here as well. Double-check that it's right
         assert self.perms_map['PATCH'] == ['%(app_label)s.change_%(model_name)s']
 
+    def get_required_permissions(self, method, model_cls):
+
+        app_label = (
+            model_cls._meta.app_label
+            if not hasattr(self, 'APP_LABEL')
+            else self.APP_LABEL
+        )
+
+        model_name = (
+            model_cls._meta.model_name
+            if not hasattr(self, 'MODEL_NAME')
+            else self.MODEL_NAME
+        )
+        kwargs = {
+            'app_label': app_label,
+            'model_name': model_name
+        }
+        return [perm % kwargs for perm in self.perms_map[method]]
+
+    def get_required_object_permissions(self, method, model_cls):
+        return self.get_required_permissions(method, model_cls)
+
     authenticated_users_only = False
 
 
@@ -115,69 +137,67 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             request, view, obj)
 
 
-class HasXFormObjectPermissionMixin(object):
-    """Use XForm permissions for Attachment objects"""
+class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
+
+    # Users can read MetaData objects with 'view_xform' permissions and
+    # they can edit MetaData objects with 'change_xform'.
+    # DRF get the app label and the model name from the queryset, so we
+    # override them the find a match among user's XForm permissions.
+    APP_LABEL = 'logger'
+    MODEL_NAME = 'xform'
+
+    def __init__(self, *args, **kwargs):
+        super(MetaDataObjectPermissions, self).__init__(
+            *args, **kwargs
+        )
+        self.perms_map = self.perms_map.copy()
+        self.perms_map['POST'] = self.perms_map['PATCH']
+        self.perms_map['PUT'] = self.perms_map['PATCH']
+        self.perms_map['DELETE'] = self.perms_map['PATCH']
+
     def has_permission(self, request, view):
-        model_cls = None
 
-        # Workaround to ensure DjangoModelPermissions are not applied
-        # to the root view when using DefaultRouter.
-        if (model_cls is None and
-                getattr(view, '_ignore_model_permissions', False)):
+        allowed_anonymous_action = ['retrieve']
+
+        try:
+            request.GET['xform']
+        except KeyError:
+            pass
+        else:
+            # Allow anonymous user to list metadata when `xform` parameter is
+            # specified.
+            allowed_anonymous_action.append('list')
+
+        if (
+            request.method in SAFE_METHODS
+            and view.action in allowed_anonymous_action
+        ):
             return True
 
-        model_cls = XForm
-        perms = self.get_required_permissions(request.method, model_cls)
-
-        if (request.user and
-                (request.user.is_authenticated() or
-                 not self.authenticated_users_only) and
-                request.user.has_perms(perms)):
-
-            return True
-
-        return False
-
-
-class MetaDataObjectPermissions(HasXFormObjectPermissionMixin,
-                                DjangoObjectPermissions):
+        return super(MetaDataObjectPermissions, self).has_permission(
+            request=request, view=view
+        )
 
     def has_object_permission(self, request, view, obj):
 
-        # Originally they monkey patched the permissions object this way:
-        # view.model = XForm
-        # It was already a hack for some permission workaround
-        # (https://github.com/kobotoolbox/kobocat/commit/106c0cbef2ecec9448df1baab7333391972730f8)
-        # It doesn't work with DRF 3 because the model class is retrieved
-        # using get_queryset. We should replace this hack by something
-        # cleaner, but that would need to rework the entire permissions system
-        # so instead, we are keeping the spirit of the original hack
-        # by temporarily patching get_queryset.
+        # Grant access to publicly shared xforms.
+        if (
+            request.method in SAFE_METHODS
+            and view.action == 'retrieve'
+            and obj.xform.shared_data
+        ):
+            return True
 
-        # save all get_queryset to restore it later
-        old_get_qs = view.get_queryset
-
-        # has_object_permission() will do get_queryset().model to get XForm
-        def get_queryset(*args, **kwargs):
-            return XForm.objects.all()
-
-        # patching the method
-        view.get_queryset = get_queryset
-
-        # now getting the perm works
-        parent = super(MetaDataObjectPermissions, self)
-        has_perm = parent.has_object_permission(request, view, obj.xform)
-
-        # putting the true get_queryset back
-        view.get_queryset = old_get_qs
-        return has_perm
+        return super(MetaDataObjectPermissions, self).has_object_permission(
+            request=request, view=view, obj=obj.xform
+        )
 
 
 class AttachmentObjectPermissions(DjangoObjectPermissions):
 
     def __init__(self, *args, **kwargs):
-        # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD. See
-        # http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter
+        # The default `perms_map` does not include GET, OPTIONS, PATCH or HEAD.
+        # See http://www.django-rest-framework.org/api-guide/filtering/#djangoobjectpermissionsfilter  # noqa
         self.perms_map = DjangoObjectPermissions.perms_map.copy()
         self.perms_map['GET'] = ['%(app_label)s.view_xform']
         self.perms_map['OPTIONS'] = ['%(app_label)s.view_xform']

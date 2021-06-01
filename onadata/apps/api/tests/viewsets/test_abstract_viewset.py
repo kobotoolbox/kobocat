@@ -32,7 +32,7 @@ class TestAbstractViewSet(TestCase):
                'transport_2011-07-25_19-06-14']
     main_directory = os.path.dirname(main_tests.__file__)
 
-    profile_data = {
+    default_profile_data = {
         'username': 'bob',
         'email': 'bob@columbia.edu',
         'password1': 'bobbob',
@@ -44,6 +44,8 @@ class TestAbstractViewSet(TestCase):
         'home_page': 'bob.com',
         'twitter': 'boberama'
     }
+
+    profile_data = default_profile_data.copy()
 
     def setUp(self):
         super(TestAbstractViewSet, self).setUp()
@@ -269,7 +271,9 @@ class TestAbstractViewSet(TestCase):
 
         return response
 
-    def _add_form_metadata(self, xform, data_type, data_value, path=None):
+    def _add_form_metadata(
+        self, xform, data_type, data_value, path=None, test=True
+    ):
         data = {
             'data_type': data_type,
             'data_value': data_value,
@@ -281,9 +285,11 @@ class TestAbstractViewSet(TestCase):
                 data.update({
                     'data_file': media_file,
                 })
-                self._post_form_metadata(data)
+                response = self._post_form_metadata(data, test)
         else:
-            self._post_form_metadata(data)
+            response = self._post_form_metadata(data, test)
+
+        return response
 
     def _get_digest_client(self):
         self.user.profile.require_auth = True

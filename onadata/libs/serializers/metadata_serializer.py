@@ -4,13 +4,13 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import mimetypes
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
 
 from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.logger.models import XForm
+from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
 
 METADATA_TYPES = (
     ('data_license', _("Data License")),
@@ -46,7 +46,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         if media == 'media' and data_file is None:
             URLValidator(message=_("Invalid url %s." % value))(value)
         if value is None:
-            msg = {'data_value': "This field is required."}
+            msg = {'data_value': _('This field is required.')}
             raise serializers.ValidationError(msg)
 
         attrs['content_type'] = self._validate_content_type(
@@ -54,6 +54,19 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         )
 
         return super(MetaDataSerializer, self).validate(attrs)
+
+    def validate_xform(self, xform):
+        request = self.context.get('request')
+
+        if not request.user.has_perm(CAN_VIEW_XFORM, xform):
+            raise serializers.ValidationError(_('Project not found'))
+
+        if not request.user.has_perm(CAN_CHANGE_XFORM, xform):
+            raise serializers.ValidationError(_(
+                'You do not have sufficient permissions to perform this action'
+            ))
+
+        return xform
 
     def create(self, validated_data):
         data_type = validated_data.get('data_type')
