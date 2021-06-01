@@ -237,6 +237,11 @@
   .legacy-banner-popup__footer * + * {
     margin-left: 20px;
   }
+
+  .legacy-banner-button__no_projects_override {
+    padding: 0 30px;
+    line-height: 40px;
+  }
 </style>
 
 <!-- 
@@ -273,22 +278,22 @@ THE POPUP
             fill="#FF556A"
           />
         </svg>
-        <span>{% trans "Upgrade to the legacy interface on 14 June 2021" %}</span>
+        <span>{% trans "Changes to the legacy interface on 14 June 2021" %}</span>
       </h1>
 
       <p class="legacy-banner__text">
-        {% trans "On 14 June 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). Thank you to everyone who has participated in our survey over the last months and for responding <a href='https://community.kobotoolbox.org/t/contemplating-the-future-of-kobocat/2743' >to the forum discussion</a >. This updated version has allowed us to upgrade kobocat’s source code and dependencies to ensure proper data security in the long run, and lower the amount of work needed to maintain it. After this date, you will notice the following changes:"%}
+        {% trans "On 14 June 2021 we removed a number of components of this legacy user interface for viewing project data (also known as kobocat). Thank you to everyone who has participated in our survey over the last months and for responding <a href='https://community.kobotoolbox.org/t/contemplating-the-future-of-kobocat/2743' >to the forum discussion</a >. This updated version has allowed us to upgrade kobocat’s source code and dependencies to ensure proper data security in the long run, and lower the amount of work needed to maintain it. You can notice the following changes:"%}
       </p>
 
       <ul class="legacy-banner__text legacy-banner__text--list">
         <li>
-          {% trans "Form uploads will only be supported through the regular interface. Note that even if a setting form configuration is not supported yet in the formbuilder, you can deploy the form from there and it will work the same way as deployed through the legacy interface."%}
+          {% trans "Form uploads are only supported through the regular interface. Note that even if a setting form configuration is not supported yet in the formbuilder, you can deploy the form from there and it will work the same way as deployed through the legacy interface."%}
         </li>
         <li>
-          {% trans "You will be able to sync all your forms that were deployed directly in the legacy interface to make them available as projects in the regular interface (as requested <a href='https://community.kobotoolbox.org/t/how-to-tranfer-data-from-legacy-interface-to-the-shiny-interface/13642' >on the forum</a >)."%}
+          {% trans "You are able to sync all your forms that were deployed directly in the legacy interface to make them available as projects in the regular interface (as requested <a href='https://community.kobotoolbox.org/t/how-to-tranfer-data-from-legacy-interface-to-the-shiny-interface/13642' >on the forum</a >)."%}
         </li>
         <li>
-          {% trans "Form media and all other settings will be handled directly in the regular interface."%}
+          {% trans "Form media and all other settings are handled directly in the regular interface."%}
         </li>
         <li>
           {% trans "You can continue to export data from the legacy interface (XLS, CSV, KML, ZIP)"%}
@@ -296,7 +301,7 @@ THE POPUP
       </ul>
 
       <p class="legacy-banner__text">
-        {% trans "The API will continue to work as before. The the legacy interface will continue to be available for a few more months. After this, the kobocat component will serve for its core responsibility, receiving and storing survey submission data."%}
+        {% trans "The API will continue to work as before. The legacy interface will continue to be available for a few more months. After this, the kobocat component will serve for its core responsibility, receiving and storing survey submission data."%}
       </p>
 
       <footer class="legacy-banner-popup__footer">
@@ -372,11 +377,11 @@ THE BANNER
           fill="#FF556A"
         />
       </svg>
-      <span>{% trans "Upgrade to the legacy interface on 14 June 2021" %}</span>
+      <span>{% trans "Changes to the legacy interface on 14 June 2021" %}</span>
     </h1>
 
     <p class="legacy-banner__text">
-      {% trans "On 14 June 2021 we will remove a number of components of this legacy user interface for viewing project data (also known as kobocat). After this date, the legacy interface will continue to be available for a few more months, with a number of changes." %}
+      {% trans "On 14 June 2021 we removed a number of components of this legacy user interface for viewing project data (also known as kobocat). After this date, the legacy interface will continue to be available for a few more months, with a number of changes." %}
     </p>
   </section>
 </div>

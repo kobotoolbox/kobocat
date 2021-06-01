@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 
+import requests
 from bson import json_util
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -60,7 +61,7 @@ def profile(request, username):
     form = QuickConverterForm()
     data = {'form': form}
 
-    # If the "Sync XForms" button is pressed in the UI, a call to KPI's
+    # If the "Sync forms" button is pressed in the UI, a call to KPI's
     # `/migrate` endpoint is made to sync kobocat and KPI.
     if request.GET.get('sync_xforms') == 'true':
         migrate_response = _make_authenticated_request(request, content_user)
@@ -451,3 +452,20 @@ def form_photos(request, username, id_string):
     data['profilei'], created = UserProfile.objects.get_or_create(user=owner)
 
     return render(request, 'form_photos.html', data)
+
+
+def _make_authenticated_request(request, user):
+    """
+    Make an authenticated request to KPI using the current session.
+    Returns response from KPI.
+    """
+    return requests.get(
+        url=_get_migrate_url(user.username),
+        cookies={settings.SESSION_COOKIE_NAME: request.session.session_key}
+    )
+
+
+def _get_migrate_url(username):
+    return '{kf_url}/api/v2/users/{username}/migrate/'.format(
+        kf_url=settings.KOBOFORM_URL, username=username
+    )
