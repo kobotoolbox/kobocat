@@ -68,9 +68,10 @@ def profile(request, username):
         message = {}
         if migrate_response.status_code == status.HTTP_200_OK:
             message['text'] = _(
-                'The migration process has started, please check the '
-                'project list in the <a href={}>new interface</a> and ensure '
-                'your projects have synced.'
+                'The migration process has started and may take several '
+                'minutes. Please check the project list in the '
+                '<a href={}>new interface</a> and ensure your projects have '
+                'synced.'
             ).format(settings.KOBOFORM_URL)
         else:
             message['text'] = _(
