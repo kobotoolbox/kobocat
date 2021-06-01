@@ -3,8 +3,6 @@
 {% load static %}
 
 {% block before-content %}
-  {% include "legacy_survey.html" %}
-  
   {% if show_dashboard %} 
   <header class="projects-list__header">
     <hgroup class="container">
@@ -12,10 +10,23 @@
     </hgroup>
   </header>
   {% endif %}
+  
+  {% include "legacy_banner.html" %}
 {% endblock %}
 
 <div class="projects__list">
 {% block content %}
+  <div class="container-fluid">
+    <form  method="get">
+      <input type="hidden" name="sync_xforms" value="true"/>
+      <div>
+        <p>
+          Click the button below to make sure all your projects are available in the new interface. All settings, data visualizations, and exports are available there.<br>
+          <div style="text-align: center"><input type="submit" class="btn btn-primary" value="{% trans 'Sync forms' %}"></div>
+        </p>
+      </div>
+    </form>
+  </div>
   {% if show_dashboard %} 
     {% include "published_surveys.html" %}
   {% else %}
