@@ -164,9 +164,12 @@ class MetaData(models.Model):
         return self.data_value
 
     def _set_hash(self):
-        # if `self.file_hash` already exists, keep it. (e.g. KPI sends file
-        # hash among other parameters when files are synchronized.
-        # In case of a remote URL, the hash is the md5 of the URL.
+        """
+        Recalculates `file_hash` if it does not exist already. KPI, for
+        example, sends a precalculated hash of the file content (or of the URL
+        string, if the file is a reference to a remote URL) when synchronizing
+        form media.
+        """
         if self.file_hash:
             return self.file_hash
 
