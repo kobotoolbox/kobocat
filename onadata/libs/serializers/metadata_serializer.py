@@ -30,27 +30,31 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     data_type = serializers.ChoiceField(choices=METADATA_TYPES)
     data_file = serializers.FileField(required=False)
     data_file_type = serializers.CharField(max_length=255, required=False)
+    from_kpi = serializers.BooleanField(required=False)
 
     class Meta:
         model = MetaData
 
     # was previously validate_data_value but the signature change in DRF3.
     def validate(self, attrs):
-        """Ensure we have a valid url if we are adding a media uri
+        """
+        Ensure we have a valid url if we are adding a media uri
         instead of a media file
         """
-        value = attrs.get("data_value")
+        value = attrs.get('data_value')
         media = attrs.get('data_type')
         data_file = attrs.get('data_file')
+        data_file_type = attrs.get('data_file_type')
 
         if media == 'media' and data_file is None:
             URLValidator(message=_("Invalid url %s." % value))(value)
+
         if value is None:
             msg = {'data_value': _('This field is required.')}
             raise serializers.ValidationError(msg)
 
-        attrs['content_type'] = self._validate_content_type(
-            data_file=data_file, data_value=value
+        attrs['data_file_type'] = self._validate_data_file_type(
+            data_file_type=data_file_type, data_file=data_file, data_value=value
         )
 
         return super(MetaDataSerializer, self).validate(attrs)
@@ -71,8 +75,10 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         data_type = validated_data.get('data_type')
         data_file = validated_data.get('data_file')
+        data_file_type = validated_data.get('data_file_type')
+        from_kpi = validated_data.get('from_kpi', False)
         xform = validated_data.get('xform')
-        content_type = validated_data.get('content_type')
+        file_hash = validated_data.get('file_hash')
         data_value = (
             data_file.name if data_file else validated_data.get('data_value')
         )
@@ -82,25 +88,29 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             xform=xform,
             data_value=data_value,
             data_file=data_file,
-            data_file_type=content_type
+            data_file_type=data_file_type,
+            file_hash=file_hash,
+            from_kpi=from_kpi,
         )
 
-    def _validate_content_type(self, data_file, data_value):
+    def _validate_data_file_type(self, data_file_type, data_file, data_value):
+
         data_value = (
             data_file.name if data_file else data_value
         )
         allowed_types = settings.SUPPORTED_MEDIA_UPLOAD_TYPES
 
-        content_type = (
-            data_file.content_type
-            if data_file and data_file.content_type in allowed_types
-            else mimetypes.guess_type(data_value)[0]
-        )
-
-        if content_type not in allowed_types:
-            raise serializers.ValidationError(
-                {'content_type': _('Invalid content type.')}
+        if not data_file_type:
+            data_file_type = (
+                data_file.content_type
+                if data_file and data_file.content_type in allowed_types
+                else mimetypes.guess_type(data_value)[0]
             )
 
-        return content_type
+        if data_file_type not in allowed_types:
+            raise serializers.ValidationError(
+                {'data_file_type': _('Invalid content type.')}
+            )
+
+        return data_file_type
 

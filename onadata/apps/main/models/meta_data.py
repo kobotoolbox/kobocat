@@ -4,15 +4,17 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 import mimetypes
 import os
 import requests
-
 from contextlib import closing
+from hashlib import md5
+
 from django.core.exceptions import ValidationError
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import URLValidator
 from django.db import models
 from django.conf import settings
-from hashlib import md5
+from six.moves.urllib.parse import urlparse
+
 from onadata.apps.logger.models import XForm
 
 CHUNK_SIZE = 1024
@@ -79,7 +81,7 @@ def type_for_form(xform, data_type):
 def create_media(media):
     """Download media link"""
     if is_valid_url(media.data_value):
-        filename = media.data_value.split('/')[-1]
+        filename = media.filename
         data_file = NamedTemporaryFile()
         content_type = mimetypes.guess_type(filename)
         with closing(requests.get(media.data_value, stream=True)) as r:
@@ -128,6 +130,7 @@ class MetaData(models.Model):
     data_file = models.FileField(upload_to=upload_to, blank=True, null=True)
     data_file_type = models.CharField(max_length=255, blank=True, null=True)
     file_hash = models.CharField(max_length=50, blank=True, null=True)
+    from_kpi = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'main'
@@ -144,7 +147,32 @@ class MetaData(models.Model):
         else:
             return self._set_hash()
 
+    @property
+    def filename(self):
+
+        # `self.__filename` has already been cached, return it.
+        if getattr(self, '__filename', None):
+            return self.__filename
+
+        # If it is a remote URL, get the filename from it and return it
+        if self.data_type == 'media' and is_valid_url(self.data_value):
+            parsed_url = urlparse(self.data_value)
+            self.__filename = os.path.basename(parsed_url.path)
+            return self.__filename
+
+        # Return `self.data_value` as fallback
+        return self.data_value
+
     def _set_hash(self):
+        """
+        Recalculates `file_hash` if it does not exist already. KPI, for
+        example, sends a precalculated hash of the file content (or of the URL
+        string, if the file is a reference to a remote URL) when synchronizing
+        form media.
+        """
+        if self.file_hash:
+            return self.file_hash
+
         if not self.data_file:
             return None
 
