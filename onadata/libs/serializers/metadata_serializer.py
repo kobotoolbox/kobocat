@@ -17,6 +17,7 @@ METADATA_TYPES = (
     ('public_link', _("Public Link")),
     ('source', _("Source")),
     ('supporting_doc', _("Supporting Document")),
+    ('paired_data', _("Paired Data")),
 )
 
 

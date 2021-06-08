@@ -143,11 +143,7 @@ class MetaData(models.Model):
 
     @property
     def is_paired_data(self) -> bool:
-        pattern = (
-            rf'{settings.KOBOFORM_URL}/'
-            r'api/v2/assets/[^\/]+/paired-data/pd[^\/]+/external\.xml$'
-        )
-        return re.match(pattern, self.data_value)
+        return self.data_file_type == 'paired_data'
 
     def save(self, *args, **kwargs):
         self.date_modified = timezone.now()
