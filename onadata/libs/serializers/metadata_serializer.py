@@ -8,6 +8,7 @@ from rest_framework import serializers
 
 from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.logger.models import XForm
+from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
 
 METADATA_TYPES = (
     ('data_license', _("Data License")),
@@ -65,6 +66,19 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             data_file_type=data_file_type, data_file=data_file, data_value=value
         )
         return super().validate(attrs)
+
+    def validate_xform(self, xform):
+        request = self.context.get('request')
+
+        if not request.user.has_perm(CAN_VIEW_XFORM, xform):
+            raise serializers.ValidationError(_('Project not found'))
+
+        if not request.user.has_perm(CAN_CHANGE_XFORM, xform):
+            raise serializers.ValidationError(_(
+                'You do not have sufficient permissions to perform this action'
+            ))
+
+        return xform
 
     def create(self, validated_data):
         data_type = validated_data.get('data_type')
