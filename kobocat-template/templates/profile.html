@@ -12,6 +12,7 @@
             margin-left: 20px;
             margin-right: 20px;
         }
+
         .legacy-warning a {
             color: darkred;
             text-decoration: underline;
@@ -31,42 +32,59 @@
     {% endif %}
 {% endblock %}
 
+{% block before-content %}
+    {% include "legacy_banner.html" %}
+{% endblock %}
+
 <div class="projects__list">
     {% block content %}
-        {% if show_dashboard %}
-            {% include "published_surveys.html" %}
-        {% else %}
-            <!-- user is not logged in -->
-            <script type="text/javascript">
-                console && console.log && console.log("profile.html: redirect to login?")
-            </script>
+        {% if all_forms or forms_shared_with %}
+            <div class="container-fluid">
+                <form method="get">
+                    <input type="hidden" name="sync_xforms" value="true"/>
+                    <div>
+                        <p>
+                            Click the <b>Sync form</b> button below to make sure all your projects
+                            are available in the <a href="{{ koboform_url }}">new
+                            interface</a>.
+                            All settings, data visualizations, and exports are
+                            available there.<br>
+                            <div style="text-align: center">
+                                <button type="submit" class="legacy-banner__button legacy-banner__button--gray">
+                                    {% trans 'Sync forms' %}
+                                </button>
+                                <a class="legacy-banner__button legacy-banner-button__no_projects_override" href="{{ koboform_url }}" target="_blank">
+                                    {% trans "Go to regular interface" %}
+                                </a>
+                            </div>
+                        </p>
+                    </div>
+                </form>
+            </div>
+            {% if show_dashboard %}
+                {% include "published_surveys.html" %}
+            {% else %}
+                <!-- user is not logged in -->
+                <script type="text/javascript">
+                    console && console.log && console.log("profile.html: redirect to login?")
+                </script>
+            {% endif %}
         {% endif %}
     {% endblock %}
 </div>
 
 {% block below-content %}
-    {% if show_dashboard %}
-
+    {% if show_dashboard and not all_forms and not forms_shared_with %}
         <div class="container-fluid container__wide projects__advanced">
-            {% if all_forms or forms_shared_with %}
-            {% else %}
-                <div class="projects__empty">
-                    <p>{% trans "You currently have no projects yet." %}</p>
-                    <p>{% trans "You can create a project by deploying one of your forms." %}</p>
-                    {% if koboform_url %}
-                        <p><a href="{{ koboform_url }}/">{% trans "Click here to go to your forms list." %}</a></p>
-                    {% endif %}
-                </div>
-            {% endif %}
-
-            <div class="legacy-warning">
-                <div class="container">
-                    We no longer support deploying projects directly from the legacy interface.<br>
-                    Please use the <a href="{{ koboform_url }}">new interface</a> to
-                    deploy your projects and access to all our new shiny tools and features.
-                </div>
+            <div class="projects__empty">
+                <p>{% trans "You currently have no projects yet." %}</p>
+                <p>{% trans "You can create a project by deploying one of your forms." %}</p>
+                {% if koboform_url %}
+                    <p>
+                        <a class="legacy-banner__button legacy-banner-button__no_projects_override" href="{{ koboform_url }}" target="_blank">{% trans "Go to regular interface" %}</a>
+                    </p>
+                {% endif %}
             </div>
-
         </div>
     {% endif %}
 {% endblock %}

@@ -210,14 +210,13 @@ class MetaData(models.Model):
 
     def _set_hash(self) -> str:
         """
-        Sets `self.file_hash` if it is empty and returns it if no errors occur.
-        Otherwise, it returns an empty string
-
-        Notes: KoBoCAT returns an empty string is the object is a URL, but KPI
-        does not. KPI always sets the hash when it synchronizes media files with
-        KoBoCAT. Thus, if `self.from_kpi` is True, the hash should be calculated
-        no matter what.
+        Recalculates `file_hash` if it does not exist already. KPI, for
+        example, sends a precalculated hash of the file content (or of the URL
+        string, if the file is a reference to a remote URL) when synchronizing
+        form media.
         """
+        if self.file_hash:
+            return self.file_hash
 
         if self.file_hash:
             return self.file_hash

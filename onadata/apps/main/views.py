@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 
+import requests
 from bson import json_util
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -20,6 +21,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_http_methods
 from rest_framework.authtoken.models import Token
+from rest_framework import status
 from ssrf_protect.ssrf_protect import SSRFProtect, SSRFProtectException
 
 from onadata.apps.logger.models import XForm
@@ -28,8 +30,7 @@ from onadata.apps.main.forms import (
 )
 from onadata.apps.main.forms import QuickConverterForm
 from onadata.apps.main.models import UserProfile, MetaData
-from onadata.apps.viewer.models.parsed_instance import \
-    DATETIME_FORMAT, ParsedInstance
+from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
@@ -59,6 +60,28 @@ def profile(request, username):
     content_user = get_object_or_404(User, username__iexact=username)
     form = QuickConverterForm()
     data = {'form': form}
+
+    # If the "Sync forms" button is pressed in the UI, a call to KPI's
+    # `/migrate` endpoint is made to sync kobocat and KPI.
+    if request.GET.get('sync_xforms') == 'true':
+        migrate_response = _make_authenticated_request(request, content_user)
+        message = {}
+        if migrate_response.status_code == status.HTTP_200_OK:
+            message['text'] = _(
+                'The migration process has started and may take several '
+                'minutes. Please check the project list in the '
+                '<a href={}>regular interface</a> and ensure your projects have '
+                'synced.'
+            ).format(settings.KOBOFORM_URL)
+        else:
+            message['text'] = _(
+                'Something went wrong trying to migrate your forms. Please try '
+                'again or reach out on the <a'
+                'href="https://community.kobotoolbox.org/">community forum</a> '
+                'for assistance.'
+            )
+
+        data['message'] = message
 
     # profile view...
     # for the same user -> dashboard
@@ -188,6 +211,14 @@ def show_form_settings(request, username=None, id_string=None, uuid=None):
     data['base_url'] = "https://%s" % request.get_host()
     data['source'] = MetaData.source(xform)
     data['media_upload'] = MetaData.media_upload(xform)
+    # https://html.spec.whatwg.org/multipage/input.html#attr-input-accept
+    # e.g. .csv,.xml,text/csv,text/xml
+    media_upload_types = []
+    for supported_type in settings.SUPPORTED_MEDIA_UPLOAD_TYPES:
+        extension = '.{}'.format(supported_type.split('/')[-1])
+        media_upload_types.append(extension)
+        media_upload_types.append(supported_type)
+    data['media_upload_types'] = ','.join(media_upload_types)
 
     if is_owner:
         data['media_form'] = MediaForm()
@@ -424,3 +455,20 @@ def form_photos(request, username, id_string):
     data['profilei'], created = UserProfile.objects.get_or_create(user=owner)
 
     return render(request, 'form_photos.html', data)
+
+
+def _make_authenticated_request(request, user):
+    """
+    Make an authenticated request to KPI using the current session.
+    Returns response from KPI.
+    """
+    return requests.get(
+        url=_get_migrate_url(user.username),
+        cookies={settings.SESSION_COOKIE_NAME: request.session.session_key}
+    )
+
+
+def _get_migrate_url(username):
+    return '{kf_url}/api/v2/users/{username}/migrate/'.format(
+        kf_url=settings.KOBOFORM_URL, username=username
+    )
