@@ -127,8 +127,9 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         media_files = {}
         expired_objects = False
         # Retrieve all media files for the current form
-        queryset = MetaData.objects.filter(data_type='media',
-                                           xform=self.object)
+        queryset = MetaData.objects.filter(
+            data_type__in=['media', 'paired_data'], xform=self.object
+        )
         object_list = queryset.all()
 
         # Keep only media files that are not considered as expired.
@@ -169,6 +170,9 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             raise Http404()
 
         meta_obj = get_object_or_404(
-            MetaData, data_type='media', xform=self.object, pk=pk)
-
+            MetaData,
+            data_type__in=['media', 'paired_data'],
+            xform=self.object,
+            pk=pk,
+        )
         return get_media_file_response(meta_obj, request)

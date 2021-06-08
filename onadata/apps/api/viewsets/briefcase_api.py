@@ -236,8 +236,9 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
         self.object = self.get_object()
-        object_list = MetaData.objects.filter(data_type='media',
-                                              xform=self.object)
+        object_list = MetaData.objects.filter(
+            data_type__in=['media', 'paired_data'], xform=self.object
+        )
         context = self.get_serializer_context()
         serializer = XFormManifestSerializer(object_list, many=True,
                                              context=context)
@@ -255,6 +256,10 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
             raise Http404()
 
         meta_obj = get_object_or_404(
-            MetaData, data_type='media', xform=self.object, pk=pk)
+            MetaData,
+            data_type__in=['media', 'paired_data'],
+            xform=self.object,
+            pk=pk,
+        )
 
         return get_media_file_response(meta_obj, request)
