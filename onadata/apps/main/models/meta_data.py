@@ -1,7 +1,6 @@
 # coding: utf-8
 import mimetypes
 import os
-import re
 import requests
 from contextlib import closing
 
@@ -152,7 +151,7 @@ class MetaData(models.Model):
         super().save(*args, **kwargs)
 
     @property
-    def hash(self) -> str:
+    def md5_hash(self) -> str:
         return self._set_hash()
 
     @property

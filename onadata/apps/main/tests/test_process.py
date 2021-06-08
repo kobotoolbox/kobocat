@@ -428,7 +428,7 @@ class TestProcess(TestBase):
         md = MetaData.objects.get(xform=self.xform,
                                   data_value='screenshot.png')
         # assert checksum string has been generated, hash length > 1
-        self.assertTrue(len(md.hash) > 16)
+        self.assertTrue(len(md.md5_hash) > 16)
 
     def test_uuid_injection_in_cascading_select(self):
         """

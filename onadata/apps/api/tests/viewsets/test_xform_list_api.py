@@ -37,7 +37,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         with open(path, 'r') as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
             content = response.render().content
             self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
@@ -82,7 +82,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         with open(path, 'r') as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
             content = response.render().content
             self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
@@ -189,7 +189,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         with open(path, 'r') as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
             content = response.render().content
             self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
@@ -219,7 +219,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         with open(path) as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
             content = response.render().content.decode('utf-8')
             self.assertEqual(content, form_list_xml % data)
 
@@ -279,7 +279,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         manifest_xml = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
-        data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
+        data = {"hash": self.metadata.md5_hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
         content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)
@@ -303,7 +303,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         manifest_xml = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
-        data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
+        data = {"hash": self.metadata.md5_hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
         content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)

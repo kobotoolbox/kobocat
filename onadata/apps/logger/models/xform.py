@@ -224,7 +224,7 @@ class XForm(BaseModel):
             pass
 
     @property
-    def hash(self):
+    def md5_hash(self):
         return get_hash(self.xml)
 
     @property
