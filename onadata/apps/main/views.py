@@ -70,7 +70,7 @@ def profile(request, username):
             message['text'] = _(
                 'The migration process has started and may take several '
                 'minutes. Please check the project list in the '
-                '<a href={}>new interface</a> and ensure your projects have '
+                '<a href={}>regular interface</a> and ensure your projects have '
                 'synced.'
             ).format(settings.KOBOFORM_URL)
         else:

@@ -45,8 +45,7 @@
                     <div>
                         <p>
                             Click the <b>Sync form</b> button below to make sure all your projects
-                            are available in the <a href="{{ koboform_url }}">new
-                            interface</a>.
+                            are available in the <a href="{{ koboform_url }}">regular interface</a>.
                             All settings, data visualizations, and exports are
                             available there.<br>
                             <div style="text-align: center">
@@ -54,7 +53,7 @@
                                     {% trans 'Sync forms' %}
                                 </button>
                                 <a class="legacy-banner__button legacy-banner-button__no_projects_override" href="{{ koboform_url }}" target="_blank">
-                                    {% trans "Go to new interface" %}
+                                    {% trans "Go to regular interface" %}
                                 </a>
                             </div>
                         </p>
@@ -81,7 +80,7 @@
                 <p>{% trans "You can create a project by deploying one of your forms." %}</p>
                 {% if koboform_url %}
                     <p>
-                        <a class="legacy-banner__button legacy-banner-button__no_projects_override" href="{{ koboform_url }}" target="_blank">{% trans "Go to new interface" %}</a>
+                        <a class="legacy-banner__button legacy-banner-button__no_projects_override" href="{{ koboform_url }}" target="_blank">{% trans "Go to regular interface" %}</a>
                     </p>
                 {% endif %}
             </div>
