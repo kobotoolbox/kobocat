@@ -530,6 +530,7 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'audio/webm',
     'audio/x-m4a',
     'text/csv',
+    'application/xml',
     'application/zip'
 ]
 
