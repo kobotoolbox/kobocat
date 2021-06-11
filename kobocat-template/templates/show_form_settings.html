@@ -46,7 +46,7 @@
               </ul>
               <div class="tab-content">
                   <div class="tab-pane active" id="media_upload">
-                      <input type="file" multiple="" name="media" id="id_media">
+                      <input type="file" accept="{{ media_upload_types }}" multiple="" name="media" id="id_media">
                       <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
                   </div>
                   <div class="tab-pane" id="media_url_add">

@@ -504,13 +504,6 @@ ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
 # default content length for submission requests
 DEFAULT_CONTENT_LENGTH = 10000000
 
-# TODO pass these variables from `kobo-docker` envfiles
-# re-captcha in registrations
-REGISTRATION_REQUIRE_CAPTCHA = False
-RECAPTCHA_USE_SSL = False
-RECAPTCHA_PRIVATE_KEY = ''
-RECAPTCHA_PUBLIC_KEY = '6Ld52OMSAAAAAJJ4W-0TFDTgbznnWWFf0XuOSaB6'
-
 # Use 1 or 0 for multiple selects instead of True or False for csv, xls exports
 BINARY_SELECT_MULTIPLES = False
 
@@ -537,6 +530,7 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'audio/webm',
     'audio/x-m4a',
     'text/csv',
+    'application/xml',
     'application/zip'
 ]
 

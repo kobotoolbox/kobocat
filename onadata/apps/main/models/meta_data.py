@@ -1,7 +1,6 @@
 # coding: utf-8
 import mimetypes
 import os
-import re
 import requests
 from contextlib import closing
 
@@ -126,6 +125,12 @@ def media_resources(media_list, download=False):
 
 
 class MetaData(models.Model):
+
+    MEDIA_FILES_TYPE = [
+        'media',
+        'paired_data',
+    ]
+
     xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     data_type = models.CharField(max_length=255)
     data_value = models.CharField(max_length=255)
@@ -143,11 +148,7 @@ class MetaData(models.Model):
 
     @property
     def is_paired_data(self) -> bool:
-        pattern = (
-            rf'{settings.KOBOFORM_URL}/'
-            r'api/v2/assets/[^\/]+/paired-data/pd[^\/]+/external\.xml$'
-        )
-        return re.match(pattern, self.data_value)
+        return self.data_file_type == 'paired_data'
 
     def save(self, *args, **kwargs):
         self.date_modified = timezone.now()
@@ -156,7 +157,7 @@ class MetaData(models.Model):
         super().save(*args, **kwargs)
 
     @property
-    def hash(self) -> str:
+    def md5_hash(self) -> str:
         return self._set_hash()
 
     @property
@@ -196,7 +197,10 @@ class MetaData(models.Model):
             return self.__filename
 
         # If it is a remote URL, get the filename from it and return it
-        if self.data_type == 'media' and is_valid_url(self.data_value):
+        if (
+            self.data_type in self.MEDIA_FILES_TYPE
+            and is_valid_url(self.data_value)
+        ):
             if self.data_filename:
                 self.__filename = self.data_filename
             else:
@@ -210,14 +214,13 @@ class MetaData(models.Model):
 
     def _set_hash(self) -> str:
         """
-        Sets `self.file_hash` if it is empty and returns it if no errors occur.
-        Otherwise, it returns an empty string
-
-        Notes: KoBoCAT returns an empty string is the object is a URL, but KPI
-        does not. KPI always sets the hash when it synchronizes media files with
-        KoBoCAT. Thus, if `self.from_kpi` is True, the hash should be calculated
-        no matter what.
+        Recalculates `file_hash` if it does not exist already. KPI, for
+        example, sends a precalculated hash of the file content (or of the URL
+        string, if the file is a reference to a remote URL) when synchronizing
+        form media.
         """
+        if self.file_hash:
+            return self.file_hash
 
         if self.file_hash:
             return self.file_hash
