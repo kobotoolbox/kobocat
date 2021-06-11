@@ -402,7 +402,7 @@ def delete_metadata(request, username, id_string, data_id):
     dfs = get_storage_class()()
     req_username = request.user.username
     if request.GET.get('del', False) and username == req_username:
-        # try:
+        try:
             dfs.delete(data.data_file.name)
             data.delete()
             audit = {
@@ -419,5 +419,5 @@ def delete_metadata(request, username, id_string, data_id):
                 'username': username,
                 'id_string': id_string
             }))
-        # except Exception:
-        #     return HttpResponseServerError()
+        except Exception:
+            return HttpResponseServerError()
