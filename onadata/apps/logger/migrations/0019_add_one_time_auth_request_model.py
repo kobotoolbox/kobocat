@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logger', '0017_remove_xform_sms'),
+        ('logger', '0018_add_submission_counter'),
     ]
 
     operations = [
