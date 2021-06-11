@@ -125,6 +125,12 @@ def media_resources(media_list, download=False):
 
 
 class MetaData(models.Model):
+
+    MEDIA_FILES_TYPE = [
+        'media',
+        'paired_data',
+    ]
+
     xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     data_type = models.CharField(max_length=255)
     data_value = models.CharField(max_length=255)
@@ -191,7 +197,10 @@ class MetaData(models.Model):
             return self.__filename
 
         # If it is a remote URL, get the filename from it and return it
-        if self.data_type == 'media' and is_valid_url(self.data_value):
+        if (
+            self.data_type in self.MEDIA_FILES_TYPE
+            and is_valid_url(self.data_value)
+        ):
             if self.data_filename:
                 self.__filename = self.data_filename
             else:
