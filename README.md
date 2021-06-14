@@ -90,15 +90,10 @@ For all other users, enter the container using this command
 $ docker exec -it {{kobocat container}} /bin/bash
 ```
 
-Run pip install the development dependancies
+Run pip install the development dependencies
 
 ``` sh
 $ pip install -r requirements/dev.pip
-```
-Install libsqlite3-mod-spatialite for the testing database
-
-``` sh
-$ apt-get update && apt-get install libsqlite3-mod-spatialite
 ```
 
 Run pytest to run all automated tests
