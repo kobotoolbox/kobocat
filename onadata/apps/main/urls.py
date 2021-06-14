@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.contrib import admin
 
-from django.urls import include, re_path
+from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 from django.views.i18n import JavaScriptCatalog
 
@@ -26,7 +26,10 @@ from onadata.apps.main.views import (
     delete_metadata,
     download_metadata,
     download_media_data,
-    show_form_settings
+    show_form_settings,
+
+    # views that now exist only in KPI
+    make_kpi_data_redirect_view,
 )
 
 # exporting stuff
@@ -111,6 +114,21 @@ urlpatterns = [
             r'(?P<data_id>\d+)', download_media_data, name='download_media_data'),
     re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/form_settings$',
             show_form_settings, name='show_form_settings'),
+    path(
+        '<str:username>/reports/<str:id_string>/export.html',
+        make_kpi_data_redirect_view('table'),
+        name='redirect_view_data_in_table_to_kpi',
+    ),
+    path(
+        '<str:username>/reports/<str:id_string>/digest.html',
+        make_kpi_data_redirect_view('report'),
+        name='redirect_analyze_data_to_kpi',
+    ),
+    path(
+        '<str:username>/forms/<str:id_string>/map',
+        make_kpi_data_redirect_view('map'),
+        name='redirect_map_to_kpi',
+    ),
 
     # briefcase api urls
     re_path(r"^(?P<username>\w+)/view/submissionList$",

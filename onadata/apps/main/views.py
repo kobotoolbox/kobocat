@@ -40,6 +40,7 @@ from onadata.libs.utils.user_auth import (
     add_cors_headers,
     check_and_set_user_and_form,
     get_xform_and_perms,
+    has_permission,
     helper_auth_helper,
     set_profile_data,
 )
@@ -184,6 +185,11 @@ def show(request, username=None, id_string=None, uuid=None):
 
     if is_owner:
         data['media_form'] = MediaForm()
+
+    if xform.kpi_asset_uid:
+        data['kpi_url'] = (
+            f'{settings.KOBOFORM_URL}/#/forms/{xform.kpi_asset_uid}'
+        )
 
     return render(request, "show.html", data)
 
@@ -544,3 +550,19 @@ def _get_migrate_url(username):
     return '{kf_url}/api/v2/users/{username}/migrate/'.format(
         kf_url=settings.KOBOFORM_URL, username=username
     )
+
+def make_kpi_data_redirect_view(kpi_data_route):
+    def view_func(request, username, id_string):
+        owner = get_object_or_404(User, username__iexact=username)
+        xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
+        if not has_permission(xform, owner, request):
+            return HttpResponseForbidden(_('Not shared.'))
+        data = {'xform': xform}
+        if xform.kpi_asset_uid:
+            data['kpi_url'] = (
+                f'{settings.KOBOFORM_URL}/#/forms/{xform.kpi_asset_uid}/data/'
+                f'{kpi_data_route}'
+            )
+        return render(request, 'outdated_data_view.html', data)
+
+    return view_func
