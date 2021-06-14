@@ -178,8 +178,13 @@ def dict_to_joined_export(data, index, indices, name):
 
 
 class ExportBuilder(object):
-    IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION,
-                       DELETEDAT]
+    IGNORED_COLUMNS = [
+        XFORM_ID_STRING,
+        STATUS,
+        ATTACHMENTS,
+        GEOLOCATION,
+        DELETEDAT,  # no longer used but may persist in old submissions
+    ]
     # fields we export but are not within the form's structure
     EXTRA_FIELDS = [ID, UUID, SUBMISSION_TIME, INDEX, PARENT_TABLE_NAME,
                     PARENT_INDEX, TAGS, NOTES]
@@ -767,9 +772,10 @@ def query_mongo(username, id_string, query=None):
 
 
 def should_create_new_export(xform, export_type):
-    if Export.objects.filter(
-            xform=xform, export_type=export_type).count() == 0\
-            or Export.exports_outdated(xform, export_type=export_type):
+    if (
+        not Export.objects.filter(xform=xform, export_type=export_type).exists()
+        or Export.exports_outdated(xform, export_type=export_type)
+    ):
         return True
     return False
 

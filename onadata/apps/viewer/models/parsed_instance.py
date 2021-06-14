@@ -22,7 +22,6 @@ from onadata.libs.utils.common_tags import (
     GEOLOCATION,
     SUBMISSION_TIME,
     MONGO_STRFTIME,
-    DELETEDAT,
     TAGS,
     NOTES,
     SUBMITTED_BY,
@@ -249,9 +248,6 @@ class ParsedInstance(models.Model):
             SUBMITTED_BY: self.instance.user.username
             if self.instance.user else None
         }
-
-        if isinstance(self.instance.deleted_at, datetime.datetime):
-            data[DELETEDAT] = self.instance.deleted_at.strftime(MONGO_STRFTIME)
 
         d.update(data)
 

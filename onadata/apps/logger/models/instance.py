@@ -24,7 +24,6 @@ from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
     ATTACHMENTS,
-    DELETEDAT,
     GEOLOCATION,
     ID,
     MONGO_STRFTIME,
@@ -91,6 +90,28 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
         )
 
 
+def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
+    """
+    Formerly, "deleting" a submission would set a flag on the `Instance`,
+    causing the `date_modified` attribute to be set to the current timestamp.
+    `Export.exports_outdated()` relied on this to detect when a new `Export`
+    needed to be generated due to submission deletion, but now that we always
+    delete `Instance`s outright, this trick doesn't work. This kludge simply
+    makes every `Export` for a form appear stale by nulling out its
+    `time_of_last_submission` attribute.
+    """
+    # Avoid circular import
+    try:
+        export_model = instance.xform.export_set.model
+    except XForm.DoesNotExist:
+        return
+    f = instance.xform.export_set.filter(
+        # Match the statuses considered by `Export.exports_outdated()`
+        internal_status__in=[export_model.SUCCESSFUL, export_model.PENDING],
+    )
+    f.update(time_of_last_submission=None)
+
+
 def update_xform_submission_count_delete(sender, instance, **kwargs):
     try:
         xform = XForm.objects.select_for_update().get(pk=instance.xform.pk)
@@ -133,7 +154,8 @@ class Instance(models.Model):
     # this will end up representing "date last parsed"
     date_modified = models.DateTimeField(auto_now=True)
 
-    # this will end up representing "date instance was deleted"
+    # this formerly represented "date instance was deleted".
+    # do not use it anymore.
     deleted_at = models.DateTimeField(null=True, default=None)
 
     # ODK keeps track of three statuses for an instance:
@@ -171,10 +193,6 @@ class Instance(models.Model):
         :return: XForm
         """
         return self.xform
-
-    @classmethod
-    def set_deleted_at(cls, instance_id, deleted_at=timezone.now()):
-        raise Exception('This method MUST NOT be used.')
 
     def _check_active(self, force):
         """Check that form is active and raise exception if not.
@@ -331,9 +349,6 @@ class Instance(models.Model):
             NOTES: self.get_notes()
         }
 
-        if isinstance(self.instance.deleted_at, datetime):
-            data[DELETEDAT] = self.deleted_at.strftime(MONGO_STRFTIME)
-
         d.update(data)
 
         return d
@@ -386,9 +401,6 @@ class Instance(models.Model):
 
         super(Instance, self).save(*args, **kwargs)
 
-    def set_deleted(self, deleted_at=timezone.now()):
-        raise Exception('This method MUST NOT be used.')
-
     def get_validation_status(self):
         """
         Returns instance validation status.
@@ -404,6 +416,9 @@ class Instance(models.Model):
 
 post_save.connect(update_xform_submission_count, sender=Instance,
                   dispatch_uid='update_xform_submission_count')
+
+post_delete.connect(nullify_exports_time_of_last_submission, sender=Instance,
+                  dispatch_uid='nullify_exports_time_of_last_submission')
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
