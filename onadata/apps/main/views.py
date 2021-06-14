@@ -1225,7 +1225,8 @@ def delete_data(request, username=None, id_string=None):
     if not data_id:
         return HttpResponseBadRequest(_("id must be specified"))
 
-    Instance.set_deleted_at(data_id)
+    doomed_instance = get_object_or_404(Instance, pk=data_id)
+    doomed_instance.delete()
     audit = {
         'xform': xform.id_string
     }

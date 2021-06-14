@@ -41,19 +41,9 @@ class Command(BaseCommand):
             help="Specify a XForm's `id_string` to clean up only this form",
         )
 
-        parser.add_argument(
-            "--purge",
-            action='store_true',
-            default=False,
-            help="Erase duplicate `Instance`s from the database entirely instead "
-                 "of marking them as deleted using the `deleted_at` attribute. "
-                 "Default is False",
-        )
-
     def handle(self, *args, **options):
         username = options['user']
         xform_id_string = options['xform']
-        purge = options['purge']
 
         # Retrieve all instances with the same `uuid`.
         query = Instance.objects
@@ -63,13 +53,6 @@ class Command(BaseCommand):
         if username:
             query = query.filter(xform__user__username=username)
 
-        # if we don't purge, we don't want to see instances
-        # that have been marked as deleted. However, if we do purge
-        # we do need these instances to be in the list in order
-        # to delete them permanently
-        if not purge:
-            query = query.filter(deleted_at=None)
-
         query = query.values_list('uuid', flat=True)\
             .annotate(count_uuid=Count('uuid'))\
             .filter(count_uuid__gt=1)\
@@ -78,13 +61,6 @@ class Command(BaseCommand):
         for uuid in query.all():
 
             duplicated_query = Instance.objects.filter(uuid=uuid)
-
-            # if we don't purge, we don't want to see instances
-            # that have been marked as deleted. However, if we do purge
-            # we do need these instances to be in the list in order
-            # to delete them permanently
-            if not purge:
-                duplicated_query = duplicated_query.filter(deleted_at=None)
 
             instances_with_same_uuid = duplicated_query.values_list('id',
                                                                     'xml_hash')\
@@ -99,8 +75,7 @@ class Command(BaseCommand):
 
                 if instance_xml_hash != xml_hash_ref:
                     self.__clean_up(instance_id_ref,
-                                    duplicated_instance_ids,
-                                    purge)
+                                    duplicated_instance_ids)
                     xml_hash_ref = instance_xml_hash
                     instance_id_ref = instance_id
                     duplicated_instance_ids = []
@@ -109,14 +84,10 @@ class Command(BaseCommand):
                 duplicated_instance_ids.append(instance_id)
 
             self.__clean_up(instance_id_ref,
-                            duplicated_instance_ids,
-                            purge)
+                            duplicated_instance_ids)
 
         if not self.__vaccuum:
-            if purge:
-                self.stdout.write('No instances have been purged.')
-            else:
-                self.stdout.write('No instances have been marked as deleted.')
+            self.stdout.write('No instances have been purged.')
         else:
             # Update number of submissions for each user.
             for user_ in list(self.__users):
@@ -130,7 +101,7 @@ class Command(BaseCommand):
                 self.stdout.write(
                     '\t\tDone! New number: {}'.format(result['count']))
 
-    def __clean_up(self, instance_id_ref, duplicated_instance_ids, purge):
+    def __clean_up(self, instance_id_ref, duplicated_instance_ids):
         if instance_id_ref is not None and len(duplicated_instance_ids) > 0:
             self.__vaccuum = True
             with transaction.atomic():
@@ -146,30 +117,15 @@ class Command(BaseCommand):
                     .get(id=instance_id_ref)
                 main_instance.parsed_instance.save()
 
-                if purge:
-                    self.stdout.write('\tPurging instances: {}'.format(
-                        duplicated_instance_ids))
-                    Instance.objects.select_for_update()\
-                        .filter(id__in=duplicated_instance_ids).delete()
-                    ParsedInstance.objects.select_for_update()\
-                        .filter(instance_id__in=duplicated_instance_ids).delete()
-                    settings.MONGO_DB.instances.remove(
-                        {'_id': {'$in': duplicated_instance_ids}}
-                    )
-                else:
-                    self.stdout.write('\tMarking instances as deleted: {}'.format(
-                        duplicated_instance_ids))
-                    # We could loop through instances and use `Instance.set_deleted()`
-                    # but it would be way slower.
-                    Instance.objects.select_for_update()\
-                        .filter(id__in=duplicated_instance_ids)\
-                        .update(deleted_at=timezone.now())
-                    settings.MONGO_DB.instances.update_many(
-                        {'_id': {'$in': duplicated_instance_ids}},
-                        {'$set': {
-                            '_deleted_at': timezone.now().strftime(MONGO_STRFTIME)
-                        }}
-                    )
+                self.stdout.write('\tPurging instances: {}'.format(
+                    duplicated_instance_ids))
+                Instance.objects.select_for_update()\
+                    .filter(id__in=duplicated_instance_ids).delete()
+                ParsedInstance.objects.select_for_update()\
+                    .filter(instance_id__in=duplicated_instance_ids).delete()
+                settings.MONGO_DB.instances.remove(
+                    {'_id': {'$in': duplicated_instance_ids}}
+                )
                 # Update number of submissions
                 xform = main_instance.xform
                 self.stdout.write(

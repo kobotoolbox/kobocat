@@ -174,12 +174,7 @@ class Instance(models.Model):
 
     @classmethod
     def set_deleted_at(cls, instance_id, deleted_at=timezone.now()):
-        try:
-            instance = cls.objects.get(id=instance_id)
-        except cls.DoesNotExist:
-            pass
-        else:
-            instance.set_deleted(deleted_at)
+        raise Exception('This method MUST NOT be used.')
 
     def _check_active(self, force):
         """Check that form is active and raise exception if not.
@@ -392,11 +387,7 @@ class Instance(models.Model):
         super(Instance, self).save(*args, **kwargs)
 
     def set_deleted(self, deleted_at=timezone.now()):
-        self.deleted_at = deleted_at
-        self.save()
-        # force submission count re-calculation
-        self.xform.submission_count(force_update=True)
-        self.parsed_instance.save()
+        raise Exception('This method MUST NOT be used.')
 
     def get_validation_status(self):
         """
