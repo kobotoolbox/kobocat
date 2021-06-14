@@ -94,9 +94,9 @@ class ParsedInstance(models.Model):
     @classmethod
     @apply_form_field_names
     def query_mongo(cls, username, id_string, query, fields, sort, start=0,
-                    limit=DEFAULT_LIMIT, count=False, hide_deleted=True):
+                    limit=DEFAULT_LIMIT, count=False):
 
-        cursor = cls._get_mongo_cursor(query, fields, hide_deleted, username, id_string)
+        cursor = cls._get_mongo_cursor(query, fields, username, id_string)
 
         if count:
             return [{"count": cursor.count()}]
@@ -112,7 +112,7 @@ class ParsedInstance(models.Model):
 
     @classmethod
     @apply_form_field_names
-    def mongo_aggregate(cls, query, pipeline, hide_deleted=True):
+    def mongo_aggregate(cls, query, pipeline):
         """Perform mongo aggregate queries
         query - is a dict which is to be passed to $match, a pipeline operator
         pipeline - list of dicts or dict of mongodb pipeline operators,
@@ -126,13 +126,6 @@ class ParsedInstance(models.Model):
         if not isinstance(query, dict):
             raise Exception(_("Invalid query! %s" % query))
         query = MongoHelper.to_safe_dict(query)
-        if hide_deleted:
-            # display only active elements
-            deleted_at_query = {
-                "$or": [{"_deleted_at": {"$exists": False}},
-                        {"_deleted_at": None}]}
-            # join existing query with deleted_at_query on an $and
-            query = {"$and": [query, deleted_at_query]}
         k = [{'$match': query}]
         if isinstance(pipeline, list):
             k.extend(pipeline)
@@ -145,9 +138,9 @@ class ParsedInstance(models.Model):
     @apply_form_field_names
     def query_mongo_minimal(
             cls, query, fields, sort, start=0, limit=DEFAULT_LIMIT,
-            count=False, hide_deleted=True):
+            count=False):
 
-        cursor = cls._get_mongo_cursor(query, fields, hide_deleted)
+        cursor = cls._get_mongo_cursor(query, fields)
 
         if count:
             return [{"count": cursor.count()}]
@@ -166,9 +159,9 @@ class ParsedInstance(models.Model):
 
     @classmethod
     @apply_form_field_names
-    def query_mongo_no_paging(cls, query, fields, count=False, hide_deleted=True):
+    def query_mongo_no_paging(cls, query, fields, count=False):
 
-        cursor = cls._get_mongo_cursor(query, fields, hide_deleted)
+        cursor = cls._get_mongo_cursor(query, fields)
 
         if count:
             return [{"count": cursor.count()}]
@@ -176,13 +169,12 @@ class ParsedInstance(models.Model):
             return cursor
 
     @classmethod
-    def _get_mongo_cursor(cls, query, fields, hide_deleted, username=None, id_string=None):
+    def _get_mongo_cursor(cls, query, fields, username=None, id_string=None):
         """
         Returns a Mongo cursor based on the query.
 
         :param query: JSON string
         :param fields: Array string
-        :param hide_deleted: boolean
         :param username: string
         :param id_string: string
         :return: pymongo Cursor
@@ -197,11 +189,6 @@ class ParsedInstance(models.Model):
 
         if username and id_string:
             query.update(cls.get_base_query(username, id_string))
-
-        if hide_deleted:
-            # display only active elements
-            # join existing query with deleted_at_query on an $and
-            query = {"$and": [query, {"_deleted_at": None}]}
 
         # fields must be a string array i.e. '["name", "age"]'
         if isinstance(fields, basestring):

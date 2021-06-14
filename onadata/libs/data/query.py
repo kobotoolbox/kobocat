@@ -72,8 +72,7 @@ def _postgres_select_key(field, name, xform):
     string_args = _query_args(field, name, xform)
 
     return "SELECT %(json)s AS \"%(name)s\" FROM %(table)s WHERE "\
-           "%(restrict_field)s=%(restrict_value)s "\
-           "AND %(exclude_deleted)s" % string_args
+           "%(restrict_field)s=%(restrict_value)s" % string_args
 
 
 def _query_args(field, name, xform):

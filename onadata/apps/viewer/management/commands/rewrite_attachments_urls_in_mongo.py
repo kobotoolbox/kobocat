@@ -78,10 +78,6 @@ class Command(BaseCommand):
 
     def __get_data(self):
         query = {"$and": [
-            {"$or": [
-                {"_deleted_at": {"$exists": False}},
-                {"_deleted_at": None}
-            ]},
             {"_attachments": {"$ne": ""}},
             {"_attachments": {"$ne": []}},
             {"$or": [

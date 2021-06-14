@@ -758,15 +758,11 @@ def generate_export(export_type, extension, username, id_string,
     return export
 
 
-def query_mongo(username, id_string, query=None, hide_deleted=True):
+def query_mongo(username, id_string, query=None):
     query = json.loads(query, object_hook=json_util.object_hook)\
         if query else {}
     query = MongoHelper.to_safe_dict(query)
     query[USERFORM_ID] = '{0}_{1}'.format(username, id_string)
-    if hide_deleted:
-        # display only active elements
-        # join existing query with deleted_at_query on an $and
-        query = {"$and": [query, {"_deleted_at": None}]}
     return xform_instances.find(query, max_time_ms=settings.MONGO_DB_MAX_TIME_MS)
 
 
@@ -895,7 +891,6 @@ def kml_export_data(id_string, user):
     instances = Instance.objects.filter(
         xform__user=user,
         xform__id_string=id_string,
-        deleted_at=None,
         geom__isnull=False
     ).order_by('id')
     data_for_template = []

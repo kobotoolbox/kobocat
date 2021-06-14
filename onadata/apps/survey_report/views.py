@@ -34,7 +34,7 @@ def readable_xform_required(func):
 
 def get_instances_for_user_and_form(user, form_id, submission=None):
     userform_id = '{}_{}'.format(user, form_id)
-    query = {'_userform_id': userform_id, '_deleted_at': {'$exists': False}}
+    query = {'_userform_id': userform_id}
     if submission:
         query['_id'] = submission
     return settings.MONGO_DB.instances.find(
