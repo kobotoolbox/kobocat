@@ -252,6 +252,7 @@ class TestPandasMongoBridge(TestBase):
         ] + AbstractDataFrameBuilder.ADDITIONAL_COLUMNS +\
             AbstractDataFrameBuilder.IGNORED_COLUMNS
         try:
+            # `_deleted_at` is no longer used but may persist in old submissions
             expected_columns.remove('_deleted_at')
         except ValueError:
             pass

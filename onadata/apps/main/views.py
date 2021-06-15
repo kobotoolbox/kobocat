@@ -551,6 +551,7 @@ def _get_migrate_url(username):
         kf_url=settings.KOBOFORM_URL, username=username
     )
 
+
 def make_kpi_data_redirect_view(kpi_data_route):
     def view_func(request, username, id_string):
         owner = get_object_or_404(User, username__iexact=username)

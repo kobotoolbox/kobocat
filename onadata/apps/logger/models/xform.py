@@ -193,7 +193,7 @@ class XForm(BaseModel):
 
     def submission_count(self, force_update=False):
         if self.num_of_submissions == 0 or force_update:
-            count = self.instances.filter(deleted_at__isnull=True).count()
+            count = self.instances.count()
             self.num_of_submissions = count
             self.save(update_fields=['num_of_submissions'])
         return self.num_of_submissions
@@ -201,14 +201,12 @@ class XForm(BaseModel):
 
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""
-        return self.instances.filter(deleted_at__isnull=True,
-                                     geom__isnull=False).count()
+        return self.instances.filter(geom__isnull=False).count()
 
     def time_of_last_submission(self):
         if self.last_submission_time is None and self.num_of_submissions > 0:
             try:
-                last_submission = self.instances.\
-                    filter(deleted_at__isnull=True).latest("date_created")
+                last_submission = self.instances.latest("date_created")
             except ObjectDoesNotExist:
                 pass
             else:
