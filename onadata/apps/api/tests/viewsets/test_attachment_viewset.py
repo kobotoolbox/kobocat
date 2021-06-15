@@ -1,7 +1,7 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from os import path
+
+from django.utils.six import string_types
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
@@ -11,7 +11,7 @@ from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
 class TestAttachmentViewSet(TestAbstractViewSet):
 
     def setUp(self):
-        super(TestAttachmentViewSet, self).setUp()
+        super().setUp()
         self.retrieve_view = AttachmentViewSet.as_view({
             'get': 'retrieve'
         })
@@ -112,7 +112,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         request = self.factory.get('/', data, **self.extra)
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, basestring))
+        self.assertTrue(isinstance(response.data, string_types))
         self.assertEqual(response.data, self.attachment.secure_url())
 
         data['filename'] = 10000000
@@ -137,5 +137,5 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         request = self.factory.get('/', data, **self.extra)
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, basestring))
+        self.assertTrue(isinstance(response.data, string_types))
         self.assertEqual(response.data, self.attachment.secure_url())

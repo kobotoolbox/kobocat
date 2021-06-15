@@ -1,7 +1,6 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-from datetime import datetime, timedelta
 import os
+from datetime import datetime, timedelta, date
 
 from mock import patch
 
@@ -14,7 +13,7 @@ from onadata.libs.data.query import get_form_submissions_grouped_by_field,\
 class TestTools(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self._create_user_and_login()
         self._publish_transportation_form()
 
@@ -38,7 +37,7 @@ class TestTools(TestBase):
     @patch('onadata.apps.logger.models.instance.submission_time')
     def test_get_form_submissions_grouped_by_field_datetime_to_date(
             self, mock_time):
-        now = datetime(2014, 01, 01)
+        now = datetime(2014, 1, 1)
         times = [now, now + timedelta(seconds=1), now + timedelta(seconds=2),
                  now + timedelta(seconds=3)]
         mock_time.side_effect = times
@@ -54,7 +53,12 @@ class TestTools(TestBase):
                 self.xform, field)[0]
 
             self.assertEqual([field, count_key], sorted(result.keys()))
-            self.assertEqual(result[field], str(now.date()))
+
+            expected_now = now.date()
+            if not isinstance(result[field], date):
+                expected_now = str(expected_now)
+
+            self.assertEqual(result[field], expected_now)
             self.assertEqual(result[count_key], count)
 
     @patch('django.utils.timezone.now')
@@ -160,9 +164,8 @@ class TestTools(TestBase):
         self.assertEqual(len(results), count + 1)
 
         # the count where the value is None should have a count of 1
-        result = filter(
-            lambda r: r['available_transportation_types_to_referral_facility']
-            is None, results)[0]
+        result = [r for r in results
+                  if r['available_transportation_types_to_referral_facility'] is None][0]
         self.assertEqual(result['count'], 1)
 
     def test_get_date_fields_includes_start_end(self):

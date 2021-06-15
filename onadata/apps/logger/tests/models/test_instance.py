@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import reversion
 
@@ -19,7 +18,7 @@ from onadata.libs.utils.common_tags import MONGO_STRFTIME, SUBMISSION_TIME,\
 class TestInstance(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
 
     def test_stores_json(self):
         self._publish_transportation_form_and_submit_instance()

@@ -8,23 +8,4 @@
         Your Project &gt; Settings &gt; REST Services.
       </strong></span>
     </p>
-    <ol id="restservice_list">
-        {% for sv in list_services %}
-            {% include "service.html" %}
-        {% endfor %}
-    </ol>
-    </div>
-    <script type="text/javascript">
-    $(document).ready(function(){
-        var attach_delete = function(){
-            var el = $(this);
-            $.post(el.data('url'), "service-id=" + el.data('id'), function(data){
-                el.parent().remove();
-            });
-            return false;
-        };
-
-        $('a.restserviceitem').click(attach_delete);
-    });
-    </script>
 {% endblock %}

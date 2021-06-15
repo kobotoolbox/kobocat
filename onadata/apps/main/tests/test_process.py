@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import csv
 import fnmatch
 from hashlib import md5
@@ -9,7 +7,7 @@ import os
 import re
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf import settings
 from django_digest.test import Client as DigestClient
 from django.core.files.uploadedfile import UploadedFile
@@ -47,10 +45,10 @@ class TestProcess(TestBase):
     }
 
     def setUp(self):
-        super(TestProcess, self).setUp()
+        super().setUp()
 
     def tearDown(self):
-        super(TestProcess, self).tearDown()
+        super().tearDown()
 
     @unittest.skip('Fails under Django 1.6')
     def test_process(self, username=None, password=None):
@@ -66,8 +64,8 @@ class TestProcess(TestBase):
         """
         Update stuff like submission time so we can compare within out fixtures
         """
-        for uuid, submission_time in self.uuid_to_submission_times.iteritems():
-            xform_instances.update(
+        for uuid, submission_time in self.uuid_to_submission_times.items():
+            xform_instances.update_one(
                 {UUID: uuid}, {'$set': {SUBMISSION_TIME: submission_time}})
 
     def test_uuid_submit(self):
@@ -76,44 +74,13 @@ class TestProcess(TestBase):
         path = os.path.join(
             self.this_directory, 'fixtures', 'transportation',
             'instances', survey, survey + '.xml')
-        with open(path) as f:
+        with open(path, 'rb') as f:
             post_data = {'xml_submission_file': f, 'uuid': self.xform.uuid}
             url = '/submission'
             self.response = self.client.post(url, post_data)
 
     def test_publish_xlsx_file(self):
         self._publish_xlsx_file()
-
-    def test_google_url_upload(self):
-        if self._internet_on(url="http://google.com"):
-            xls_url = "https://docs.google.com/spreadsheet/pub?"\
-                "key=0AvhZpT7ZLAWmdDhISGhqSjBOSl9XdXd5SHZHUUE2RFE&output=xls"
-            pre_count = XForm.objects.count()
-            response = self.client.post('/%s/' % self.user.username,
-                                        {'xls_url': xls_url})
-            # make sure publishing the survey worked
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(XForm.objects.count(), pre_count + 1)
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_url_upload(self):
-        if self._internet_on(url="http://google.com"):
-            xls_url = 'https://ona.io/examples/forms/tutorial/form.xls'
-            pre_count = XForm.objects.count()
-            response = self.client.post('/%s/' % self.user.username,
-                                        {'xls_url': xls_url})
-            # make sure publishing the survey worked
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(XForm.objects.count(), pre_count + 1)
-
-    def test_bad_url_upload(self):
-        xls_url = 'formhuborg/pld/forms/transportation_2011_07_25/form.xls'
-        pre_count = XForm.objects.count()
-        response = self.client.post('/%s/' % self.user.username,
-                                    {'xls_url': xls_url})
-        # make sure publishing the survey worked
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(XForm.objects.count(), pre_count)
 
     # This method tests a large number of xls files.
     # create a directory /main/test/fixtures/online_xls
@@ -136,25 +103,6 @@ class TestProcess(TestBase):
                 print('finished sub-folder %s' % root)
             self.assertEqual(success, True)
 
-    def test_url_upload_non_dot_xls_path(self):
-        if self._internet_on():
-            xls_url = 'http://formhub.org/formhub_u/forms/tutorial/form.xls'
-            pre_count = XForm.objects.count()
-            response = self.client.post('/%s/' % self.user.username,
-                                        {'xls_url': xls_url})
-            # make sure publishing the survey worked
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(XForm.objects.count(), pre_count + 1)
-
-    def test_not_logged_in_cannot_upload(self):
-        path = os.path.join(self.this_directory, "fixtures", "transportation",
-                            "transportation.xls")
-        if not path.startswith('/%s/' % self.user.username):
-            path = os.path.join(self.this_directory, path)
-        with open(path) as xls_file:
-            post_data = {'xls_file': xls_file}
-            return self.client.post('/%s/' % self.user.username, post_data)
-
     def _publish_file(self, xls_path, strict=True):
         """
         Returns False if not strict and publish fails
@@ -162,7 +110,7 @@ class TestProcess(TestBase):
         pre_count = XForm.objects.count()
         self.response = TestBase._publish_xls_file(self, xls_path)
         # make sure publishing the survey worked
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, 201)
         if XForm.objects.count() != pre_count + 1:
             # print file location
             print('\nPublish Failure for file: %s' % xls_path)
@@ -190,7 +138,7 @@ class TestProcess(TestBase):
         self.manifest_url = \
             'http://testserver/%s/xformsManifest/%s'\
             % (self.user.username, self.xform.pk)
-        md5_hash = md5(self.xform.xml).hexdigest()
+        md5_hash = md5(self.xform.xml.encode()).hexdigest()
         expected_content = """<?xml version="1.0" encoding="utf-8"?>
 <xforms xmlns="http://openrosa.org/xforms/xformsList"><xform><formID>transportation_2011_07_25</formID><name>transportation_2011_07_25</name><majorMinorVersion></majorMinorVersion><version></version><hash>md5:%(hash)s</hash><descriptionText>transportation_2011_07_25</descriptionText><downloadUrl>%(download_url)s</downloadUrl><manifestUrl>%(manifest_url)s</manifestUrl></xform></xforms>"""  # noqa
         expected_content = expected_content % {
@@ -250,7 +198,7 @@ class TestProcess(TestBase):
 
         # test to make sure the headers in the actual csv are as expected
         actual_csv = self._get_csv_()
-        self.assertEqual(sorted(actual_csv.next()), sorted(expected_list))
+        self.assertEqual(sorted(next(actual_csv)), sorted(expected_list))
 
     def _check_data_for_csv_export(self):
 
@@ -276,14 +224,15 @@ class TestProcess(TestBase):
              }
         ]
         for d_from_db in self.data_dictionary.get_data_for_excel():
-            for k, v in d_from_db.items():
+            d_from_db_iter = dict(d_from_db)
+            for k, v in d_from_db_iter.items():
                 if (k != '_xform_id_string' and k != 'meta/instanceID') and v:
                     new_key = k[len('transport/'):]
                     d_from_db[new_key] = d_from_db[k]
                 del d_from_db[k]
             self.assertTrue(d_from_db in data)
             data.remove(d_from_db)
-        self.assertEquals(data, [])
+        self.assertEqual(data, [])
 
     def _check_group_xpaths_do_not_appear_in_dicts_for_export(self):
         uuid = 'uuid:f3d8dc65-91a6-4d0f-9e97-802128083390'
@@ -353,7 +302,7 @@ class TestProcess(TestBase):
         actual_csv = self._get_response_content(response)
         actual_lines = actual_csv.split("\n")
         actual_csv = csv.reader(actual_lines)
-        headers = actual_csv.next()
+        headers = next(actual_csv)
         data = [
             {'meta/instanceID': 'uuid:5b2cc313-fc09-437e-8149-fcd32f695d41',
              '_uuid': '5b2cc313-fc09-437e-8149-fcd32f695d41',
@@ -396,7 +345,8 @@ class TestProcess(TestBase):
         dd = DataDictionary.objects.get(pk=self.xform.pk)
         for row, expected_dict in zip(actual_csv, data):
             d = dict(zip(headers, row))
-            for k, v in d.items():
+            d_iter = dict(d)
+            for k, v in d_iter.items():
                 if v in ["n/a", "False"] or k in dd._additional_headers():
                     del d[k]
             l = []
@@ -443,9 +393,9 @@ class TestProcess(TestBase):
             self.assertEqual(actual_row, expected_row)
 
     def _check_delete(self):
-        self.assertEquals(self.user.xforms.count(), 1)
+        self.assertEqual(self.user.xforms.count(), 1)
         self.user.xforms.all()[0].delete()
-        self.assertEquals(self.user.xforms.count(), 0)
+        self.assertEqual(self.user.xforms.count(), 0)
 
     def test_405_submission(self):
         url = reverse('submissions')
@@ -464,13 +414,13 @@ class TestProcess(TestBase):
             'form_with_unicode_in_relevant_column.xlsx')
         response = TestBase._publish_xls_file(self, path)
         # make sure we get a 200 response
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_metadata_file_hash(self):
         self._publish_transportation_form()
         src = os.path.join(self.this_directory, "fixtures",
                            "transportation", "screenshot.png")
-        uf = UploadedFile(file=open(src), content_type='image/png')
+        uf = UploadedFile(file=open(src, 'rb'), content_type='image/png')
         count = MetaData.objects.count()
         MetaData.media_upload(self.xform, uf)
         # assert successful insert of new metadata record
@@ -531,21 +481,6 @@ class TestProcess(TestBase):
         calculate_bind_node = calculate_bind_nodes[0]
         self.assertEqual(
             calculate_bind_node.getAttribute("calculate"), "'%s'" % xform.uuid)
-
-    def test_csv_publishing(self):
-        csv_text = '\n'.join([
-            'survey,,', ',type,name,label',
-            ',text,whatsyourname,"What is your name?"',
-            'choices,,',
-            'settings,,', ',id_string', ',identity'])
-        url = reverse('onadata.apps.main.views.profile',
-                      kwargs={'username': self.user.username})
-        num_xforms = XForm.objects.count()
-        params = {
-            'text_xls_form': csv_text
-        }
-        self.response = self.client.post(url, params)
-        self.assertEqual(XForm.objects.count(), num_xforms + 1)
 
     def test_truncate_xform_title_to_255(self):
         self._publish_transportation_form()

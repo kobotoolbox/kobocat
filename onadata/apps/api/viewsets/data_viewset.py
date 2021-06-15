@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import json
 
 from django.db.models import Q
@@ -10,7 +8,7 @@ from django.utils import six
 from django.utils.translation import ugettext as _
 
 from rest_framework import status
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ParseError, PermissionDenied
@@ -208,7 +206,7 @@ API Parameters</a>.
 >       curl -X GET 'https://example.com/api/v1/data/22845?query={"kind": \
 "monthly"}'
 >       curl -X GET 'https://example.com/api/v1/data/22845?query={"date": \
-{"gt$": "2014-09-29T01:02:03+0000"}}'
+{"$gt": "2014-09-29T01:02:03+0000"}}'
 
 > Response
 >
@@ -379,8 +377,6 @@ Delete a specific submission in a form
         renderers.XLSRenderer,
         renderers.XLSXRenderer,
         renderers.CSVRenderer,
-        renderers.CSVZIPRenderer,
-        renderers.SAVZIPRenderer,
         renderers.RawXMLRenderer
     ]
 
@@ -404,12 +400,7 @@ Delete a specific submission in a form
         postgres_query, mongo_query = self.__build_db_queries(xform, payload)
 
         # Delete Postgres & Mongo
-        updated_records_count = Instance.objects.filter(**postgres_query).count()
-
-        # Since Django 1.9, `.delete()` returns an dict with number of rows
-        # deleted per object.
-        # FixMe remove `.count()` query and use that dict instance
-        Instance.objects.filter(**postgres_query).delete()
+        updated_records_count = Instance.objects.filter(**postgres_query).delete()
         ParsedInstance.bulk_delete(mongo_query)
         return Response({
             'detail': _('{} submissions have been deleted').format(
@@ -459,7 +450,7 @@ Delete a specific submission in a form
         return serializer_class
 
     def get_object(self):
-        obj = super(DataViewSet, self).get_object()
+        obj = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
@@ -496,7 +487,7 @@ Delete a specific submission in a form
         return qs
 
     def filter_queryset(self, queryset, view=None):
-        qs = super(DataViewSet, self).filter_queryset(queryset)
+        qs = super().filter_queryset(queryset)
         pk = self.kwargs.get(self.lookup_field)
         tags = self.request.query_params.get('tags', None)
 
@@ -514,7 +505,7 @@ Delete a specific submission in a form
 
         return qs
 
-    @detail_route(methods=["GET", "PATCH", "DELETE"])
+    @action(detail=True, methods=["GET", "PATCH", "DELETE"])
     def validation_status(self, request, *args, **kwargs):
         """
         View or modify validation status of specific instance.
@@ -546,7 +537,7 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @detail_route(methods=['GET', 'POST', 'DELETE'],
+    @action(detail=True, methods=['GET', 'POST', 'DELETE'],
                   extra_lookup_fields=['label', ])
     def labels(self, request, *args, **kwargs):
         http_status = status.HTTP_400_BAD_REQUEST
@@ -580,7 +571,7 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @detail_route(methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def enketo(self, request, *args, **kwargs):
         self.object = self.get_object()
         data = {}
@@ -608,7 +599,7 @@ Delete a specific submission in a form
             instance = self.get_object()
             return Response(instance.xml)
         else:
-            return super(DataViewSet, self).retrieve(request, *args, **kwargs)
+            return super().retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -647,7 +638,7 @@ Delete a specific submission in a form
             # With DRF ListSerializer are automatically created and wraps
             # everything in a list. Since this returns a list
             # # already, we unwrap it.
-            res = super(DataViewSet, self).list(request, *args, **kwargs)
+            res = super().list(request, *args, **kwargs)
             res.data = res.data[0]
             return res
 

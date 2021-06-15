@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import logging
 import re
 import requests
@@ -16,28 +14,34 @@ class ServiceDefinition(RestServiceInterface):
 
     def send(self, endpoint, data):
 
+        # Will be used internally by KPI to fetch data with KoBoCatBackend
         post_data = {
-            "instance_id": data.get("instance_id")  # Will be used internally by KPI to fetch data with KoboCatBackend
+            "instance_id": data.get("instance_id")
         }
         headers = {"Content-Type": "application/json"}
 
-        # Verify if endpoint starts with `/assets/` before sending the request to`kpi`
+        # Verify if endpoint starts with `/assets/` before sending
+        # the request to KPI
         pattern = r'{}'.format(settings.KPI_HOOK_ENDPOINT_PATTERN.replace(
             '{asset_uid}', '[^/]*'))
 
         # Match v2 and v1 endpoints.
         if re.match(pattern, endpoint) or re.match(pattern[7:], endpoint):
-            # Build the url in the service to avoid saving hardcoded domain name in the DB
+            # Build the url in the service to avoid saving hardcoded
+            # domain name in the DB
             url = "{}{}".format(
-                settings.KPI_INTERNAL_URL,
+                settings.KOBOFORM_INTERNAL_URL,
                 endpoint
             )
             response = requests.post(url, headers=headers, json=post_data)
             response.raise_for_status()
 
             # Save successful
-            Instance.objects.filter(pk=data.get("instance_id")).update(posted_to_kpi=True)
+            Instance.objects.filter(pk=data.get("instance_id")).update(
+                posted_to_kpi=True
+            )
         else:
-            logging.warning('This endpoint: `{}` is not valid for `KPI Hook`'.format(
-                endpoint
-            ))
+            logging.warning(
+                f'This endpoint: `{endpoint}` is not valid for `KPI Hook`'
+            )
+

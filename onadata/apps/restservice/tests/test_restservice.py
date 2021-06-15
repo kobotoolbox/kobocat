@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 
 from django.conf import settings
@@ -14,7 +12,7 @@ from onadata.apps.restservice.models import RestService
 class RestServiceTest(TestBase):
 
     def setUp(self):
-        super(RestServiceTest, self).setUp()
+        super().setUp()
         xls_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'fixtures',
@@ -34,7 +32,7 @@ class RestServiceTest(TestBase):
     def test_create_rest_service(self):
         count = RestService.objects.all().count()
         self._create_rest_service()
-        self.assertEquals(RestService.objects.all().count(), count + 1)
+        self.assertEqual(RestService.objects.all().count(), count + 1)
 
     def test_service_definition(self):
         self._create_rest_service()

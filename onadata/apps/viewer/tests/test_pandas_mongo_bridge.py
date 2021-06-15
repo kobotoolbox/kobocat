@@ -1,11 +1,10 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import csv
 import os
 from tempfile import NamedTemporaryFile
 
 from django.utils.dateparse import parse_datetime
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models.xform import XForm
@@ -426,13 +425,13 @@ class TestPandasMongoBridge(TestBase):
         self.assertEqual(expected_result, record)
 
     def test_unicode_export(self):
-        unicode_char = unichr(40960)
+        unicode_char = chr(40960)
         # fake data
         data = [{"key": unicode_char}]
         columns = ["key"]
         # test xls
         xls_df_writer = XLSDataFrameWriter(data, columns)
-        temp_file = NamedTemporaryFile(suffix=".xls")
+        temp_file = NamedTemporaryFile(suffix='.xls', mode='w')
         excel_writer = ExcelWriter(temp_file.name)
         passed = False
         try:
@@ -446,7 +445,7 @@ class TestPandasMongoBridge(TestBase):
         # test csv
         passed = False
         csv_df_writer = CSVDataFrameWriter(data, columns)
-        temp_file = NamedTemporaryFile(suffix=".csv")
+        temp_file = NamedTemporaryFile(suffix='.csv', mode='w')
         try:
             csv_df_writer.write_to_csv(temp_file)
             passed = True
@@ -576,7 +575,7 @@ class TestPandasMongoBridge(TestBase):
         csv_df_builder.export_to(temp_file.name, data_frame_max_size=3)
         csv_file = open(temp_file.name)
         csv_reader = csv.reader(csv_file)
-        header = csv_reader.next()
+        header = next(csv_reader)
         self.assertEqual(
             len(header), 17 + len(AbstractDataFrameBuilder.ADDITIONAL_COLUMNS))
         rows = []

@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import pytz
 
 from datetime import datetime
@@ -9,7 +8,7 @@ from django.conf import settings
 DEFAULT_CONTENT_LENGTH = getattr(settings, 'DEFAULT_CONTENT_LENGTH', 10000000)
 
 
-class OpenRosaHeadersMixin(object):
+class OpenRosaHeadersMixin:
     def get_openrosa_headers(self, request, location=True):
         tz = pytz.timezone(settings.TIME_ZONE)
         dt = datetime.now(tz).strftime('%a, %d %b %Y %H:%M:%S %Z')

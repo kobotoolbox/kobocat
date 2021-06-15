@@ -1,11 +1,10 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import time
 import csv
 import tempfile
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.utils import timezone
 from xlrd import open_workbook
@@ -15,6 +14,7 @@ from onadata.apps.viewer.views import kml_export, export_download
 from onadata.libs.utils.export_tools import generate_export
 from onadata.libs.utils.user_auth import http_auth_string
 from .test_base import TestBase
+
 
 class TestFormExports(TestBase):
 
@@ -34,10 +34,7 @@ class TestFormExports(TestBase):
             return open_workbook(file_contents=f).sheets()[0].nrows
 
         def csv_rows(f):
-            with tempfile.TemporaryFile() as tmp:
-                tmp.write(f.encode('utf-8'))
-                tmp.seek(0)
-                return len([line for line in csv.reader(tmp)])
+            return len([line for line in csv.reader(f.decode().strip().split('\n'))])
         num_rows_fn = {
             'xls': xls_rows,
             'csv': csv_rows,

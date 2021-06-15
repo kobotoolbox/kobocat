@@ -1,13 +1,15 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
+from onadata.libs.utils.redis_helper import RedisHelper
+from .base import *
 
-from .kc_environ import *
+################################
+# Django Framework settings    #
+################################
 
-
-LOGGING['handlers']['console'] = {
-    'level': 'DEBUG',
-    'class': 'logging.StreamHandler',
-    'formatter': 'verbose'
+LOGGING['root'] = {
+    'handlers': ['console'],
+    'level': 'DEBUG'
 }
 
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+SESSION_ENGINE = "redis_sessions.session"
+SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")

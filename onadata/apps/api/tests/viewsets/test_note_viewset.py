@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.test import RequestFactory
 
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
@@ -10,7 +8,7 @@ from onadata.apps.main.tests.test_base import TestBase
 class TestNoteViewSet(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self._create_user_and_login()
         self._publish_transportation_form()
         self._make_submissions()
@@ -43,7 +41,8 @@ class TestNoteViewSet(TestBase):
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(len(response.data) > 0)
-        self.assertDictContainsSubset(self.note, response.data[0])
+        self.assertEqual(dict(response.data[0], **self.note),
+                         response.data[0])
 
     def test_note_get(self):
         self._add_notes_to_data_point()
@@ -53,7 +52,8 @@ class TestNoteViewSet(TestBase):
         request = self.factory.get('/', **self.extra)
         response = view(request, pk=self.pk)
         self.assertEqual(response.status_code, 200)
-        self.assertDictContainsSubset(self.note, response.data)
+        self.assertEqual(dict(response.data, **self.note),
+                         response.data)
 
     def test_add_notes_to_data_point(self):
         self._add_notes_to_data_point()
@@ -130,4 +130,4 @@ class TestNoteViewSet(TestBase):
         request = self.factory.get('/', **self.extra)
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        self.assertEquals(response.data, [])
+        self.assertEqual(response.data, [])

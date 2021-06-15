@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 from django.conf import settings
 
 
@@ -23,8 +22,9 @@ def redirect_url(url_param):
 
 def login_url(next_kobocat_url=False, next_url=False):
     # use kpi login if configuration exists
-    if settings.KPI_URL:
-        url = settings.KPI_URL
+
+    if settings.KOBOFORM_URL:
+        url = settings.KOBOFORM_URL
 
         if url:
             url_param = url + '/accounts/login/'

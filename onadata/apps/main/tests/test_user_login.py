@@ -1,11 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-import unittest
-
-from django.contrib.auth.models import User
-
 from .test_base import TestBase
-from .test_user_profile import TestUserProfile
 
 
 class TestUserLogin(TestBase):

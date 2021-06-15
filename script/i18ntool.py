@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 #!/usr/bin/env python
 # encoding: utf-8
 
@@ -15,7 +14,7 @@ from __future__ import unicode_literals, print_function, division, absolute_impo
 
 import os
 import sys
-import StringIO
+import io
 import tempfile
 import types
 import shutil

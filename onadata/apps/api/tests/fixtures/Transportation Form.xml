@@ -58,7 +58,7 @@
       <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/motorbike/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'motorbike')" type="string"/>
       <bind nodeset="/transportation_2011_07_25/transport/loop_over_transport_types_frequency/taxi/frequency_to_referral_facility" relevant="selected( /transportation_2011_07_25/transport/available_transportation_types_to_referral_facility , 'taxi')" type="string"/>
       <bind jr:preload="uid" nodeset="/transportation_2011_07_25/meta/instanceID" readonly="true()" type="string"/>
-      <bind calculate="'%(form_uuid)s'" nodeset="/transportation_2011_07_25/formhub/uuid" type="string"/>
+      <bind nodeset="/transportation_2011_07_25/formhub/uuid" type="string" calculate="'%(form_uuid)s'"/>
     </model>
   </h:head>
   <h:body>

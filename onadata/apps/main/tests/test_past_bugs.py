@@ -1,8 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
-
-from django.utils.encoding import smart_text
 
 from onadata.apps.logger.models import XForm, Instance
 from .test_base import TestBase
@@ -20,8 +17,7 @@ class TestInputs(TestBase):
         response = self._publish_xls_file(
             'fixtures/group_names_must_be_unique.xls')
         message = 'The name "group_names_must_be_unique" is the same as the form name'
-        response_content = smart_text(response.content)
-        self.assertTrue(message in response_content)
+        self.assertTrue(message in response.json()['text'])
         self.assertEqual(XForm.objects.count(), pre_count)
 
     def test_mch(self):

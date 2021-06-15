@@ -1,20 +1,18 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
+import logging
+import math
+import mimetypes
 import os
 import time
-import math
-import logging
-import mimetypes
-import requests
-from requests.auth import HTTPDigestAuth
-from urlparse import urljoin
+from io import StringIO
+from urllib.parse import urljoin
 from xml.parsers.expat import ExpatError
 
-from cStringIO import StringIO
-
+import requests
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from requests.auth import HTTPDigestAuth
 
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.libs.utils.logger_tools import publish_xml_form, publish_form, \
@@ -79,7 +77,7 @@ def node_value(node, tag_name):
     return tag.childNodes[0].nodeValue
 
 
-class BriefcaseClient(object):
+class BriefcaseClient:
     def __init__(self, url, username, password, user):
         self.url = url
         self.user = user
@@ -277,7 +275,7 @@ class BriefcaseClient(object):
                 self.download_instances(form_id, cursor)
 
     def _upload_xform(self, path, file_name):
-        class PublishXForm(object):
+        class PublishXForm:
             def __init__(self, xml_file, user):
                 self.xml_file = xml_file
                 self.user = user

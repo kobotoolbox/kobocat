@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.contrib.auth.models import User
 from django.test import TestCase, RequestFactory
 from pyxform import SurveyElementBuilder
@@ -12,7 +10,7 @@ from onadata.libs.utils.logger_tools import (
 )
 
 
-class TempFileProxy(object):
+class TempFileProxy:
     """
     create_instance will be looking for a file object,
     with "read" and "close" methods.
@@ -74,31 +72,31 @@ class TestSimpleSubmission(TestCase):
         self.assertTrue(self.xform2.has_start_time)
 
     def test_simple_yes_submission(self):
-        self.assertEquals(0, self.xform1.instances.count())
+        self.assertEqual(0, self.xform1.instances.count())
 
         self._submit_simple_yes()
 
-        self.assertEquals(1, self.xform1.instances.count())
+        self.assertEqual(1, self.xform1.instances.count())
 
         self._submit_simple_yes()
 
         # a simple "yes" submission *SHOULD* increment the survey count
-        self.assertEquals(2, self.xform1.instances.count())
+        self.assertEqual(2, self.xform1.instances.count())
 
     def test_start_time_submissions(self):
         """This test checks to make sure that instances
         *with start_time available* are marked as duplicates when the XML is a
         direct match.
         """
-        self.assertEquals(0, self.xform2.instances.count())
+        self.assertEqual(0, self.xform2.instances.count())
         self._submit_at_hour(11)
-        self.assertEquals(1, self.xform2.instances.count())
+        self.assertEqual(1, self.xform2.instances.count())
         self._submit_at_hour(12)
-        self.assertEquals(2, self.xform2.instances.count())
+        self.assertEqual(2, self.xform2.instances.count())
         # an instance from 11 AM already exists in the database, so it
         # *SHOULD NOT* increment the survey count.
         self._submit_at_hour(11)
-        self.assertEquals(2, self.xform2.instances.count())
+        self.assertEqual(2, self.xform2.instances.count())
 
     def test_corrupted_submission(self):
         """

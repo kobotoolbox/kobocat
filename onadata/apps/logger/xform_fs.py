@@ -1,12 +1,10 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 import glob
 import re
 
 
-class XFormInstanceFS(object):
+class XFormInstanceFS:
     def __init__(self, filepath):
         self.path = filepath
         self.directory, self.filename = os.path.split(self.path)

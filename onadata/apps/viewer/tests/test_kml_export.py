@@ -1,9 +1,8 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models.instance import Instance

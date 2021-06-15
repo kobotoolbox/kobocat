@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import mimetypes
 import os
 import requests
@@ -124,7 +122,7 @@ def media_resources(media_list, download=False):
 
 
 class MetaData(models.Model):
-    xform = models.ForeignKey(XForm)
+    xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     data_type = models.CharField(max_length=255)
     data_value = models.CharField(max_length=255)
     data_file = models.FileField(upload_to=upload_to, blank=True, null=True)
@@ -138,7 +136,7 @@ class MetaData(models.Model):
 
     def save(self, *args, **kwargs):
         self._set_hash()
-        super(MetaData, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @property
     def hash(self):
@@ -185,8 +183,11 @@ class MetaData(models.Model):
             except IOError:
                 return ''
             else:
-                self.file_hash = 'md5:%s' \
-                    % md5(self.data_file.read()).hexdigest()
+                data_file_content = self.data_file.read()
+                if isinstance(data_file_content, str):
+                    data_file_content = data_file_content.encode()
+                md5_hash = md5(data_file_content).hexdigest()
+                self.file_hash = f'md5:{md5_hash}'
 
                 return self.file_hash
 
