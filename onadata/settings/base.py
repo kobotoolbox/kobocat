@@ -498,6 +498,8 @@ AWS_S3_HOST = os.environ.get("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
 GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
 
+MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
+
 # duration to keep zip exports before deletion (in seconds)
 ZIP_EXPORT_COUNTDOWN = 24 * 60 * 60
 
