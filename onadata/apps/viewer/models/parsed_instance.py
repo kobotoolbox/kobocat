@@ -216,12 +216,11 @@ class ParsedInstance(models.Model):
         )
 
     @classmethod
-    def _get_mongo_cursor_query(cls, query, hide_deleted, username=None, id_string=None):
+    def _get_mongo_cursor_query(cls, query, username=None, id_string=None):
         """
         Returns the query to get a Mongo cursor.
 
         :param query: JSON string
-        :param hide_deleted: boolean
         :param username: string
         :param id_string: string
         :return: dict
@@ -235,11 +234,6 @@ class ParsedInstance(models.Model):
 
         if username and id_string:
             query.update(cls.get_base_query(username, id_string))
-
-        if hide_deleted:
-            # display only active elements
-            # join existing query with deleted_at_query on an $and
-            query = {"$and": [query, {"_deleted_at": None}]}
 
         return query
 
@@ -307,7 +301,9 @@ class ParsedInstance(models.Model):
                 if success != self.instance.is_synced_with_mongo:
                     # Skip the labor-intensive stuff in Instance.save() to gain performance
                     # Use .update() instead of .save()
-                    Instance.objects.filter(pk=self.instance.id).update(is_synced_with_mongo=success)
+                    Instance.objects.filter(pk=self.instance.id).update(
+                        is_synced_with_mongo=success
+                    )
 
         return True
 
