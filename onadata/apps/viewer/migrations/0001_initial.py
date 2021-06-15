@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.db import migrations, models
 from django.conf import settings
 
@@ -28,7 +26,7 @@ class Migration(migrations.Migration):
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('filename', models.CharField(max_length=255, null=True, blank=True)),
                 ('filedir', models.CharField(max_length=255, null=True, blank=True)),
-                ('export_type', models.CharField(default=b'xls', max_length=10, choices=[(b'xls', b'Excel'), (b'csv', b'CSV'), (b'gdoc', b'GDOC'), (b'zip', b'ZIP'), (b'kml', b'kml'), (b'csv_zip', b'CSV ZIP'), (b'sav_zip', b'SAV ZIP'), (b'sav', b'SAV'), (b'external', b'Excel')])),
+                ('export_type', models.CharField(default='xls', max_length=10, choices=[('xls', 'Excel'), ('csv', 'CSV'), ('gdoc', 'GDOC'), ('zip', 'ZIP'), ('kml', 'kml'), ('csv_zip', 'CSV ZIP'), ('sav_zip', 'SAV ZIP'), ('sav', 'SAV'), ('external', 'Excel')])),
                 ('task_id', models.CharField(max_length=255, null=True, blank=True)),
                 ('time_of_last_submission', models.DateTimeField(default=None, null=True)),
                 ('internal_status', models.SmallIntegerField(default=0, max_length=1)),
@@ -43,8 +41,8 @@ class Migration(migrations.Migration):
                 ('xpath', models.CharField(max_length=50)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('instance', models.ForeignKey(related_name='modifications', to='logger.Instance')),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True)),
+                ('instance', models.ForeignKey(related_name='modifications', to='logger.Instance', on_delete=models.CASCADE)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -55,7 +53,7 @@ class Migration(migrations.Migration):
                 ('end_time', models.DateTimeField(null=True)),
                 ('lat', models.FloatField(null=True)),
                 ('lng', models.FloatField(null=True)),
-                ('instance', models.OneToOneField(related_name='parsed_instance', to='logger.Instance')),
+                ('instance', models.OneToOneField(related_name='parsed_instance', to='logger.Instance', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -70,7 +68,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='export',
             name='xform',
-            field=models.ForeignKey(to='logger.XForm'),
+            field=models.ForeignKey(to='logger.XForm', on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='export',

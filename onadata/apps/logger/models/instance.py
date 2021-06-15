@@ -1,7 +1,5 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
-from datetime import datetime
+from datetime import date, datetime
 from hashlib import sha256
 
 import reversion
@@ -13,6 +11,7 @@ from django.db.models import F
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
+from django.utils.encoding import smart_text
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
@@ -20,6 +19,7 @@ from onadata.apps.logger.exceptions import FormInactiveError
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
+from onadata.apps.logger.models.submission_counter import SubmissionCounter
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
@@ -112,6 +112,28 @@ def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     f.update(time_of_last_submission=None)
 
 
+def update_user_submissions_counter(sender, instance, created, **kwargs):
+    if not created:
+        return
+    if getattr(instance, 'defer_counting', False):
+        return
+
+    # Querying the database this way because it's faster than querying
+    # the instance model for the data
+    user_id = XForm.objects.values_list('user_id', flat=True).get(
+        pk=instance.xform_id
+    )
+    today = date.today()
+    first_day_of_month = today.replace(day=1)
+    queryset = SubmissionCounter.objects.filter(
+        user_id=user_id, timestamp=first_day_of_month
+    )
+    if not queryset.exists():
+        SubmissionCounter.objects.create(user_id=user_id)
+
+    queryset.update(count=F('count') + 1)
+
+
 def update_xform_submission_count_delete(sender, instance, **kwargs):
     try:
         xform = XForm.objects.select_for_update().get(pk=instance.xform.pk)
@@ -121,7 +143,9 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
         xform.num_of_submissions -= 1
         if xform.num_of_submissions < 0:
             xform.num_of_submissions = 0
-        xform.save(update_fields=['num_of_submissions'])
+        # Update `date_modified` to detect outdated exports
+        # with deleted instances
+        xform.save(update_fields=['num_of_submissions', 'date_modified'])
         profile_qs = User.profile.get_queryset()
         try:
             profile = profile_qs.select_for_update()\
@@ -144,9 +168,9 @@ class Instance(models.Model):
     xml = models.TextField()
     xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,
                                 default=DEFAULT_XML_HASH)
-    user = models.ForeignKey(User, related_name='instances', null=True)
-    xform = models.ForeignKey(XForm, null=True, related_name='instances')
-    survey_type = models.ForeignKey(SurveyType)
+    user = models.ForeignKey(User, related_name='instances', null=True, on_delete=models.CASCADE)
+    xform = models.ForeignKey(XForm, null=True, related_name='instances', on_delete=models.CASCADE)
+    survey_type = models.ForeignKey(SurveyType, on_delete=models.CASCADE)
 
     # shows when we first received this instance
     date_created = models.DateTimeField(auto_now_add=True)
@@ -167,7 +191,6 @@ class Instance(models.Model):
 
     # store an geographic objects associated with this instance
     geom = models.GeometryCollectionField(null=True)
-    objects = models.GeoManager()
 
     tags = TaggableManager()
 
@@ -257,15 +280,15 @@ class Instance(models.Model):
         set_uuid(self)
 
     def _populate_xml_hash(self):
-        '''
+        """
         Populate the `xml_hash` attribute of this `Instance` based on the content of the `xml`
         attribute.
-        '''
+        """
         self.xml_hash = self.get_hash(self.xml)
 
     @classmethod
     def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None, repopulate=False):
-        '''
+        """
         Populate the `xml_hash` field for `Instance` instances limited to the specified users
         and/or DB primary keys.
 
@@ -276,7 +299,7 @@ class Instance(models.Model):
         :param bool repopulate: Optional argument to force repopulation of existing hashes.
         :returns: Total number of `Instance`s updated.
         :rtype: int
-        '''
+        """
 
         filter_kwargs = dict()
         if usernames:
@@ -369,13 +392,12 @@ class Instance(models.Model):
         """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param basestring input_string: The string to be hashed.
+        :param string_types input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
         """
-        if isinstance(input_string, unicode):
-            input_string = input_string.encode('utf-8')
-        return sha256(input_string).hexdigest()
+        input_string = smart_text(input_string)
+        return sha256(input_string.encode()).hexdigest()
 
     @property
     def point(self):
@@ -399,7 +421,7 @@ class Instance(models.Model):
         if self.validation_status is None:
             self.validation_status = {}
 
-        super(Instance, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def get_validation_status(self):
         """
@@ -418,7 +440,10 @@ post_save.connect(update_xform_submission_count, sender=Instance,
                   dispatch_uid='update_xform_submission_count')
 
 post_delete.connect(nullify_exports_time_of_last_submission, sender=Instance,
-                  dispatch_uid='nullify_exports_time_of_last_submission')
+                    dispatch_uid='nullify_exports_time_of_last_submission')
+
+post_save.connect(update_user_submissions_counter, sender=Instance,
+                  dispatch_uid='update_user_submissions_counter')
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
@@ -433,7 +458,7 @@ class InstanceHistory(models.Model):
         app_label = 'logger'
 
     xform_instance = models.ForeignKey(
-        Instance, related_name='submission_history')
+        Instance, related_name='submission_history', on_delete=models.CASCADE)
     xml = models.TextField()
     # old instance id
     uuid = models.CharField(max_length=249, default='')

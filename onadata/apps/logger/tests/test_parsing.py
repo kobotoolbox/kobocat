@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 import re
 from xml.dom import minidom
@@ -29,7 +27,7 @@ class TestXFormInstanceParser(TestBase):
             "../fixtures/new_repeats/new_repeats.xls"
         )
         self._publish_xls_file_and_set_xform(xls_file_path)
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, 201)
 
         # submit an instance
         xml_submission_file_path = os.path.join(
@@ -161,7 +159,7 @@ class TestXFormInstanceParser(TestBase):
             "../fixtures/new_repeats/new_repeats.xls"
         )
         self._publish_xls_file_and_set_xform(xls_file_path)
-        self.assertEqual(self.response.status_code, 200)
+        self.assertEqual(self.response.status_code, 201)
 
         # submit an instance
         xml_submission_file_path = os.path.join(
@@ -170,7 +168,7 @@ class TestXFormInstanceParser(TestBase):
             "multiple_nodes_error.xml"
         )
         self._make_submission(xml_submission_file_path)
-        self.assertEquals(201, self.response.status_code)
+        self.assertEqual(201, self.response.status_code)
 
     def test_xml_repeated_group_to_dict(self):
         xml_file = os.path.join(
@@ -187,4 +185,5 @@ class TestXFormInstanceParser(TestBase):
             self.assertEqual(2, len(dict_['#document']['form']['question_group']))
             with open(json_file) as jfile:
                 import json
-                self.assertEqual(jfile.read(), json.dumps(dict_))
+                jfile_content = jfile.read()
+                self.assertEqual(jfile_content.strip(), json.dumps(dict_).strip())

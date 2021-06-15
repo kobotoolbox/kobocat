@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import pytest
 import sys
@@ -20,16 +19,10 @@ TEST_USERNAMES = [
     'peter',
 ]
 
-try:
-    INTERRUPTED = pytest.ExitCode.INTERRUPTED  # pytest 5
-except AttributeError:
-    INTERRUPTED = 2
-
 
 def stderr_prompt(message):
     sys.stderr.write(message)
-    # FIXME: Python 3 compatibility
-    return raw_input().strip()
+    return input().strip()
 
 
 def toggle_capturing(capture_manager, stop):
@@ -63,7 +56,7 @@ def setup(request):
             if response.lower() != 'yes':
                 if is_global_capturing:
                     toggle_capturing(capture_manager, stop=False)
-                pytest.exit('User interrupted tests', INTERRUPTED)
+                pytest.exit('User interrupted tests', pytest.ExitCode.INTERRUPTED)
 
     if 'instances' in settings.MONGO_DB.collection_names():
         response = stderr_prompt(
@@ -77,7 +70,7 @@ def setup(request):
         else:
             if is_global_capturing:
                 toggle_capturing(capture_manager, stop=False)
-            pytest.exit('User interrupted tests', INTERRUPTED)
+            pytest.exit('User interrupted tests', pytest.ExitCode.INTERRUPTED)
 
     if is_global_capturing:
         toggle_capturing(capture_manager, stop=False)

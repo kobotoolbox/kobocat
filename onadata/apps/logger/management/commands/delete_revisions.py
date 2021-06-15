@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from datetime import timedelta
 import sys
 
@@ -15,7 +13,7 @@ class Command(RevisionCommand):
     help = "Deletes revisions (by chunks) for a given app [and model]"
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
         parser.add_argument(
             "--chunks",

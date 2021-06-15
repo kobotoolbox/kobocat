@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.db import migrations, models
 
 
@@ -19,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='restservice',
             name='xform',
-            field=models.ForeignKey(related_name='restservices', to='logger.XForm'),
+            field=models.ForeignKey(related_name='restservices', to='logger.XForm', on_delete=models.CASCADE),
         ),
     ]

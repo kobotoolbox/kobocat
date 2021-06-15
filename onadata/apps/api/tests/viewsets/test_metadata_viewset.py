@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 
 from django.conf import settings
@@ -19,7 +17,7 @@ from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
 
 class TestMetaDataViewSet(TestAbstractViewSet):
     def setUp(self):
-        super(TestMetaDataViewSet, self).setUp()
+        super().setUp()
         self.view = MetaDataViewSet.as_view({
             'delete': 'destroy',
             'get': 'retrieve',
@@ -80,7 +78,7 @@ class TestMetaDataViewSet(TestAbstractViewSet):
     def test_windows_csv_file_upload_to_metadata(self):
         data_value = 'transportation.csv'
         path = os.path.join(self.fixture_dir, data_value)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(
                 f, 'media', data_value, 'text/csv', 2625, None)
             data = {

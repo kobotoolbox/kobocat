@@ -1,18 +1,19 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import re
+from xml.dom import Node
 
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.encoding import smart_text
+from django.utils.six import text_type
 from guardian.shortcuts import assign_perm, get_perms_for_model
 from pyxform import SurveyElementBuilder
 from pyxform.builder import create_survey_from_xls
 from pyxform.question import Question
 from pyxform.section import RepeatingSection
 from pyxform.xform2json import create_survey_element_from_xml
-from xml.dom import Node
+
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.apps.api.mongo_helper import MongoHelper
@@ -61,7 +62,7 @@ class DataDictionary(XForm):
 
     def __init__(self, *args, **kwargs):
         self.instances_for_export = lambda d: d.instances.all()
-        super(DataDictionary, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def set_uuid_in_xml(self, file_name=None, id_string=None):
         """
@@ -131,7 +132,7 @@ class DataDictionary(XForm):
             calculate_node.setAttribute("calculate", "'%s'" % self.uuid)
             model_node.appendChild(calculate_node)
 
-        self.xml = doc.toprettyxml(indent="  ", encoding='utf-8')
+        self.xml = smart_text(doc.toprettyxml(indent="  ", encoding='utf-8'))
         # hack
         # http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-\
         # and-silly-whitespace/
@@ -162,7 +163,7 @@ class DataDictionary(XForm):
             self._mark_start_time_boolean()
             set_uuid(self)
             self.set_uuid_in_xml(id_string=survey.id_string)
-        super(DataDictionary, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def file_name(self):
         return os.path.split(self.xls.name)[-1]
@@ -199,7 +200,7 @@ class DataDictionary(XForm):
                 label = choice.label
 
                 if isinstance(label, dict):
-                    label = label.get(lang, choice.label.values()[0])
+                    label = label.get(lang, list(choice.label.values())[0])
 
                 return label
 
@@ -212,7 +213,7 @@ class DataDictionary(XForm):
         """
         names = {}
         for elem in self.get_survey_elements():
-            names[MongoHelper.encode(unicode(elem.get_abbreviated_xpath()))] = \
+            names[MongoHelper.encode(text_type(elem.get_abbreviated_xpath()))] = \
                 elem.get_abbreviated_xpath()
         return names
 
@@ -247,7 +248,7 @@ class DataDictionary(XForm):
             return []
         if result is None:
             result = []
-        path = '/'.join([prefix, unicode(survey_element.name)])
+        path = '/'.join([prefix, text_type(survey_element.name)])
         if survey_element.children is not None:
             # add xpaths to result for each child
             indices = [''] if type(survey_element) != RepeatingSection else \

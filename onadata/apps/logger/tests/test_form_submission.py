@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 import re
 
@@ -51,7 +49,7 @@ class TestFormSubmission(TestBase):
         mock_pop.side_effect = IOError(
             'request data read error')
 
-        self.assertEquals(0, self.xform.instances.count())
+        self.assertEqual(0, self.xform.instances.count())
 
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -60,14 +58,14 @@ class TestFormSubmission(TestBase):
         self._make_submission(xml_submission_file_path)
         self.assertEqual(self.response.status_code, 400)
 
-        self.assertEquals(0, self.xform.instances.count())
+        self.assertEqual(0, self.xform.instances.count())
 
     @patch('django.utils.datastructures.MultiValueDict.pop')
     def test_fail_with_ioerror_wsgi(self, mock_pop):
         mock_pop.side_effect = IOError(
             'error during read(65536) on wsgi.input')
 
-        self.assertEquals(0, self.xform.instances.count())
+        self.assertEqual(0, self.xform.instances.count())
 
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -76,7 +74,7 @@ class TestFormSubmission(TestBase):
         self._make_submission(xml_submission_file_path)
         self.assertEqual(self.response.status_code, 400)
 
-        self.assertEquals(0, self.xform.instances.count())
+        self.assertEqual(0, self.xform.instances.count())
 
     def test_submission_to_require_auth_anon(self):
         """

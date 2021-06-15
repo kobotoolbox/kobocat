@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+# coding: utf-8
 import sys
 
 from django.db import migrations
@@ -13,14 +11,11 @@ def create_new_perms(apps):
     The new `delete_data_xform` permission does not exist when running this
     migration for the first time. Django runs migrations in a transaction and
     new permissions are not created until after the transaction is completed.
-
-    See https://stackoverflow.com/a/40092780/1141214
     """
-    # ToDo update this code when upgrading to Django 2.x
-    # see https://stackoverflow.com/a/40092780/1141214
-    apps.models_module = True
-    create_permissions(apps, verbosity=0)
-    apps.models_module = None
+    for app_config in apps.get_app_configs():
+        app_config.models_module = True
+        create_permissions(app_config, apps=apps, verbosity=0)
+        app_config.models_module = None
 
 
 def grant_model_level_perms(apps):
@@ -138,6 +133,15 @@ def reverse_func(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    """
+    This migration has changed between KoBoCAT 1.0 and KoBoCAT 2.0.
+    Permissions on Note model are altered in this migration in this branch.
+    With Django 2.2 "view" permission is included by default.
+    So `view_xform` and `view_notes` must be removed here because they were
+    added by previous migrations in Django 1.8.
+    It avoids an IntegrityError when Django tries to add `view_xform`|`view_notes`
+    twice.
+    """
 
     dependencies = [
         ('logger', '0014_attachment_add_media_file_size'),
@@ -151,7 +155,6 @@ class Migration(migrations.Migration):
                 'verbose_name': 'XForm',
                 'verbose_name_plural': 'XForms',
                 'permissions': (
-                    ('view_xform', 'Can view associated data'),
                     ('report_xform', 'Can make submissions to the form'),
                     ('move_xform', 'Can move form between projects'),
                     ('transfer_xform', 'Can transfer form ownership'),
@@ -159,6 +162,10 @@ class Migration(migrations.Migration):
                     ('delete_data_xform', 'Can delete submissions'),
                 ),
             },
+        ),
+        migrations.AlterModelOptions(
+            name='note',
+            options={'permissions': ()},
         ),
         migrations.RunPython(forwards_func, reverse_func),
     ]

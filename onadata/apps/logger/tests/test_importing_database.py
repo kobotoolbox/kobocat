@@ -1,10 +1,8 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 
 from django.core.files.storage import get_storage_class
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf import settings
 
 from onadata.apps.main.tests.test_base import TestBase

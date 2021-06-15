@@ -1,10 +1,10 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
+import time
 from collections import OrderedDict
 from itertools import chain
-import time
 
 from django.conf import settings
+from django.utils.six import string_types
 from pandas.core.frame import DataFrame
 
 # an immediate fix to an error with the installation of pandas v0.15
@@ -86,7 +86,7 @@ def get_prefix_from_xpath(xpath):
             '%s cannot be prefixed, it returns %s' % (xpath, str(parts)))
 
 
-class AbstractDataFrameBuilder(object):
+class AbstractDataFrameBuilder:
     IGNORED_COLUMNS = [
         XFORM_ID_STRING,
         STATUS,
@@ -192,8 +192,8 @@ class AbstractDataFrameBuilder(object):
     @classmethod
     def _split_gps_fields(cls, record, gps_fields):
         updated_gps_fields = {}
-        for key, value in record.iteritems():
-            if key in gps_fields and isinstance(value, basestring):
+        for key, value in record.items():
+            if key in gps_fields and isinstance(value, string_types):
                 gps_xpaths = DataDictionary.get_additional_geopoint_xpaths(key)
                 gps_parts = dict([(xpath, None) for xpath in gps_xpaths])
                 # hack, check if its a list and grab the object within that
@@ -269,12 +269,12 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
     def __init__(self, username, id_string, filter_query=None,
                  group_delimiter=DEFAULT_GROUP_DELIMITER,
                  split_select_multiples=True, binary_select_multiples=False):
-        super(XLSDataFrameBuilder, self).__init__(
+        super().__init__(
             username, id_string, filter_query, group_delimiter,
             split_select_multiples, binary_select_multiples)
 
     def _setup(self):
-        super(XLSDataFrameBuilder, self)._setup()
+        super()._setup()
         # need to split columns, with repeats in individual sheets and
         # everything else on the default sheet
         self._generate_sections()
@@ -296,7 +296,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
             data = self._format_for_dataframe(cursor)
 
             # write all cursor's data to their respective sheets
-            for section_name, section in self.sections.iteritems():
+            for section_name, section in self.sections.items():
                 records = data[section_name]
                 # TODO: currently ignoring nested repeats
                 # so ignore sections that have 0 records
@@ -323,8 +323,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
         returns a dictionary with the key being the name of the sheet,
         and values a list of dicts to feed into a DataFrame
         """
-        data = dict((section_name, [])
-                    for section_name in self.sections.keys())
+        data = dict((section_name, []) for section_name in self.sections.keys())
 
         main_section = self.sections[self.survey_name]
         main_sections_columns = main_section["columns"]
@@ -339,7 +338,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
                                        self.survey_name)
             parent_index = main_section[self.CURRENT_INDEX_META]
 
-            for sheet_name, section in self.sections.iteritems():
+            for sheet_name, section in self.sections.items():
                 # skip default section i.e survey name
                 if sheet_name != self.survey_name:
                     xpath = section["xpath"]
@@ -433,7 +432,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
                 # if its repeating, build a new section
                 if new_is_repeating:
                     new_section_name = get_valid_sheet_name(
-                        child.name, self.sections.keys())
+                        child.name, list(self.sections))
                     self._create_section(
                         new_section_name, child.get_abbreviated_xpath(), True)
 
@@ -471,7 +470,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
             if len(self.sections) > self.XLS_SHEET_COUNT_LIMIT:
                 self.exceeds_xls_limits = True
             else:
-                for section in self.sections.itervalues():
+                for section in self.sections.values():
                     if len(section["columns"]) > self.XLS_COLUMN_COUNT_MAX:
                         self.exceeds_xls_limits = True
                         break
@@ -488,7 +487,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
         xpath = None
         if isinstance(column, SurveyElement):
             xpath = column.get_abbreviated_xpath()
-        elif isinstance(column, basestring):
+        elif isinstance(column, string_types):
             xpath = column
         assert(xpath)
         # make sure column is not already in list
@@ -501,13 +500,13 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
     def __init__(self, username, id_string, filter_query=None,
                  group_delimiter=DEFAULT_GROUP_DELIMITER,
                  split_select_multiples=True, binary_select_multiples=False):
-        super(CSVDataFrameBuilder, self).__init__(
+        super().__init__(
             username, id_string, filter_query, group_delimiter,
             split_select_multiples, binary_select_multiples)
         self.ordered_columns = OrderedDict()
 
     def _setup(self):
-        super(CSVDataFrameBuilder, self)._setup()
+        super()._setup()
 
     @classmethod
     def _reindex(cls, key, value, ordered_columns, parent_prefix=None):
@@ -525,7 +524,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
                 # for each list check for dict, we want to transform the key of
                 # this dict
                 if type(item) is dict:
-                    for nested_key, nested_val in item.iteritems():
+                    for nested_key, nested_val in item.items():
                         # given the key "children/details" and nested_key/
                         # abbreviated xpath
                         # "children/details/immunization/polio_1",
@@ -621,14 +620,14 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             self._tag_edit_string(record)
             flat_dict = {}
             # re index repeats
-            for key, value in record.iteritems():
+            for key, value in record.items():
                 reindexed = self._reindex(key, value, self.ordered_columns)
                 flat_dict.update(reindexed)
 
-            # if delimetr is diferent, replace within record as well
+            # if delimiter is different, replace within record as well
             if self.group_delimiter != DEFAULT_GROUP_DELIMITER:
                 flat_dict = dict((self.group_delimiter.join(k.split('/')), v)
-                                 for k, v in flat_dict.iteritems())
+                                 for k, v in flat_dict.items())
             data.append(flat_dict)
         return data
 
@@ -656,7 +655,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
 
         columns = list(chain.from_iterable(
             [[xpath] if cols is None else cols
-             for xpath, cols in self.ordered_columns.iteritems()]))
+             for xpath, cols in self.ordered_columns.items()]))
 
         # use a different group delimiter if needed
         if self.group_delimiter != DEFAULT_GROUP_DELIMITER:
@@ -671,7 +670,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             csv_file = file_or_path
             close = False
         else:
-            csv_file = open(file_or_path, "wb")
+            csv_file = open(file_or_path, "w")
             close = True
 
         for data in datas:
@@ -682,7 +681,7 @@ class CSVDataFrameBuilder(AbstractDataFrameBuilder):
             csv_file.close()
 
 
-class XLSDataFrameWriter(object):
+class XLSDataFrameWriter:
     def __init__(self, records, columns):
         self.dataframe = DataFrame(records, columns=columns)
 
@@ -692,7 +691,7 @@ class XLSDataFrameWriter(object):
                                 index=index)
 
 
-class CSVDataFrameWriter(object):
+class CSVDataFrameWriter:
     def __init__(self, records, columns):
         # TODO: if records is empty, raise a known exception
         # catch it in the view and handle

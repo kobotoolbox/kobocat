@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -7,12 +6,12 @@ from onadata.apps.logger.models import Instance
 
 
 class InstanceModification(models.Model):
-    user = models.ForeignKey(User, null=True)
+    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
 
     action = models.CharField(max_length=50)
 
     instance = models.ForeignKey(Instance, null=False,
-                                 related_name="modifications")
+                                 related_name="modifications", on_delete=models.CASCADE)
     xpath = models.CharField(max_length=50)
 
     date_created = models.DateTimeField(auto_now_add=True)

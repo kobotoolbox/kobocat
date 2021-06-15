@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import mimetypes
 
 from django.conf import settings
@@ -34,6 +32,17 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MetaData
+        fields = (
+            'id',
+            'xform',
+            'data_value',
+            'data_type',
+            'data_file',
+            'data_file_type',
+            'file_hash',
+            'url',
+            'from_kpi',
+        )
 
     # was previously validate_data_value but the signature change in DRF3.
     def validate(self, attrs):
@@ -56,8 +65,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         attrs['data_file_type'] = self._validate_data_file_type(
             data_file_type=data_file_type, data_file=data_file, data_value=value
         )
-
-        return super(MetaDataSerializer, self).validate(attrs)
+        return super().validate(attrs)
 
     def validate_xform(self, xform):
         request = self.context.get('request')
@@ -113,4 +121,3 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             )
 
         return data_file_type
-

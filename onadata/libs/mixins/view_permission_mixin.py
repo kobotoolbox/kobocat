@@ -1,10 +1,9 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 from django.core.exceptions import ImproperlyConfigured
 from guardian.shortcuts import get_objects_for_user
 
 
-class ViewPermissionMixin(object):
+class ViewPermissionMixin:
 
     def get_queryset(self):
         """

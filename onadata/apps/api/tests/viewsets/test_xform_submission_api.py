@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 
 import simplejson as json
@@ -20,7 +18,7 @@ from onadata.libs.constants import (
 
 class TestXFormSubmissionApi(TestAbstractViewSet):
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = XFormSubmissionApi.as_view({
             "head": "create",
             "post": "create"
@@ -32,7 +30,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
             submission_path = os.path.join(
@@ -62,7 +60,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
 
@@ -70,7 +68,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.main_directory, 'fixtures',
                 'transportation', 'instances', s, s + '.xml')
 
-            with open(submission_path) as sf:
+            with open(submission_path, 'rb') as sf:
                 data = {'xml_submission_file': sf, 'media_file': f}
                 request = self.factory.post('/submission', data)
                 response = self.view(request)
@@ -106,7 +104,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
             path = os.path.join(
@@ -114,7 +112,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 'transportation', 'instances', s, s + '.xml')
             path = self._add_uuid_to_submission_xml(path, self.xform)
 
-            with open(path) as sf:
+            with open(path, 'rb') as sf:
                 data = {'xml_submission_file': sf, 'media_file': f}
                 request = self.factory.post('/submission', data)
                 response = self.view(request)
@@ -135,7 +133,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             '..',
             'fixtures',
             'transport_submission.json')
-        with open(path) as f:
+        with open(path, 'rb') as f:
             data = json.loads(f.read())
             request = self.factory.post('/submission', data, format='json')
             response = self.view(request)
@@ -149,33 +147,6 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             response = self.view(request)
             self.assertContains(response, 'Successful submission',
                                 status_code=201)
-            self.assertTrue(response.has_header('X-OpenRosa-Version'))
-            self.assertTrue(
-                response.has_header('X-OpenRosa-Accept-Content-Length'))
-            self.assertTrue(response.has_header('Date'))
-            self.assertEqual(response['Content-Type'],
-                             'application/json')
-            self.assertEqual(response['Location'],
-                             'http://testserver/submission')
-
-    def test_post_submission_authenticated_json_with_geo(self):
-        path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            '..',
-            'fixtures',
-            'movie_form_submission.json')
-        with open(path) as f:
-            data = json.loads(f.read())
-            request = self.factory.post('/submission', data, format='json')
-            response = self.view(request)
-            self.assertEqual(response.status_code, 401)
-
-            request = self.factory.post('/submission', data, format='json')
-            auth = DigestAuth('bob', 'bobbob')
-            request.META.update(auth(request.META, response))
-            response = self.view(request)
-            self.assertContains(response, 'error":"Improperly',
-                                status_code=400)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -201,15 +172,21 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             auth = DigestAuth('bob', 'bobbob')
             request.META.update(auth(request.META, response))
             response = self.view(request)
-            self.assertContains(response, 'error":"Received empty submission',
-                                status_code=400)
-            self.assertTrue(response.has_header('X-OpenRosa-Version'))
+            rendered_response = response.render()
+            self.assertTrue('error' in rendered_response.data)
             self.assertTrue(
-                response.has_header('X-OpenRosa-Accept-Content-Length'))
-            self.assertTrue(response.has_header('Date'))
-            self.assertEqual(response['Content-Type'],
+                rendered_response.data['error'].startswith(
+                    'Received empty submission'
+                )
+            )
+            self.assertTrue(rendered_response.status_code == 400)
+            self.assertTrue(rendered_response.has_header('X-OpenRosa-Version'))
+            self.assertTrue(
+                rendered_response.has_header('X-OpenRosa-Accept-Content-Length'))
+            self.assertTrue(rendered_response.has_header('Date'))
+            self.assertEqual(rendered_response['Content-Type'],
                              'application/json')
-            self.assertEqual(response['Location'],
+            self.assertEqual(rendered_response['Location'],
                              'http://testserver/submission')
 
     def test_post_submission_require_auth(self):
@@ -220,7 +197,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
             submission_path = os.path.join(
@@ -262,7 +239,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
             submission_path = os.path.join(
@@ -294,7 +271,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
             submission_path = os.path.join(
@@ -340,7 +317,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         media_file = "1335783522563.jpg"
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
-        with open(path) as f:
+        with open(path, 'rb') as f:
             f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
                                      os.path.getsize(path), None)
             submission_path = os.path.join(

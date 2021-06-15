@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 from datetime import datetime
 
@@ -16,7 +15,7 @@ from onadata.libs.utils.image_tools import image_url
 class TestAttachment(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self._publish_transportation_form_and_submit_instance()
         self.media_file = "1335783522563.jpg"
         media_file = os.path.join(
@@ -25,7 +24,7 @@ class TestAttachment(TestBase):
         self.instance = Instance.objects.all()[0]
         self.attachment = Attachment.objects.create(
             instance=self.instance,
-            media_file=File(open(media_file), media_file))
+            media_file=File(open(media_file, 'rb'), media_file))
 
     def test_mimetype(self):
         self.assertEqual(self.attachment.mimetype, 'image/jpeg')
@@ -38,7 +37,7 @@ class TestAttachment(TestBase):
             self.assertNotEqual(
                 url.find(thumbnail), -1)
             for size in ['small', 'medium', 'large']:
-                thumbnail = '%s-%s.jpg' % (filename, size)
+                thumbnail = f'{filename}-{size}.jpg'
                 self.assertTrue(
                     default_storage.exists(thumbnail))
                 default_storage.delete(thumbnail)
@@ -52,15 +51,15 @@ class TestAttachment(TestBase):
                 thumbnail = '%s-%s.jpg' % (filename, size)
                 self.assertTrue(
                     default_storage.exists(thumbnail))
-                created_times[size] = default_storage.modified_time(thumbnail)
+                created_times[size] = default_storage.get_modified_time(thumbnail)
         # replace or regenerate thumbnails if they exist
         call_command("create_image_thumbnails", force=True)
         for attachment in Attachment.objects.filter(instance=self.instance):
             filename = attachment.media_file.name.replace('.jpg', '')
             for size in settings.THUMB_CONF.keys():
-                thumbnail = '%s-%s.jpg' % (filename, size)
+                thumbnail = f'{filename}-{size}.jpg'
                 self.assertTrue(
                     default_storage.exists(thumbnail))
                 self.assertTrue(
-                    default_storage.modified_time(thumbnail) > created_times[size])
+                    default_storage.get_modified_time(thumbnail) > created_times[size])
                 default_storage.delete(thumbnail)

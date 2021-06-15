@@ -1,12 +1,11 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import re
 
 from django.utils.six.moves.urllib.parse import unquote_plus
 
 
-class RedisHelper(object):
+class RedisHelper:
     """
     Redis's helper.
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -22,12 +20,12 @@ class Command(BaseCommand):
     help = "Deletes duplicated submissions (i.e same `uuid` and same `xml`)"
 
     def __init__(self, **kwargs):
-        super(Command, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.__vaccuum = False
         self.__users = set([])
 
     def add_arguments(self, parser):
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
         parser.add_argument(
             "--user",

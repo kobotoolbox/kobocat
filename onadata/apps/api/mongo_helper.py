@@ -1,21 +1,21 @@
-from __future__ import unicode_literals, print_function, division, absolute_import
 import re
-import base64
+
 
 from onadata.libs.utils.common_tags import NESTED_RESERVED_ATTRIBUTES
+from onadata.libs.utils.string import base64_encodestring
 
 
-class MongoHelper(object):
+class MongoHelper:
 
     KEY_WHITELIST = ['$or', '$and', '$exists', '$in', '$gt', '$gte',
                      '$lt', '$lte', '$regex', '$options', '$all']
     ENCODING_SUBSTITUTIONS = [
-        (re.compile(r'^\$'), base64.encodestring('$').strip()),
-        (re.compile(r'\.'), base64.encodestring('.').strip()),
+        (re.compile(r'^\$'), base64_encodestring('$').strip()),
+        (re.compile(r'\.'), base64_encodestring('.').strip()),
     ]
     DECODING_SUBSTITUTIONS = [
-        (re.compile(r'^' + base64.encodestring('$').strip()), '$'),
-        (re.compile(base64.encodestring('.').strip()), '.'),
+        (re.compile(r'^' + base64_encodestring('$').strip()), '$'),
+        (re.compile(base64_encodestring('.').strip()), '.'),
     ]
 
     @classmethod

@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from datetime import datetime
 import os
 import tempfile
@@ -21,7 +19,7 @@ from onadata.libs.utils.backup_tools import (
 
 class TestBackupTools(TestBase):
     def setUp(self):
-        super(TestBackupTools, self).setUp()
+        super().setUp()
         self._publish_xls_file_and_set_xform(
             os.path.join(
                 settings.ONADATA_DIR,

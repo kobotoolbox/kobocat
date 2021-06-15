@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from rest_framework import renderers
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -189,4 +187,4 @@ Accept: image/png </pre>
         except OSError:
             pass
 
-        return super(MetaDataViewSet, self).perform_destroy(*args, **kwargs)
+        return super().perform_destroy(*args, **kwargs)

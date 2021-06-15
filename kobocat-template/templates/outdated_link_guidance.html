@@ -1,0 +1,59 @@
+{% load i18n %}
+<style>
+  #kpi_url_box {
+    border: 2px solid #E9EDF0;
+    display: inline-block;
+    font-size: larger;
+    margin: 0;
+    padding: 0.5em;
+  }
+  #kpi_url_clipboard {
+    cursor: pointer;
+    margin-left: 0.75em;
+  }
+</style>
+<script>
+  function copyKpiUrl() {
+    var el = document.getElementById("kpi_url_clipboard");
+    if (!navigator.clipboard) {
+      el.outerHTML = "<i>{% trans "sorry, browser did not allow copying to clipboard" %}";
+    } else {
+      navigator.clipboard.writeText("{{ kpi_url }}").then(
+        function() {
+          el.innerText = "{% trans "copied to clipboard!" %}";
+          el.className = "";
+        }
+      );
+    }
+  }
+</script>
+<div>
+  <h2>⚠ {% trans "Outdated Link" %}</h2>
+  {% if not kpi_url %}
+    {% if user == xform.user %}
+      <p>
+        {% trans "Many features cannot be accessed at this outdated address." %}
+        <a href="/">{% trans "Please click here to synchronize your forms." %}</a>
+      </p>
+    {% else %}
+      <p>
+        {% trans "Many features cannot be accessed at this outdated address." %}
+        {% trans "Please ask the owner to log into their account and synchronize their forms." %}
+      </p>
+    {% endif %}
+  {% else %}
+    <p>
+      {% trans "Many features cannot be accessed at this outdated address." %}
+      {% trans "Please use the following instead:" %}
+    </p>
+    <p id="kpi_url_box">
+      <a href="{{ kpi_url }}">{{ kpi_url }}</a>
+      <i id="kpi_url_clipboard" class="fa fa-fw fa-clipboard" onclick="copyKpiUrl()"></i>
+    </p>
+  {% endif %}
+  <p>
+    <a href="{{ legacy_learn_more_url }}" target="_blank">
+      {% trans "To learn more, please click here." %}
+    </a>
+  </p>
+</div>

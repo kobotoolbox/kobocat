@@ -1,7 +1,6 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.logger.views import download_jsonform
 

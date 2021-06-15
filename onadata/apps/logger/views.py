@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 from datetime import datetime
 import datetime as datetime_module
 import json
@@ -16,7 +14,6 @@ from django.contrib.sites.models import Site
 from django.contrib import messages
 from django.core.files.storage import get_storage_class
 from django.core.files import File
-from django.core.urlresolvers import reverse
 from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden,
@@ -27,8 +24,7 @@ from django.http import (HttpResponse,
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
-from django.template import RequestContext
-from django.utils import six
+from django.utils.six import string_types, text_type
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
@@ -41,28 +37,22 @@ from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.viewer_tools import enketo_url
-from onadata.libs.utils.viewer_tools import image_urls_dict
 from onadata.libs.utils.logger_tools import (
     safe_create_instance,
     OpenRosaResponseBadRequest,
     OpenRosaResponse,
     BaseOpenRosaResponse,
-    inject_instanceid,
-    remove_xform,
     publish_xml_form,
-    publish_form)
+    publish_form,
+)
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
-from onadata.libs.utils.decorators import is_owner
 from onadata.libs.utils.user_auth import (helper_auth_helper,
                                           has_permission,
-                                          has_edit_permission,
                                           HttpResponseNotAuthorized,
                                           add_cors_headers,
                                           )
-from onadata.libs.utils.viewer_tools import _get_form_url
-from ...koboform.pyxform_utils import convert_csv_to_xls
 from .tasks import generate_stats_zip
+from ...koboform.pyxform_utils import convert_csv_to_xls
 
 IO_ERROR_STRINGS = [
     'request data read error',
@@ -71,7 +61,7 @@ IO_ERROR_STRINGS = [
 
 
 def _bad_request(e):
-    strerror = unicode(e)
+    strerror = text_type(e)
 
     return strerror and strerror in IO_ERROR_STRINGS
 
@@ -90,28 +80,20 @@ def _parse_int(num):
         pass
 
 
-def _html_submission_response(request, instance):
-    data = {}
-    data['username'] = instance.xform.user.username
-    data['id_string'] = instance.xform.id_string
-    data['domain'] = Site.objects.get(id=settings.SITE_ID).domain
-
-    return render(request, "submission.html", data)
-
-
 def _submission_response(request, instance):
-    data = {}
-    data['message'] = _("Successful submission.")
-    data['formid'] = instance.xform.id_string
-    data['encrypted'] = instance.xform.encrypted
-    data['instanceID'] = 'uuid:%s' % instance.uuid
-    data['submissionDate'] = instance.date_created.isoformat()
-    data['markedAsCompleteDate'] = instance.date_modified.isoformat()
+    data = {
+        'message': _("Successful submission."),
+        'formid': instance.xform.id_string,
+        'encrypted': instance.xform.encrypted,
+        'instanceID': f'uuid:{instance.uuid}',
+        'submissionDate': instance.date_created.isoformat(),
+        'markedAsCompleteDate': instance.date_modified.isoformat()
+    }
 
-    context = RequestContext(request, data)
+    #context = RequestContext(request, data)
     t = loader.get_template('submission.xml')
 
-    return BaseOpenRosaResponse(t.render(context))
+    return BaseOpenRosaResponse(t.render(data, request=request))
 
 
 @require_POST
@@ -283,13 +265,13 @@ def submission(request, username=None):
     # request.FILES is a django.utils.datastructures.MultiValueDict
     # for each key we have a list of values
     try:
-        xml_file_list = request.FILES.pop("xml_submission_file", [])
+        xml_file_list = list(request.FILES.pop("xml_submission_file", []))
         if len(xml_file_list) != 1:
             return OpenRosaResponseBadRequest(
                 _("There should be a single XML submission file.")
             )
         # save this XML file and media files as attachments
-        media_files = request.FILES.values()
+        media_files = list(request.FILES.values())
 
         # get uuid from post request
         uuid = request.POST.get('uuid')
@@ -313,11 +295,7 @@ def submission(request, username=None):
                 "id_string": instance.xform.id_string
             }, audit, request)
 
-        # response as html if posting with a UUID
-        if not username and uuid:
-            response = _html_submission_response(request, instance)
-        else:
-            response = _submission_response(request, instance)
+        response = _submission_response(request, instance)
 
         # ODK needs two things for a form to be considered successful
         # 1) the status code needs to be 201 (created)
@@ -332,10 +310,10 @@ def submission(request, username=None):
         else:
             raise
     finally:
-        if len(xml_file_list):
-            [_file.close() for _file in xml_file_list]
-        if len(media_files):
-            [_file.close() for _file in media_files]
+        for xml_file in xml_file_list:
+            xml_file.close()
+        for media_file in media_files:
+            media_file.close()
 
 
 def download_xform(request, username, id_string):
@@ -417,6 +395,7 @@ def download_xlsform(request, username, id_string):
 
         return HttpResponseRedirect("/%s" % username)
 
+
 def download_jsonform(request, username, id_string):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, user__username__iexact=username,
@@ -439,130 +418,6 @@ def download_jsonform(request, username, id_string):
         add_cors_headers(response)
         response.content = xform.json
     return response
-
-
-@is_owner
-@require_POST
-def delete_xform(request, username, id_string):
-    xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__exact=id_string)
-
-    # delete xform and submissions
-    remove_xform(xform)
-
-    audit = {}
-    audit_log(
-        Actions.FORM_DELETED, request.user, xform.user,
-        _("Deleted form '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-        }, audit, request)
-    return HttpResponseRedirect('/')
-
-
-@is_owner
-def toggle_downloadable(request, username, id_string):
-    xform = XForm.objects.get(user__username__iexact=username,
-                              id_string__exact=id_string)
-    xform.downloadable = not xform.downloadable
-    xform.save()
-    audit = {}
-    audit_log(
-        Actions.FORM_UPDATED, request.user, xform.user,
-        _("Made form '%(id_string)s' %(downloadable)s.") %
-        {
-            'id_string': xform.id_string,
-            'downloadable':
-            _("downloadable") if xform.downloadable else _("un-downloadable")
-        }, audit, request)
-    return HttpResponseRedirect("/%s" % username)
-
-
-def enter_data(request, username, id_string):
-    owner = get_object_or_404(User, username__iexact=username)
-    xform = get_object_or_404(XForm, user__username__iexact=username,
-                              id_string__exact=id_string)
-    if not has_edit_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
-
-    form_url = _get_form_url(username)
-
-    try:
-        url = enketo_url(form_url, xform.id_string)
-        if not url:
-            return HttpResponseRedirect(reverse('onadata.apps.main.views.show',
-                                        kwargs={'username': username,
-                                                'id_string': id_string}))
-        return HttpResponseRedirect(url)
-    except Exception as e:
-        data = {}
-        owner = User.objects.get(username__iexact=username)
-        data['profile'], created = \
-            UserProfile.objects.get_or_create(user=owner)
-        data['xform'] = xform
-        data['content_user'] = owner
-        data['form_view'] = True
-        data['message'] = {
-            'type': 'alert-error',
-            'text': "Enketo error, reason: %s" % e}
-        messages.add_message(
-            request, messages.WARNING,
-            _("Enketo error: enketo replied %s") % e, fail_silently=True)
-        return render(request, "profile.html", data)
-
-    return HttpResponseRedirect(reverse('onadata.apps.main.views.show',
-                                kwargs={'username': username,
-                                        'id_string': id_string}))
-
-
-def edit_data(request, username, id_string, data_id):
-    context = RequestContext(request)
-    owner = User.objects.get(username__iexact=username)
-    xform = get_object_or_404(
-        XForm, user__username__iexact=username, id_string__exact=id_string)
-    instance = get_object_or_404(
-        Instance, pk=data_id, xform=xform)
-    instance_attachments = image_urls_dict(instance)
-    if not has_edit_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
-    if not hasattr(settings, 'ENKETO_URL'):
-        return HttpResponseRedirect(reverse(
-            'onadata.apps.main.views.show',
-            kwargs={'username': username, 'id_string': id_string}))
-
-    url = '%sdata/edit_url' % settings.ENKETO_URL
-    # see commit 220f2dad0e for tmp file creation
-    injected_xml = inject_instanceid(instance.xml, instance.uuid)
-    return_url = request.build_absolute_uri(
-        reverse(
-            'onadata.apps.viewer.views.instance',
-            kwargs={
-                'username': username,
-                'id_string': id_string}
-        ) + "#/" + str(instance.id))
-    form_url = _get_form_url(username)
-
-    try:
-        url = enketo_url(
-            form_url, xform.id_string, instance_xml=injected_xml,
-            instance_id=instance.uuid, return_url=return_url,
-            instance_attachments=instance_attachments
-        )
-    except Exception as e:
-        context.message = {
-            'type': 'alert-error',
-            'text': "Enketo error, reason: %s" % e}
-        messages.add_message(
-            request, messages.WARNING,
-            _("Enketo error: enketo replied %s") % e, fail_silently=True)
-    else:
-        if url:
-            context.enketo = url
-            return HttpResponseRedirect(url)
-    return HttpResponseRedirect(
-        reverse('onadata.apps.main.views.show',
-                kwargs={'username': username,
-                        'id_string': id_string}))
 
 
 def view_submission_list(request, username):
@@ -614,7 +469,7 @@ def view_download_submission(request, username):
         return authenticator.build_challenge_response()
     data = {}
     formId = request.GET.get('formId', None)
-    if not isinstance(formId, six.string_types):
+    if not isinstance(formId, string_types):
         return HttpResponseBadRequest()
 
     id_string = formId[0:formId.find('[')]

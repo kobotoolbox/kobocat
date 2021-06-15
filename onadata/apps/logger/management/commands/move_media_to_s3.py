@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
-
 import sys
 
 from django.core.files.storage import get_storage_class
@@ -25,7 +22,7 @@ class Command(BaseCommand):
         try:
             fs = get_storage_class(
                 'django.core.files.storage.FileSystemStorage')()
-            s3 = get_storage_class('storages.backends.s3boto.S3BotoStorage')()
+            s3 = get_storage_class('storages.backends.s3boto3.S3Boto3Storage')()
         except:
             print(_("Missing necessary libraries. Try running: pip install -r"
                     "requirements/s3.pip"))

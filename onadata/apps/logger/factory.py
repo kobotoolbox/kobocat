@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 # This factory is not the same as the others, and doesn't use
 # django-factories but it mimics their functionality...
 from datetime import timedelta
@@ -76,7 +74,7 @@ def _load_simple_survey_object():
     return survey
 
 
-class XFormManagerFactory(object):
+class XFormManagerFactory:
 
     def create_registration_xform(self):
         """

@@ -1,15 +1,13 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os.path
-from cStringIO import StringIO
-from urlparse import urljoin
+from io import StringIO, BytesIO
+from urllib.parse import urljoin
 
 import requests
 from django.contrib.auth import authenticate
 from django.core.files.storage import get_storage_class
 from django.core.files.uploadedfile import UploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import RequestFactory
 from django_digest.test import Client as DigestClient
 from httmock import urlmatch, HTTMock
@@ -54,7 +52,7 @@ def form_list_xml(url, request, **kwargs):
 
 
 def get_streaming_content(res):
-    tmp = StringIO()
+    tmp = BytesIO()
     for chunk in res.streaming_content:
         tmp.write(chunk)
     content = tmp.getvalue()
@@ -86,7 +84,7 @@ class TestBriefcaseClient(TestBase):
         self._submit_transport_instance_w_attachment()
         src = os.path.join(self.this_directory, "fixtures",
                            "transportation", "screenshot.png")
-        uf = UploadedFile(file=open(src), content_type='image/png')
+        uf = UploadedFile(file=open(src, 'rb'), content_type='image/png')
         count = MetaData.objects.count()
         MetaData.media_upload(self.xform, uf)
         self.assertEqual(MetaData.objects.count(), count + 1)

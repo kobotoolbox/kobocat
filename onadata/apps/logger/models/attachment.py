@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import mimetypes
 import os
 from hashlib import md5
@@ -27,11 +25,13 @@ def upload_to(attachment, filename):
 
 
 def hash_attachment_contents(contents):
-    return '%s' % md5(contents).hexdigest()
+    if isinstance(contents, str):
+        contents = contents.encode()
+    return md5(contents).hexdigest()
 
 
 class Attachment(models.Model):
-    instance = models.ForeignKey(Instance, related_name="attachments")
+    instance = models.ForeignKey(Instance, related_name="attachments", on_delete=models.CASCADE)
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
     media_file_basename = models.CharField(
         max_length=260, null=True, blank=True, db_index=True)
@@ -56,7 +56,7 @@ class Attachment(models.Model):
             # the storage engine when running reports
             self.media_file_size = self.media_file.size
 
-        super(Attachment, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @property
     def file_hash(self):

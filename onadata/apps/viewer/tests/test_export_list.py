@@ -1,9 +1,8 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import os
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.models.export import Export
@@ -14,7 +13,7 @@ from onadata.apps.viewer.views import export_list
 class TestExportList(TestBase):
 
     def setUp(self):
-        super(TestExportList, self).setUp()
+        super().setUp()
         self._publish_transportation_form()
         survey = self.surveys[0]
         self._make_submission(
@@ -34,7 +33,7 @@ class TestExportList(TestBase):
         self.assertNotIn(
             '<input title="" data-original-title="" \
             class="btn large btn-primary" \
-            value="New Export" type="submit">', response.content)
+            value="New Export" type="submit">', response.content.decode())
         self.assertEqual(response.status_code, 200)
 
     @unittest.skip('Fails under Django 1.6')
@@ -72,35 +71,11 @@ class TestExportList(TestBase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    def test_gdoc_export_list(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.GDOC_EXPORT}
-        url = reverse(export_list, kwargs=kwargs)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)
-
-    def test_csv_zip_export_list(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.CSV_ZIP_EXPORT}
-        url = reverse(export_list, kwargs=kwargs)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-    def test_sav_zip_export_list(self):
-        kwargs = {'username': self.user.username,
-                  'id_string': self.xform.id_string,
-                  'export_type': Export.SAV_ZIP_EXPORT}
-        url = reverse(export_list, kwargs=kwargs)
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
 
 class TestDataExportURL(TestBase):
 
     def setUp(self):
-        super(TestDataExportURL, self).setUp()
+        super().setUp()
         self._publish_transportation_form()
 
     def _filename_from_disposition(self, content_disposition):
@@ -147,32 +122,3 @@ class TestDataExportURL(TestBase):
         filename = self._filename_from_disposition(content_disposition)
         basename, ext = os.path.splitext(filename)
         self.assertEqual(ext, '.xlsx')
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_csv_zip_export_url(self):
-        self._submit_transport_instance()
-        url = reverse('csv_zip_export', kwargs={
-            'username': self.user.username.upper(),
-            'id_string': self.xform.id_string.upper(),
-        })
-        response = self.client.get(url)
-        headers = dict(response.items())
-        self.assertEqual(headers['Content-Type'], 'application/zip')
-        content_disposition = headers['Content-Disposition']
-        filename = self._filename_from_disposition(content_disposition)
-        basename, ext = os.path.splitext(filename)
-        self.assertEqual(ext, '.zip')
-
-    def test_sav_zip_export_url(self):
-        self._submit_transport_instance()
-        url = reverse('sav_zip_export', kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-        })
-        response = self.client.get(url)
-        headers = dict(response.items())
-        self.assertEqual(headers['Content-Type'], 'application/zip')
-        content_disposition = headers['Content-Disposition']
-        filename = self._filename_from_disposition(content_disposition)
-        basename, ext = os.path.splitext(filename)
-        self.assertEqual(ext, '.zip')

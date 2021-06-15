@@ -1,5 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
 import logging
 import pytz
 import re
@@ -19,7 +18,6 @@ from onadata.libs.utils.export_tools import (
 )
 from onadata.libs.utils.logger_tools import mongo_sync_status, report_exception
 
-
 def create_async_export(xform, export_type, query, force_xlsx, options=None):
     username = xform.user.username
     id_string = xform.id_string
@@ -36,9 +34,7 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
         'export_id': export.id,
         'query': query,
     }
-    if export_type in [Export.XLS_EXPORT, Export.GDOC_EXPORT,
-                       Export.CSV_EXPORT, Export.CSV_ZIP_EXPORT,
-                       Export.SAV_ZIP_EXPORT]:
+    if export_type in [Export.XLS_EXPORT, Export.CSV_EXPORT]:
         if options and "group_delimiter" in options:
             arguments["group_delimiter"] = options["group_delimiter"]
         if options and "split_select_multiples" in options:
@@ -49,16 +45,10 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
                 options["binary_select_multiples"]
 
         # start async export
-        if export_type in [Export.XLS_EXPORT, Export.GDOC_EXPORT]:
+        if export_type == Export.XLS_EXPORT:
             result = create_xls_export.apply_async((), arguments, countdown=10)
         elif export_type == Export.CSV_EXPORT:
             result = create_csv_export.apply_async(
-                (), arguments, countdown=10)
-        elif export_type == Export.CSV_ZIP_EXPORT:
-            result = create_csv_zip_export.apply_async(
-                (), arguments, countdown=10)
-        elif export_type == Export.SAV_ZIP_EXPORT:
-            result = create_sav_zip_export.apply_async(
                 (), arguments, countdown=10)
         else:
             raise Export.ExportTypeError
@@ -215,65 +205,6 @@ def create_zip_export(username, id_string, export_id, query=None):
 
 
 @task()
-def create_csv_zip_export(username, id_string, export_id, query=None,
-                          group_delimiter='/', split_select_multiples=True,
-                          binary_select_multiples=False):
-    export = Export.objects.get(id=export_id)
-    try:
-        # though export is not available when for has 0 submissions, we
-        # catch this since it potentially stops celery
-        gen_export = generate_export(
-            Export.CSV_ZIP_EXPORT, 'zip', username, id_string, export_id,
-            query, group_delimiter, split_select_multiples,
-            binary_select_multiples)
-    except (Exception, NoRecordsFoundError) as e:
-        export.internal_status = Export.FAILED
-        export.save()
-        # mail admins
-        details = {
-            'export_id': export_id,
-            'username': username,
-            'id_string': id_string
-        }
-        report_exception("CSV ZIP Export Exception: Export ID - "
-                         "%(export_id)s, /%(username)s/%(id_string)s"
-                         % details, e, sys.exc_info())
-        raise
-    else:
-        return gen_export.id
-
-
-@task()
-def create_sav_zip_export(username, id_string, export_id, query=None,
-                          group_delimiter='/', split_select_multiples=True,
-                          binary_select_multiples=False):
-    export = Export.objects.get(id=export_id)
-    try:
-        # though export is not available when for has 0 submissions, we
-        # catch this since it potentially stops celery
-        gen_export = generate_export(
-            Export.SAV_ZIP_EXPORT, 'zip', username, id_string, export_id,
-            query, group_delimiter, split_select_multiples,
-            binary_select_multiples
-        )
-    except (Exception, NoRecordsFoundError) as e:
-        export.internal_status = Export.FAILED
-        export.save()
-        # mail admins
-        details = {
-            'export_id': export_id,
-            'username': username,
-            'id_string': id_string
-        }
-        report_exception("SAV ZIP Export Exception: Export ID - "
-                         "%(export_id)s, /%(username)s/%(id_string)s"
-                         % details, e, sys.exc_info())
-        raise
-    else:
-        return gen_export.id
-
-
-@task()
 def delete_export(export_id):
     try:
         export = Export.objects.get(id=export_id)
@@ -351,3 +282,5 @@ def log_stuck_exports_and_mark_failed():
         # Export.save() is a busybody; bypass it with update()
         stuck_exports.filter(pk=stuck_export.pk).update(
             internal_status=Export.FAILED)
+
+        

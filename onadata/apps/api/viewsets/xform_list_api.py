@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import pytz
 from datetime import datetime
 
@@ -10,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.response import Response
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 
 from onadata.apps.api.tools import get_media_file_response
 from onadata.apps.logger.models.xform import XForm
@@ -39,7 +37,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
     template_name = 'api/xformsList.xml'
 
     def __init__(self, *args, **kwargs):
-        super(XFormListApi, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # Respect DEFAULT_AUTHENTICATION_CLASSES, but also ensure that the
         # previously hard-coded authentication classes are included first
         authentication_classes = [
@@ -65,19 +63,19 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         if self.action and self.action == 'manifest':
             return [XFormManifestRenderer()]
 
-        return super(XFormListApi, self).get_renderers()
+        return super().get_renderers()
 
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
         if username is None:
             # If no username is specified, the request must be authenticated
-            if self.request.user.is_anonymous():
+            if self.request.user.is_anonymous:
                 # raises a permission denied exception, forces authentication
                 self.permission_denied(self.request)
             else:
                 # Return all the forms the currently-logged-in user can access,
                 # including those shared by other users
-                queryset = super(XFormListApi, self).filter_queryset(queryset)
+                queryset = super().filter_queryset(queryset)
         else:
             profile = get_object_or_404(
                 UserProfile, user__username=username.lower()
@@ -87,7 +85,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             if profile.require_auth:
                 # The specified has user ticked "Require authentication to see
                 # forms and submit data"; reject anonymous requests
-                if self.request.user.is_anonymous():
+                if self.request.user.is_anonymous:
                     # raises a permission denied exception, forces
                     # authentication
                     self.permission_denied(self.request)
@@ -95,7 +93,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
                     # Someone has logged in, but they are not necessarily
                     # allowed to access the forms belonging to the specified
                     # user. Filter again to consider object-level permissions
-                    queryset = super(XFormListApi, self).filter_queryset(
+                    queryset = super().filter_queryset(
                         queryset
                     )
         try:
@@ -122,7 +120,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
         return Response(self.object.xml, headers=self.get_openrosa_headers())
 
-    @detail_route(methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
         self.object = self.get_object()
         object_list = MetaData.objects.filter(data_type='media',
@@ -133,7 +131,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
         return Response(serializer.data, headers=self.get_openrosa_headers())
 
-    @detail_route(methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def media(self, request, *args, **kwargs):
         self.object = self.get_object()
         pk = kwargs.get('metadata')

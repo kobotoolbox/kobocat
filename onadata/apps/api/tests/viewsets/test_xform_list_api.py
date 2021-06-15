@@ -1,6 +1,4 @@
 # coding: utf-8
-from __future__ import unicode_literals, print_function, division, absolute_import
-
 import os
 
 from django.conf import settings
@@ -18,7 +16,7 @@ from onadata.libs.constants import (
 
 class TestXFormListApi(TestAbstractViewSet):
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = XFormListApi.as_view({
             "get": "list"
         })
@@ -37,11 +35,11 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
+        with open(path, 'r') as f:
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(content, form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -62,7 +60,7 @@ class TestXFormListApi(TestAbstractViewSet):
 
         xml = '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
         xml += 'xmlns="http://openrosa.org/xforms/xformsList"></xforms>'
-        content = response.render().content
+        content = response.render().content.decode('utf-8')
         self.assertEqual(content, xml)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
@@ -82,11 +80,11 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
+        with open(path, 'r') as f:
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(content, form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -122,7 +120,7 @@ class TestXFormListApi(TestAbstractViewSet):
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        content = response.render().content
+        content = response.render().content.decode('utf-8')
         self.assertNotIn(self.xform.id_string, content)
         self.assertEqual(
             content, '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
@@ -153,7 +151,7 @@ class TestXFormListApi(TestAbstractViewSet):
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        content = response.render().content
+        content = response.render().content.decode('utf-8')
         self.assertNotIn(self.xform.id_string, content)
         self.assertEqual(
             content, '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
@@ -189,11 +187,11 @@ class TestXFormListApi(TestAbstractViewSet):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
+        with open(path, 'r') as f:
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(content, form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -222,7 +220,7 @@ class TestXFormListApi(TestAbstractViewSet):
         with open(path) as f:
             form_list_xml = f.read().strip()
             data = {"hash": self.xform.hash, "pk": self.xform.pk}
-            content = response.render().content
+            content = response.render().content.decode('utf-8')
             self.assertEqual(content, form_list_xml % data)
 
     def test_retrieve_xform_xml(self):
@@ -251,7 +249,7 @@ class TestXFormListApi(TestAbstractViewSet):
         with open(path) as f:
             form_xml = f.read().strip()
             data = {"form_uuid": self.xform.uuid}
-            content = response.render().content.strip()
+            content = response.render().content.decode('utf-8').strip()
             self.assertEqual(content, form_xml % data)
 
     def _load_metadata(self, xform=None):
@@ -283,7 +281,7 @@ class TestXFormListApi(TestAbstractViewSet):
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
         data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
-        content = response.render().content.strip()
+        content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
@@ -307,7 +305,7 @@ class TestXFormListApi(TestAbstractViewSet):
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
         data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
-        content = response.render().content.strip()
+        content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
