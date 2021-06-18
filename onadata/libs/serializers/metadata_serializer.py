@@ -114,7 +114,8 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_value = attrs.get('data_value')
 
         if attrs.get('data_type') == 'media' and attrs.get('data_file') is None:
-            URLValidator(message=_("Invalid url %s." % data_value))(data_value)
+            message = {'data_value': _('Invalid url {}').format(data_value)}
+            URLValidator(message=message)(data_value)
 
         if not data_value:
             raise serializers.ValidationError(
@@ -127,15 +128,15 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
 
         allowed_types = settings.SUPPORTED_MEDIA_UPLOAD_TYPES
 
-        data_file = attrs.get('data_file')
-        data_value = attrs.get('data_value')
+        data_file = attrs.get('data_file')  # This is could be `None`
+        data_value = attrs['data_value']
 
         if data_value.lower().startswith('http'):
             # If `data_value` is a URL but we cannot get the filename from it,
             # let's try from the headers
             parsed_url = urlparse(data_value)
             filename, extension = os.path.splitext(
-                os.path.basename(os.path.basename(parsed_url.path))
+                os.path.basename(parsed_url.path)
             )
             if not extension:
                 try:
