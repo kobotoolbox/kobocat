@@ -108,8 +108,12 @@ class TestMetaDataViewSet(TestAbstractViewSet):
         }
         response = self._post_form_metadata(data, False)
         self.assertEqual(response.status_code, 400)
-        error = {"non_field_errors": ["Invalid url %s." % data['data_value']]}
-        self.assertEqual(response.data, error)
+        error = {'data_value': [f"Invalid url {data['data_value']}"]}
+        self.assertTrue('data_value' in response.data)
+        error_details = [
+            str(error_detail) for error_detail in response.data['data_value']
+        ]
+        self.assertEqual(error_details, error['data_value'])
 
     def test_invalid_post(self):
         response = self._post_form_metadata({}, False)
