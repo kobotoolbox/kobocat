@@ -1,10 +1,14 @@
 # coding: utf-8
 import mimetypes
+import os
+from urllib.parse import urlparse
 
+import requests
 from django.conf import settings
 from django.core.validators import URLValidator
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
+from werkzeug.http import parse_options_header
 
 from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.logger.models import XForm
@@ -27,7 +31,6 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
                                        required=False)
     data_type = serializers.ChoiceField(choices=METADATA_TYPES)
     data_file = serializers.FileField(required=False)
-    data_file_type = serializers.CharField(max_length=255, required=False)
     from_kpi = serializers.BooleanField(required=False)
 
     class Meta:
@@ -43,6 +46,10 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             'url',
             'from_kpi',
         )
+        read_only_fields = (
+            'id',
+            'data_file_type',
+        )
 
     # was previously validate_data_value but the signature change in DRF3.
     def validate(self, attrs):
@@ -50,21 +57,9 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         Ensure we have a valid url if we are adding a media uri
         instead of a media file
         """
-        value = attrs.get('data_value')
-        media = attrs.get('data_type')
-        data_file = attrs.get('data_file')
-        data_file_type = attrs.get('data_file_type')
+        self._validate_data_value(attrs)
+        self._validate_data_file_type(attrs)
 
-        if media == 'media' and data_file is None:
-            URLValidator(message=_("Invalid url %s." % value))(value)
-
-        if value is None:
-            msg = {'data_value': _('This field is required.')}
-            raise serializers.ValidationError(msg)
-
-        attrs['data_file_type'] = self._validate_data_file_type(
-            data_file_type=data_file_type, data_file=data_file, data_value=value
-        )
         return super().validate(attrs)
 
     def validate_xform(self, xform):
@@ -101,23 +96,92 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             from_kpi=from_kpi,
         )
 
-    def _validate_data_file_type(self, data_file_type, data_file, data_value):
+    def _validate_data_value(self, attrs):
+        if self.instance and self.instance.pk:
+            # ToDo , Should we allow PATCHing the object with different file?
+            attrs['data_file'] = attrs.get(
+                'data_file', self.instance.data_file
+            )
+            attrs['data_type'] = attrs.get(
+                'data_type', self.instance.data_type
+            )
+            try:
+                attrs['data_value']
+            except KeyError:
+                attrs['data_value'] = self.instance.data_value
+                return attrs
 
-        data_value = (
-            data_file.name if data_file else data_value
-        )
+        data_value = attrs.get('data_value')
+
+        if attrs.get('data_type') == 'media' and attrs.get('data_file') is None:
+            message = {'data_value': _('Invalid url {}').format(data_value)}
+            URLValidator(message=message)(data_value)
+
+        if not data_value:
+            raise serializers.ValidationError(
+                {'data_value': _('This field is required.')}
+            )
+
+        return attrs
+
+    def _validate_data_file_type(self, attrs):
+
         allowed_types = settings.SUPPORTED_MEDIA_UPLOAD_TYPES
 
-        if not data_file_type:
-            data_file_type = (
-                data_file.content_type
-                if data_file and data_file.content_type in allowed_types
-                else mimetypes.guess_type(data_value)[0]
-            )
+        data_file = attrs.get('data_file')  # This is could be `None`
+        data_value = attrs['data_value']
 
-        if data_file_type not in allowed_types:
+        if data_value.lower().startswith('http'):
+            # If `data_value` is a URL but we cannot get the filename from it,
+            # let's try from the headers
+            parsed_url = urlparse(data_value)
+            filename, extension = os.path.splitext(
+                os.path.basename(parsed_url.path)
+            )
+            if not extension:
+                try:
+                    # `stream=True` makes `requests` to not download the whole
+                    # file until `response.content` is called.
+                    # Useful to get 'Content-Disposition' header.
+                    response = requests.get(data_value, stream=True)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException:
+                    response.close()
+                    raise serializers.ValidationError({
+                        {'data_file_type': _('Cannot determine content type')}
+                    })
+                else:
+                    response.close()
+
+                try:
+                    filename_from_header = parse_options_header(
+                        response.headers['Content-Disposition']
+                    )
+                except KeyError:
+                    raise serializers.ValidationError({
+                        {'data_file_type': _('Cannot determine content type')}
+                    })
+
+                try:
+                    data_value = filename_from_header[1]['filename']
+                except (TypeError, IndexError, KeyError):
+                    raise serializers.ValidationError({
+                        {'data_file_type': _('Cannot determine content type')}
+                    })
+            else:
+                # In case the url contains a querystring, let's rebuild the
+                # `data_value` within this scope to detect its mimetype
+                data_value = f'{filename}{extension}'
+
+        # Used to rely on `data_file.content_type`. Unfortunately, when object
+        # is PATCHed, `data_file` is not a `InMemoryUploadedFile` object anymore
+        # but a `FieldFile` object which doesn't have a `content_type` attribute
+        filename = data_file.name if data_file else data_value
+        attrs['data_file_type'] = mimetypes.guess_type(filename)[0]
+
+        if attrs['data_file_type'] not in allowed_types:
             raise serializers.ValidationError(
-                {'data_file_type': _('Invalid content type.')}
+                {'data_file_type': _('Invalid content type')}
             )
 
-        return data_file_type
+        return attrs
