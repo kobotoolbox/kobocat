@@ -32,11 +32,15 @@ from onadata.apps.main.forms import QuickConverterForm
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
+from onadata.libs.utils.logger_tools import (
+    check_submission_permissions,
+    response_with_mimetype_and_name,
+)
 from onadata.libs.utils.user_auth import (
     add_cors_headers,
     check_and_set_user_and_form,
     get_xform_and_perms,
+    has_permission,
     helper_auth_helper,
     set_profile_data,
 )
@@ -181,6 +185,11 @@ def show(request, username=None, id_string=None, uuid=None):
 
     if is_owner:
         data['media_form'] = MediaForm()
+
+    if xform.kpi_asset_uid:
+        data['kpi_url'] = (
+            f'{settings.KOBOFORM_URL}/#/forms/{xform.kpi_asset_uid}'
+        )
 
     return render(request, "show.html", data)
 
@@ -383,32 +392,36 @@ def download_media_data(request, username, id_string, data_id):
             except Exception as e:
                 return HttpResponseServerError(e)
     else:
-        if username:  # == request.user.username or xform.shared:
-            if data.data_file.name == '' and data.data_value is not None:
-                return HttpResponseRedirect(data.data_value)
+        if not xform.shared:
+            # raise an exception if the requesting user is not allowed to
+            # submit to this form (and therefore should not see this form media)
+            check_submission_permissions(request, xform)
 
-            file_path = data.data_file.name
-            filename, extension = os.path.splitext(file_path.split('/')[-1])
-            extension = extension.strip('.')
-            if dfs.exists(file_path):
-                audit = {
-                    'xform': xform.id_string
-                }
-                audit_log(
-                    Actions.FORM_UPDATED, request.user, owner,
-                    _("Media '%(filename)s' downloaded from "
-                        "'%(id_string)s'.") %
-                    {
-                        'id_string': xform.id_string,
-                        'filename': os.path.basename(file_path)
-                    }, audit, request)
-                response = response_with_mimetype_and_name(
-                    data.data_file_type,
-                    filename, extension=extension, show_date=False,
-                    file_path=file_path)
-                return response
-            else:
-                return HttpResponseNotFound()
+        if data.data_file.name == '' and data.data_value is not None:
+            return HttpResponseRedirect(data.data_value)
+
+        file_path = data.data_file.name
+        filename, extension = os.path.splitext(file_path.split('/')[-1])
+        extension = extension.strip('.')
+        if dfs.exists(file_path):
+            audit = {
+                'xform': xform.id_string
+            }
+            audit_log(
+                Actions.FORM_UPDATED, request.user, owner,
+                _("Media '%(filename)s' downloaded from "
+                    "'%(id_string)s'.") %
+                {
+                    'id_string': xform.id_string,
+                    'filename': os.path.basename(file_path)
+                }, audit, request)
+            response = response_with_mimetype_and_name(
+                data.data_file_type,
+                filename, extension=extension, show_date=False,
+                file_path=file_path)
+            return response
+        else:
+            return HttpResponseNotFound()
 
     return HttpResponseForbidden(_('Permission denied.'))
 
@@ -418,6 +431,8 @@ def download_metadata(request, username, id_string, data_id):
                               user__username__iexact=username,
                               id_string__exact=id_string)
     owner = xform.user
+    # FIXME: couldn't non-owner users be allowed to access these files even
+    # without the form being entirely public (shared=True)?
     if username == request.user.username or xform.shared:
         data = get_object_or_404(MetaData, pk=data_id)
         file_path = data.data_file.name
@@ -537,3 +552,20 @@ def _get_migrate_url(username):
     return '{kf_url}/api/v2/users/{username}/migrate/'.format(
         kf_url=settings.KOBOFORM_URL, username=username
     )
+
+
+def make_kpi_data_redirect_view(kpi_data_route):
+    def view_func(request, username, id_string):
+        owner = get_object_or_404(User, username__iexact=username)
+        xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
+        if not has_permission(xform, owner, request):
+            return HttpResponseForbidden(_('Not shared.'))
+        data = {'xform': xform}
+        if xform.kpi_asset_uid:
+            data['kpi_url'] = (
+                f'{settings.KOBOFORM_URL}/#/forms/{xform.kpi_asset_uid}/data/'
+                f'{kpi_data_route}'
+            )
+        return render(request, 'outdated_data_view.html', data)
+
+    return view_func

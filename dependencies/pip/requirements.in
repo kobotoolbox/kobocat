@@ -89,3 +89,6 @@ boto3
 
 # Sentry
 sentry-sdk
+
+# mimetype detection
+Werkzeug

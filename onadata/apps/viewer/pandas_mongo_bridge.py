@@ -87,8 +87,15 @@ def get_prefix_from_xpath(xpath):
 
 
 class AbstractDataFrameBuilder:
-    IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ID, ATTACHMENTS, GEOLOCATION,
-                       DELETEDAT, SUBMITTED_BY]
+    IGNORED_COLUMNS = [
+        XFORM_ID_STRING,
+        STATUS,
+        ID,
+        ATTACHMENTS,
+        GEOLOCATION,
+        DELETEDAT,  # no longer used but may persist in old submissions
+        SUBMITTED_BY,
+    ]
     # fields NOT within the form def that we want to include
     ADDITIONAL_COLUMNS = [UUID, SUBMISSION_TIME, TAGS, NOTES, VALIDATION_STATUS]
     BINARY_SELECT_MULTIPLES = False

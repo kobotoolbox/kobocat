@@ -434,7 +434,7 @@ def view_submission_list(request, username):
         return HttpResponseForbidden('Not shared.')
     num_entries = request.GET.get('numEntries', None)
     cursor = request.GET.get('cursor', None)
-    instances = xform.instances.filter(deleted_at=None).order_by('pk')
+    instances = xform.instances.order_by('pk')
 
     cursor = _parse_int(cursor)
     if cursor:
@@ -480,7 +480,7 @@ def view_download_submission(request, username):
     uuid = _extract_uuid(form_id_parts[1])
     instance = get_object_or_404(
         Instance, xform__id_string__exact=id_string, uuid=uuid,
-        xform__user__username=username, deleted_at=None)
+        xform__user__username=username)
     xform = instance.xform
     if not has_permission(xform, form_user, request, xform.shared_data):
         return HttpResponseForbidden('Not shared.')

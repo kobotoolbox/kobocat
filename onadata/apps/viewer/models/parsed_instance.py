@@ -23,7 +23,6 @@ from onadata.libs.utils.common_tags import (
     GEOLOCATION,
     SUBMISSION_TIME,
     MONGO_STRFTIME,
-    DELETEDAT,
     TAGS,
     NOTES,
     SUBMITTED_BY,
@@ -92,9 +91,9 @@ class ParsedInstance(models.Model):
     @classmethod
     @apply_form_field_names
     def query_mongo(cls, username, id_string, query, fields, sort, start=0,
-                    limit=DEFAULT_LIMIT, count=False, hide_deleted=True):
+                    limit=DEFAULT_LIMIT, count=False):
 
-        query = cls._get_mongo_cursor_query(query, hide_deleted, username, id_string)
+        query = cls._get_mongo_cursor_query(query, username, id_string)
 
         if count:
             return [
@@ -118,7 +117,7 @@ class ParsedInstance(models.Model):
 
     @classmethod
     @apply_form_field_names
-    def mongo_aggregate(cls, query, pipeline, hide_deleted=True):
+    def mongo_aggregate(cls, query, pipeline):
         """Perform mongo aggregate queries
         query - is a dict which is to be passed to $match, a pipeline operator
         pipeline - list of dicts or dict of mongodb pipeline operators,
@@ -132,13 +131,6 @@ class ParsedInstance(models.Model):
         if not isinstance(query, dict):
             raise Exception(_("Invalid query! %s" % query))
         query = MongoHelper.to_safe_dict(query)
-        if hide_deleted:
-            # display only active elements
-            deleted_at_query = {
-                "$or": [{"_deleted_at": {"$exists": False}},
-                        {"_deleted_at": None}]}
-            # join existing query with deleted_at_query on an $and
-            query = {"$and": [query, deleted_at_query]}
         k = [{'$match': query}]
         if isinstance(pipeline, list):
             k.extend(pipeline)
@@ -151,9 +143,10 @@ class ParsedInstance(models.Model):
     @apply_form_field_names
     def query_mongo_minimal(
             cls, query, fields, sort, start=0, limit=DEFAULT_LIMIT,
-            count=False, hide_deleted=True):
+            count=False):
 
-        query = cls._get_mongo_cursor_query(query, hide_deleted)
+        query = cls._get_mongo_cursor_query(query)
+
         if count:
             return [
                 {
@@ -179,9 +172,9 @@ class ParsedInstance(models.Model):
 
     @classmethod
     @apply_form_field_names
-    def query_mongo_no_paging(cls, query, fields, count=False, hide_deleted=True):
+    def query_mongo_no_paging(cls, query, fields, count=False):
 
-        query = cls._get_mongo_cursor_query(query, hide_deleted)
+        query = cls._get_mongo_cursor_query(query)
 
         if count:
             return [
@@ -201,9 +194,6 @@ class ParsedInstance(models.Model):
 
         :param query: JSON string
         :param fields: Array string
-        :param hide_deleted: boolean
-        :param username: string
-        :param id_string: string
         :return: pymongo Cursor
         """
         fields_to_select = {cls.USERFORM_ID: 0}
@@ -226,12 +216,11 @@ class ParsedInstance(models.Model):
         )
 
     @classmethod
-    def _get_mongo_cursor_query(cls, query, hide_deleted, username=None, id_string=None):
+    def _get_mongo_cursor_query(cls, query, username=None, id_string=None):
         """
         Returns the query to get a Mongo cursor.
 
         :param query: JSON string
-        :param hide_deleted: boolean
         :param username: string
         :param id_string: string
         :return: dict
@@ -245,11 +234,6 @@ class ParsedInstance(models.Model):
 
         if username and id_string:
             query.update(cls.get_base_query(username, id_string))
-
-        if hide_deleted:
-            # display only active elements
-            # join existing query with deleted_at_query on an $and
-            query = {"$and": [query, {"_deleted_at": None}]}
 
         return query
 
@@ -296,9 +280,6 @@ class ParsedInstance(models.Model):
             if self.instance.user else None
         }
 
-        if isinstance(self.instance.deleted_at, datetime.datetime):
-            data[DELETEDAT] = self.instance.deleted_at.strftime(MONGO_STRFTIME)
-
         d.update(data)
 
         return MongoHelper.to_safe_dict(d)
@@ -320,7 +301,9 @@ class ParsedInstance(models.Model):
                 if success != self.instance.is_synced_with_mongo:
                     # Skip the labor-intensive stuff in Instance.save() to gain performance
                     # Use .update() instead of .save()
-                    Instance.objects.filter(pk=self.instance.id).update(is_synced_with_mongo=success)
+                    Instance.objects.filter(pk=self.instance.id).update(
+                        is_synced_with_mongo=success
+                    )
 
         return True
 
