@@ -177,8 +177,13 @@ def dict_to_joined_export(data, index, indices, name):
 
 
 class ExportBuilder:
-    IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION,
-                       DELETEDAT]
+    IGNORED_COLUMNS = [
+        XFORM_ID_STRING,
+        STATUS,
+        ATTACHMENTS,
+        GEOLOCATION,
+        DELETEDAT,  # no longer used but may persist in old submissions
+    ]
     # fields we export but are not within the form's structure
     EXTRA_FIELDS = [ID, UUID, SUBMISSION_TIME, INDEX, PARENT_TABLE_NAME,
                     PARENT_INDEX, TAGS, NOTES]
@@ -609,22 +614,19 @@ def generate_export(export_type, extension, username, id_string,
     return export
 
 
-def query_mongo(username, id_string, query=None, hide_deleted=True):
+def query_mongo(username, id_string, query=None):
     query = json.loads(query, object_hook=json_util.object_hook)\
         if query else {}
     query = MongoHelper.to_safe_dict(query)
     query[USERFORM_ID] = '{0}_{1}'.format(username, id_string)
-    if hide_deleted:
-        # display only active elements
-        # join existing query with deleted_at_query on an $and
-        query = {"$and": [query, {"_deleted_at": None}]}
     return xform_instances.find(query, max_time_ms=settings.MONGO_DB_MAX_TIME_MS)
 
 
 def should_create_new_export(xform, export_type):
-    if Export.objects.filter(
-            xform=xform, export_type=export_type).count() == 0 \
-            or Export.exports_outdated(xform, export_type=export_type):
+    if (
+        not Export.objects.filter(xform=xform, export_type=export_type).exists()
+        or Export.exports_outdated(xform, export_type=export_type)
+    ):
         return True
     return False
 
@@ -746,7 +748,6 @@ def kml_export_data(id_string, user):
     instances = Instance.objects.filter(
         xform__user=user,
         xform__id_string=id_string,
-        deleted_at=None,
         geom__isnull=False
     ).order_by('id')
     data_for_template = []

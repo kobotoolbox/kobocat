@@ -50,10 +50,12 @@ RUN apt-get -qq update && \
         libproj-dev \
         gettext \
         postgresql-client \
+        libsqlite3-mod-spatialite \
         openjdk-11-jre \
         locales \
         runit-init \
         rsync \
+        less \
         vim \
         gosu \
         cron && \

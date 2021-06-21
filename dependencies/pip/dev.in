@@ -3,7 +3,6 @@
 ipdb
 ipython
 shell_command
-Werkzeug
 sqlparse
 pytest
 pytest-django

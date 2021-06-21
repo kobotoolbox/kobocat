@@ -1,8 +1,5 @@
 {% load i18n %} 
-
 {% load static %} 
-
-{% with learn_more_url="https://community.kobotoolbox.org/t/changes-to-legacy-interface-self-serve-migration-feature-into-the-new-interface/18108" %}
 
 <script type="text/javascript">
   (function () {
@@ -319,7 +316,7 @@ THE POPUP
         <a
           id="legacy-banner-popup-learn"
           class="legacy-banner__button legacy-banner__button--borderless"
-          href="{{ learn_more_url }}"
+          href="{{ legacy_learn_more_url }}"
           target="_blank"
         >
           {% trans "Learn more" %}
@@ -385,5 +382,3 @@ THE BANNER
     </p>
   </section>
 </div>
-
-{% endwith %}

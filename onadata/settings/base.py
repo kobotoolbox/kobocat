@@ -684,7 +684,8 @@ MONGO_CONNECTION = MongoClient(
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
 # Timeout for Mongo, must be, at least, as long as Celery timeout.
-MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 60 * 1000
+MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
+
 
 ################################
 # Sentry settings              #

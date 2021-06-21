@@ -109,7 +109,6 @@ Provides a list of json submitted data for a specific form.
 >        [
 >            {
 >                "_id": 4503,
->                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
 >                "_geolocation": [
@@ -157,7 +156,6 @@ Get a single specific submission json data providing `pk`
 >
 >            {
 >                "_id": 4503,
->                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
 >                "_geolocation": [
@@ -213,7 +211,6 @@ API Parameters</a>.
 >        [
 >            {
 >                "_id": 4503,
->                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
 >                "_geolocation": [
