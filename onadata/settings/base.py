@@ -527,11 +527,13 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'audio/mpeg',
     'audio/ogg',
     'audio/wav',
+    'audio/x-wav',
     'audio/webm',
     'audio/x-m4a',
     'text/csv',
     'application/xml',
-    'application/zip'
+    'application/zip',
+    'application/x-zip-compressed'
 ]
 
 DEFAULT_VALIDATION_STATUSES = [
