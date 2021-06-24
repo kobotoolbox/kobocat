@@ -448,7 +448,6 @@ Delete a specific submission in a form
         return serializer_class
 
     def get_object(self):
-        obj = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
@@ -464,9 +463,9 @@ Delete a specific submission in a form
                 raise ParseError(_("Invalid dataid `%(dataid)s`"
                                    % {'dataid': dataid}))
 
-            obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
+            return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
 
-        return obj
+        return super().get_object()
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
@@ -577,24 +576,26 @@ Delete a specific submission in a form
             raise ParseError(_("Data id not provided."))
         elif isinstance(self.object, Instance):
             return_url = request.query_params.get('return_url')
-            action = request.query_params.get('action')
-            if action != 'view' and request.user.has_perm(CAN_CHANGE_XFORM, self.object.xform):
+            action = request.query_params.get('action', 'edit')
+            if action == 'edit' and request.user.has_perm(
+                CAN_CHANGE_XFORM, self.object.xform
+            ):
                 if not return_url:
                     raise ParseError(_("return_url not provided."))
-                try:
-                    data["url"] = get_enketo_submission_url(
-                        request, self.object, return_url)
-                except EnketoError as e:
-                    data['detail'] = "{}".format(e)
-            elif action == 'view' and request.user.has_perm(CAN_VIEW_XFORM, self.object.xform):
-                try:
-                    data["url"] = get_enketo_submission_url(
-                        request, self.object, return_url, action=action)
-                except EnketoError as e:
-                    data['detail'] = "{}".format(e)
-
+            elif action == 'view':
+                # Allow anonymous access to view-only if the data has been made
+                # public
+                if request.user.is_anonymous and not self.object.xform.shared:
+                    raise Http404
             else:
-                raise PermissionDenied(_("You do not have edit permissions."))
+                raise PermissionDenied(_("You do not have sufficient permissions."))
+
+            try:
+                data["url"] = get_enketo_submission_url(
+                    request, self.object, return_url, action=action
+                )
+            except EnketoError as e:
+                data['detail'] = "{}".format(e)
 
         return Response(data=data)
 
