@@ -206,7 +206,7 @@ def enketo_url(
                 'instance_attachments[' + key + ']': value
             })
 
-    # The Ekento view-only endpoint differs to the edit by the addition of /view
+    # The Enketo view-only endpoint differs to the edit by the addition of /view
     # as shown in the docs: https://apidocs.enketo.org/v2#/post-instance-view
     if action == 'view':
         url = '{}/view'.format(url)
