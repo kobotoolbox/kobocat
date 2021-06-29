@@ -115,7 +115,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         # Allow anonymous users to access shared data
         if request.method in SAFE_METHODS and \
-                view.action in ['retrieve', 'list']:
+                view.action in ['retrieve', 'list', 'enketo']:
             if obj.shared_data:
                 return True
 

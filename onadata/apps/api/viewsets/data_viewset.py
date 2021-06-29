@@ -448,6 +448,7 @@ Delete a specific submission in a form
         return serializer_class
 
     def get_object(self):
+        obj = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
@@ -465,7 +466,7 @@ Delete a specific submission in a form
 
             return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
 
-        return super().get_object()
+        return obj
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
@@ -585,7 +586,10 @@ Delete a specific submission in a form
             elif action == 'view':
                 # Allow anonymous access to view-only if the data has been made
                 # public
-                if request.user.is_anonymous and not self.object.xform.shared:
+                if (
+                    request.user.is_anonymous
+                    and not self.object.xform.shared_data
+                ):
                     raise Http404
             else:
                 raise PermissionDenied(_("You do not have sufficient permissions."))
