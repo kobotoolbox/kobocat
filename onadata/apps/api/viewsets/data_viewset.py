@@ -2,6 +2,7 @@
 import json
 
 from django.db.models import Q
+from django.db.models.signals import pre_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import six
@@ -22,7 +23,7 @@ from onadata.apps.api.tools import add_tags_to_instance, \
     remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, ParsedInstance
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
@@ -396,9 +397,16 @@ Delete a specific submission in a form
 
         postgres_query, mongo_query = self.__build_db_queries(xform, payload)
 
+        # Disconnect redundant parsed instance pre_delete signal
+        pre_delete.disconnect(_remove_from_mongo, sender=ParsedInstance)
+
         # Delete Postgres & Mongo
         updated_records_count = Instance.objects.filter(**postgres_query).delete()
         ParsedInstance.bulk_delete(mongo_query)
+
+        # Pre_delete signal needs to be re-enabled for parsed instance
+        pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+
         return Response({
             'detail': _('{} submissions have been deleted').format(
                 updated_records_count)
