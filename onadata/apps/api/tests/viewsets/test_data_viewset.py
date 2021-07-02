@@ -297,6 +297,25 @@ class TestDataViewSet(TestBase):
                 response.data['url'],
                 "https://hmh2a.enketo.formhub.org")
 
+    def test_get_enketo_view_url(self):
+        self._make_submissions()
+        view = DataViewSet.as_view({'get': 'enketo'})
+        request = self.factory.get('/', **self.extra)
+        formid = self.xform.pk
+        dataid = self.xform.instances.all().order_by('id')[0].pk
+
+        request = self.factory.get(
+            '/',
+            data={'return_url': "http://test.io/test_url", 'action': 'view'},
+            **self.extra
+        )
+
+        with HTTMock(enketo_mock):
+            response = view(request, pk=formid, dataid=dataid)
+            self.assertEqual(
+                response.data['url'],
+                "https://hmh2a.enketo.formhub.org")
+
     def test_get_form_public_data(self):
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
