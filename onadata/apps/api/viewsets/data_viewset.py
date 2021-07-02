@@ -1,5 +1,6 @@
 # coding: utf-8
 import json
+from typing import Union
 
 from django.db.models import Q
 from django.http import Http404
@@ -447,26 +448,26 @@ Delete a specific submission in a form
 
         return serializer_class
 
-    def get_object(self):
-        obj = super().get_object()
+    def get_object(self) -> Union[XForm, Instance]:
+        xform = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
 
-        if pk is not None and dataid is not None:
-            try:
-                int(pk)
-            except ValueError:
-                raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
-            try:
-                int(dataid)
-            except ValueError:
-                raise ParseError(_("Invalid dataid `%(dataid)s`"
-                                   % {'dataid': dataid}))
+        if pk is None or dataid is None:
+           return  xform
 
-            return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
+        try:
+            int(pk)
+        except ValueError:
+            raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
+        try:
+            int(dataid)
+        except ValueError:
+            raise ParseError(_("Invalid dataid `%(dataid)s`"
+                               % {'dataid': dataid}))
 
-        return obj
+        return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
@@ -595,7 +596,7 @@ Delete a specific submission in a form
                 raise PermissionDenied(_("You do not have sufficient permissions."))
 
             try:
-                data["url"] = get_enketo_submission_url(
+                data['url'] = get_enketo_submission_url(
                     request, self.object, return_url, action=action
                 )
             except EnketoError as e:
