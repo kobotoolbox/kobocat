@@ -91,7 +91,6 @@ class MultiLookupRouter(routers.DefaultRouter):
         for route in self.lookups_routes:
             if route.mapping == {'{httpmethod}': '{methodname}'}:
                 for extra_action in viewset.get_extra_actions():
-                    # FIXME support `url_path` and `url_name` of `@action` decorator
                     methodname = extra_action.__name__
                     mapping = extra_action.mapping
                     detail = extra_action.detail

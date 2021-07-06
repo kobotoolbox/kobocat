@@ -1,7 +1,9 @@
 # coding: utf-8
 import json
+from typing import Union
 
 from django.db.models import Q
+from django.db.models.signals import pre_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import six
@@ -22,7 +24,7 @@ from onadata.apps.api.tools import add_tags_to_instance, \
     remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, ParsedInstance
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
@@ -30,6 +32,7 @@ from onadata.apps.api.permissions import XFormDataPermissions
 from onadata.libs.constants import (
     CAN_CHANGE_XFORM,
     CAN_VALIDATE_XFORM,
+    CAN_VIEW_XFORM,
     CAN_DELETE_DATA_XFORM
 )
 from onadata.libs.serializers.data_serializer import (
@@ -37,7 +40,7 @@ from onadata.libs.serializers.data_serializer import (
 from onadata.libs import filters
 from onadata.libs.utils.viewer_tools import (
     EnketoError,
-    get_enketo_edit_url)
+    get_enketo_submission_url)
 
 
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
@@ -396,9 +399,16 @@ Delete a specific submission in a form
 
         postgres_query, mongo_query = self.__build_db_queries(xform, payload)
 
+        # Disconnect redundant parsed instance pre_delete signal
+        pre_delete.disconnect(_remove_from_mongo, sender=ParsedInstance)
+
         # Delete Postgres & Mongo
         updated_records_count = Instance.objects.filter(**postgres_query).delete()
         ParsedInstance.bulk_delete(mongo_query)
+
+        # Pre_delete signal needs to be re-enabled for parsed instance
+        pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+
         return Response({
             'detail': _('{} submissions have been deleted').format(
                 updated_records_count)
@@ -446,26 +456,26 @@ Delete a specific submission in a form
 
         return serializer_class
 
-    def get_object(self):
-        obj = super().get_object()
+    def get_object(self) -> Union[XForm, Instance]:
+        xform = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
 
-        if pk is not None and dataid is not None:
-            try:
-                int(pk)
-            except ValueError:
-                raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
-            try:
-                int(dataid)
-            except ValueError:
-                raise ParseError(_("Invalid dataid `%(dataid)s`"
-                                   % {'dataid': dataid}))
+        if pk is None or dataid is None:
+           return  xform
 
-            obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
+        try:
+            int(pk)
+        except ValueError:
+            raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
+        try:
+            int(dataid)
+        except ValueError:
+            raise ParseError(_("Invalid dataid `%(dataid)s`"
+                               % {'dataid': dataid}))
 
-        return obj
+        return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
@@ -575,18 +585,30 @@ Delete a specific submission in a form
         if isinstance(self.object, XForm):
             raise ParseError(_("Data id not provided."))
         elif isinstance(self.object, Instance):
-            if request.user.has_perm("change_xform", self.object.xform):
-                return_url = request.query_params.get('return_url')
+            return_url = request.query_params.get('return_url')
+            action = request.query_params.get('action', 'edit')
+            if action == 'edit' and request.user.has_perm(
+                CAN_CHANGE_XFORM, self.object.xform
+            ):
                 if not return_url:
                     raise ParseError(_("return_url not provided."))
-
-                try:
-                    data["url"] = get_enketo_edit_url(
-                        request, self.object, return_url)
-                except EnketoError as e:
-                    data['detail'] = "{}".format(e)
+            elif action == 'view':
+                # Allow anonymous access to view-only if the data has been made
+                # public
+                if (
+                    request.user.is_anonymous
+                    and not self.object.xform.shared_data
+                ):
+                    raise Http404
             else:
-                raise PermissionDenied(_("You do not have edit permissions."))
+                raise PermissionDenied(_("You do not have sufficient permissions."))
+
+            try:
+                data['url'] = get_enketo_submission_url(
+                    request, self.object, return_url, action=action
+                )
+            except EnketoError as e:
+                data['detail'] = "{}".format(e)
 
         return Response(data=data)
 
