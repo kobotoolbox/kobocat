@@ -106,14 +106,19 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         lookup_field = view.lookup_field
         lookup = view.kwargs.get(lookup_field)
         # Allow anonymous users to access access shared data
-        allowed_anonymous_action = ['retrieve']
+        allowed_anonymous_actions = ['retrieve']
         if lookup:
             # We need to grant access to anonymous on list endpoint too when
             # a form pk is specified. e.g. `/api/v1/data/{pk}.json
-            allowed_anonymous_action.append('list')
+            allowed_anonymous_actions.append('list')
+
+        query_param = request.query_params.get('action')
+        if view.action == 'enketo' and query_param == 'view':
+            allowed_anonymous_actions.append('enketo')
+
         if (
             request.method in SAFE_METHODS
-            and view.action in allowed_anonymous_action
+            and view.action in allowed_anonymous_actions
         ):
             return True
         return super().has_permission(request, view)
@@ -131,14 +136,27 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         if user.is_superuser or user == obj.user:
             return True
 
+        allowed_anonymous_actions = ['retrieve', 'list']
+        query_param = request.query_params.get('action')
+        enketo_permission = f'logger.{CAN_CHANGE_XFORM}'
+        if view.action == 'enketo' and query_param == 'view':
+            # FIXME Old behaviour is to return 404 when user has no permissions
+            allowed_anonymous_actions.append('enketo')
+            enketo_permission = f'logger.{CAN_VIEW_XFORM}'
+
         # Allow anonymous users to access shared data
         if (
             request.method in SAFE_METHODS
-            and view.action in ['retrieve', 'list']
+            and view.action in allowed_anonymous_actions
         ):
             if obj.shared_data:
                 return True
 
+        # TODO Use a better solution than these mapping.
+        #  E.g.:
+        #  - Add new endpoints for enketo-edit and enketo-view
+        #  - Add new permission classes for each action
+        #  - Remove this kludgy solution
         perms_actions_map = {
             'bulk_delete': {
                 'DELETE': [f'logger.{CAN_DELETE_DATA_XFORM}'],
@@ -147,7 +165,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
                 'PATCH': [f'logger.{CAN_VALIDATE_XFORM}'],
             },
             'enketo': {
-                'GET': [f'logger.{CAN_CHANGE_XFORM}']
+                'GET': [enketo_permission]
             },
             'labels': {
                 'DELETE': [f'logger.{CAN_CHANGE_XFORM}']

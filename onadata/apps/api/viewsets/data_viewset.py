@@ -3,6 +3,7 @@ import json
 from typing import Union
 
 from django.db.models import Q
+from django.db.models.signals import pre_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import six
@@ -12,7 +13,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import ParseError, PermissionDenied
+from rest_framework.exceptions import ParseError
 from rest_framework.serializers import ValidationError
 from rest_framework.settings import api_settings
 
@@ -23,7 +24,7 @@ from onadata.apps.api.tools import add_tags_to_instance, \
     remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, ParsedInstance
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
@@ -33,7 +34,8 @@ from onadata.libs.serializers.data_serializer import (
 from onadata.libs import filters
 from onadata.libs.utils.viewer_tools import (
     EnketoError,
-    get_enketo_edit_url)
+    get_enketo_submission_url,
+)
 
 
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
@@ -389,10 +391,18 @@ Delete a specific submission in a form
         xform = self.get_object()
         postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
+        # Disconnect redundant parsed instance pre_delete signal
+        pre_delete.disconnect(_remove_from_mongo, sender=ParsedInstance)
+
         # Delete Postgres & Mongo
         all_count, results = Instance.objects.filter(**postgres_query).delete()
         identifier = f'{Instance._meta.app_label}.Instance'
         deleted_records_count = results[identifier]
+        ParsedInstance.bulk_delete(mongo_query)
+
+        # Pre_delete signal needs to be re-enabled for parsed instance
+        pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+
         return Response({
             'detail': _('{} submissions have been deleted').format(
                 deleted_records_count)
@@ -445,26 +455,25 @@ Delete a specific submission in a form
         Return a `XForm` object or a `Instance` object if its primary key is
         present in the url. If no results are found, a HTTP 404 error is raised
         """
-
-        obj = super().get_object()
+        xform = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
 
-        if pk is not None and dataid is not None:
-            try:
-                int(pk)
-            except ValueError:
-                raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
-            try:
-                int(dataid)
-            except ValueError:
-                raise ParseError(_("Invalid dataid `%(dataid)s`"
-                                   % {'dataid': dataid}))
+        if pk is None or dataid is None:
+            return xform
 
-            obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
+        try:
+            int(pk)
+        except ValueError:
+            raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
+        try:
+            int(dataid)
+        except ValueError:
+            raise ParseError(_("Invalid dataid `%(dataid)s`"
+                               % {'dataid': dataid}))
 
-        return obj
+        return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
@@ -576,12 +585,14 @@ Delete a specific submission in a form
             raise ParseError(_('Data id not provided.'))
         elif isinstance(object_, Instance):
             return_url = request.query_params.get('return_url')
-            if not return_url:
+            action_ = request.query_params.get('action', 'edit')
+            if not return_url and not action_ == 'view':
                 raise ParseError(_('`return_url` not provided.'))
 
             try:
-                data['url'] = get_enketo_edit_url(
-                    request, object_, return_url)
+                data['url'] = get_enketo_submission_url(
+                    request, object_, return_url, action=action_
+                )
             except EnketoError as e:
                 data['detail'] = str(e)
 

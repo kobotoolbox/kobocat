@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logger', '0018_add_submission_counter'),
+        ('logger', '0019_purge_deleted_instances'),
     ]
 
     operations = [

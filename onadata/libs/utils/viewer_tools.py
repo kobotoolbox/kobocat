@@ -170,8 +170,15 @@ def get_client_ip(request):
     return ip
 
 
-def enketo_url(form_url, id_string, instance_xml=None,
-               instance_id=None, return_url=None, instance_attachments=None):
+def enketo_url(
+    form_url,
+    id_string,
+    instance_xml=None,
+    instance_id=None,
+    return_url=None,
+    instance_attachments=None,
+    action=None,
+):
 
     if (
         not hasattr(settings, 'ENKETO_URL')
@@ -200,6 +207,12 @@ def enketo_url(form_url, id_string, instance_xml=None,
             values.update({
                 'instance_attachments[' + key + ']': value
             })
+
+    # The Enketo view-only endpoint differs to the edit by the addition of /view
+    # as shown in the docs: https://apidocs.enketo.org/v2#/post-instance-view
+    if action == 'view':
+        url = '{}/view'.format(url)
+
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
 
@@ -211,6 +224,8 @@ def enketo_url(form_url, id_string, instance_xml=None,
         else:
             if 'edit_url' in response:
                 return response['edit_url']
+            elif 'view_url' in response:
+                return response['view_url']
             if settings.ENKETO_OFFLINE_SURVEYS and ('offline_url' in response):
                 return response['offline_url']
             if 'url' in response:
@@ -229,6 +244,17 @@ def enketo_url(form_url, id_string, instance_xml=None,
 def create_attachments_zipfile(attachments, output_file=None):
     if not output_file:
         output_file = NamedTemporaryFile()
+    else:
+        # Disable seeking in a way understood by Python's zipfile module. See
+        # https://github.com/python/cpython/blob/ca2009d72a52a98bf43aafa9ad270a4fcfabfc89/Lib/zipfile.py#L1270-L1274
+        # This is a workaround for https://github.com/kobotoolbox/kobocat/issues/475
+        # and https://github.com/jschneier/django-storages/issues/566
+        def no_seeking(*a, **kw):
+            raise AttributeError(
+                'Seeking disabled! See '
+                'https://github.com/kobotoolbox/kobocat/issues/475'
+            )
+        output_file.seek = no_seeking
 
     storage = get_storage_class()()
     with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_STORED, allowZip64=True) as zip_file:
@@ -258,11 +284,11 @@ def _get_form_url(username):
     )
 
 
-def get_enketo_edit_url(request, instance, return_url):
+def get_enketo_submission_url(request, instance, return_url, action=None):
     form_url = _get_form_url(instance.xform.user.username)
     instance_attachments = image_urls_dict(instance)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
         instance_id=instance.uuid, return_url=return_url,
-        instance_attachments=instance_attachments)
+        instance_attachments=instance_attachments, action=action)
     return url
