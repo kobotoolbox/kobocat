@@ -148,7 +148,7 @@ class MetaData(models.Model):
 
     @property
     def is_paired_data(self) -> bool:
-        return self.data_file_type == 'paired_data'
+        return self.data_type == 'paired_data'
 
     def save(self, *args, **kwargs):
         self.date_modified = timezone.now()
@@ -219,9 +219,6 @@ class MetaData(models.Model):
         string, if the file is a reference to a remote URL) when synchronizing
         form media.
         """
-        if self.file_hash:
-            return self.file_hash
-
         if self.file_hash:
             return self.file_hash
 

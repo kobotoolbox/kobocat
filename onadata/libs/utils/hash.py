@@ -71,6 +71,7 @@ def get_hash(source: Union[str, bytes, BinaryIO],
                 except UnboundLocalError:
                     pass
                 return _prefix_hash(hex_digest=url_hash)
+
             try:
                 file_size = int(response.headers['Content-Length'])
             except KeyError:
