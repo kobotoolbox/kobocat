@@ -319,11 +319,11 @@ if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
 # Limit sessions to 1 week (the default is 2 weeks)
 SESSION_COOKIE_AGE = 604800
 
-# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
+# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised  # noqa
 # This variable is available only in Django 1.10+. Only there for next upgrade
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
-# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
+# The maximum size (in bytes) that an upload will be before it gets streamed to the file system # noqa
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
 LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
@@ -411,23 +411,23 @@ GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_an
 
 PRINT_EXCEPTION = os.environ.get("PRINT_EXCEPTION", False)
 
-KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+KOBOCAT_URL = os.environ.get('KOBOCAT_URL', 'http://kc.kobo.local')
+KOBOFORM_SERVER = os.environ.get('KOBOFORM_SERVER', 'localhost')
+KOBOFORM_SERVER_PORT = os.environ.get('KOBOFORM_SERVER_PORT', '8000')
+KOBOFORM_SERVER_PROTOCOL = os.environ.get('KOBOFORM_SERVER_PROTOCOL', 'http')
 KOBOFORM_LOGIN_AUTOREDIRECT = True
-KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
-KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
-KOBOFORM_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KOBOFORM_URL)
+KOBOFORM_URL = os.environ.get('KOBOFORM_URL', 'http://kf.kobo.local')
+KOBOFORM_INTERNAL_URL = os.environ.get('KOBOFORM_INTERNAL_URL', KOBOFORM_URL)
 KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 
 # These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
 # See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
-KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
-KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
+KOBOCAT_INTERNAL_HOSTNAME = '{}.{}'.format(
+    os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
+    os.environ.get('INTERNAL_DOMAIN_NAME', 'docker.internal'))
+KOBOCAT_PUBLIC_HOSTNAME = '{}.{}'.format(
+    os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
+    os.environ.get('PUBLIC_DOMAIN_NAME', 'kobotoolbox.org'))
 
 # Default value for the `UserProfile.require_auth` attribute
 REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
@@ -449,9 +449,9 @@ REGISTRATION_OPEN = False
 ACCOUNT_ACTIVATION_DAYS = 1
 
 SWAGGER_SETTINGS = {
-    "exclude_namespaces": [],    # List URL namespaces to ignore
-    "api_version": '1.0',  # Specify your API's version (optional)
-    "enabled_methods": [         # Methods to enable in UI
+    'exclude_namespaces': [],    # List URL namespaces to ignore
+    'api_version': '1.0',  # Specify your API's version (optional)
+    'enabled_methods': [         # Methods to enable in UI
         'get',
         'post',
         'put',
@@ -553,6 +553,19 @@ DEFAULT_VALIDATION_STATUSES = [
         'label': 'On Hold'
     },
 ]
+
+# Expiration time in sec. after which the hash of paired data xml file should be
+# validated.
+# Does not need to match KPI setting
+PAIRED_DATA_EXPIRATION = 300
+
+# Minimum size (in bytes) of files to allow fast calculation of hashes
+# Should match KoBoCAT setting
+HASH_BIG_FILE_SIZE_THRESHOLD = 0.5 * 1024 * 1024  # 512 kB
+
+# Chunk size in bytes to read per iteration when hash of a file is calculated
+# Should match KoBoCAT setting
+HASH_BIG_FILE_CHUNK = 16 * 1024  # 16 kB
 
 # PostgreSQL is considered as the default engine. Some DB queries
 # rely on PostgreSQL engine to be executed. It needs to be set to `False` if
