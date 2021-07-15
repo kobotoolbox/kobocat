@@ -30,7 +30,7 @@ from onadata.libs.constants import (
     CAN_TRANSFER_OWNERSHIP,
 )
 from onadata.libs.models.base_model import BaseModel
-from onadata.libs.utils.hash import get_hash
+from onadata.libs.utils.hash import calculate_hash
 
 
 XFORM_TITLE_LENGTH = 255
@@ -223,7 +223,7 @@ class XForm(BaseModel):
 
     @property
     def md5_hash(self):
-        return get_hash(self.xml)
+        return calculate_hash(self.xml)
 
     @property
     def can_be_replaced(self):

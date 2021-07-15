@@ -1,5 +1,5 @@
 # coding: utf-8
-from datetime import date, datetime
+from datetime import date
 from hashlib import sha256
 
 import reversion
@@ -11,7 +11,6 @@ from django.db.models import F
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
-from django.utils.encoding import smart_text
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
@@ -20,8 +19,11 @@ from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.submission_counter import SubmissionCounter
-from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
-    clean_and_parse_xml, get_uuid_from_xml
+from onadata.apps.logger.xform_instance_parser import (
+    XFormInstanceParser,
+    clean_and_parse_xml,
+    get_uuid_from_xml,
+)
 from onadata.libs.utils.common_tags import (
     ATTACHMENTS,
     GEOLOCATION,
@@ -34,6 +36,7 @@ from onadata.libs.utils.common_tags import (
     XFORM_ID_STRING,
     SUBMITTED_BY
 )
+from onadata.libs.utils.hash import calculate_hash
 from onadata.libs.utils.model_tools import set_uuid
 
 
@@ -396,8 +399,7 @@ class Instance(models.Model):
         :return: The resulting hash.
         :rtype: str
         """
-        input_string = smart_text(input_string)
-        return sha256(input_string.encode()).hexdigest()
+        return calculate_hash(input_string, algorithm='256')
 
     @property
     def point(self):

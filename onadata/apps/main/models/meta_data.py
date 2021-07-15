@@ -16,7 +16,7 @@ from six.moves.urllib.parse import urlparse
 from requests.exceptions import RequestException
 
 from onadata.apps.logger.models import XForm
-from onadata.libs.utils.hash import get_hash
+from onadata.libs.utils.hash import calculate_hash
 
 CHUNK_SIZE = 1024
 
@@ -224,7 +224,7 @@ class MetaData(models.Model):
 
         if self.data_file:
             try:
-                self.file_hash = get_hash(self.data_file, prefix=True)
+                self.file_hash = calculate_hash(self.data_file, prefix=True)
             except (IOError, FileNotFoundError) as e:
                 return ''
             else:
@@ -236,7 +236,7 @@ class MetaData(models.Model):
         # Object should be a URL at this point `POST`ed by KPI.
         # We have to set the hash
         try:
-            self.file_hash = get_hash(self.data_value, prefix=True, fast=True)
+            self.file_hash = calculate_hash(self.data_value, prefix=True, fast=True)
         except RequestException as e:
             return ''
         else:

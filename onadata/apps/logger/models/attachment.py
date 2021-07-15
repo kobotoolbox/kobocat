@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.http import urlencode
 
-from onadata.libs.utils.hash import get_hash
+from onadata.libs.utils.hash import calculate_hash
 from .instance import Instance
 
 
@@ -25,7 +25,7 @@ def upload_to(attachment, filename):
 
 
 def hash_attachment_contents(contents):
-    return get_hash(contents)
+    return calculate_hash(contents)
 
 
 class Attachment(models.Model):

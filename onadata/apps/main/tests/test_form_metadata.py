@@ -11,7 +11,7 @@ from onadata.apps.main.views import (
     edit,
     download_media_data,
 )
-from onadata.libs.utils.hash import get_hash
+from onadata.libs.utils.hash import calculate_hash
 from .test_base import TestBase
 
 
@@ -95,7 +95,7 @@ class TestFormMetadata(TestBase):
             data_file=File(open(media_file, 'rb'), name),
             data_file_type='image/png')
         with open(media_file, 'rb') as f:
-            media_hash = get_hash(f, prefix=True)
+            media_hash = calculate_hash(f, prefix=True)
         meta_hash = m.md5_hash
         self.assertEqual(meta_hash, media_hash)
         self.assertEqual(m.file_hash, media_hash)
