@@ -28,7 +28,11 @@ from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, Parse
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
-from onadata.apps.api.permissions import XFormDataPermissions
+from onadata.apps.api.permissions import (
+    EnketoSubmissionEditPermissions,
+    EnketoSubmissionViewPermissions,
+    XFormDataPermissions,
+)
 from onadata.libs.serializers.data_serializer import (
     DataSerializer, DataListSerializer, DataInstanceSerializer)
 from onadata.libs import filters
@@ -577,15 +581,38 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @action(detail=True, methods=['GET'])
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=[EnketoSubmissionEditPermissions],
+    )
     def enketo(self, request, *args, **kwargs):
+        # keep `/enketo` for retro-compatibility
+        return self._enketo_request(request, action_='edit', *args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=[EnketoSubmissionEditPermissions],
+    )
+    def enketo_edit(self, request, *args, **kwargs):
+        return self._enketo_request(request, action_='edit', *args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=[EnketoSubmissionViewPermissions],
+    )
+    def enketo_view(self, request, *args, **kwargs):
+        return self._enketo_request(request, action_='view', *args, **kwargs)
+
+    def _enketo_request(self, request, action_, *args, **kwargs):
         object_ = self.get_object()
         data = {}
         if isinstance(object_, XForm):
             raise ParseError(_('Data id not provided.'))
         elif isinstance(object_, Instance):
             return_url = request.query_params.get('return_url')
-            action_ = request.query_params.get('action', 'edit')
             if not return_url and not action_ == 'view':
                 raise ParseError(_('`return_url` not provided.'))
 
