@@ -6,6 +6,7 @@ import reversion
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.db.models.signals import post_delete
@@ -125,13 +126,16 @@ def update_user_submissions_counter(sender, instance, created, **kwargs):
     )
     today = date.today()
     first_day_of_month = today.replace(day=1)
-    queryset = SubmissionCounter.objects.filter(
-        user_id=user_id, timestamp=first_day_of_month
-    )
-    if not queryset.exists():
-        SubmissionCounter.objects.create(user_id=user_id)
+    try:
+        queryset = SubmissionCounter.objects.get(
+            user_id=user_id, timestamp=first_day_of_month
+        )
+    except ObjectDoesNotExist:
+        SubmissionCounter.objects.create(user_id=user_id, timestamp=first_day_of_month)
+        queryset = SubmissionCounter.objects.get(user_id=user_id, timestamp=first_day_of_month)
 
-    queryset.update(count=F('count') + 1)
+    queryset.count = queryset.count + 1
+    queryset.save()
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
