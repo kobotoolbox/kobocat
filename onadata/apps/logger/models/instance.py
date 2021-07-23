@@ -132,7 +132,10 @@ def update_user_submissions_counter(sender, instance, created, **kwargs):
         )
     except ObjectDoesNotExist:
         SubmissionCounter.objects.create(user_id=user_id, timestamp=first_day_of_month)
-        queryset = SubmissionCounter.objects.get(user_id=user_id, timestamp=first_day_of_month)
+        queryset = SubmissionCounter.objects.get(
+            user_id=user_id,
+            timestamp=first_day_of_month,
+        )
 
     queryset.count = queryset.count + 1
     queryset.save()
