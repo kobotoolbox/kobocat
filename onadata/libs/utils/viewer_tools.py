@@ -211,7 +211,7 @@ def enketo_url(
     # The Enketo view-only endpoint differs to the edit by the addition of /view
     # as shown in the docs: https://apidocs.enketo.org/v2#/post-instance-view
     if action == 'view':
-        url = '{}/view'.format(url)
+        url = f'{url}/view'
 
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)

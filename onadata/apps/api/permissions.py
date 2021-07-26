@@ -112,10 +112,6 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             # a form pk is specified. e.g. `/api/v1/data/{pk}.json
             allowed_anonymous_actions.append('list')
 
-        query_param = request.query_params.get('action')
-        if view.action == 'enketo' and query_param == 'view':
-            allowed_anonymous_actions.append('enketo')
-
         if (
             request.method in SAFE_METHODS
             and view.action in allowed_anonymous_actions
@@ -137,25 +133,18 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             return True
 
         allowed_anonymous_actions = ['retrieve', 'list']
-        query_param = request.query_params.get('action')
-        enketo_permission = f'logger.{CAN_CHANGE_XFORM}'
-        if view.action == 'enketo' and query_param == 'view':
-            # FIXME Old behaviour is to return 404 when user has no permissions
-            allowed_anonymous_actions.append('enketo')
-            enketo_permission = f'logger.{CAN_VIEW_XFORM}'
-
         # Allow anonymous users to access shared data
         if (
             request.method in SAFE_METHODS
             and view.action in allowed_anonymous_actions
+            and obj.shared_data
         ):
-            if obj.shared_data:
-                return True
+            return True
 
         # TODO Use a better solution than these mapping.
         #  E.g.:
-        #  - Add new endpoints for enketo-edit and enketo-view
-        #  - Add new permission classes for each action
+        #  - Add new endpoints for enketo-edit and enketo-view -- DONE
+        #  - Add new permission classes for each action -- DONE
         #  - Remove this kludgy solution
         perms_actions_map = {
             'bulk_delete': {
@@ -163,9 +152,6 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             },
             'bulk_validation_status': {
                 'PATCH': [f'logger.{CAN_VALIDATE_XFORM}'],
-            },
-            'enketo': {
-                'GET': [enketo_permission]
             },
             'labels': {
                 'DELETE': [f'logger.{CAN_CHANGE_XFORM}']
@@ -184,6 +170,50 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             return user.has_perms(required_perms, obj)
 
         return super().has_object_permission(request, view, obj)
+
+
+class EnketoSubmissionEditPermissions(ObjectPermissionsWithViewRestricted):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        required_perms = [f'logger.{CAN_CHANGE_XFORM}']
+        is_granted_once = OneTimeAuthRequest.grant_access(request)
+
+        if is_granted_once is not None:
+            return is_granted_once
+
+        # Grant access if user is owner or super user
+        if user.is_superuser or user == obj.user:
+            return True
+
+        return user.has_perms(required_perms, obj)
+
+
+class EnketoSubmissionViewPermissions(ObjectPermissionsWithViewRestricted):
+
+    def has_permission(self, request, view):
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        required_perms = [f'logger.{CAN_VIEW_XFORM}']
+        is_granted_once = OneTimeAuthRequest.grant_access(request)
+
+        if is_granted_once is not None:
+            return is_granted_once
+
+        # Grant access if user is owner or super user
+        if user.is_superuser or user == obj.user:
+            return True
+
+        # Allow anonymous users to access shared data
+        if obj.shared_data:
+            return True
+
+        return user.has_perms(required_perms, obj)
 
 
 class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
