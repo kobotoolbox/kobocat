@@ -194,9 +194,6 @@ class EnketoSubmissionEditPermissions(ObjectPermissionsWithViewRestricted):
 
 class EnketoSubmissionViewPermissions(ObjectPermissionsWithViewRestricted):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def has_permission(self, request, view):
         return True
 
