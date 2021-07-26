@@ -5,7 +5,11 @@ from rest_framework import filters
 from rest_framework_guardian import filters as guardian_filters
 from rest_framework.exceptions import ParseError
 
-from onadata.apps.logger.models import XForm, Instance
+from onadata.apps.logger.models import (
+    Instance,
+    OneTimeAuthRequest,
+    XForm,
+)
 
 
 class AnonDjangoObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
@@ -19,7 +23,23 @@ class AnonDjangoObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter)
         return super().filter_queryset(request, queryset, view)
 
 
-class XFormListObjectPermissionFilter(AnonDjangoObjectPermissionFilter):
+class RowLevelObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
+    def filter_queryset(self, request, queryset, view):
+        """
+        Return queryset as-is if user is anonymous or headers contain
+        a one-time authentication request token (validation of the token is
+        delegated to the permission class)
+        """
+        if (
+            request.user.is_anonymous
+            or OneTimeAuthRequest.is_signed_request(request)
+        ):
+            return queryset
+
+        return super().filter_queryset(request, queryset, view)
+
+
+class XFormListObjectPermissionFilter(RowLevelObjectPermissionFilter):
     perm_format = '%(app_label)s.report_%(model_name)s'
 
 
