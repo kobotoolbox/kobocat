@@ -336,7 +336,7 @@ def create_instance(
     username: str,
     xml_file: str,
     media_files: list,
-    status: list = 'submitted_via_web',
+    status: str = 'submitted_via_web',
     uuid: str = None,
     date_created_override: datetime = None,
     request: 'rest_framework.request.Request' = None,
