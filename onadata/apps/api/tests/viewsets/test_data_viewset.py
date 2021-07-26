@@ -276,7 +276,7 @@ class TestDataViewSet(TestBase):
     def test_get_enketo_edit_url(self):
         self._make_submissions()
         for view_ in ['enketo', 'enketo_edit']:
-            # ensure both legact `/enketo` and the new `/enketo_edit` endpoints
+            # ensure both legacy `/enketo` and the new `/enketo_edit` endpoints
             # do the same thing
             view = DataViewSet.as_view({'get': view_})
             formid = self.xform.pk
