@@ -5,6 +5,7 @@ import sys
 import tempfile
 import traceback
 from datetime import date, datetime
+from urllib.parse import urlparse, parse_qs
 from xml.parsers.expat import ExpatError
 
 import pytz
@@ -99,8 +100,8 @@ def _get_instance(
 
     if instances:
         # edits
-        check_edit_submission_permissions(request, xform)
         instance = instances[0]
+        check_edit_submission_permissions(request, xform, instance)
         InstanceHistory.objects.create(
             xml=instance.xml, xform_instance=instance, uuid=old_uuid)
         instance.xml = xml
@@ -167,11 +168,22 @@ def get_xform_from_submission(xml, username, uuid=None):
 
 
 def _has_edit_xform_permission(
-    request: 'rest_framework.request.Request', xform: XForm
+    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
 ) -> bool:
     if isinstance(xform, XForm) and isinstance(request.user, User):
         if request.user.has_perm('logger.change_xform', xform):
             return True
+
+        referrer_qs = parse_qs(urlparse(request.META['HTTP_REFERER']).query)
+        try:
+            referrer_uuid = referrer_qs['instance_id'][0]
+        except (IndexError, KeyError):
+            referrer_uuid = None
+
+        # When using partial permissions, deny access if the UUID in the
+        # referrer URL does not match the UUID of the submission being edited
+        if referrer_uuid != instance.uuid:
+            return False
 
         is_granted_once = OneTimeAuthRequest.grant_access(
             request, use_referrer=True
@@ -186,13 +198,13 @@ def _has_edit_xform_permission(
 
 
 def check_edit_submission_permissions(
-    request: 'rest_framework.request.Request', xform: XForm
+    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
 ):
     if not xform or not (request and request.user.is_authenticated):
         return
 
     requires_auth = UserProfile.objects.get_or_create(user=xform.user)[0].require_auth  # noqa
-    has_edit_perms = _has_edit_xform_permission(request, xform)
+    has_edit_perms = _has_edit_xform_permission(request, xform, instance)
 
     if requires_auth and not has_edit_perms:
         raise PermissionDenied(
