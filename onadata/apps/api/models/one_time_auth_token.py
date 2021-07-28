@@ -10,22 +10,19 @@ from django.db.models import Q, F, Func
 from django.utils import timezone
 
 
-class OneTimeAuthRequest(models.Model):
+class OneTimeAuthToken(models.Model):
 
-    HEADER = 'X-KOBOCAT-OTAR-TOKEN'
-    DEFAULT_TTL = 60  # Number of seconds before a token expires
+    HEADER = 'X-KOBOCAT-OTA-TOKEN'
 
     user = models.ForeignKey(
         User, related_name='authenticated_requests', on_delete=models.CASCADE
     )
     token = models.CharField(max_length=50)
-    date_created = models.DateTimeField(default=timezone.now)
-    ttl = models.IntegerField(default=DEFAULT_TTL)
+    expiration_time = models.DateTimeField()
     method = models.CharField(max_length=6)
-    used = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('token', 'used')
+        unique_together = ('user', 'token', 'method')
 
     @classmethod
     def grant_access(
@@ -39,37 +36,24 @@ class OneTimeAuthRequest(models.Model):
             # delegated to other mechanisms present in permission classes
             return None
 
-        granted = False
         user = request.user
         try:
-            auth_request = cls.objects.get(
-                user=user, token=token, method=request.method, used=False
+            auth_token = cls.objects.get(
+                user=user, token=token, method=request.method
             )
-        except OneTimeAuthRequest.DoesNotExist:
-            pass
-        else:
-            expiry = (
-                auth_request.date_created
-                + timedelta(seconds=auth_request.ttl)
-            )
-            granted = timezone.now() < expiry
+        except OneTimeAuthToken.DoesNotExist:
+            return False
 
-            # void token
-            auth_request.used = True
-            auth_request.save()
+        granted = timezone.now() <= auth_token.expiration_time
 
-            # clean-up expired or already used tokens
-            OneTimeAuthRequest.objects.filter(
-                Q(
-                    date_created__lt=Func(
-                        F('ttl'),
-                        template="now() - INTERVAL '1 seconds' * %(expressions)s",
-                    ),
-                    used=False,
-                )
-                | Q(used=True),
-                user=user,
-            ).delete()
+        # void token
+        auth_token.delete()
+
+        # clean-up expired or already used tokens
+        OneTimeAuthToken.objects.filter(
+            expiration_time__lt=timezone.now(),
+            user=user,
+        ).delete()
 
         return granted
 
@@ -80,7 +64,7 @@ class OneTimeAuthRequest(models.Model):
         use_referrer: bool = False,
     ) -> Union[str, None]:
         """
-        Search for a OneTimeAuthRequest token in the request headers.
+        Search for a OneTimeAuthToken in the request headers.
         If there is a match, it is returned. Otherwise, it returns `None`.
 
         If `use_referrer` is `True`, the comparison is also made on the
