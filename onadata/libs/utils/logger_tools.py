@@ -34,13 +34,9 @@ from pyxform.xform2json import create_survey_element_from_xml
 from xml.dom import Node
 from wsgiref.util import FileWrapper
 
+from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
-from onadata.apps.logger.models import (
-    Attachment,
-    OneTimeAuthRequest,
-    Instance,
-    XForm,
-)
+from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
     hash_attachment_contents,
@@ -185,7 +181,7 @@ def _has_edit_xform_permission(
         if referrer_uuid != instance.uuid:
             return False
 
-        is_granted_once = OneTimeAuthRequest.grant_access(
+        is_granted_once = OneTimeAuthToken.grant_access(
             request, use_referrer=True
         )
         # If a one-time authentication request token has been detected,

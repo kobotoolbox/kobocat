@@ -5,11 +5,8 @@ from rest_framework import filters
 from rest_framework_guardian import filters as guardian_filters
 from rest_framework.exceptions import ParseError
 
-from onadata.apps.logger.models import (
-    Instance,
-    OneTimeAuthRequest,
-    XForm,
-)
+from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
+from onadata.apps.logger.models import Instance, XForm
 
 
 class AnonDjangoObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
@@ -32,7 +29,7 @@ class RowLevelObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
         """
         if (
             request.user.is_anonymous
-            or OneTimeAuthRequest.is_signed_request(request)
+            or OneTimeAuthToken.is_signed_request(request)
         ):
             return queryset
 
