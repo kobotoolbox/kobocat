@@ -5,7 +5,6 @@ import sys
 import tempfile
 import traceback
 from datetime import date, datetime
-from urllib.parse import urlparse, parse_qs
 from xml.parsers.expat import ExpatError
 
 import pytz
@@ -170,19 +169,11 @@ def _has_edit_xform_permission(
         if request.user.has_perm('logger.change_xform', xform):
             return True
 
-        referrer_qs = parse_qs(urlparse(request.META['HTTP_REFERER']).query)
-        try:
-            referrer_uuid = referrer_qs['instance_id'][0]
-        except (IndexError, KeyError):
-            referrer_uuid = None
-
-        # When using partial permissions, deny access if the UUID in the
-        # referrer URL does not match the UUID of the submission being edited
-        if referrer_uuid != instance.uuid:
-            return False
-
+        # The referrer string contains the UUID of the submission that is
+        # allowed to be edited. Pass the instance being edited to verify that
+        # it matches that UUID
         is_granted_once = OneTimeAuthToken.grant_access(
-            request, use_referrer=True
+            request, use_referrer=True, instance=instance
         )
         # If a one-time authentication request token has been detected,
         # we return its validity.
