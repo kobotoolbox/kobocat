@@ -1,5 +1,4 @@
 # coding: utf-8
-from datetime import timedelta
 from typing import Optional, Union
 from urllib.parse import urlparse, parse_qs
 
@@ -7,7 +6,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.signing import Signer
 from django.db import models
-from django.db.models import Q, F, Func
 from django.utils import timezone
 
 
@@ -29,7 +27,7 @@ class OneTimeAuthToken(models.Model):
     def grant_access(
         cls,
         request: 'rest_framework.request.Request',
-        use_referrer: bool = True,
+        use_referrer: bool = False,
         instance: Optional['onadata.apps.logger.models.Instance'] = None,
     ):
         token = cls.is_signed_request(request, use_referrer, instance)
