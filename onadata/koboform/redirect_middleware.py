@@ -34,7 +34,7 @@ class ConditionalRedirects(MiddlewareMixin):
         if request.user.is_anonymous:
             helper_auth_helper(request)
         is_logged_in = request.user.is_authenticated
-        login_url = reverse('auth_login')
+        login_url = reverse('login')
         if koboform.active and koboform.autoredirect:
             login_url = koboform.redirect_url(login_url)
             if view_name == 'login':
