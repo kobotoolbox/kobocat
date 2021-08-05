@@ -126,19 +126,16 @@ def update_user_submissions_counter(sender, instance, created, **kwargs):
     )
     today = date.today()
     first_day_of_month = today.replace(day=1)
-    try:
-        queryset = SubmissionCounter.objects.get(
-            user_id=user_id, timestamp=first_day_of_month
-        )
-    except ObjectDoesNotExist:
-        SubmissionCounter.objects.create(user_id=user_id, timestamp=first_day_of_month)
-        queryset = SubmissionCounter.objects.get(
+    queryset = SubmissionCounter.objects.filter(
+        user_id=user_id, timestamp=first_day_of_month
+    )
+    if not queryset.exists():
+        SubmissionCounter.objects.create(
             user_id=user_id,
             timestamp=first_day_of_month,
         )
 
-    queryset.count = queryset.count + 1
-    queryset.save()
+    queryset.update(count=F('count') + 1)
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):

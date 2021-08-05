@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.db.models.signals import pre_delete
 from django.http import (
     HttpResponse,
@@ -47,6 +47,7 @@ from onadata.apps.logger.models.instance import (
     update_xform_submission_count,
     update_user_submissions_counter,
 )
+from onadata.apps.logger.models.submission_counter import SubmissionCounter
 from onadata.apps.logger.models.xform import XLSFormError
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
@@ -630,6 +631,7 @@ def update_mongo_for_xform(xform, only_update_missing=True):
     sys.stdout.write("Total no of instances: %d\n" % len(instance_ids))
     mongo_ids = set()
     user = xform.user
+    today = date.today()
     userform_id = "%s_%s" % (user.username, xform.id_string)
     if only_update_missing:
         sys.stdout.write("Only updating missing mongo instances\n")
@@ -638,7 +640,7 @@ def update_mongo_for_xform(xform, only_update_missing=True):
                 {common_tags.USERFORM_ID: userform_id},
                 {common_tags.ID: 1},
                 max_time_ms=settings.MONGO_DB_MAX_TIME_MS
-)])
+        )])
         sys.stdout.write("Total no of mongo instances: %d\n" % len(mongo_ids))
         # get the difference
         instance_ids = instance_ids.difference(mongo_ids)
@@ -669,6 +671,20 @@ def update_mongo_for_xform(xform, only_update_missing=True):
                 )
             else:
                 done += 1
+
+        update_user_submissions_counter(None, instance, True)
+        # first_day_of_month = today.replace(day=1)
+        # counter = SubmissionCounter.objects.filter(
+        #     user_id=xform.user.id,
+        #     timestamp__year=today.year,
+        #     timestamp__month=today.month
+        # )
+        # if not counter.exists():
+        #     SubmissionCounter.objects.create(
+        #         user_id=xform.user.id,
+        #         timestamp=first_day_of_month,
+        #     )
+        # counter.update(count=F('count') + 1)
 
         progress = "\r%.2f %% done..." % ((float(done) / float(total)) * 100)
         sys.stdout.write(progress)
