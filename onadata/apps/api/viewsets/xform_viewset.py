@@ -517,6 +517,22 @@ https://example.com/api/v1/forms/28058/labels/hello%20world
 >
 >        HTTP 200 OK
 
+## Get webform/enketo link
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/forms/<code>{pk}</code>/enketo</pre>
+
+> Request
+>
+>       curl -X GET \
+https://example.com/api/v1/forms/28058/enketo
+>
+> Response
+>
+>       {"enketo_url": "https://h6ic6.enketo.org/webform"}
+>
+>        HTTP 200 OK
+
 ## Get form data in xls, csv format.
 
 Get form data exported as xls, csv, csv zip, sav zip format.
@@ -602,6 +618,25 @@ data (instance/submission per row)
                             headers=headers)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['GET'])
+    def enketo(self, request, **kwargs):
+        self.object = self.get_object()
+        form_url = _get_form_url(self.object.user.username)
+
+        data = {'message': _("Enketo not properly configured.")}
+        http_status = status.HTTP_400_BAD_REQUEST
+
+        try:
+            url = enketo_url(form_url, self.object.id_string)
+        except EnketoError:
+            pass
+        else:
+            if url:
+                http_status = status.HTTP_200_OK
+                data = {"enketo_url": url}
+
+        return Response(data, http_status)
 
     def update(self, request, pk, *args, **kwargs):
         if 'xls_file' in request.FILES:
