@@ -65,7 +65,7 @@
         <img src="{% static "images/kobocat_photo.png" %}" width="497" height="363"/>
     </div>
     <div class="col-md-4">
-        {% url "auth_login" as login_url %}
+        {% url "login" as login_url %}
         <form role="form" method="post" action="{{ login_url }}">
                         <input type="text" class="form-control" autocomplete="off" autofocus="autofocus" name="username" placeholder="Username">
                         <br/>
@@ -73,16 +73,9 @@
                         <br/>
                         <button type="submit" class="btn btn-primary btn-lg btn-block">{% trans 'Sign in' %}</button>
                         <br/>
-                        <p> Or if you want to create an account, please </p>
-                        {% url "registration_register" as registration_url %}
-                        {% blocktrans %}
-                        <a class="btn btn-info btn-lg btn-block" href="{{ registration_url }}">Sign up</a>
-                        {% endblocktrans %}
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ next }}" />
             </form>
-            {% url "auth_password_reset" as reset_url %}
-            <p>{% blocktrans %}Can't access your account? <a href="{{ reset_url }}">Reset your password.</a>{% endblocktrans %}</p>
         </div>
         </div>
         {% endblock %}

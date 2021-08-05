@@ -83,7 +83,7 @@ class TestUserProfile(TestCase):
         response = self.client.get(reverse(profile,
                                            kwargs={'username': 'nonuser'}))
         self.assertEqual(response.status_code, 302)
-        login_url = reverse('auth_login')
+        login_url = reverse('login')
         if koboform.active and koboform.autoredirect:
             redirect_to = koboform.login_url()
         else:
