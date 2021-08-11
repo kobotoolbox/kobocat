@@ -631,7 +631,6 @@ def update_mongo_for_xform(xform, only_update_missing=True):
     sys.stdout.write("Total no of instances: %d\n" % len(instance_ids))
     mongo_ids = set()
     user = xform.user
-    today = date.today()
     userform_id = "%s_%s" % (user.username, xform.id_string)
     if only_update_missing:
         sys.stdout.write("Only updating missing mongo instances\n")
@@ -647,6 +646,7 @@ def update_mongo_for_xform(xform, only_update_missing=True):
     else:
         # clear mongo records
         mongo_instances.delete_many({common_tags.USERFORM_ID: userform_id})
+
     # get instances
     sys.stdout.write(
         "Total no of instances to update: %d\n" % len(instance_ids))
@@ -671,20 +671,6 @@ def update_mongo_for_xform(xform, only_update_missing=True):
                 )
             else:
                 done += 1
-
-        update_user_submissions_counter(None, instance, True)
-        # first_day_of_month = today.replace(day=1)
-        # counter = SubmissionCounter.objects.filter(
-        #     user_id=xform.user.id,
-        #     timestamp__year=today.year,
-        #     timestamp__month=today.month
-        # )
-        # if not counter.exists():
-        #     SubmissionCounter.objects.create(
-        #         user_id=xform.user.id,
-        #         timestamp=first_day_of_month,
-        #     )
-        # counter.update(count=F('count') + 1)
 
         progress = "\r%.2f %% done..." % ((float(done) / float(total)) * 100)
         sys.stdout.write(progress)

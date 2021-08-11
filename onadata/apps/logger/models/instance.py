@@ -1,12 +1,12 @@
 # coding: utf-8
-from datetime import date, datetime
+import pytz
+from datetime import date
 from hashlib import sha256
 
 import reversion
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import F
 from django.db.models.signals import post_delete
@@ -113,7 +113,7 @@ def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     f.update(time_of_last_submission=None)
 
 
-def update_user_submissions_counter(sender, instance, created, **kwargs):
+def update_user_submissions_counter(instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
@@ -124,8 +124,11 @@ def update_user_submissions_counter(sender, instance, created, **kwargs):
     user_id = XForm.objects.values_list('user_id', flat=True).get(
         pk=instance.xform_id
     )
-    today = date.today()
-    first_day_of_month = today.replace(day=1)
+    date_created = instance.date_created
+    first_day_of_month = date(
+        year=date_created.year, month=date_created.month, day=1
+    )
+
     queryset = SubmissionCounter.objects.filter(
         user_id=user_id, timestamp=first_day_of_month
     )
