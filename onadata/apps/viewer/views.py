@@ -23,6 +23,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from rest_framework.settings import api_settings
 
+from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.tasks import create_async_export
@@ -415,7 +416,10 @@ def attachment_url(request, size='medium'):
                     # first match wins; don't look any further
                     break
 
-        if not has_permission(xform, xform.user, request):
+        if (
+            not OneTimeAuthToken.grant_access(request)
+            and not has_permission(xform, xform.user, request)
+        ):
             return HttpResponseForbidden(_('Not shared.'))
 
         media_url = None
