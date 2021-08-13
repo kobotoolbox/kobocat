@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
 from django.db import IntegrityError, transaction
-from django.db.models import F, Q
+from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.http import (
     HttpResponse,
@@ -47,7 +47,6 @@ from onadata.apps.logger.models.instance import (
     update_xform_submission_count,
     update_user_submissions_counter,
 )
-from onadata.apps.logger.models.submission_counter import SubmissionCounter
 from onadata.apps.logger.models.xform import XLSFormError
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
