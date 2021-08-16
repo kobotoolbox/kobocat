@@ -66,7 +66,7 @@ def submission_time():
     return timezone.now()
 
 
-def update_xform_submission_count(sender, instance, created, **kwargs):
+def update_xform_submission_count(instance, created, **kwargs):
     if not created:
         return
     # `defer_counting` is a Python-only attribute

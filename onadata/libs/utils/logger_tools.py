@@ -276,10 +276,8 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     if getattr(instance, 'defer_counting', False):
         # Remove the Python-only attribute
         del instance.defer_counting
-        update_xform_submission_count(sender=None, instance=instance,
-                                      created=True)
-        update_user_submissions_counter(sender=None, instance=instance,
-                                        created=True)
+        update_xform_submission_count(instance=instance, created=True)
+        update_user_submissions_counter(instance=instance, created=True)
 
     return instance
 
