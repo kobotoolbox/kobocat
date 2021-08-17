@@ -21,6 +21,7 @@ METADATA_TYPES = (
     ('public_link', _("Public Link")),
     ('source', _("Source")),
     ('supporting_doc', _("Supporting Document")),
+    ('paired_data', _("Paired Data")),
 )
 
 
@@ -32,6 +33,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     data_type = serializers.ChoiceField(choices=METADATA_TYPES)
     data_file = serializers.FileField(required=False)
     from_kpi = serializers.BooleanField(required=False)
+    data_filename = serializers.CharField(max_length=255, required=False)
 
     class Meta:
         model = MetaData
@@ -45,6 +47,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             'file_hash',
             'url',
             'from_kpi',
+            'data_filename',
         )
         read_only_fields = (
             'id',
@@ -85,6 +88,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_value = (
             data_file.name if data_file else validated_data.get('data_value')
         )
+        data_filename = validated_data.get('data_filename')
 
         return MetaData.objects.create(
             data_type=data_type,
@@ -94,6 +98,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             data_file_type=data_file_type,
             file_hash=file_hash,
             from_kpi=from_kpi,
+            data_filename=data_filename,
         )
 
     def _validate_data_value(self, attrs):

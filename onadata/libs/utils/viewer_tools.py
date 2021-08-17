@@ -170,11 +170,20 @@ def get_client_ip(request):
     return ip
 
 
-def enketo_url(form_url, id_string, instance_xml=None,
-               instance_id=None, return_url=None, instance_attachments=None):
+def enketo_url(
+    form_url,
+    id_string,
+    instance_xml=None,
+    instance_id=None,
+    return_url=None,
+    instance_attachments=None,
+    action=None,
+):
 
-    if not hasattr(settings, 'ENKETO_URL')\
-            and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
+    if (
+        not hasattr(settings, 'ENKETO_URL')
+        and not hasattr(settings, 'ENKETO_API_SURVEY_PATH')
+    ):
         return False
 
     if instance_attachments is None:
@@ -198,6 +207,12 @@ def enketo_url(form_url, id_string, instance_xml=None,
             values.update({
                 'instance_attachments[' + key + ']': value
             })
+
+    # The Enketo view-only endpoint differs to the edit by the addition of /view
+    # as shown in the docs: https://apidocs.enketo.org/v2#/post-instance-view
+    if action == 'view':
+        url = f'{url}/view'
+
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
 
@@ -209,6 +224,8 @@ def enketo_url(form_url, id_string, instance_xml=None,
         else:
             if 'edit_url' in response:
                 return response['edit_url']
+            elif 'view_url' in response:
+                return response['view_url']
             if settings.ENKETO_OFFLINE_SURVEYS and ('offline_url' in response):
                 return response['offline_url']
             if 'url' in response:
@@ -267,11 +284,11 @@ def _get_form_url(username):
     )
 
 
-def get_enketo_edit_url(request, instance, return_url):
+def get_enketo_submission_url(request, instance, return_url, action=None):
     form_url = _get_form_url(instance.xform.user.username)
     instance_attachments = image_urls_dict(instance)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
         instance_id=instance.uuid, return_url=return_url,
-        instance_attachments=instance_attachments)
+        instance_attachments=instance_attachments, action=action)
     return url

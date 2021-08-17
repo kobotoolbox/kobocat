@@ -19,15 +19,9 @@ amqp==2.6.0
 argparse==1.4.0
     # via unittest2
 attrs==19.3.0
-    # via
-    #   jsonschema
-    #   pytest
+    # via pytest
 backcall==0.2.0
     # via ipython
-backports.csv==1.0.7
-    # via formpack
-begins==0.9
-    # via formpack
 billiard==3.6.3.0
     # via celery
 boto3==1.14.44
@@ -46,8 +40,6 @@ certifi==2020.6.20
     #   sentry-sdk
 chardet==3.0.4
     # via requests
-cssselect==1.1.0
-    # via pyquery
 decorator==4.4.2
     # via
     #   ipython
@@ -122,9 +114,7 @@ djangorestframework-jsonp==1.0.2
 djangorestframework-xml==2.0.0
     # via -r dependencies/pip/requirements.in
 docutils==0.15.2
-    # via
-    #   botocore
-    #   statistics
+    # via botocore
 dpath==2.0.1
     # via -r dependencies/pip/requirements.in
 ecdsa==0.15
@@ -135,14 +125,10 @@ et-xmlfile==1.0.1
     # via openpyxl
 formencode==1.3.1
     # via pyxform
-git+https://github.com/kobotoolbox/formpack.git@52f77e3519fd1079ce3451f9a5c7c27002e9f3f0#egg=formpack
-    # via -r dependencies/pip/requirements.in
 future==0.18.2
     # via celery
 gdata-python3==3.0.1
     # via -r dependencies/pip/requirements.in
-geojson-rewind==0.2.0
-    # via formpack
 gitdb==4.0.5
     # via gitpython
 gitpython==3.1.7
@@ -169,8 +155,6 @@ jmespath==0.10.0
     #   botocore
 jsonfield==3.1.0
     # via -r dependencies/pip/requirements.in
-jsonschema==3.2.0
-    # via formpack
 kombu==4.6.11
     # via celery
 linecache2==1.0.0
@@ -178,9 +162,7 @@ linecache2==1.0.0
 lxml==4.5.2
     # via
     #   -r dependencies/pip/requirements.in
-    #   formpack
     #   gdata-python3
-    #   pyquery
 markdown==3.2.2
     # via -r dependencies/pip/requirements.in
 mock==4.0.2
@@ -205,10 +187,6 @@ pandas==1.0.5
     # via -r dependencies/pip/requirements.in
 parso==0.7.0
     # via jedi
-path==13.1.0
-    # via path.py
-path.py==12.4.0
-    # via formpack
 pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
@@ -233,10 +211,6 @@ pymongo==3.10.1
     # via -r dependencies/pip/requirements.in
 pyparsing==2.4.7
     # via packaging
-pyquery==1.4.1
-    # via formpack
-pyrsistent==0.16.0
-    # via jsonschema
 pytest==5.4.3
     # via
     #   -r dependencies/pip/dev.in
@@ -263,9 +237,7 @@ pytz==2020.1
     #   django-timezone-field
     #   pandas
 pyxform==1.5.1
-    # via
-    #   -r dependencies/pip/requirements.in
-    #   formpack
+    # via -r dependencies/pip/requirements.in
 redis==3.5.3
     # via
     #   -r dependencies/pip/requirements.in
@@ -294,10 +266,8 @@ six==1.15.0
     #   django-templated-email
     #   djangorestframework-csv
     #   ecdsa
-    #   jsonschema
     #   mongomock
     #   packaging
-    #   pyrsistent
     #   python-dateutil
     #   ssrf-protect
     #   traitlets
@@ -309,8 +279,6 @@ sqlparse==0.3.1
     # via
     #   -r dependencies/pip/dev.in
     #   django
-statistics==1.0.3.5
-    # via formpack
 text-unidecode==1.3
     # via python-slugify
 tlslite-ng==0.7.5
@@ -347,8 +315,6 @@ xlrd==1.2.0
     # via
     #   -r dependencies/pip/requirements.in
     #   pyxform
-xlsxwriter==1.2.9
-    # via formpack
 xlwt==1.3.0
     # via -r dependencies/pip/requirements.in
 
