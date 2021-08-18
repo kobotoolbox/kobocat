@@ -203,7 +203,6 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.gis',
-    'registration',
     'reversion',
     'django_digest',
     'corsheaders',

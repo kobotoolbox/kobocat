@@ -67,7 +67,7 @@ class TestFormShow(TestBase):
             'id_string': self.xform.id_string
         }))
 
-        login_url = reverse('auth_login')
+        login_url = reverse('login')
         if koboform.active and koboform.autoredirect:
             redirect_to = koboform.login_url()
         else:
