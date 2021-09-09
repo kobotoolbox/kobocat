@@ -436,6 +436,7 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
 
 
 def report_exception(subject, info, exc_info=None):
+    # TODO: replace with standard logging (i.e. `import logging`)
     if exc_info:
         cls, err = exc_info[:2]
         message = _("Exception in request:"
