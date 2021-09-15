@@ -146,4 +146,8 @@ class Migration(migrations.Migration):
             name='instance',
             field=models.ForeignKey(related_name='attachments', to='logger.Instance', on_delete=models.CASCADE),
         ),
+        migrations.AlterUniqueTogether(
+            name='xform',
+            unique_together=set([('user', 'id_string')]),
+        ),
     ]
