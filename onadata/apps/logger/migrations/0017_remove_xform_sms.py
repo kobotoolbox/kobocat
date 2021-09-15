@@ -37,9 +37,3 @@ class Migration(migrations.Migration):
             name='allows_sms',
         )
     )
-    operations.append(
-        migrations.RemoveField(
-            model_name='xform',
-            name='sms_id_string',
-        )
-    )

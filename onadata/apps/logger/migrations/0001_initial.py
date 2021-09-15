@@ -84,7 +84,6 @@ class Migration(migrations.Migration):
                 ('downloadable', models.BooleanField(default=True)),
                 ('allows_sms', models.BooleanField(default=False)),
                 ('encrypted', models.BooleanField(default=False)),
-                ('sms_id_string', models.SlugField(default='', verbose_name='SMS ID', max_length=100, editable=False)),
                 ('id_string', models.SlugField(verbose_name='ID', max_length=100, editable=False)),
                 ('title', models.CharField(max_length=255, editable=False)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
@@ -146,9 +145,5 @@ class Migration(migrations.Migration):
             model_name='attachment',
             name='instance',
             field=models.ForeignKey(related_name='attachments', to='logger.Instance', on_delete=models.CASCADE),
-        ),
-        migrations.AlterUniqueTogether(
-            name='xform',
-            unique_together=set([('user', 'id_string'), ('user', 'sms_id_string')]),
         ),
     ]
