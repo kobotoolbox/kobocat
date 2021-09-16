@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 import json
+import logging
 import traceback
 import requests
 import zipfile
@@ -9,7 +10,7 @@ from tempfile import NamedTemporaryFile
 from xml.dom import minidom
 
 from django.conf import settings
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
 from django.utils.translation import ugettext as _
@@ -254,7 +255,18 @@ def create_attachments_zipfile(attachments, output_file=None):
                 'Seeking disabled! See '
                 'https://github.com/kobotoolbox/kobocat/issues/475'
             )
-        output_file.seek = no_seeking
+        try:
+            output_file.seek = no_seeking
+        except AttributeError as e:
+            # The default, file-system storage won't allow changing the `seek`
+            # attribute, which is fine because seeking on local files works
+            # perfectly anyway
+            storage_class = get_storage_class()
+            if not issubclass(storage_class, FileSystemStorage):
+                logging.warning(
+                    f'{storage_class} may not be a local storage class, but '
+                    f'disabling seeking failed: {e}'
+                )
 
     storage = get_storage_class()()
     with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_STORED, allowZip64=True) as zip_file:

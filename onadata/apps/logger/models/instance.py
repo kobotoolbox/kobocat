@@ -1,5 +1,6 @@
 # coding: utf-8
-from datetime import date, datetime
+import pytz
+from datetime import date
 from hashlib import sha256
 
 import reversion
@@ -65,7 +66,7 @@ def submission_time():
     return timezone.now()
 
 
-def update_xform_submission_count(sender, instance, created, **kwargs):
+def update_xform_submission_count(instance, created, **kwargs):
     if not created:
         return
     # `defer_counting` is a Python-only attribute
@@ -112,7 +113,7 @@ def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     f.update(time_of_last_submission=None)
 
 
-def update_user_submissions_counter(sender, instance, created, **kwargs):
+def update_user_submissions_counter(instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
@@ -123,13 +124,19 @@ def update_user_submissions_counter(sender, instance, created, **kwargs):
     user_id = XForm.objects.values_list('user_id', flat=True).get(
         pk=instance.xform_id
     )
-    today = date.today()
-    first_day_of_month = today.replace(day=1)
+    date_created = instance.date_created
+    first_day_of_month = date(
+        year=date_created.year, month=date_created.month, day=1
+    )
+
     queryset = SubmissionCounter.objects.filter(
         user_id=user_id, timestamp=first_day_of_month
     )
     if not queryset.exists():
-        SubmissionCounter.objects.create(user_id=user_id)
+        SubmissionCounter.objects.create(
+            user_id=user_id,
+            timestamp=first_day_of_month,
+        )
 
     queryset.update(count=F('count') + 1)
 

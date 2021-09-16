@@ -322,10 +322,8 @@ def save_submission(
     if getattr(instance, 'defer_counting', False):
         # Remove the Python-only attribute
         del instance.defer_counting
-        update_xform_submission_count(sender=None, instance=instance,
-                                      created=True)
-        update_user_submissions_counter(sender=None, instance=instance,
-                                        created=True)
+        update_xform_submission_count(instance=instance, created=True)
+        update_user_submissions_counter(instance=instance, created=True)
 
     return instance
 
@@ -438,6 +436,7 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
 
 
 def report_exception(subject, info, exc_info=None):
+    # TODO: replace with standard logging (i.e. `import logging`)
     if exc_info:
         cls, err = exc_info[:2]
         message = _("Exception in request:"
@@ -686,13 +685,14 @@ def update_mongo_for_xform(xform, only_update_missing=True):
                 {common_tags.USERFORM_ID: userform_id},
                 {common_tags.ID: 1},
                 max_time_ms=settings.MONGO_DB_MAX_TIME_MS
-)])
+        )])
         sys.stdout.write("Total no of mongo instances: %d\n" % len(mongo_ids))
         # get the difference
         instance_ids = instance_ids.difference(mongo_ids)
     else:
         # clear mongo records
         mongo_instances.delete_many({common_tags.USERFORM_ID: userform_id})
+
     # get instances
     sys.stdout.write(
         "Total no of instances to update: %d\n" % len(instance_ids))
