@@ -89,9 +89,9 @@ class OneTimeAuthToken(models.Model):
         Search for a OneTimeAuthToken in the request headers, the querystring or
         the HTTP referrer (if `use_referrer` is `True`).
 
-        It returns a tuple. The first element is the token, if a match has been
-        found, or `None`. The second element is a boolean which represents whether
-        the validation of the URL must enforced.
+        It returns a tuple. The first element is the token if a match has been
+        found. Otherwise, it is `None`. The second element is a boolean which
+        represents whether the validation of the URL must enforced.
         When the comparison is made on the HTTP referrer, `instance` must be
         provided. The referrer must include an `instance_id` query parameter
         that matches `instance.uuid`.

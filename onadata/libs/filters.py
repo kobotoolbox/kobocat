@@ -29,7 +29,7 @@ class RowLevelObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
         """
         if (
             request.user.is_anonymous
-            or OneTimeAuthToken.is_signed_request(request)
+            or OneTimeAuthToken.is_signed_request(request)[0]
         ):
             return queryset
 
