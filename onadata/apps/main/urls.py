@@ -131,37 +131,37 @@ urlpatterns = [
     ),
 
     # briefcase api urls
-    re_path(r"^(?P<username>\w+)/view/submissionList$",
+    re_path(r"^(?P<username>[\w.@+-]+)/view/submissionList$",
             BriefcaseApi.as_view({'get': 'list', 'head': 'list'}),
             name='view-submission-list'),
-    re_path(r"^(?P<username>\w+)/view/downloadSubmission$",
+    re_path(r"^(?P<username>[\w.@+-]+)/view/downloadSubmission$",
             BriefcaseApi.as_view({'get': 'retrieve', 'head': 'retrieve'}),
             name='view-download-submission'),
-    re_path(r"^(?P<username>\w+)/formUpload$",
+    re_path(r"^(?P<username>[\w.@+-]+)/formUpload$",
             BriefcaseApi.as_view({'post': 'create', 'head': 'create'}),
             name='form-upload'),
-    re_path(r"^(?P<username>\w+)/upload$",
+    re_path(r"^(?P<username>[\w.@+-]+)/upload$",
             BriefcaseApi.as_view({'post': 'create', 'head': 'create'}),
             name='upload'),
 
     # exporting stuff
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.csv$",
+    re_path(r"^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/data\.csv$",
             data_export, name='csv_export',
             kwargs={'export_type': 'csv'}),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.xls",
+    re_path(r"^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/data\.xls",
             data_export, name='xls_export',
             kwargs={'export_type': 'xls'}),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
+    re_path(r"^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/data\.kml$",
             kml_export),
-    re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
+    re_path(r"^(?P<username>[\w.@+-]+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
             r"/new$", create_export, name='create_export'),
-    re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
+    re_path(r"^(?P<username>[\w.@+-]+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
             r"/delete$", delete_export, name='delete_export'),
-    re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
+    re_path(r"^(?P<username>[\w.@+-]+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
             r"/progress$", export_progress, name='export_progress'),
-    re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
+    re_path(r"^(?P<username>[\w.@+-]+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
             r"/$", export_list, name='export_list'),
-    re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
+    re_path(r"^(?P<username>[\w.@+-]+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
             "/(?P<filename>[^/]+)$",
             export_download, name='export_download'),
 
@@ -171,18 +171,18 @@ urlpatterns = [
             name='submissions'),
     re_path(r"^formList$",
             XFormListApi.as_view({'get': 'list'}), name='form-list'),
-    re_path(r"^(?P<username>\w+)/formList$",
+    re_path(r"^(?P<username>[\w.@+-]+)/formList$",
             XFormListApi.as_view({'get': 'list'}), name='form-list'),
-    re_path(r"^(?P<username>\w+)/xformsManifest/(?P<pk>[\d+^/]+)$",
+    re_path(r"^(?P<username>[\w.@+-]+)/xformsManifest/(?P<pk>[\d+^/]+)$",
             XFormListApi.as_view({'get': 'manifest'}),
             name='manifest-url'),
     re_path(r"^xformsManifest/(?P<pk>[\d+^/]+)$",
             XFormListApi.as_view({'get': 'manifest'}),
             name='manifest-url'),
-    re_path(r"^(?P<username>\w+)/xformsMedia/(?P<pk>[\d+^/]+)"
+    re_path(r"^(?P<username>[\w.@+-]+)/xformsMedia/(?P<pk>[\d+^/]+)"
             r"/(?P<metadata>[\d+^/.]+)$",
             XFormListApi.as_view({'get': 'media'}), name='xform-media'),
-    re_path(r"^(?P<username>\w+)/xformsMedia/(?P<pk>[\d+^/]+)"
+    re_path(r"^(?P<username>[\w.@+-]+)/xformsMedia/(?P<pk>[\d+^/]+)"
             r"/(?P<metadata>[\d+^/.]+)\.(?P<format>[a-z0-9]+)$",
             XFormListApi.as_view({'get': 'media'}), name='xform-media'),
     re_path(r"^xformsMedia/(?P<pk>[\d+^/]+)/(?P<metadata>[\d+^/.]+)$",
@@ -190,22 +190,22 @@ urlpatterns = [
     re_path(r"^xformsMedia/(?P<pk>[\d+^/]+)/(?P<metadata>[\d+^/.]+)\."
             r"(?P<format>[a-z0-9]+)$",
             XFormListApi.as_view({'get': 'media'}), name='xform-media'),
-    re_path(r"^(?P<username>\w+)/submission$",
+    re_path(r"^(?P<username>[\w.@+-]+)/submission$",
             XFormSubmissionApi.as_view({'post': 'create', 'head': 'create'}),
             name='submissions'),
-    re_path(r"^(?P<username>\w+)/bulk-submission$",
+    re_path(r"^(?P<username>[\w.@+-]+)/bulk-submission$",
             bulksubmission),
-    re_path(r"^(?P<username>\w+)/bulk-submission-form$",
+    re_path(r"^(?P<username>[\w.@+-]+)/bulk-submission-form$",
             bulksubmission_form),
-    re_path(r"^(?P<username>\w+)/forms/(?P<pk>[\d+^/]+)/form\.xml$",
+    re_path(r"^(?P<username>[\w.@+-]+)/forms/(?P<pk>[\d+^/]+)/form\.xml$",
             XFormListApi.as_view({'get': 'retrieve'}),
             name="download_xform"),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/form\.xml$",
+    re_path(r"^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/form\.xml$",
             download_xform, name="download_xform"),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/form\.xls$",
+    re_path(r"^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/form\.xls$",
             download_xlsform,
             name="download_xlsform"),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/form\.json",
+    re_path(r"^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/form\.json",
             download_jsonform,
             name="download_jsonform"),
     re_path(r'^favicon\.ico',
