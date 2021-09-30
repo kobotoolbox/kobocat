@@ -11,7 +11,6 @@ class VeritreeAuth(ModelBackend):
                 if token_response.status_code >= 200 and token_response.status_code < 300:
                     user_lookup_response = requests.get('{koboform_url}/me/'.format(koboform_url=settings.KOBOFORM_URL), headers={'Authorization': 'Token {}'.format(token_response.json()['token'])})
                     if user_lookup_response.status_code >= 200 and token_response.status_code < 300:
-                        print(user_lookup_response.json())
                         username = user_lookup_response.json()['username']
                         try:
                             return User.objects.get(username=username)
