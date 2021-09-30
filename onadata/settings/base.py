@@ -222,6 +222,7 @@ INSTALLED_APPS = [
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',
+    'veritree',
 ]
 
 USE_THOUSAND_SEPARATOR = True
@@ -297,6 +298,7 @@ LOGGING = {
 AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 
 AUTHENTICATION_BACKENDS = (
+    'veritree.models.VeritreeAuth',
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
