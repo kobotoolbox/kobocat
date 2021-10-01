@@ -1,10 +1,29 @@
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.conf import settings
+
 import requests
+import logging
+import python_digest
 
 class VeritreeAuth(ModelBackend):
     def authenticate(self, request, username=None, password=None):
+        try:
+            digest_response = python_digest.parse_digest_credentials(
+                request.META['HTTP_AUTHORIZATION'])
+            if digest_response:
+                logger = logging.getLogger("console_logger")
+                logger.error(
+                    " '%s'" % digest_response.username, exc_info=True)
+                username = digest_response.username
+                logger.error(
+                    " '%s'" % digest_response.password, exc_info=True)
+                password = digest_response.password
+        except:
+            pass
+
+       
+
         if username and password:
             try:
                 token_response = requests.post('{koboform_url}/token/'.format(koboform_url=settings.KOBOFORM_URL), data={'username': username, 'password': password })
