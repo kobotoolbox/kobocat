@@ -22,6 +22,7 @@ ENV VIRTUAL_ENV=/opt/venv \
     INIT_PATH=/srv/init
 
 # Install Dockerize
+# TODO: Remove this after merging kobotoolbox/kobo-docker#322
 ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz -P /tmp \
     && tar -C /usr/local/bin -xzvf /tmp/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
@@ -46,19 +47,21 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 
 RUN apt-get -qq update && \
     apt-get -qq -y install \
+        cron \
         gdal-bin \
-        libproj-dev \
         gettext \
-        postgresql-client \
-        libsqlite3-mod-spatialite \
-        openjdk-11-jre \
-        locales \
-        runit-init \
-        rsync \
-        less \
-        vim \
         gosu \
-        cron && \
+        less \
+        libproj-dev \
+        libsqlite3-mod-spatialite \
+        locales \
+        openjdk-11-jre \
+        postgresql-client \
+        python3-virtualenv \
+        rsync \
+        runit-init \
+        vim \
+        wait-for-it && \
     apt-get clean && \
         rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
