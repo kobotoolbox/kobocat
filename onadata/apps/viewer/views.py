@@ -21,6 +21,7 @@ from django.shortcuts import render
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from django_digest import HttpDigestAuthenticator
 from rest_framework.settings import api_settings
 
 from onadata.apps.logger.models import XForm, Attachment
@@ -416,6 +417,17 @@ def attachment_url(request, size='medium'):
                     break
 
         if not has_permission(xform, xform.user, request):
+            # New versions of ODK Briefcase (1.16+) do not sent Digest
+            # authentication headers anymore directly. So, if user does not
+            # pass `has_permission` and user is anonymous, we need to notify them
+            # that access is unauthorized (i.e.: send a HTTP 401) and give them
+            # a chance to authenticate.
+            if request.user.is_anonymous:
+                authenticator = HttpDigestAuthenticator()
+                if not authenticator.authenticate(request):
+                    return authenticator.build_challenge_response()
+
+            # Otherwise, return a HTTP 403 (access forbidden)
             return HttpResponseForbidden(_('Not shared.'))
 
         media_url = None
@@ -426,7 +438,9 @@ def attachment_url(request, size='medium'):
             try:
                 media_url = image_url(attachment, size)
             except:
-                media_file_logger.error('could not get thumbnail for image', exc_info=True)
+                media_file_logger.error(
+                    'could not get thumbnail for image', exc_info=True
+                )
 
         if media_url:
             # We want nginx to serve the media (instead of redirecting the media itself)
