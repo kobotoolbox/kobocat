@@ -228,7 +228,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         # Added this because of https://github.com/onaio/onadata/pull/2139
         # Should bring support to ODK v1.17+
-        if getattr(settings, 'SUPPORT_BRIEFCASE_SUBMISSION_DATE', True):
+        if settings.SUPPORT_BRIEFCASE_SUBMISSION_DATE:
             # Remove namespace attribute if any
             try:
                 submission_xml_root_node.removeAttribute('xmlns')
@@ -241,10 +241,11 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
             'host': request.build_absolute_uri().replace(
                 request.get_full_path(), '')
         }
-        return Response(data,
-                        headers=self.get_openrosa_headers(request,
-                                                          location=False),
-                        template_name='downloadSubmission.xml')
+        return Response(
+            data,
+            headers=self.get_openrosa_headers(request, location=False),
+            template_name='downloadSubmission.xml',
+        )
 
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
