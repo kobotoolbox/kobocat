@@ -86,6 +86,12 @@ class XForm(BaseModel):
 
     has_kpi_hooks = LazyDefaultBooleanField(default=False)
     kpi_asset_uid = models.CharField(max_length=32, null=True)
+    VERITREE_FORM_TYPE_CHOICES = [
+        ('socio-economic', 'socio-economic'),
+        ('inventory', 'inventory'),
+        ('none', 'none')
+    ]
+    veritree_form_type = models.CharField(choices=VERITREE_FORM_TYPE_CHOICES, default='none', max_length=25)
 
     class Meta:
         app_label = 'logger'

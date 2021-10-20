@@ -97,6 +97,7 @@ class XFormListSerializer(serializers.Serializer):
     descriptionText = serializers.ReadOnlyField(source='description')
     downloadUrl = serializers.SerializerMethodField('get_url')
     manifestUrl = serializers.SerializerMethodField('get_manifest_url')
+    veritreeFormType = serializers.SerializerMethodField('get_veritree_form_type')
 
     class Meta:
         fields = '__all__'
@@ -110,6 +111,7 @@ class XFormListSerializer(serializers.Serializer):
             'descriptionText',
             'downloadUrl',
             'manifestUrl',
+            'veritreeFormType'
         )
 
     def get_version(self, obj):
@@ -138,6 +140,8 @@ class XFormListSerializer(serializers.Serializer):
 
         return reverse('manifest-url', kwargs=kwargs, request=request)
 
+    def get_veritree_form_type(self, obj):
+        return obj.veritree_form_type
 
 class XFormManifestSerializer(serializers.Serializer):
 
