@@ -65,24 +65,33 @@ def set_profile_data(data, content_user):
 
 def has_permission(xform, owner, request, shared=False):
     user = request.user
-    return shared or xform.shared_data or \
-        (hasattr(request, 'session') and
-         request.session.get('public_link') == xform.uuid) or \
-        owner == user or \
-        user.has_perm('logger.' + CAN_VIEW_XFORM, xform) or \
-        user.has_perm('logger.' + CAN_CHANGE_XFORM, xform)
+    return (
+        shared
+        or xform.shared_data
+        or (
+            hasattr(request, 'session')
+            and request.session.get('public_link') == xform.uuid
+        )
+        or owner == user
+        or user.has_perm('logger.' + CAN_VIEW_XFORM, xform)
+        or user.has_perm('logger.' + CAN_CHANGE_XFORM, xform)
+    )
 
 
 def has_delete_data_permission(xform, owner, request):
     user = request.user
-    return owner == user or \
-        user.has_perm('logger.' + CAN_DELETE_DATA_XFORM, xform)
+    return (
+        owner == user
+        or user.has_perm('logger.' + CAN_DELETE_DATA_XFORM, xform)
+    )
 
 
 def has_edit_permission(xform, owner, request):
     user = request.user
-    return owner == user or \
-        user.has_perm('logger.' + CAN_CHANGE_XFORM, xform)
+    return (
+        owner == user
+        or user.has_perm('logger.' + CAN_CHANGE_XFORM, xform)
+    )
 
 
 def check_and_set_user_and_form(username, id_string, request):
