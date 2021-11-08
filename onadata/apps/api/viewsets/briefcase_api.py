@@ -1,11 +1,13 @@
 # coding: utf-8
+from xml.dom import NotFoundErr
+
+from django.conf import settings
 from django.core.files import File
 from django.core.validators import ValidationError
 from django.contrib.auth.models import User
 from django.http import Http404
 from django.utils.translation import ugettext as _
 from django.utils import six
-
 from rest_framework import exceptions
 from rest_framework import mixins
 from rest_framework import status
@@ -96,8 +98,9 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
             DigestAuthentication,
         ]
         self.authentication_classes = authentication_classes + [
-            auth_class for auth_class in self.authentication_classes
-                if not auth_class in authentication_classes
+            auth_class
+            for auth_class in self.authentication_classes
+            if auth_class not in authentication_classes
         ]
 
     def get_object(self):
@@ -222,16 +225,27 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         submission_xml_root_node.setAttribute(
             'submissionDate', self.object.date_created.isoformat()
         )
+
+        # Added this because of https://github.com/onaio/onadata/pull/2139
+        # Should bring support to ODK v1.17+
+        if settings.SUPPORT_BRIEFCASE_SUBMISSION_DATE:
+            # Remove namespace attribute if any
+            try:
+                submission_xml_root_node.removeAttribute('xmlns')
+            except NotFoundErr:
+                pass
+
         data = {
             'submission_data': submission_xml_root_node.toxml(),
             'media_files': Attachment.objects.filter(instance=self.object),
             'host': request.build_absolute_uri().replace(
                 request.get_full_path(), '')
         }
-        return Response(data,
-                        headers=self.get_openrosa_headers(request,
-                                                          location=False),
-                        template_name='downloadSubmission.xml')
+        return Response(
+            data,
+            headers=self.get_openrosa_headers(request, location=False),
+            template_name='downloadSubmission.xml',
+        )
 
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):

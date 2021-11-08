@@ -571,6 +571,12 @@ HASH_BIG_FILE_CHUNK = 16 * 1024  # 16 kB
 # the database is SQLite (e.g.: running unit tests locally).
 USE_POSTGRESQL = True
 
+# Added this because of https://github.com/onaio/onadata/pull/2139
+# Should bring support to ODK v1.17+
+SUPPORT_BRIEFCASE_SUBMISSION_DATE = (
+    os.environ.get('SUPPORT_BRIEFCASE_SUBMISSION_DATE') != 'True'
+)
+
 ################################
 # Celery settings              #
 ################################
