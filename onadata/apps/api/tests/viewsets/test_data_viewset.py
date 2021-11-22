@@ -89,6 +89,11 @@ class TestDataViewSet(TestBase):
                          response.data)
 
     def test_data_anon(self):
+        # By default, `_create_user_and_login()` creates users without
+        # authentication required. We force it when submitting data to persist
+        # collector's username because this test expects it.
+        # See `_submitted_data` in `data` below
+        self._set_require_auth(True)
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
         request = self.factory.get('/')
@@ -357,6 +362,7 @@ class TestDataViewSet(TestBase):
                          response_first_element)
 
     def test_data_w_attachment(self):
+        self._set_require_auth(auth=True)
         self._submit_transport_instance_w_attachment()
 
         view = DataViewSet.as_view({'get': 'list'})

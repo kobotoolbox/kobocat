@@ -21,13 +21,13 @@ from django.shortcuts import render
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
-from django_digest import HttpDigestAuthenticator
 from rest_framework.settings import api_settings
 
 from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.tasks import create_async_export
+from onadata.libs.authentication import digest_authentication
 from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.utils.common_tags import SUBMISSION_TIME
 from onadata.libs.utils.export_tools import (
@@ -427,9 +427,8 @@ def attachment_url(request, size='medium'):
             # that access is unauthorized (i.e.: send a HTTP 401) and give them
             # a chance to authenticate.
             if request.user.is_anonymous:
-                authenticator = HttpDigestAuthenticator()
-                if not authenticator.authenticate(request):
-                    return authenticator.build_challenge_response()
+                if digest_response := digest_authentication(request):
+                    return digest_response
 
             # Otherwise, return a HTTP 403 (access forbidden)
             return HttpResponseForbidden(_('Not shared.'))

@@ -169,9 +169,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
                 self.permission_denied(self.request)
             else:
                 user = get_object_or_404(User, username=username.lower())
-
                 profile, created = UserProfile.objects.get_or_create(user=user)
-
                 if profile.require_auth:
                     # raises a permission denied exception,
                     # forces authentication
@@ -189,7 +187,6 @@ Here is some example JSON, it would replace `[the JSON]` above:
 
         error, instance = (create_instance_from_json if is_json_request else
                            create_instance_from_xml)(username, request)
-
         if error or not instance:
             return self.error_response(error, is_json_request, request)
 

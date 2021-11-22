@@ -1,26 +1,25 @@
 # coding: utf-8
-from datetime import datetime
-import datetime as datetime_module
 import json
 import os
 import tempfile
 import re
+from datetime import datetime, date
 
 import pytz
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.contrib import messages
 from django.core.files.storage import get_storage_class
 from django.core.files import File
-from django.http import (HttpResponse,
-                         HttpResponseBadRequest,
-                         HttpResponseForbidden,
-                         HttpResponseRedirect,
-                         StreamingHttpResponse,
-                         Http404,
-                         )
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+    StreamingHttpResponse,
+    Http404,
+)
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
@@ -29,13 +28,13 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from django_digest import HttpDigestAuthenticator
 
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
+from onadata.libs.authentication import digest_authentication
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import (
     safe_create_instance,
@@ -90,7 +89,6 @@ def _submission_response(request, instance):
         'markedAsCompleteDate': instance.date_modified.isoformat()
     }
 
-    #context = RequestContext(request, data)
     t = loader.get_template('submission.xml')
 
     return BaseOpenRosaResponse(t.render(data, request=request))
@@ -163,6 +161,7 @@ def bulksubmission_form(request, username=None):
         return HttpResponseRedirect('/%s' % request.user.username)
 
 
+# Todo DEPRECATED
 @require_GET
 def formList(request, username): # noqa
     """
@@ -170,16 +169,11 @@ def formList(request, username): # noqa
     """
     formlist_user = get_object_or_404(User, username__iexact=username)
     profile, created = UserProfile.objects.get_or_create(user=formlist_user)
-
-    if profile.require_auth:
-        authenticator = HttpDigestAuthenticator()
-        if not authenticator.authenticate(request):
-            return authenticator.build_challenge_response()
-
-        # unauthorized if user in auth request does not match user in path
-        # unauthorized if user not active
-        if not request.user.is_active:
-            return HttpResponseNotAuthorized()
+    if (
+        profile.require_auth
+        and (digest_response := digest_authentication(request))
+    ):
+        return digest_response
 
     # filter private forms (where require_auth=False)
     # for users who are non-owner
@@ -210,6 +204,7 @@ def formList(request, username): # noqa
     return response
 
 
+# Todo DEPRECATED
 @require_GET
 def xformsManifest(request, username, id_string):  # noqa
     xform = get_object_or_404(
@@ -218,10 +213,11 @@ def xformsManifest(request, username, id_string):  # noqa
     form_list_user = xform.user
     profile, created = UserProfile.objects.get_or_create(user=form_list_user)
 
-    if profile.require_auth:
-        authenticator = HttpDigestAuthenticator()
-        if not authenticator.authenticate(request):
-            return authenticator.build_challenge_response()
+    if (
+        profile.require_auth
+        and (digest_response := digest_authentication(request))
+    ):
+        return digest_response
 
     response = render(request, "xformsManifest.xml", {
         'host': request.build_absolute_uri().replace(
@@ -236,97 +232,18 @@ def xformsManifest(request, username, id_string):  # noqa
     return response
 
 
-@require_http_methods(["HEAD", "POST"])
-@csrf_exempt
-def submission(request, username=None):
-    if username:
-        formlist_user = get_object_or_404(User, username__iexact=username)
-        profile, created = UserProfile.objects.get_or_create(
-            user=formlist_user)
-
-        if profile.require_auth:
-            authenticator = HttpDigestAuthenticator()
-            if not authenticator.authenticate(request):
-                return authenticator.build_challenge_response()
-
-    if request.method == 'HEAD':
-        response = OpenRosaResponse(status=204)
-        if username:
-            response['Location'] = request.build_absolute_uri().replace(
-                request.get_full_path(), '/%s/submission' % username)
-        else:
-            response['Location'] = request.build_absolute_uri().replace(
-                request.get_full_path(), '/submission')
-        return response
-
-    xml_file_list = []
-    media_files = []
-
-    # request.FILES is a django.utils.datastructures.MultiValueDict
-    # for each key we have a list of values
-    try:
-        xml_file_list = list(request.FILES.pop("xml_submission_file", []))
-        if len(xml_file_list) != 1:
-            return OpenRosaResponseBadRequest(
-                _("There should be a single XML submission file.")
-            )
-        # save this XML file and media files as attachments
-        media_files = list(request.FILES.values())
-
-        # get uuid from post request
-        uuid = request.POST.get('uuid')
-
-        error, instance = safe_create_instance(
-            username, xml_file_list[0], media_files, uuid, request)
-
-        if error:
-            return error
-        elif instance is None:
-            return OpenRosaResponseBadRequest(
-                _("Unable to create submission."))
-
-        audit = {
-            "xform": instance.xform.id_string
-        }
-        audit_log(
-            Actions.SUBMISSION_CREATED, request.user, instance.xform.user,
-            _("Created submission on form %(id_string)s.") %
-            {
-                "id_string": instance.xform.id_string
-            }, audit, request)
-
-        response = _submission_response(request, instance)
-
-        # ODK needs two things for a form to be considered successful
-        # 1) the status code needs to be 201 (created)
-        # 2) The location header needs to be set to the host it posted to
-        response.status_code = 201
-        response['Location'] = request.build_absolute_uri(request.path)
-        return response
-    except IOError as e:
-        if _bad_request(e):
-            return OpenRosaResponseBadRequest(
-                _("File transfer interruption."))
-        else:
-            raise
-    finally:
-        for xml_file in xml_file_list:
-            xml_file.close()
-        for media_file in media_files:
-            media_file.close()
-
-
 def download_xform(request, username, id_string):
     user = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm,
                               user=user, id_string__exact=id_string)
-    profile, created =\
-        UserProfile.objects.get_or_create(user=user)
+    profile, created = UserProfile.objects.get_or_create(user=user)
 
-    if profile.require_auth:
-        authenticator = HttpDigestAuthenticator()
-        if not authenticator.authenticate(request):
-            return authenticator.build_challenge_response()
+    if (
+        profile.require_auth
+        and (digest_response := digest_authentication(request))
+    ):
+        return digest_response
+
     audit = {
         "xform": xform.id_string
     }
@@ -420,13 +337,13 @@ def download_jsonform(request, username, id_string):
     return response
 
 
+# Todo DEPRECATED
 def view_submission_list(request, username):
     form_user = get_object_or_404(User, username__iexact=username)
-    profile, created = \
-        UserProfile.objects.get_or_create(user=form_user)
-    authenticator = HttpDigestAuthenticator()
-    if not authenticator.authenticate(request):
-        return authenticator.build_challenge_response()
+    UserProfile.objects.get_or_create(user=form_user)
+
+    if digest_response := digest_authentication(request):
+        return digest_response
     id_string = request.GET.get('formId', None)
     xform = get_object_or_404(
         XForm, id_string__exact=id_string, user__username__iexact=username)
@@ -460,13 +377,13 @@ def view_submission_list(request, username):
         content_type="text/xml; charset=utf-8")
 
 
+# ToDo DEPRECATED
 def view_download_submission(request, username):
     form_user = get_object_or_404(User, username__iexact=username)
-    profile, created = \
-        UserProfile.objects.get_or_create(user=form_user)
-    authenticator = HttpDigestAuthenticator()
-    if not authenticator.authenticate(request):
-        return authenticator.build_challenge_response()
+    UserProfile.objects.get_or_create(user=form_user)
+    if digest_response := digest_authentication(request):
+        return digest_response
+
     data = {}
     formId = request.GET.get('formId', None)
     if not isinstance(formId, string_types):
@@ -500,6 +417,7 @@ def view_download_submission(request, username):
         content_type="text/xml; charset=utf-8")
 
 
+# ToDo DEPRECATED
 @require_http_methods(["HEAD", "POST"])
 @csrf_exempt
 def form_upload(request, username):
@@ -513,11 +431,10 @@ def form_upload(request, username):
             return publish_xml_form(self.xml_file, self.user)
 
     form_user = get_object_or_404(User, username__iexact=username)
-    profile, created = \
-        UserProfile.objects.get_or_create(user=form_user)
-    authenticator = HttpDigestAuthenticator()
-    if not authenticator.authenticate(request):
-        return authenticator.build_challenge_response()
+    UserProfile.objects.get_or_create(user=form_user)
+    if digest_response := digest_authentication(request):
+        return digest_response
+
     if form_user != request.user:
         return HttpResponseForbidden(
             _("Not allowed to upload form[s] to %(user)s account." %
@@ -549,8 +466,8 @@ def form_upload(request, username):
 def superuser_stats(request, username):
     base_filename = '{}_{}_{}.zip'.format(
         re.sub('[^a-zA-Z0-9]', '-', request.get_host()),
-        datetime_module.date.today(),
-        datetime_module.datetime.now().microsecond
+        date.today(),
+        datetime.now().microsecond
     )
     filename = os.path.join(
         request.user.username,
