@@ -12,8 +12,9 @@ from django.test import RequestFactory
 from django_digest.test import Client as DigestClient
 from httmock import urlmatch, HTTMock
 
+from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.logger.models import Instance, XForm
-from onadata.apps.logger.views import formList, download_xform, xformsManifest
+from onadata.apps.logger.views import download_xform
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.main.views import profile, download_media_data
@@ -21,6 +22,13 @@ from onadata.libs.utils.briefcase_client import BriefcaseClient
 from onadata.libs.utils.storage import delete_user_storage
 
 storage = get_storage_class()()
+
+
+def formList():  # noqa
+    return XFormListApi.as_view({'get': 'list'})
+
+def xformsManifest():  # noqa
+    return XFormListApi.as_view({'get': 'manifest'})
 
 
 @urlmatch(netloc=r'(.*\.)?testserver$')
