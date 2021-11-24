@@ -92,27 +92,27 @@ urlpatterns = [
             attachment_url, name='attachment_url'),
     re_path(r'^jsi18n/$', JavaScriptCatalog.as_view(packages=['onadata.apps.main', 'onadata.apps.viewer']),
             name='javascript-catalog'),
-    re_path(r'^(?P<username>[^/]+)/$',
+    re_path(r'^(?P<username>[\w.@+-]+)/$',
             profile, name='user_profile'),
-    re_path(r'^(?P<username>[^/]+)/api-token$',
+    re_path(r'^(?P<username>[\w.@+-]+)/api-token$',
             api_token, name='api_token'),
 
     # form specific
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)$',
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)$',
             show, name='show_form'),
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/api$',
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/api$',
             api, name='mongo_view_api'),
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/edit$',
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/edit$',
             edit, name='edit_form'),
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/photos',
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/photos',
             form_photos, name='form_photos'),
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/doc/(?P<data_'
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/doc/(?P<data_'
             'id>\d+)', download_metadata, name='download_metadata'),
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/delete-doc/(?P<'
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/delete-doc/(?P<'
             'data_id>\d+)', delete_metadata, name='delete_metadata'),
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/'
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/formid-media/'
             r'(?P<data_id>\d+)', download_media_data, name='download_media_data'),
-    re_path(r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/form_settings$',
+    re_path(r'^(?P<username>[\w.@+-]+)/forms/(?P<id_string>[^/]+)/form_settings$',
             show_form_settings, name='show_form_settings'),
     path(
         '<str:username>/reports/<str:id_string>/export.html',
@@ -213,8 +213,8 @@ urlpatterns = [
 
     # Statistics for superusers. The username is irrelevant, but leave it as
     # the first part of the path to avoid collisions
-    re_path(r"^(?P<username>[^/]+)/superuser_stats/$",
+    re_path(r"^(?P<username>[\w.@+-]+)/superuser_stats/$",
             superuser_stats),
-    re_path(r"^(?P<username>[^/]+)/superuser_stats/(?P<base_filename>[^/]+)$",
+    re_path(r"^(?P<username>[\w.@+-]+)/superuser_stats/(?P<base_filename>[^/]+)$",
             retrieve_superuser_stats),
 ]

@@ -298,7 +298,7 @@ LOGGING = {
 AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 
 AUTHENTICATION_BACKENDS = (
-    'veritree.models.VeritreeAuth',
+    'veritree.models.VeritreeOAuth2',
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
