@@ -39,6 +39,7 @@ class UserProfile(models.Model):
     created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     num_of_submissions = models.IntegerField(default=0)
     metadata = JSONField(default={}, blank=True)
+    is_mfa_active = models.BooleanField(default=False)
 
     def __str__(self):
         return '%s[%s]' % (self.name, self.user.username)

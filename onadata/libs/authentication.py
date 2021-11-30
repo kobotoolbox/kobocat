@@ -7,8 +7,11 @@ from rest_framework.authentication import (
     BaseAuthentication,
     BasicAuthentication,
     get_authorization_header,
+    TokenAuthentication as DRFTokenAuthentication,
 )
 from rest_framework.exceptions import AuthenticationFailed
+
+from onadata.libs.mixins.mfa import MFABlockerMixin
 
 
 def digest_authentication(request):
@@ -27,6 +30,7 @@ def digest_authentication(request):
 
 
 class DigestAuthentication(BaseAuthentication):
+
     def __init__(self):
         self.authenticator = HttpDigestAuthenticator()
 
@@ -44,6 +48,8 @@ class DigestAuthentication(BaseAuthentication):
             if not request.user.is_active:
                 raise AuthenticationFailed()
 
+            self.validate_mfa_not_active(request.user)
+
             return request.user, None
         else:
             raise AuthenticationFailed(_('Invalid username/password'))
@@ -57,6 +63,14 @@ class DigestAuthentication(BaseAuthentication):
 
 
 class HttpsOnlyBasicAuthentication(BasicAuthentication):
+    """
+    Extend DRF class to support MFA and authentication over HTTPS only (if
+    testing mode is not activated)
+
+    Basic authentication should be deactivated if user has activated MFA
+    on their account (unless it has been add to `settings.MFA_SUPPORTED_AUTH_CLASSES`)
+    """
+    verbose_name = 'Https Basic authentication'
 
     def authenticate(self, request):
         # The parent class can discern whether basic authentication is even
@@ -64,8 +78,11 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
         # authenticators
         user_auth = super().authenticate(
             request)
-        if settings.TESTING_MODE is False and \
-                user_auth is not None and not request.is_secure():
+        if (
+            settings.TESTING_MODE is False
+            and user_auth is not None
+            and not request.is_secure()
+        ):
             # Scold the user if they provided correct credentials for basic
             # auth but didn't use HTTPS
             raise AuthenticationFailed(_(
@@ -74,3 +91,25 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
                 'to use basic authentication.'
             ))
         return user_auth
+
+    def authenticate_credentials(self, userid, password, request=None):
+        user, _ = super().authenticate_credentials(
+            userid=userid, password=password, request=request
+        )
+        self.validate_mfa_not_active(user)
+        return user,
+
+
+class TokenAuthentication(MFABlockerMixin, DRFTokenAuthentication):
+    """
+    Extend DRF class to support MFA.
+
+    Token authentication should be deactivated if user has activated MFA
+    on their account (unless it has been add to `settings.MFA_SUPPORTED_AUTH_CLASSES`)
+    """
+    verbose_name = 'Token authentication'
+
+    def authenticate_credentials(self, key):
+        user, token = super().authenticate_credentials(key=key)
+        self.validate_mfa_not_active(user)
+        return user, token

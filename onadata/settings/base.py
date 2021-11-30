@@ -577,6 +577,12 @@ SUPPORT_BRIEFCASE_SUBMISSION_DATE = (
     os.environ.get('SUPPORT_BRIEFCASE_SUBMISSION_DATE') != 'True'
 )
 
+# Session Authentication is supported by default.
+MFA_SUPPORTED_AUTH_CLASSES = [
+    'onadata.lib.authentication.TokenAuthentication',
+]
+
+
 ################################
 # Celery settings              #
 ################################
