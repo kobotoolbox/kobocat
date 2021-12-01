@@ -10,7 +10,6 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Attachment
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import XForm
-# from onadata.apps.logger.views import submission
 
 
 class TestEncryptedForms(TestBase):

@@ -18,7 +18,6 @@ from rest_framework.test import APIRequestFactory
 
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.logger.models import Instance, XForm, Attachment
-# from onadata.apps.logger.views import submission
 from onadata.apps.main import tests as main_tests
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
