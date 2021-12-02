@@ -1,11 +1,29 @@
 # coding: utf-8
 from django.conf import settings
 from django.utils.translation import ugettext as _
+from django.http import HttpResponse
 from django_digest import HttpDigestAuthenticator
 from rest_framework.authentication import (
-    BaseAuthentication, get_authorization_header,
-    BasicAuthentication)
+    BaseAuthentication,
+    BasicAuthentication,
+    get_authorization_header,
+)
 from rest_framework.exceptions import AuthenticationFailed
+
+
+def digest_authentication(request):
+    authenticator = DigestAuthentication()
+    try:
+        authentication = authenticator.authenticate(request)
+    except AuthenticationFailed as e:
+        return HttpResponse(
+            str(e),
+            content_type=request.headers['content-type'],
+            status=AuthenticationFailed.status_code
+        )
+    else:
+        if not authentication:
+            return authenticator.build_challenge_response()
 
 
 class DigestAuthentication(BaseAuthentication):
@@ -18,19 +36,28 @@ class DigestAuthentication(BaseAuthentication):
 
         if not auth or auth[0].lower() != b'digest':
             return None
+
         if self.authenticator.authenticate(request):
+
+            # If user provided correct credentials but their account is
+            # disabled, return a 401
+            if not request.user.is_active:
+                raise AuthenticationFailed()
+
             return request.user, None
         else:
-            raise AuthenticationFailed(
-                _("Invalid username/password"))
+            raise AuthenticationFailed(_('Invalid username/password'))
 
     def authenticate_header(self, request):
-        response = self.authenticator.build_challenge_response()
-
+        response = self.build_challenge_response()
         return response['WWW-Authenticate']
+
+    def build_challenge_response(self):
+        return self.authenticator.build_challenge_response()
 
 
 class HttpsOnlyBasicAuthentication(BasicAuthentication):
+
     def authenticate(self, request):
         # The parent class can discern whether basic authentication is even
         # being attempted; if it isn't, we need to gracefully defer to other
