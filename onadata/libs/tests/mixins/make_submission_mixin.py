@@ -27,7 +27,7 @@ class MakeSubmissionMixin:
         with open(path, 'rb') as _file:
             split_xml = re.split(r'(<transport>)', _file.read().decode())
 
-        split_xml[1:1] = [f'<formhub><uuid>{xform.uuid}</uuid></formhub>']
+        split_xml.insert(1, f'<formhub><uuid>{xform.uuid}</uuid></formhub>')
 
         with NamedTemporaryFile(delete=False, mode='w') as tmp_file:
             tmp_file.write(''.join(split_xml))
@@ -37,16 +37,14 @@ class MakeSubmissionMixin:
 
     def _make_submission(
         self,
-        path,
-        username=None,
-        add_uuid=False,
-        forced_submission_time=None,
-        auth=None,
-        client=None,
-        media_file=None,
+        path: str,
+        username: str = None,
+        add_uuid: bool = False,
+        forced_submission_time: bool = None,
+        auth: DigestAuth = None,
+        media_file: 'io.BufferedReader' = None,
     ):
         # store temporary file with dynamic uuid
-
         self.factory = APIRequestFactory()
         if auth is None:
             auth = DigestAuth('bob', 'bob')
@@ -86,40 +84,23 @@ class MakeSubmissionMixin:
 
     def _make_submission_w_attachment(self, path, attachment_path):
 
-        with open(path, 'rb') as f:
-            a = open(attachment_path, 'rb')
-            post_data = {'xml_submission_file': f, 'media_file': a}
-            url = f'/{self.user.username}/submission'
-            auth = DigestAuth('bob', 'bob')
-            self.factory = APIRequestFactory()
-            request = self.factory.post(url, post_data)
-            request.user = authenticate(
-                username='bob', password='bob'
-            )
-            self.response = self.submission_view(
-                request, username=self.user.username
-            )
-
-            if auth and self.response.status_code == 401:
-                request.META.update(auth(request.META, self.response))
-                self.response = self.submission_view(
-                    request, username=self.user.username
-                )
+        with open(attachment_path, 'rb') as media_file:
+            self._make_submission(path, self.user.username, media_file=media_file)
 
     def _make_submissions(
         self,
-        username=None,
-        add_uuid=False,
-        should_store=True,
-        auth=None,
-        module_directory=None,
+        username: str = None,
+        auth: DigestAuth = None,
+        module_directory: str = None,
     ):
         """
         Make test fixture submissions to current xform.
 
-        :param username: submit under this username, default None.
-        :param add_uuid: add UUID to submission, default False.
-        :param should_store: should submissions be save, default True.
+        Submissions are saved under `username` if provided.
+        By default, user "bob" is used to submit data, other credentials can be
+        used by providing a different authentication `auth`.
+        Module directory can also be specified to use fixtures from another
+        directory than the default one (main app)
         """
 
         if not module_directory:
@@ -128,14 +109,11 @@ class MakeSubmissionMixin:
         paths = [os.path.join(
             module_directory, 'fixtures', 'transportation',
             'instances', s, s + '.xml') for s in self.surveys]
-        pre_count = Instance.objects.count()
 
         for path in paths:
-            self._make_submission(path, username, add_uuid, auth=auth)
+            self._make_submission(path, username, auth=auth)
 
-        post_count = (
-            pre_count + len(self.surveys) if should_store else pre_count
-        )
+        post_count = len(self.surveys)
 
         self.assertEqual(Instance.objects.count(), post_count)
         self.assertEqual(self.xform.instances.count(), post_count)

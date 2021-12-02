@@ -311,9 +311,7 @@ class TestFormSubmission(TestBase):
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
         )
-        client = DigestClient()
-        client.set_authorization('bob', 'bob', 'Digest')
-        self._make_submission(xml_submission_file_path, client=client)
+        self._make_submission(xml_submission_file_path)
         self.assertEqual(self.response.status_code, 201)
         # we must have the same number of instances
         self.assertEqual(Instance.objects.count(), num_instances + 1)

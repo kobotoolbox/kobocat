@@ -37,7 +37,8 @@ class TestEncryptedForms(TestBase):
                 self.this_directory, 'fixtures', 'transportation',
                 'instances_encrypted', filename)
         count = Instance.objects.count()
-        account = Attachment.objects.count()
+        attachments_count = Attachment.objects.count()
+
         with open(files['submission.xml.enc'], 'rb') as ef:
             with open(files['submission.xml'], 'rb') as f:
                 post_data = {
@@ -50,5 +51,5 @@ class TestEncryptedForms(TestBase):
                 response = self.submission_view(request, username=self.user.username)
                 self.assertContains(response, message, status_code=201)
                 self.assertEqual(Instance.objects.count(), count + 1)
-                self.assertEqual(Attachment.objects.count(), account + 1)
+                self.assertEqual(Attachment.objects.count(), attachments_count + 1)
                 self.assertTrue(Instance.objects.get(uuid=uuid))
