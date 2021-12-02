@@ -3,6 +3,8 @@ from django.conf import settings
 from django.utils.translation import gettext
 from rest_framework import exceptions
 
+from onadata.apps.main.models.user_profile import UserProfile
+
 
 class MFABlockerMixin:
 
@@ -17,9 +19,13 @@ class MFABlockerMixin:
         # ToDo Remove the condition when kobotoolbox/kpi#3383 is released/merged
         class_path = f'{self.__module__}.{self.__class__.__name__}'
         if class_path not in settings.MFA_SUPPORTED_AUTH_CLASSES:
-
-            if user.profile.mfa_enabled:
-                raise exceptions.AuthenticationFailed(gettext(
-                    'Multi-factor authentication is enabled for this account. '
-                    f'{self.verbose_name} cannot be used.'
-                ))
+            try:
+                is_mfa_active = user.profile.is_mfa_active
+            except UserProfile.DoesNotExist:
+                pass
+            else:
+                if is_mfa_active:
+                    raise exceptions.AuthenticationFailed(gettext(
+                        'Multi-factor authentication is enabled for '
+                        f'this account. {self.verbose_name} cannot be used.'
+                    ))

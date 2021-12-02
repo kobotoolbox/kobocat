@@ -1,11 +1,9 @@
 # coding: utf-8
 import os
-import re
 import socket
 from io import BytesIO
 from urllib.request import urlopen
 from urllib.error import URLError
-from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User, Permission

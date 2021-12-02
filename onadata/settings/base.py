@@ -378,9 +378,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'onadata.libs.authentication.DigestAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        'onadata.libs.authentication.TokenAuthentication',
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         # Keep JSONRenderer at the top "in order to send JSON responses to
@@ -579,9 +579,8 @@ SUPPORT_BRIEFCASE_SUBMISSION_DATE = (
 
 # Session Authentication is supported by default.
 MFA_SUPPORTED_AUTH_CLASSES = [
-    'onadata.lib.authentication.TokenAuthentication',
+    'onadata.libs.authentication.TokenAuthentication',
 ]
-
 
 ################################
 # Celery settings              #

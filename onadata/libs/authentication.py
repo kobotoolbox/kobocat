@@ -29,7 +29,9 @@ def digest_authentication(request):
             return authenticator.build_challenge_response()
 
 
-class DigestAuthentication(BaseAuthentication):
+class DigestAuthentication(MFABlockerMixin, BaseAuthentication):
+
+    verbose_name = 'Digest authentication'
 
     def __init__(self):
         self.authenticator = HttpDigestAuthenticator()
@@ -37,7 +39,6 @@ class DigestAuthentication(BaseAuthentication):
     def authenticate(self, request):
 
         auth = get_authorization_header(request).split()
-
         if not auth or auth[0].lower() != b'digest':
             return None
 
@@ -62,7 +63,7 @@ class DigestAuthentication(BaseAuthentication):
         return self.authenticator.build_challenge_response()
 
 
-class HttpsOnlyBasicAuthentication(BasicAuthentication):
+class HttpsOnlyBasicAuthentication(MFABlockerMixin, BasicAuthentication):
     """
     Extend DRF class to support MFA and authentication over HTTPS only (if
     testing mode is not activated)
@@ -76,8 +77,7 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
         # The parent class can discern whether basic authentication is even
         # being attempted; if it isn't, we need to gracefully defer to other
         # authenticators
-        user_auth = super().authenticate(
-            request)
+        user_auth = super().authenticate(request)
         if (
             settings.TESTING_MODE is False
             and user_auth is not None
@@ -97,7 +97,7 @@ class HttpsOnlyBasicAuthentication(BasicAuthentication):
             userid=userid, password=password, request=request
         )
         self.validate_mfa_not_active(user)
-        return user,
+        return user, _
 
 
 class TokenAuthentication(MFABlockerMixin, DRFTokenAuthentication):
