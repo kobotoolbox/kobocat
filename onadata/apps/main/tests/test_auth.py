@@ -2,7 +2,7 @@
 from django.test import override_settings
 from django.test.client import Client
 from django.urls import reverse
-from requests.auth import HTTPDigestAuth
+from rest_framework import status
 
 from onadata.apps.main.tests.test_base import TestBase
 
@@ -17,7 +17,6 @@ class TestAuthBase(TestBase):
             'pk': self.xform.pk,
             'format': 'json'
         })
-        print('self.api_url', self.api_url, flush=True)
         self._logout()
 
 
@@ -25,39 +24,39 @@ class TestBasicHttpAuthentication(TestAuthBase):
 
     def test_http_auth(self):
         response = self.client.get(self.api_url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         # headers with invalid user/pass
         response = self.client.get(self.api_url,
                                    **self._set_auth_headers('x', 'y'))
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # headers with valid user/pass
         client = Client()
         response = client.get(
             self.api_url, **self._set_auth_headers('bob', 'bob')
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_http_auth_shared_data(self):
         self.xform.shared_data = True
         self.xform.save()
         response = self.anon.get(self.api_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         response = self.client.get(self.api_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_http_auth_failed_with_mfa_active(self):
         # headers with valid user/pass
         response = self.client.get(self.api_url,
                                    **self._set_auth_headers('bob', 'bob'))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Activate MFA
         self.user.profile.is_mfa_active = True
         self.user.profile.save()
         response = self.client.get(self.api_url,
                                    **self._set_auth_headers('bob', 'bob'))
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_http_auth_with_mfa_active_with_exception(self):
         # Activate MFA
@@ -65,7 +64,7 @@ class TestBasicHttpAuthentication(TestAuthBase):
         self.user.profile.save()
         response = self.client.get(self.api_url,
                                    **self._set_auth_headers('bob', 'bob'))
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Allow Basic Auth with MFA
         with override_settings(MFA_SUPPORTED_AUTH_CLASSES=[
@@ -73,7 +72,7 @@ class TestBasicHttpAuthentication(TestAuthBase):
         ]):
             response = self.client.get(self.api_url,
                                        **self._set_auth_headers('bob', 'bob'))
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class TestDigestAuthentication(TestAuthBase):
@@ -90,7 +89,7 @@ class TestDigestAuthentication(TestAuthBase):
             self.api_url, 'bob', 'bob'
         )
         response = digest_client.get(self.api_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Activate MFA
         self.user.profile.is_mfa_active = True
@@ -99,7 +98,7 @@ class TestDigestAuthentication(TestAuthBase):
             self.api_url, 'bob', 'bob'
         )
         response = digest_client.get(self.api_url)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_digest_auth_with_mfa_active_with_exception(self):
         # Activate MFA
@@ -109,7 +108,7 @@ class TestDigestAuthentication(TestAuthBase):
             self.api_url, 'bob', 'bob'
         )
         response = digest_client.get(self.api_url)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Allow Basic Auth with MFA
         with override_settings(MFA_SUPPORTED_AUTH_CLASSES=[
@@ -119,7 +118,7 @@ class TestDigestAuthentication(TestAuthBase):
                 self.api_url, 'bob', 'bob'
             )
             response = digest_client.get(self.api_url)
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class TestTokenAuthentication(TestAuthBase):
@@ -130,17 +129,17 @@ class TestTokenAuthentication(TestAuthBase):
         }
 
     def test_token_auth_failed_with_mfa_active(self):
-        # headers with valid user/pass
+        # headers with valid token
         response = self.client.get(self.api_url,
                                    **self._set_auth_headers(self.user.auth_token))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Activate MFA, token auth is allowed with MFA by default
         self.user.profile.is_mfa_active = True
         self.user.profile.save()
         response = self.client.get(self.api_url,
                                    **self._set_auth_headers(self.user.auth_token))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_token_auth_with_mfa_active_with_exception(self):
         # Activate MFA
@@ -151,9 +150,9 @@ class TestTokenAuthentication(TestAuthBase):
         with override_settings(MFA_SUPPORTED_AUTH_CLASSES=[]):
             response = self.client.get(self.api_url,
                                        **self._set_auth_headers(self.user.auth_token))
-            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Default settings, allow token Auth with MFA
         response = self.client.get(self.api_url,
                                    **self._set_auth_headers(self.user.auth_token))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
