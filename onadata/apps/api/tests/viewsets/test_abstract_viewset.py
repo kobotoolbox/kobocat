@@ -162,7 +162,6 @@ class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
         add_uuid=False,
         forced_submission_time=None,
         auth=None,
-        client=None,
         media_file=None,
     ):
         if auth is None:
@@ -176,19 +175,17 @@ class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
             add_uuid,
             forced_submission_time,
             auth,
-            client,
             media_file,
         )
 
-    def _make_submissions(self, username=None, add_uuid=False,
-                          should_store=True):
+    def _make_submissions(self, username=None):
 
         auth = DigestAuth(
             self.profile_data['username'], self.profile_data['password1']
         )
 
         super()._make_submissions(
-            username, add_uuid, should_store, auth, self.main_directory
+            username, auth, self.main_directory
         )
 
     def _submit_transport_instance_w_attachment(

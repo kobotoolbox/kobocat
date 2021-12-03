@@ -26,11 +26,16 @@ storage = get_storage_class()()
 
 def formList(*args, **kwargs):  # noqa
     view = XFormListApi.as_view({'get': 'list'})
-    return view(*args, **kwargs)
+    response = view(*args, **kwargs)
+    response.render()
+    return response
+
 
 def xformsManifest(*args, **kwargs):  # noqa
     view = XFormListApi.as_view({'get': 'manifest'})
-    return view(*args, **kwargs)
+    response = view(*args, **kwargs)
+    response.render()
+    return response
 
 
 @urlmatch(netloc=r'(.*\.)?testserver$')
@@ -42,15 +47,21 @@ def form_list_xml(url, request, **kwargs):
     req.user.profile.require_auth = False
     req.user.profile.save()
     id_string = 'transportation_2011_07_25'
-    xform_id = 1
+    # Retrieve XForm pk for user bob.
+    # SQLite resets PK to 1 every time the table is truncated (i.e. after
+    # each test is over) whereas PostgreSQL keeps the last sequence value
+    # which makes `xform_id` differ all the time.
+    xform_id = (
+        XForm.objects.values_list('id', flat=True)
+        .filter(user__username='bob')
+        .last()
+    )
     if url.path.endswith('formList'):
         res = formList(req, username='bob')
-        res.render()
     elif url.path.endswith('form.xml'):
         res = download_xform(req, username='bob', id_string=id_string)
     elif url.path.find('xformsManifest') > -1:
         res = xformsManifest(req, username='bob', pk=xform_id)
-        res.render()
     elif url.path.find('formid-media') > -1:
         data_id = url.path[url.path.rfind('/') + 1:]
         res = download_media_data(
@@ -58,7 +69,6 @@ def form_list_xml(url, request, **kwargs):
         response._content = get_streaming_content(res)
     else:
         res = formList(req, username='bob')
-        res.render()
     response.status_code = 200
     if not response._content:
         response._content = res.content

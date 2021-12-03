@@ -271,10 +271,11 @@ class TestXFormViewSet(TestAbstractViewSet):
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            error_msg = ("There should be a choices sheet in this xlsform. "
-                         "Please ensure that the choices sheet name is all in "
-                         "small caps and has columns 'list name', 'name', "
-                         "and 'label' (or aliased column names).")
+            error_msg = (
+                "There should be a choices sheet in this xlsform. "
+                "Please ensure that the choices sheet has the mandatory "
+                "columns 'list_name', 'name', and 'label'."
+            )
             self.assertEqual(response.data.get('text'), error_msg)
 
     def test_partial_update(self):
