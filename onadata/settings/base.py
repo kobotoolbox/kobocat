@@ -379,6 +379,9 @@ REST_FRAMEWORK = {
         'onadata.libs.authentication.DigestAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'onadata.libs.authentication.TokenAuthentication',
+        # HttpsOnlyBasicAuthentication must come before SessionAuthentication because
+        # Django authentication is called before DRF authentication and users get authenticated with
+        # Session if it comes first (which bypass BasicAuthentication and MFA validation)
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
@@ -577,7 +580,7 @@ SUPPORT_BRIEFCASE_SUBMISSION_DATE = (
     os.environ.get('SUPPORT_BRIEFCASE_SUBMISSION_DATE') != 'True'
 )
 
-# Session Authentication is supported by default.
+# Session Authentication is supported by default, no need to add it to supported classes
 MFA_SUPPORTED_AUTH_CLASSES = [
     'onadata.libs.authentication.TokenAuthentication',
 ]
