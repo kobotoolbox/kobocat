@@ -325,6 +325,10 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 # The maximum size (in bytes) that an upload will be before it gets streamed to the file system # noqa
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
+# File permissions provided explicitly because by default it sets 0o600 when streamed to the file system. 
+# The absence of this setting causes nginx to not be able to read larger submission attachments and return a 403 Forbidden error.
+FILE_UPLOAD_PERMISSIONS = 0o644
+
 LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
