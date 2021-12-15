@@ -1,4 +1,22 @@
-FROM python:3.8
+FROM python:3.8 as build-python
+
+ENV VIRTUAL_ENV=/opt/venv \
+    KOBOCAT_SRC_DIR=/srv/src/kobocat \
+    TMP_DIR=/srv/tmp
+
+# Copy KoBoCAT directory
+COPY . "${KOBOCAT_SRC_DIR}"
+
+# Install `pip` packages
+RUN python3 -m venv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install  --quiet --upgrade pip && \
+    pip install  --quiet pip-tools
+COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
+RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
+    rm -rf ~/.cache/pip
+
+FROM python:3.8-slim
 
 # Declare environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -40,6 +58,7 @@ RUN apt-get -qq update && \
         cron \
         gdal-bin \
         gettext \
+        git \
         gosu \
         less \
         libproj-dev \
@@ -49,7 +68,7 @@ RUN apt-get -qq update && \
         postgresql-client \
         rsync \
         runit-init \
-        vim \
+        vim-tiny \
         wait-for-it && \
     apt-get clean && \
         rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -61,17 +80,9 @@ RUN echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && \
 # Create local user UWSGI_USER`
 RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 
-# Copy KoBoCAT directory
-COPY . "${KOBOCAT_SRC_DIR}"
-
-# Install `pip` packages
-RUN python3 -m venv "$VIRTUAL_ENV"
+# Copy virtualenv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install  --quiet --upgrade pip && \
-    pip install  --quiet pip-tools
-COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
-RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
-    rm -rf ~/.cache/pip
+COPY --from=build-python "$VIRTUAL_ENV" "$VIRTUAL_ENV"
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo "export PATH=${PATH}" >> /etc/profile && \
