@@ -82,6 +82,7 @@ RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 
 # Copy virtualenv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
 COPY --from=build-python "$VIRTUAL_ENV" "$VIRTUAL_ENV"
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
