@@ -1,9 +1,9 @@
 stages:
-  - build
-  - test
+  - build_test
   - deploy
 
 build:
+  stage: build_test
   image: docker
   services:
     - docker:dind
@@ -14,3 +14,25 @@ build:
     - docker build --cache-from $CI_REGISTRY_IMAGE:CI_COMMIT_REF_NAME --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+test:
+  stage: build_test
+  image: python:3.8-slim
+  variables:
+    DJANGO_SECRET_KEY: abcdef
+    TEST_DATABASE_URL: postgis://kobo:kobo@postgres:5432/kobocat_test
+    REDIS_SESSION_URL: redis://localhost:6380/2
+    USE_POSTGRESQL: "True"
+    POSTGRES_USER: kobo
+    POSTGRES_PASSWORD: kobo
+    POSTGRES_DB: kobocat_test
+  services:
+    - name: postgis/postgis:9.5-2.5
+      alias: postgres
+    - name: redis:3.2
+      alias: redis_cache
+  script:
+    - apt-get update && apt-get install -y ghostscript libxml2-dev libxslt-dev python3-dev gdal-bin libproj-dev gettext postgresql-client openjdk-11-jre git
+    - pip install -r dependencies/pip/dev.txt
+    - pytest -vv -rf
+
