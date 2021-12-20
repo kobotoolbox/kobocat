@@ -89,6 +89,7 @@ class XForm(BaseModel):
     VERITREE_FORM_TYPE_CHOICES = [
         ('socio-economic', 'socio-economic'),
         ('inventory', 'inventory'),
+        ('planting', 'planting'),
         ('none', 'none')
     ]
     veritree_form_type = models.CharField(choices=VERITREE_FORM_TYPE_CHOICES, default='none', max_length=25)
