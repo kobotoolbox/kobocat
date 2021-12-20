@@ -2,6 +2,7 @@
 import os
 import re
 from tempfile import NamedTemporaryFile
+from typing import Union
 
 from django.contrib.auth import authenticate
 from django_digest.test import DigestAuth
@@ -41,9 +42,13 @@ class MakeSubmissionMixin:
         username: str = None,
         add_uuid: bool = False,
         forced_submission_time: bool = None,
-        auth: DigestAuth = None,
+        auth: Union[DigestAuth, bool] = None,
         media_file: 'io.BufferedReader' = None,
     ):
+        """
+        Pass `auth=False` for an anonymous request, or omit `auth` to perform
+        the submission as 'bob'
+        """
         # store temporary file with dynamic uuid
         self.factory = APIRequestFactory()
         if auth is None:
@@ -64,11 +69,14 @@ class MakeSubmissionMixin:
             url_prefix = f'{username}/' if username else ''
             url = f'/{url_prefix}submission'
             request = self.factory.post(url, post_data)
-            request.user = authenticate(username=auth.username,
-                                        password=auth.password)
+            if auth:
+                request.user = authenticate(username=auth.username,
+                                            password=auth.password)
             self.response = None  # Reset in case error in viewset below
             self.response = self.submission_view(request, username=username)
             if auth and self.response.status_code == 401:
+                f.seek(0)
+                request = self.factory.post(url, post_data)
                 request.META.update(auth(request.META, self.response))
                 self.response = self.submission_view(request, username=username)
 
