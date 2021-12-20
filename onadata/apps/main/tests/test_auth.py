@@ -42,6 +42,8 @@ class TestBasicHttpAuthentication(TestAuthBase):
         self.xform.save()
         response = self.anon.get(self.api_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Log in as bob
+        self._login(username='bob', password='bob')
         response = self.client.get(self.api_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

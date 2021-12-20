@@ -1,6 +1,4 @@
 # coding: utf-8
-import datetime
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -11,9 +9,10 @@ from guardian.shortcuts import get_perms_for_model, assign_perm
 from jsonfield import JSONField
 from rest_framework.authtoken.models import Token
 
+from onadata.apps.logger.fields import LazyDefaultBooleanField
+from onadata.apps.main.signals import set_api_permissions
 from onadata.libs.utils.country_field import COUNTRIES
 from onadata.libs.utils.gravatar import get_gravatar_img_link, gravatar_exists
-from onadata.apps.main.signals import set_api_permissions
 
 
 class UserProfile(models.Model):
@@ -39,7 +38,7 @@ class UserProfile(models.Model):
     created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     num_of_submissions = models.IntegerField(default=0)
     metadata = JSONField(default={}, blank=True)
-    is_mfa_active = models.BooleanField(default=False)
+    is_mfa_active = LazyDefaultBooleanField(default=False)
 
     def __str__(self):
         return '%s[%s]' % (self.name, self.user.username)

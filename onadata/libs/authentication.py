@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.http import HttpResponse
 from django_digest import HttpDigestAuthenticator
 from rest_framework.authentication import (
@@ -93,11 +93,11 @@ class HttpsOnlyBasicAuthentication(MFABlockerMixin, BasicAuthentication):
         return user_auth
 
     def authenticate_credentials(self, userid, password, request=None):
-        user, _ = super().authenticate_credentials(
+        user, auth = super().authenticate_credentials(
             userid=userid, password=password, request=request
         )
         self.validate_mfa_not_active(user)
-        return user, _
+        return user, auth
 
 
 class TokenAuthentication(MFABlockerMixin, DRFTokenAuthentication):
