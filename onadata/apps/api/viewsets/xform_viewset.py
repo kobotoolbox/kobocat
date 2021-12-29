@@ -696,10 +696,17 @@ data (instance/submission per row)
         Calls :py:func:`onadata.libs.utils.csv_import.submit_csv`
         passing with the `request.FILES.get('csv_file')` upload for import.
         """
-        resp = submit_csv(request.user.username,
-                          self.get_object(),
-                          request.FILES.get('csv_file'))
-
+        xform = self.get_object()
+        if request.user != xform.user:
+            # Access control for this endpoint previously relied on testing
+            # that the user had `logger.add_xform` on this specific XForm,
+            # which is meaningless but does get assigned to the XForm owner by
+            # the post-save signal handler
+            # `onadata.apps.logger.models.xform.set_object_permissions()`.
+            # For safety and clarity, this endpoint now explicitly denies
+            # access to all non-owners.
+            raise PermissionDenied
+        resp = submit_csv(request, xform, request.FILES.get('csv_file'))
         return Response(
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
