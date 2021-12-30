@@ -273,10 +273,7 @@ class TestFormSubmission(TestBase):
         another_inst = Instance.objects.order_by('pk').last()
         self.assertNotEqual(inst.xml, another_inst.xml)
 
-    def test_edited_submission(self):
-        """
-        Test submissions that have been edited
-        """
+    def test_owner_can_edit_submissions(self):
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "..", "fixtures", "tutorial", "instances",
@@ -447,76 +444,161 @@ class TestFormSubmission(TestBase):
         instance = Instance.objects.all().reverse()[0]
         self.assertEqual(instance.user, alice)
 
-    def test_edited_submission_require_auth(self):
-        """
-        Test submissions that have been edited
-        """
+    def test_anonymous_cannot_edit_submissions(self):
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_w_uuid.xml"
         )
-        # require authentication
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-
-        num_instances_history = InstanceHistory.objects.count()
-        num_instances = Instance.objects.count()
-        query_args = {
-            'username': self.user.username,
-            'id_string': self.xform.id_string,
-            'query': '{}',
-            'fields': '[]',
-            'sort': '[]',
-            'count': True
-        }
-        cursor = ParsedInstance.query_mongo(**query_args)
-        num_mongo_instances = cursor[0]['count']
         # make first submission
         self._make_submission(xml_submission_file_path)
-
         self.assertEqual(self.response.status_code, 201)
-        self.assertEqual(Instance.objects.count(), num_instances + 1)
-        # no new record in instances history
+        created_instance = Instance.objects.order_by('pk').last()
         self.assertEqual(
-            InstanceHistory.objects.count(), num_instances_history)
-        # check count of mongo instances after first submission
-        cursor = ParsedInstance.query_mongo(**query_args)
-        self.assertEqual(cursor[0]['count'], num_mongo_instances + 1)
+            created_instance.uuid,
+            '729f173c688e482486a48661700455ff',
+        )
+        # attempt an edit
+        xml_submission_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "fixtures", "tutorial", "instances",
+            "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
+        )
+        # …without "Require authentication to see forms and submit data"
+        self.assertFalse(self.user.profile.require_auth)
+        self._make_submission(xml_submission_file_path, auth=False)
+        self.assertEqual(self.response.status_code, 401)
+        self.assertEqual(
+            Instance.objects.order_by('pk').last().xml_hash,
+            created_instance.xml_hash,
+        )
+        # …now with "Require authentication to…"
+        self.user.profile.require_auth = True
+        self.user.profile.save()
+        self._make_submission(xml_submission_file_path, auth=False)
+        self.assertEqual(self.response.status_code, 401)
+        self.assertEqual(
+            Instance.objects.order_by('pk').last().xml_hash,
+            created_instance.xml_hash,
+        )
 
-        # create a new user
+    def test_authorized_user_can_edit_submissions_without_require_auth(self):
+        self.assertFalse(self.user.profile.require_auth)
+
+        xml_submission_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "fixtures", "tutorial", "instances",
+            "tutorial_2012-06-27_11-27-53_w_uuid.xml"
+        )
+        # make first submission
+        self._make_submission(xml_submission_file_path)
+        self.assertEqual(self.response.status_code, 201)
+        created_instance = Instance.objects.order_by('pk').last()
+        self.assertEqual(
+            created_instance.uuid,
+            '729f173c688e482486a48661700455ff',
+        )
+        # create a new user with permission to edit submissions
         alice = self._create_user('alice', 'alice')
         UserProfile.objects.create(user=alice)
+        assign_perm('report_xform', alice, self.xform)
+        assign_perm('logger.change_xform', alice, self.xform)
         auth = DigestAuth('alice', 'alice')
-
-        # edited submission
+        # attempt an edit
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
         )
         self._make_submission(xml_submission_file_path, auth=auth)
-        self.assertEqual(self.response.status_code, 403)
+        self.assertEqual(self.response.status_code, 201)
+        # verify edit
+        edited_instance = Instance.objects.order_by('pk').last()
+        self.assertEqual(edited_instance.pk, created_instance.pk)
+        self.assertEqual(
+            edited_instance.uuid,
+            '2d8c59eb-94e9-485d-a679-b28ffe2e9b98',
+        )
 
-        # assign report perms to user
+    def test_authorized_user_can_edit_submissions_with_require_auth(self):
+        self.user.profile.require_auth = True
+        self.user.profile.save()
+
+        xml_submission_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "fixtures", "tutorial", "instances",
+            "tutorial_2012-06-27_11-27-53_w_uuid.xml"
+        )
+        # make first submission
+        self._make_submission(xml_submission_file_path)
+        self.assertEqual(self.response.status_code, 201)
+        created_instance = Instance.objects.order_by('pk').last()
+        self.assertEqual(
+            created_instance.uuid,
+            '729f173c688e482486a48661700455ff',
+        )
+        # create a new user with permission to edit submissions
+        alice = self._create_user('alice', 'alice')
+        UserProfile.objects.create(user=alice)
         assign_perm('report_xform', alice, self.xform)
         assign_perm('logger.change_xform', alice, self.xform)
-
+        auth = DigestAuth('alice', 'alice')
+        # attempt an edit
+        xml_submission_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "fixtures", "tutorial", "instances",
+            "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
+        )
         self._make_submission(xml_submission_file_path, auth=auth)
         self.assertEqual(self.response.status_code, 201)
-        # we must have the same number of instances
-        self.assertEqual(Instance.objects.count(), num_instances + 1)
-        # should be a new record in instances history
+        # verify edit
+        edited_instance = Instance.objects.order_by('pk').last()
+        self.assertEqual(edited_instance.pk, created_instance.pk)
         self.assertEqual(
-            InstanceHistory.objects.count(), num_instances_history + 1)
-        cursor = ParsedInstance.query_mongo(**query_args)
-        self.assertEqual(cursor[0]['count'], num_mongo_instances + 1)
-        # make sure we edited the mongo db record and NOT added a new row
-        query_args['count'] = False
-        cursor = ParsedInstance.query_mongo(**query_args)
-        record = cursor[0]
-        with open(xml_submission_file_path, "r") as f:
-            xml_str = f.read()
-        xml_str = clean_and_parse_xml(xml_str).toxml()
-        edited_name = re.match(r"^.+?<name>(.+?)</name>", xml_str).groups()[0]
-        self.assertEqual(record['name'], edited_name)
+            edited_instance.uuid,
+            '2d8c59eb-94e9-485d-a679-b28ffe2e9b98',
+        )
+
+    def test_unauthorized_cannot_edit_submissions(self):
+        xml_submission_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "fixtures", "tutorial", "instances",
+            "tutorial_2012-06-27_11-27-53_w_uuid.xml"
+        )
+        # make first submission
+        self._make_submission(xml_submission_file_path)
+        self.assertEqual(self.response.status_code, 201)
+        created_instance = Instance.objects.order_by('pk').last()
+        self.assertEqual(
+            created_instance.uuid,
+            '729f173c688e482486a48661700455ff',
+        )
+        # create a new user with permission to make new submissions but without
+        # permission to edit submissions
+        alice = self._create_user('alice', 'alice')
+        UserProfile.objects.create(user=alice)
+        assign_perm('report_xform', alice, self.xform)
+        auth = DigestAuth('alice', 'alice')
+        # attempt an edit
+        xml_submission_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..", "fixtures", "tutorial", "instances",
+            "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
+        )
+        # …without "Require authentication to see forms and submit data"
+        self.assertFalse(self.user.profile.require_auth)
+        self._make_submission(xml_submission_file_path, auth=auth)
+        self.assertEqual(self.response.status_code, 403)
+        self.assertEqual(
+            Instance.objects.order_by('pk').last().xml_hash,
+            created_instance.xml_hash,
+        )
+        # …now with "Require authentication to…"
+        self.user.profile.require_auth = True
+        self.user.profile.save()
+        self._make_submission(xml_submission_file_path, auth=auth)
+        self.assertEqual(self.response.status_code, 403)
+        self.assertEqual(
+            Instance.objects.order_by('pk').last().xml_hash,
+            created_instance.xml_hash,
+        )

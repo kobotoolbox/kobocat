@@ -1,9 +1,10 @@
 # coding: utf-8
+import io
 import json
 import uuid
 from datetime import datetime
+from typing import TextIO, Union
 
-import io
 import unicodecsv as ucsv
 from django.contrib.auth.models import User
 
@@ -57,18 +58,17 @@ def dict2xmlsubmission(submission_dict, xform, instance_id, submission_date):
                 dict2xml(submission_dict).replace('\n', '')))
 
 
-def submit_csv(username, xform, csv_file):
+def submit_csv(
+    request: 'django.http.HttpRequest',
+    xform: 'onadata.apps.logger.models.XForm',
+    csv_file: Union[str, TextIO],
+) -> dict:
     """ Imports CSV data to an existing form
 
     Takes a csv formatted file or string containing rows of submission/instance
     and converts those to xml submissions and finally submits them by calling
     :py:func:`onadata.libs.utils.logger_tools.safe_create_instance`
 
-    :param str username: the submission user
-    :param onadata.apps.logger.models.XForm xfrom: The submission's XForm.
-    :param (str or file): A CSV formatted file with submission rows.
-    :return: If successful, a dict with import summary else dict with error str.
-    :rtype: Dict
     """
     if isinstance(csv_file, str):
         csv_file = io.StringIO(csv_file)
@@ -86,7 +86,6 @@ def submit_csv(username, xform, csv_file):
     for row in csv_reader:
         # fetch submission uuid before purging row metadata
         row_uuid = row.get('_uuid')
-        submitted_by = row.get('_submitted_by')
         submission_date = row.get('_submission_time', submission_time)
 
         row_iter = dict(row)
@@ -116,8 +115,9 @@ def submit_csv(username, xform, csv_file):
             dict2xmlsubmission(row, xform, row_uuid, submission_date))
 
         try:
-            error, instance = safe_create_instance(username, xml_file, [],
-                                                   xform.uuid, None)
+            error, instance = safe_create_instance(
+                request.user.username, xml_file, [], xform.uuid, request
+            )
         except ValueError as e:
             error = e
 
@@ -127,10 +127,5 @@ def submit_csv(username, xform, csv_file):
             return {'error': str(error)}
         else:
             additions += 1
-            users = User.objects.filter(
-                username=submitted_by) if submitted_by else []
-            if users:
-                instance.user = users[0]
-                instance.save()
 
     return {'additions': additions - inserts, 'updates': inserts}

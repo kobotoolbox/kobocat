@@ -187,23 +187,13 @@ def _has_edit_xform_permission(
 def check_edit_submission_permissions(
     request: 'rest_framework.request.Request', xform: XForm, instance: Instance
 ):
-    if not xform or not (request and request.user.is_authenticated):
-        return
-
-    requires_auth = UserProfile.objects.get_or_create(user=xform.user)[0].require_auth  # noqa
-    has_edit_perms = _has_edit_xform_permission(request, xform, instance)
-
-    if requires_auth and not has_edit_perms:
-        raise PermissionDenied(
-            _(
-                "{request_user} is not allowed to make edit submissions "
-                "to {form_user}'s {form_title} form."
-            ).format(
-                request_user=request.user,
-                form_user=xform.user,
-                form_title=xform.title,
-            )
-        )
+    if request.user.is_anonymous:
+        raise UnauthenticatedEditAttempt
+    if not _has_edit_xform_permission(request, xform, instance):
+        raise PermissionDenied(_(
+            'Forbidden attempt to edit a submission. To make a new submission, '
+            'Remove `deprecatedID` from the submission XML and try again.'
+        ))
 
 
 def check_submission_permissions(
@@ -234,12 +224,7 @@ def check_submission_permissions(
         and xform.user != request.user
         and not request.user.has_perm('report_xform', xform)
     ):
-        raise PermissionDenied(
-            _("%(request_user)s is not allowed to make submissions "
-              "to %(form_user)s's %(form_title)s form." % {
-                  'request_user': request.user,
-                  'form_user': xform.user,
-                  'form_title': xform.title}))
+        raise PermissionDenied(_('Forbidden'))
 
 
 def save_attachments(instance, media_files):
@@ -632,6 +617,19 @@ class OpenRosaResponseNotAllowed(OpenRosaResponse):
 
 class OpenRosaResponseForbidden(OpenRosaResponse):
     status_code = 403
+
+
+class UnauthenticatedEditAttempt(Exception):
+    """
+    Escape hatch from the `safe_create_instance()` antipattern, where these
+    "logger tools" return responses directly instead of raising exceptions.
+    To avoid a large refactoring, this class allows the view code to handle
+    returning the proper response to the client:
+    `check_edit_submission_permissions()` raises `UnauthenticatedEditAttempt`,
+    which passes through unmolested to `XFormSubmissionApi.create()`, which
+    then returns the appropriate 401 response.
+    """
+    pass
 
 
 def inject_instanceid(xml_str, uuid):

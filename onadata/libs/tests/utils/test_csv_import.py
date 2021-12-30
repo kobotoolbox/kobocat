@@ -3,6 +3,10 @@ import os
 from io import StringIO, BytesIO
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
+from django.test import RequestFactory
+from django.urls import reverse
+
 from onadata.libs.utils import csv_import
 from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models import Instance
@@ -20,9 +24,13 @@ class CSVImportTestCase(TestBase):
         xls_file_path = os.path.join(self.fixtures_dir, 'tutorial.xls')
         self._publish_xls_file(xls_file_path)
         self.xform = XForm.objects.get()
+        self.request = RequestFactory().post(
+            reverse('xform-csv-import', kwargs={'pk': self.xform.pk})
+        )
+        self.request.user = self.xform.user
 
     def test_submit_csv_param_sanity_check(self):
-        resp = csv_import.submit_csv('userX', XForm(), 123456)
+        resp = csv_import.submit_csv(self.request, self.xform, 123456)
         self.assertIsNotNone(resp.get('error'))
 
     # @mock.patch('onadata.libs.utils.csv_import.safe_create_instance')
@@ -38,16 +46,17 @@ class CSVImportTestCase(TestBase):
 
     def test_submit_csv_and_rollback(self):
         count = Instance.objects.count()
-        csv_import.submit_csv(self.user.username, self.xform, self.good_csv)
+        csv_import.submit_csv(self.request, self.xform, self.good_csv)
         self.assertEqual(Instance.objects.count(),
                          count + 9, 'submit_csv test Failed!')
-        # Check that correct # of submissions belong to our user
+        # CSV imports previously allowed `_submitted_by` to be set arbitrarily;
+        # it is now always assigned to the user requesting the CSV import
         self.assertEqual(
-            Instance.objects.filter(user=self.user).count(),
-            count + 8, 'submit_csv username check failed!')
+            Instance.objects.filter(user=self.user).count(), count + 9
+        )
 
     def test_submit_csv_edits(self):
-        csv_import.submit_csv(self.user.username, self.xform, self.good_csv)
+        csv_import.submit_csv(self.request, self.xform, self.good_csv)
         self.assertEqual(Instance.objects.count(),
                          9, 'submit_csv edits #1 test Failed!')
 
@@ -58,6 +67,6 @@ class CSVImportTestCase(TestBase):
             *[x.get('uuid') for x in Instance.objects.values('uuid')]).encode())
 
         count = Instance.objects.count()
-        csv_import.submit_csv(self.user.username, self.xform, edit_csv)
+        csv_import.submit_csv(self.request, self.xform, edit_csv)
         self.assertEqual(Instance.objects.count(),
                          count, 'submit_csv edits #2 test Failed!')
