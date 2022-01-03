@@ -1,4 +1,8 @@
 from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth.models import User
+from django.conf import settings
+
+import requests
 
 class VeritreeOAuth2(ModelBackend):
     def authenticate(self, request, username=None, password=None):
@@ -6,4 +10,18 @@ class VeritreeOAuth2(ModelBackend):
         Authentication should happen through kpi anyways, this will be here simply for session
         validation
         """
-        return None
+        if username and password:
+            try:
+                token_response = requests.post('{koboform_url}/token/'.format(koboform_url=settings.KOBOFORM_URL), data={'username': username, 'password': password })
+                if token_response.status_code >= 200 and token_response.status_code < 300:
+                    user_lookup_response = requests.get('{koboform_url}/me/'.format(koboform_url=settings.KOBOFORM_URL), headers={'Authorization': 'Token {}'.format(token_response.json()['token'])})
+                    if user_lookup_response.status_code >= 200 and token_response.status_code < 300:
+                        username = user_lookup_response.json()['username']
+                        try:
+                            return User.objects.get(username=username)
+                        except User.DoesNotExist:
+                            return None
+            except:
+                # Don't crash, although should handle this better
+                pass
+        return None 
