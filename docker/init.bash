@@ -17,15 +17,15 @@ fi
 KOBOCAT_WEB_SERVER="${KOBOCAT_WEB_SERVER:-uWSGI}"
 if [[ "${KOBOCAT_WEB_SERVER,,}" == "uwsgi" ]]; then
     # `diff` returns exit code 1 if it finds a difference between the files
-    DIFF=$(diff "${KOBOCAT_SRC_DIR}/dependencies/pip/prod.txt" "${TMP_DIR}/pip_dependencies.txt" || true)
-    if [[ -n "$DIFF" ]]; then
+    if ! diff -q "${KOBOCAT_SRC_DIR}/dependencies/pip/prod.txt" "${TMP_DIR}/pip_dependencies.txt"
+    then
         echo "Syncing production pip dependencies..."
         pip-sync dependencies/pip/prod.txt 1>/dev/null
         cp "dependencies/pip/prod.txt" "${TMP_DIR}/pip_dependencies.txt"
     fi
 else
-    DIFF=$(diff "${KOBOCAT_SRC_DIR}/dependencies/pip/dev.txt" "${TMP_DIR}/pip_dependencies.txt" || true)
-    if [[ -n "$DIFF" ]]; then
+    if ! diff -q "${KOBOCAT_SRC_DIR}/dependencies/pip/dev.txt" "${TMP_DIR}/pip_dependencies.txt"
+    then
         echo "Syncing development pip dependencies..."
         gosu "${UWSGI_USER}" pip-sync dependencies/pip/dev.txt 1>/dev/null
         cp "dependencies/pip/dev.txt" "${TMP_DIR}/pip_dependencies.txt"
