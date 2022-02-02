@@ -483,6 +483,18 @@ class TestFormSubmission(TestBase):
         )
 
     def test_authorized_user_can_edit_submissions_without_require_auth(self):
+        """
+        This is nice but unfortunately does not reflect how Enketo acts when
+        editing submissions. Enketo *always* sends an unauthenticated HEAD
+        request, even if the editing user has already provided credentials. If
+        the HEAD request does not receive a 401 response, Enketo will submit
+        anonymously.
+        There's no way to determine whether Enketo's HEAD was sent with the
+        intent of editing or making a new submission, making it effectively
+        impossible to support authenticated editing and anonymous (new)
+        submissions at the same time.
+        """
+
         self.assertFalse(self.user.profile.require_auth)
 
         xml_submission_file_path = os.path.join(

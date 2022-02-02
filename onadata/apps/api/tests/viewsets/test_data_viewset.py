@@ -278,7 +278,35 @@ class TestDataViewSet(TestBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
+    def test_cannot_get_enketo_edit_url_without_require_auth(self):
+        """
+        It's not currently possible to support authenticated Enketo submission
+        editing while simultaneously accepting anonymous submissions. The
+        less-bad option is to reject edit requests with an explicit error
+        message when anonymous submissions are enabled.
+        """
+        self.assertFalse(self.user.profile.require_auth)
+        self._make_submissions()
+        for view_ in ['enketo', 'enketo_edit']:
+            view = DataViewSet.as_view({'get': view_})
+            formid = self.xform.pk
+            dataid = self.xform.instances.all().order_by('id')[0].pk
+            request = self.factory.get(
+                '/',
+                data={'return_url': "http://test.io/test_url"},
+                **self.extra
+            )
+            response = view(request, pk=formid, dataid=dataid)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertTrue(
+                response.data[0].startswith(
+                    'Cannot edit submissions while "Require authentication'
+                )
+            )
+
     def test_get_enketo_edit_url(self):
+        self.user.profile.require_auth = True
+        self.user.profile.save()
         self._make_submissions()
         for view_ in ['enketo', 'enketo_edit']:
             # ensure both legacy `/enketo` and the new `/enketo_edit` endpoints
