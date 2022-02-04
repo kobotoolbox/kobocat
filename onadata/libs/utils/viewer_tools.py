@@ -1,21 +1,17 @@
 # coding: utf-8
 import os
-import json
 import logging
 import traceback
 import requests
 import zipfile
 
 from tempfile import NamedTemporaryFile
-from xml.dom import minidom
 
 from django.conf import settings
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
 from django.utils.translation import ugettext as _
-
-from onadata.libs.utils import common_tags
 
 
 SLASH = "/"
@@ -29,21 +25,9 @@ class EnketoError(Exception):
     pass
 
 
-def image_urls_for_form(xform):
-    return sum([
-        image_urls(s) for s in xform.instances.all()
-    ], [])
-
-
 def get_path(path, suffix):
     fileName, fileExtension = os.path.splitext(path)
     return fileName + suffix + fileExtension
-
-
-# TODO VERIFY IF STILL USED
-def image_urls(instance):
-    image_urls_dict_ = image_urls_dict(instance)
-    return image_urls_dict_.values()
 
 
 def image_urls_dict(instance):
@@ -62,66 +46,6 @@ def image_urls_dict(instance):
     for a in instance.attachments.all():
         urls[a.filename] = a.secure_url(suffix=suffix)
     return urls
-
-
-def parse_xform_instance(xml_str):
-    """
-    'xml_str' is a str object holding the XML of an XForm
-    instance. Return a python object representation of this XML file.
-    """
-    xml_obj = minidom.parseString(xml_str)
-    root_node = xml_obj.documentElement
-    # go through the xml object creating a corresponding python object
-    # NOTE: THIS WILL DESTROY ANY DATA COLLECTED WITH REPEATABLE NODES
-    # THIS IS OKAY FOR OUR USE CASE, BUT OTHER USERS SHOULD BEWARE.
-    survey_data = dict(_path_value_pairs(root_node))
-    assert len(list(_all_attributes(root_node))) == 1, \
-        _("There should be exactly one attribute in this document.")
-    survey_data.update({
-        common_tags.XFORM_ID_STRING: root_node.getAttribute("id"),
-        common_tags.INSTANCE_DOC_NAME: root_node.nodeName,
-    })
-    return survey_data
-
-
-def _path(node):
-    n = node
-    levels = []
-    while n.nodeType != n.DOCUMENT_NODE:
-        levels = [n.nodeName] + levels
-        n = n.parentNode
-    return SLASH.join(levels[1:])
-
-
-def _path_value_pairs(node):
-    """
-    Using a depth first traversal of the xml nodes build up a python
-    object in parent that holds the tree structure of the data.
-    """
-    if len(node.childNodes) == 0:
-        # there's no data for this leaf node
-        yield _path(node), None
-    elif len(node.childNodes) == 1 and \
-            node.childNodes[0].nodeType == node.TEXT_NODE:
-        # there is data for this leaf node
-        yield _path(node), node.childNodes[0].nodeValue
-    else:
-        # this is an internal node
-        for child in node.childNodes:
-            for pair in _path_value_pairs(child):
-                yield pair
-
-
-def _all_attributes(node):
-    """
-    Go through an XML document returning all the attributes we see.
-    """
-    if hasattr(node, "hasAttributes") and node.hasAttributes():
-        for key in node.attributes.keys():
-            yield key, node.getAttribute(key)
-    for child in node.childNodes:
-        for pair in _all_attributes(child):
-            yield pair
 
 
 def report_exception(subject, info, exc_info=None):
