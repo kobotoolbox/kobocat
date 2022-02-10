@@ -26,6 +26,6 @@ class MFABlockerMixin:
             else:
                 if is_mfa_active:
                     raise exceptions.AuthenticationFailed(_(
-                        'Multi-factor authentication is enabled for '
-                        'this account. {verbose_name} cannot be used.'
-                    ).format(verbose_name=self.verbose_name))
+                        'Multi-factor authentication is enabled for this '
+                        'account. ##authentication class## cannot be used.'
+                    ).replace('##authentication class##', self.verbose_name))
