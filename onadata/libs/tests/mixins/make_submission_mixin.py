@@ -7,7 +7,6 @@ from typing import Union
 from django.contrib.auth import authenticate
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
-from rest_framework.test import MockOriginalResponse
 
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Instance, XForm

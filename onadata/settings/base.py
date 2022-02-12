@@ -378,9 +378,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'onadata.libs.authentication.DigestAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        'onadata.libs.authentication.TokenAuthentication',
+        # HttpsOnlyBasicAuthentication must come before SessionAuthentication because
+        # Django authentication is called before DRF authentication and users get authenticated with
+        # Session if it comes first (which bypass BasicAuthentication and MFA validation)
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         # Keep JSONRenderer at the top "in order to send JSON responses to
@@ -576,6 +579,11 @@ USE_POSTGRESQL = True
 SUPPORT_BRIEFCASE_SUBMISSION_DATE = (
     os.environ.get('SUPPORT_BRIEFCASE_SUBMISSION_DATE') != 'True'
 )
+
+# Session Authentication is supported by default, no need to add it to supported classes
+MFA_SUPPORTED_AUTH_CLASSES = [
+    'onadata.libs.authentication.TokenAuthentication',
+]
 
 ################################
 # Celery settings              #
