@@ -30,9 +30,7 @@ from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.models.xform import XForm
 from onadata.libs.authentication import digest_authentication
 from onadata.libs.utils.log import audit_log, Actions
-from onadata.libs.utils.logger_tools import (
-    BaseOpenRosaResponse,
-)
+from onadata.libs.utils.logger_tools import BaseOpenRosaResponse
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
     helper_auth_helper,
