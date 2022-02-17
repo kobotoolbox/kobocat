@@ -40,6 +40,7 @@ class Attachment(models.Model):
     media_file_size = models.PositiveIntegerField(blank=True, null=True)
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
+    replaced_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         app_label = 'logger'

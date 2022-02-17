@@ -4,6 +4,7 @@ import re
 import sys
 import traceback
 from datetime import date, datetime
+from xml.etree import ElementTree as ET
 from xml.parsers.expat import ExpatError
 
 import pytz
@@ -54,6 +55,7 @@ from onadata.apps.logger.xform_instance_parser import (
     get_uuid_from_xml,
     get_deprecated_uuid_from_xml,
     get_submission_date_from_xml,
+    get_xform_media_question_xpaths,
 )
 from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
@@ -564,6 +566,8 @@ def save_attachments(instance, media_files):
             media_file=f, mimetype=f.content_type)
         any_new_attachment = True
 
+    _update_instance_attachments(instance)
+
     return any_new_attachment
 
 
@@ -698,6 +702,45 @@ def _has_edit_xform_permission(
     return False
 
 
+def _update_instance_attachments(instance: Instance):
+    """
+    Soft delete replaced attachments when editing a submission
+    """
+    # Retrieve all media questions of Xform
+    media_question_xpaths = get_xform_media_question_xpaths(instance.xform)
+
+    # If XForm does not have any media fields, do not go further
+    if not media_question_xpaths:
+        return
+
+    # Parse instance XML to get the basename of each file of the updated
+    # submission
+    xml_parsed = ET.fromstring(instance.xml)
+    basenames = []
+
+    for media_question_xpath in media_question_xpaths:
+        root_name, xpath_without_root = media_question_xpath.split('/', 1)
+        assert root_name == xml_parsed.tag
+        # With repeat groups, several nodes can have the same XPath. We
+        # need to retrieve all of them
+        questions = xml_parsed.findall(xpath_without_root)
+        for question in questions:
+            try:
+                basename = question.text
+            except AttributeError:
+                raise XPathNotFoundException
+
+            # Only keep non-empty fields
+            if basename:
+                basenames.append(basename)
+
+    # Update Attachment objects to hide them if they are not used anymore.
+    # We do not want to delete them until the instance itself is deleted.
+    Attachment.objects.filter(instance=instance, replaced_at=None).exclude(
+        media_file_basename__in=basenames
+    ).update(replaced_at=timezone.now())
+
+
 def _update_mongo_for_xform(xform, only_update_missing=True):
 
     instance_ids = set(
@@ -810,4 +853,8 @@ class UnauthenticatedEditAttempt(Exception):
     which passes through unmolested to `XFormSubmissionApi.create()`, which
     then returns the appropriate 401 response.
     """
+    pass
+
+
+class XPathNotFoundException(Exception):
     pass

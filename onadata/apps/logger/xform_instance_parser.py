@@ -2,13 +2,13 @@
 import logging
 import re
 import sys
+from xml.dom import minidom, Node
 
 import dateutil.parser
 import six
 from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
 from django.utils.six import text_type
-from xml.dom import minidom, Node
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
 
@@ -119,14 +119,14 @@ def get_deprecated_uuid_from_xml(xml):
     return None
 
 
-def clean_and_parse_xml(xml_string):
+def clean_and_parse_xml(xml_string: str) -> minidom.Node:
     clean_xml_str = xml_string.strip()
-    clean_xml_str = re.sub(r">\s+<", "><", smart_str(clean_xml_str))
+    clean_xml_str = re.sub(r'>\s+<', '><', smart_str(clean_xml_str))
     xml_obj = minidom.parseString(clean_xml_str)
     return xml_obj
 
 
-def _xml_node_to_dict(node, repeats=[]):
+def _xml_node_to_dict(node: minidom.Node, repeats=[]) -> dict:
     assert isinstance(node, minidom.Node)
     if len(node.childNodes) == 0:
         # there's no data for this leaf node
@@ -357,3 +357,44 @@ def xform_instance_to_flat_dict(xml_str, data_dictionary):
 def parse_xform_instance(xml_str, data_dictionary):
     parser = XFormInstanceParser(xml_str, data_dictionary)
     return parser.get_flat_dict_with_attributes()
+
+
+def get_xform_media_question_xpaths(
+    xform: 'onadata.apps.logger.models.XForm',
+) -> list:
+    logger = logging.getLogger('console_logger')
+    parser = XFormInstanceParser(xform.xml, xform.data_dictionary())
+    all_attributes = _get_all_attributes(parser.get_root_node())
+    media_field_xpaths = []
+
+    # This code expects that the attributes from Enketo Express are **always**
+    # sent in the same order.
+    # For example:
+    #   <upload mediatype="application/*" ref="/azx11113333/Question_Name"/>
+    # `ref` attribute should always comes right after `mediatype`
+    for (key, value) in all_attributes:
+        if key.lower() == 'mediatype':
+            try:
+                next_attribute = next(all_attributes)
+            except StopIteration:
+                logger.error(
+                    f'`ref` attribute seems to be missing in {xform.xml}',
+                    exc_info=True,
+                )
+                continue
+
+            next_attribute_key, next_attribute_value = next_attribute
+            try:
+                assert next_attribute_key.lower() == 'ref'
+            except AssertionError:
+                logger = logging.getLogger('console_logger')
+                logger.error(
+                    f'`ref` should come after `mediatype:{value}` in {xform.xml}',
+                    exc_info=True,
+                )
+                continue
+
+            # We are returning XPaths, leading slash should be removed
+            media_field_xpaths.append(next_attribute_value[1:])
+
+    return media_field_xpaths
