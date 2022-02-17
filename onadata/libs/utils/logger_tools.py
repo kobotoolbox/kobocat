@@ -2,7 +2,6 @@
 import os
 import re
 import sys
-import tempfile
 import traceback
 from datetime import date, datetime
 from xml.parsers.expat import ExpatError
@@ -16,7 +15,6 @@ from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
 from django.db import IntegrityError, transaction
 from django.db.models import Q
-from django.db.models.signals import pre_delete
 from django.http import (
     HttpResponse,
     HttpResponseNotFound,
