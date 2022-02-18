@@ -1,16 +1,22 @@
+# coding: utf-8
 import mimetypes
 import os
 import requests
-
 from contextlib import closing
+
+
 from django.core.exceptions import ValidationError
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import URLValidator
 from django.db import models
 from django.conf import settings
-from hashlib import md5
+from django.utils import timezone
+from six.moves.urllib.parse import urlparse
+from requests.exceptions import RequestException
+
 from onadata.apps.logger.models import XForm
+from onadata.libs.utils.hash import get_hash
 
 CHUNK_SIZE = 1024
 
@@ -27,15 +33,25 @@ def is_valid_url(uri):
 
 
 def upload_to(instance, filename):
+
+    xform_unique_id = (
+        instance.xform.uuid
+        or instance.xform.id_string
+        or '__pk-{}'.format(instance.xform.pk)
+    )
+
     if instance.data_type == 'media':
         return os.path.join(
             instance.xform.user.username,
-            'formid-media',
+            'form-media',
+            xform_unique_id,
             filename
         )
+
     return os.path.join(
         instance.xform.user.username,
         'docs',
+        xform_unique_id,
         filename
     )
 
@@ -66,7 +82,7 @@ def type_for_form(xform, data_type):
 def create_media(media):
     """Download media link"""
     if is_valid_url(media.data_value):
-        filename = media.data_value.split('/')[-1]
+        filename = media.filename
         data_file = NamedTemporaryFile()
         content_type = mimetypes.guess_type(filename)
         with closing(requests.get(media.data_value, stream=True)) as r:
@@ -87,7 +103,8 @@ def create_media(media):
 
 
 def media_resources(media_list, download=False):
-    """List of MetaData objects of type media
+    """
+    List of MetaData objects of type media
 
     @param media_list - list of MetaData objects of type `media`
     @param download - boolean, when True downloads media files when
@@ -99,7 +116,6 @@ def media_resources(media_list, download=False):
     for media in media_list:
         if media.data_file.name == '' and download:
             media = create_media(media)
-
             if media:
                 data.append(media)
         else:
@@ -109,47 +125,122 @@ def media_resources(media_list, download=False):
 
 
 class MetaData(models.Model):
-    xform = models.ForeignKey(XForm)
+
+    MEDIA_FILES_TYPE = [
+        'media',
+        'paired_data',
+    ]
+
+    xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     data_type = models.CharField(max_length=255)
     data_value = models.CharField(max_length=255)
     data_file = models.FileField(upload_to=upload_to, blank=True, null=True)
     data_file_type = models.CharField(max_length=255, blank=True, null=True)
     file_hash = models.CharField(max_length=50, blank=True, null=True)
+    from_kpi = models.BooleanField(default=False)
+    data_filename = models.CharField(max_length=255, blank=True, null=True)
+    date_created = models.DateTimeField(default=timezone.now)
+    date_modified = models.DateTimeField(default=timezone.now)
 
     class Meta:
         app_label = 'main'
         unique_together = ('xform', 'data_type', 'data_value')
 
+    @property
+    def is_paired_data(self) -> bool:
+        return self.data_type == 'paired_data'
+
     def save(self, *args, **kwargs):
+        self.date_modified = timezone.now()
         self._set_hash()
-        super(MetaData, self).save(*args, **kwargs)
+
+        super().save(*args, **kwargs)
 
     @property
-    def hash(self):
-        if self.file_hash is not None and self.file_hash != '':
-            return self.file_hash
-        else:
-            return self._set_hash()
+    def md5_hash(self) -> str:
+        return self._set_hash()
 
-    def _set_hash(self):
-        if not self.data_file:
-            return None
+    @property
+    def has_expired(self) -> bool:
+        """
+        It validates whether the file has been modified for the last X minutes.
+        (where `X` equals `settings.PAIRED_DATA_EXPIRATION`)
 
-        file_exists = self.data_file.storage.exists(self.data_file.name)
+        Notes: Only `xml-external` (paired data XML) files expire.
+        """
+        if not self.is_paired_data:
+            return False
 
-        if (file_exists and self.data_file.name != '') \
-                or (not file_exists and self.data_file):
-            try:
-                self.data_file.seek(os.SEEK_SET)
-            except IOError:
-                return u''
+        timedelta = timezone.now() - self.date_modified
+        if timedelta.total_seconds() > settings.PAIRED_DATA_EXPIRATION:
+            # No need to download the whole file. Sending a `HEAD` request to
+            # KPI will cause KPI to delete and recreate the file in KoBoCAT if
+            # needed
+            requests.head(self.data_value)
+            # We update the modification time here to avoid requesting that KPI
+            # resynchronize this file multiple times per the
+            # `PAIRED_DATA_EXPIRATION` period. However, this introduces a race
+            # condition where it's possible that KPI *deletes* this file before
+            # we attempt to update it. We avoid that by locking the row
+            MetaData.objects.filter(pk=self.pk).select_for_update().update(
+                date_modified=timezone.now()
+            )
+            return True
+
+        return False
+
+    @property
+    def filename(self) -> str:
+
+        # `self.__filename` has already been cached, return it.
+        if getattr(self, '__filename', None):
+            return self.__filename
+
+        # If it is a remote URL, get the filename from it and return it
+        if (
+            self.data_type in self.MEDIA_FILES_TYPE
+            and is_valid_url(self.data_value)
+        ):
+            if self.data_filename:
+                self.__filename = self.data_filename
             else:
-                self.file_hash = u'md5:%s' \
-                    % md5(self.data_file.read()).hexdigest()
+                parsed_url = urlparse(self.data_value)
+                self.__filename = os.path.basename(parsed_url.path)
 
+            return self.__filename
+
+        # Return `self.data_value` as fallback
+        return self.data_value
+
+    def _set_hash(self) -> str:
+        """
+        Recalculates `file_hash` if it does not exist already. KPI, for
+        example, sends a precalculated hash of the file content (or of the URL
+        string, if the file is a reference to a remote URL) when synchronizing
+        form media.
+        """
+        if self.file_hash:
+            return self.file_hash
+
+        if self.data_file:
+            try:
+                self.file_hash = get_hash(self.data_file, prefix=True)
+            except (IOError, FileNotFoundError) as e:
+                return ''
+            else:
                 return self.file_hash
 
-        return u''
+        if not self.from_kpi:
+            return ''
+
+        # Object should be a URL at this point `POST`ed by KPI.
+        # We have to set the hash
+        try:
+            self.file_hash = get_hash(self.data_value, prefix=True, fast=True)
+        except RequestException as e:
+            return ''
+        else:
+            return self.file_hash
 
     @staticmethod
     def public_link(xform, data_value=None):
@@ -214,56 +305,3 @@ class MetaData(models.Model):
             media = MetaData(data_type=data_type, xform=xform,
                              data_value=uri)
             media.save()
-
-    @staticmethod
-    def mapbox_layer_upload(xform, data=None):
-        data_type = 'mapbox_layer'
-        if data and not MetaData.objects.filter(xform=xform,
-                                                data_type='mapbox_layer'):
-            s = ''
-            for key in data:
-                s = s + data[key] + '||'
-            mapbox_layer = MetaData(data_type=data_type, xform=xform,
-                                    data_value=s)
-            mapbox_layer.save()
-        if type_for_form(xform, data_type):
-            values = type_for_form(xform, data_type)[0].data_value.split('||')
-            data_values = {}
-            data_values['map_name'] = values[0]
-            data_values['link'] = values[1]
-            data_values['attribution'] = values[2]
-            data_values['id'] = type_for_form(xform, data_type)[0].id
-            return data_values
-        else:
-            return None
-
-    @staticmethod
-    def external_export(xform, data_value=None):
-        data_type = 'external_export'
-
-        if data_value:
-            result = MetaData(data_type=data_type, xform=xform,
-                              data_value=data_value)
-            result.save()
-            return result
-
-        return MetaData.objects.filter(xform=xform, data_type=data_type)\
-            .order_by('-id')
-
-    @property
-    def external_export_url(self):
-        parts = self.data_value.split('|')
-
-        return parts[1] if len(parts) > 1 else None
-
-    @property
-    def external_export_name(self):
-        parts = self.data_value.split('|')
-
-        return parts[0] if len(parts) > 1 else None
-
-    @property
-    def external_export_template(self):
-        parts = self.data_value.split('|')
-
-        return parts[1].replace('xls', 'templates') if len(parts) > 1 else None

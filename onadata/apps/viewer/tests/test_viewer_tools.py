@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.test.client import RequestFactory
 
 from onadata.apps.main.tests.test_base import TestBase

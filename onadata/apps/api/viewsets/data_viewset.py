@@ -1,17 +1,19 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 import json
+from typing import Union
 
 from django.db.models import Q
+from django.db.models.signals import pre_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import six
 from django.utils.translation import ugettext as _
 
 from rest_framework import status
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import ParseError, PermissionDenied
+from rest_framework.exceptions import ParseError
 from rest_framework.serializers import ValidationError
 from rest_framework.settings import api_settings
 
@@ -22,18 +24,22 @@ from onadata.apps.api.tools import add_tags_to_instance, \
     remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, ParsedInstance
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
-from onadata.apps.api.permissions import XFormDataPermissions
-from onadata.libs.permissions import CAN_CHANGE_XFORM
+from onadata.apps.api.permissions import (
+    EnketoSubmissionEditPermissions,
+    EnketoSubmissionViewPermissions,
+    XFormDataPermissions,
+)
 from onadata.libs.serializers.data_serializer import (
     DataSerializer, DataListSerializer, DataInstanceSerializer)
 from onadata.libs import filters
 from onadata.libs.utils.viewer_tools import (
     EnketoError,
-    get_enketo_edit_url)
+    get_enketo_submission_url,
+)
 
 
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
@@ -46,7 +52,7 @@ This endpoint provides access to submitted data in JSON format. Where:
 
 * `pk` - the form unique identifier
 * `dataid` - submission data unique identifier
-* `owner` - username of the owner(user/organization) of the data point
+* `owner` - username of the owner of the data point
 
 ## GET JSON List of data end points
 
@@ -105,8 +111,6 @@ Provides a list of json submitted data for a specific form.
 >        [
 >            {
 >                "_id": 4503,
->                "_bamboo_dataset_id": "",
->                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
 >                "_geolocation": [
@@ -154,8 +158,6 @@ Get a single specific submission json data providing `pk`
 >
 >            {
 >                "_id": 4503,
->                "_bamboo_dataset_id": "",
->                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
 >                "_geolocation": [
@@ -204,15 +206,13 @@ API Parameters</a>.
 >       curl -X GET 'https://example.com/api/v1/data/22845?query={"kind": \
 "monthly"}'
 >       curl -X GET 'https://example.com/api/v1/data/22845?query={"date": \
-{"gt$": "2014-09-29T01:02:03+0000"}}'
+{"$gt": "2014-09-29T01:02:03+0000"}}'
 
 > Response
 >
 >        [
 >            {
 >                "_id": 4503,
->                "_bamboo_dataset_id": "",
->                "_deleted_at": null,
 >                "expense_type": "service",
 >                "_xform_id_string": "exp",
 >                "_geolocation": [
@@ -339,28 +339,6 @@ Payload
 >           "label": "Not Approved"
 >       }
 
-## Get list of public data endpoints
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/data/public
-</pre>
-
-> Example
->
->       curl -X GET https://example.com/api/v1/data/public
-
-> Response
->
->        [{
->            "id": 4240,
->            "id_string": "dhis2form"
->            "title": "dhis2form"
->            "description": "dhis2form"
->            "url": "https://example.com/api/v1/data/4240"
->         },
->            ...
->        ]
-
 ## Get enketo edit link for a submission instance
 
 <pre class="prettyprint">
@@ -398,53 +376,48 @@ Delete a specific submission in a form
         renderers.XLSRenderer,
         renderers.XLSXRenderer,
         renderers.CSVRenderer,
-        renderers.CSVZIPRenderer,
-        renderers.SAVZIPRenderer,
         renderers.RawXMLRenderer
     ]
 
     content_negotiation_class = renderers.InstanceContentNegotiation
-    filter_backends = (filters.AnonDjangoObjectPermissionFilter,
+    filter_backends = (filters.RowLevelObjectPermissionFilter,
                        filters.XFormOwnerFilter)
     permission_classes = (XFormDataPermissions,)
     lookup_field = 'pk'
     lookup_fields = ('pk', 'dataid')
     extra_lookup_fields = None
-    public_data_endpoint = 'public'
-
     queryset = XForm.objects.all()
 
     def bulk_delete(self, request, *args, **kwargs):
         """
         Bulk delete instances
         """
-        xform = self.__validate_permission_on_bulk_action(request,
-                                                          'change_xform')
-        payload = self.__get_payload(request)
+        xform = self.get_object()
+        postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
-        postgres_query, mongo_query = self.__build_db_queries(xform, payload)
+        # Disconnect redundant parsed instance pre_delete signal
+        pre_delete.disconnect(_remove_from_mongo, sender=ParsedInstance)
 
         # Delete Postgres & Mongo
-        updated_records_count = Instance.objects.filter(**postgres_query).count()
-
-        # Since Django 1.9, `.delete()` returns an dict with number of rows
-        # deleted per object.
-        # FixMe remove `.count()` query and use that dict instance
-        Instance.objects.filter(**postgres_query).delete()
+        all_count, results = Instance.objects.filter(**postgres_query).delete()
+        identifier = f'{Instance._meta.app_label}.Instance'
+        deleted_records_count = results[identifier]
         ParsedInstance.bulk_delete(mongo_query)
+
+        # Pre_delete signal needs to be re-enabled for parsed instance
+        pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+
         return Response({
             'detail': _('{} submissions have been deleted').format(
-                updated_records_count)
+                deleted_records_count)
         }, status.HTTP_200_OK)
 
     def bulk_validation_status(self, request, *args, **kwargs):
 
-        xform = self.__validate_permission_on_bulk_action(request,
-                                                          'validate_xform')
-        payload = self.__get_payload(request)
+        xform = self.get_object()
 
         try:
-            new_validation_status_uid = payload['validation_status.uid']
+            new_validation_status_uid = request.data['validation_status.uid']
         except KeyError:
             raise ValidationError({
                 'payload': _('No `validation_status.uid` provided')
@@ -454,11 +427,13 @@ Delete a specific submission in a form
         new_validation_status = get_validation_status(
             new_validation_status_uid, xform, request.user.username)
 
-        postgres_query, mongo_query = self.__build_db_queries(xform, payload)
+        postgres_query, mongo_query = self.__build_db_queries(xform,
+                                                              request.data)
 
         # Update Postgres & Mongo
-        updated_records_count = Instance.objects.\
-            filter(**postgres_query).update(validation_status=new_validation_status)
+        updated_records_count = Instance.objects.filter(
+            **postgres_query
+        ).update(validation_status=new_validation_status)
         ParsedInstance.bulk_update_validation_statuses(mongo_query,
                                                        new_validation_status)
         return Response({
@@ -470,8 +445,7 @@ Delete a specific submission in a form
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
-        if pk is not None and dataid is None \
-                and pk != self.public_data_endpoint:
+        if pk is not None and dataid is None:
             serializer_class = DataListSerializer
         elif pk is not None and dataid is not None:
             serializer_class = DataInstanceSerializer
@@ -480,26 +454,30 @@ Delete a specific submission in a form
 
         return serializer_class
 
-    def get_object(self):
-        obj = super(DataViewSet, self).get_object()
+    def get_object(self) -> Union[XForm, Instance]:
+        """
+        Return a `XForm` object or a `Instance` object if its primary key is
+        present in the url. If no results are found, a HTTP 404 error is raised
+        """
+        xform = super().get_object()
         pk_lookup, dataid_lookup = self.lookup_fields
         pk = self.kwargs.get(pk_lookup)
         dataid = self.kwargs.get(dataid_lookup)
 
-        if pk is not None and dataid is not None:
-            try:
-                int(pk)
-            except ValueError:
-                raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
-            try:
-                int(dataid)
-            except ValueError:
-                raise ParseError(_(u"Invalid dataid %(dataid)s"
-                                   % {'dataid': dataid}))
+        if pk is None or dataid is None:
+            return xform
 
-            obj = get_object_or_404(Instance, pk=dataid, xform__pk=pk)
+        try:
+            int(pk)
+        except ValueError:
+            raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
+        try:
+            int(dataid)
+        except ValueError:
+            raise ParseError(_("Invalid dataid `%(dataid)s`"
+                               % {'dataid': dataid}))
 
-        return obj
+        return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
 
     def _get_public_forms_queryset(self):
         return XForm.objects.filter(Q(shared=True) | Q(shared_data=True))
@@ -511,14 +489,13 @@ Delete a specific submission in a form
         if not qs:
             filter_kwargs['shared_data'] = True
             qs = XForm.objects.filter(**filter_kwargs)
-
             if not qs:
-                raise Http404(_(u"No data matches with given query."))
+                raise Http404(_("No data matches with given query."))
 
         return qs
 
     def filter_queryset(self, queryset, view=None):
-        qs = super(DataViewSet, self).filter_queryset(queryset)
+        qs = super().filter_queryset(queryset)
         pk = self.kwargs.get(self.lookup_field)
         tags = self.request.query_params.get('tags', None)
 
@@ -530,16 +507,13 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                if pk == self.public_data_endpoint:
-                    qs = self._get_public_forms_queryset()
-                else:
-                    raise ParseError(_(u"Invalid pk %(pk)s" % {'pk': pk}))
+                raise ParseError(_("Invalid pk %(pk)s" % {'pk': pk}))
             else:
                 qs = self._filtered_or_shared_qs(qs, pk)
 
         return qs
 
-    @detail_route(methods=["GET", "PATCH", "DELETE"])
+    @action(detail=True, methods=["GET", "PATCH", "DELETE"])
     def validation_status(self, request, *args, **kwargs):
         """
         View or modify validation status of specific instance.
@@ -552,27 +526,29 @@ Delete a specific submission in a form
         instance = self.get_object()
         data = {}
 
-        if request.method != "GET":
-            if request.user.has_perm("validate_xform", instance.asset):
-                if request.method == "PATCH" and \
-                        not add_validation_status_to_instance(request, instance):
+        if request.method != 'GET':
+            if (
+                request.method == 'PATCH'
+                and not add_validation_status_to_instance(request, instance)
+            ):
+                http_status = status.HTTP_400_BAD_REQUEST
+            elif request.method == 'DELETE':
+                if remove_validation_status_from_instance(instance):
+                    http_status = status.HTTP_204_NO_CONTENT
+                    data = None
+                else:
                     http_status = status.HTTP_400_BAD_REQUEST
-                elif request.method == "DELETE":
-                    if remove_validation_status_from_instance(instance):
-                        http_status = status.HTTP_204_NO_CONTENT
-                        data = None
-                    else:
-                        http_status = status.HTTP_400_BAD_REQUEST
-            else:
-                raise PermissionDenied(_(u"You do not have validate permissions."))
 
         if http_status == status.HTTP_200_OK:
             data = instance.validation_status
 
         return Response(data, status=http_status)
 
-    @detail_route(methods=['GET', 'POST', 'DELETE'],
-                  extra_lookup_fields=['label', ])
+    @action(
+        detail=True,
+        methods=['GET', 'POST', 'DELETE'],
+        extra_lookup_fields=['label'],
+    )
     def labels(self, request, *args, **kwargs):
         http_status = status.HTTP_400_BAD_REQUEST
         instance = self.get_object()
@@ -605,25 +581,47 @@ Delete a specific submission in a form
 
         return Response(data, status=http_status)
 
-    @detail_route(methods=['GET'])
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=[EnketoSubmissionEditPermissions],
+    )
     def enketo(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        data = {}
-        if isinstance(self.object, XForm):
-            raise ParseError(_(u"Data id not provided."))
-        elif isinstance(self.object, Instance):
-            if request.user.has_perm("change_xform", self.object.xform):
-                return_url = request.query_params.get('return_url')
-                if not return_url:
-                    raise ParseError(_(u"return_url not provided."))
+        # keep `/enketo` for retro-compatibility
+        return self._enketo_request(request, action_='edit', *args, **kwargs)
 
-                try:
-                    data["url"] = get_enketo_edit_url(
-                        request, self.object, return_url)
-                except EnketoError as e:
-                    data['detail'] = "{}".format(e)
-            else:
-                raise PermissionDenied(_(u"You do not have edit permissions."))
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=[EnketoSubmissionEditPermissions],
+    )
+    def enketo_edit(self, request, *args, **kwargs):
+        return self._enketo_request(request, action_='edit', *args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        permission_classes=[EnketoSubmissionViewPermissions],
+    )
+    def enketo_view(self, request, *args, **kwargs):
+        return self._enketo_request(request, action_='view', *args, **kwargs)
+
+    def _enketo_request(self, request, action_, *args, **kwargs):
+        object_ = self.get_object()
+        data = {}
+        if isinstance(object_, XForm):
+            raise ParseError(_('Data id not provided.'))
+        elif isinstance(object_, Instance):
+            return_url = request.query_params.get('return_url')
+            if not return_url and not action_ == 'view':
+                raise ParseError(_('`return_url` not provided.'))
+
+            try:
+                data['url'] = get_enketo_submission_url(
+                    request, object_, return_url, action=action_
+                )
+            except EnketoError as e:
+                data['detail'] = str(e)
 
         return Response(data=data)
 
@@ -633,23 +631,14 @@ Delete a specific submission in a form
             instance = self.get_object()
             return Response(instance.xml)
         else:
-            return super(DataViewSet, self).retrieve(request, *args, **kwargs)
+            return super().retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if isinstance(self.object, XForm):
-            raise ParseError(_(u"Data id not provided."))
-        elif isinstance(self.object, Instance):
-            # Redundant permissions check that duplicates
-            # `XFormDataPermissions`, left here to minimize changes. We're
-            # deleting an `Instance`, not an `XForm`, so the correct permission
-            # to verify is `change_xform` (`CAN_CHANGE_XFORM`). This matches
-            # the behavior of `onadata.apps.main.views.delete_data`
-            if request.user.has_perm(CAN_CHANGE_XFORM, self.object.xform):
-                self.object.delete()
-            else:
-                raise PermissionDenied(_(u"You do not have delete "
-                                         u"permissions."))
+        instance = self.get_object()
+        if isinstance(instance, XForm):
+            raise ParseError(_('Data id not provided'))
+        elif isinstance(instance, Instance):
+            instance.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -663,17 +652,6 @@ Delete a specific submission in a form
 
             return Response(serializer.data)
 
-        if lookup == self.public_data_endpoint:
-            self.object_list = self._get_public_forms_queryset()
-
-            page = self.paginate_queryset(self.object_list)
-            if page is not None:
-                serializer = self.get_pagination_serializer(page)
-            else:
-                serializer = self.get_serializer(self.object_list, many=True)
-
-            return Response(serializer.data)
-
         xform = self.get_object()
         query = request.GET.get("query", {})
         export_type = kwargs.get('format')
@@ -683,25 +661,14 @@ Delete a specific submission in a form
             # With DRF ListSerializer are automatically created and wraps
             # everything in a list. Since this returns a list
             # # already, we unwrap it.
-            res = super(DataViewSet, self).list(request, *args, **kwargs)
+            res = super().list(request, *args, **kwargs)
             res.data = res.data[0]
             return res
 
         return custom_response_handler(request, xform, query, export_type)
 
     @staticmethod
-    def __get_payload(request):
-        try:
-            payload = json.loads(request.data.get('payload', '{}'))
-        except ValueError:
-            payload = None
-        if not isinstance(payload, dict):
-            raise ValidationError({'payload': _('Invalid format')})
-
-        return payload
-
-    @staticmethod
-    def __build_db_queries(xform_, payload):
+    def __build_db_queries(xform_, request_data):
 
         """
         Gets instance ids based on the request payload.
@@ -709,7 +676,7 @@ Delete a specific submission in a form
 
         Args:
             xform_ (XForm)
-            payload (dict)
+            request_data (dict)
 
         Returns:
             tuple(<dict>, <dict>): PostgreSQL filters, Mongo filters.
@@ -722,11 +689,16 @@ Delete a specific submission in a form
                                                     xform_.id_string)
         postgres_query = {'xform_id': xform_.id}
         instance_ids = None
-
+        # Remove empty values
+        payload = {
+            key_: value_ for key_, value_ in request_data.items() if value_
+        }
         ###################################################
         # Submissions can be retrieve in 3 different ways #
         ###################################################
-        # First of all, users can't mix `query` and `submission_ids` in `payload`
+        # First of all,
+        # users cannot send `query` and `submission_ids` in POST/PATCH request
+        #
         if all(key_ in payload for key_ in ('query', 'submission_ids')):
             raise ValidationError({
                 'payload': _("`query` and `instance_ids` can't be used together")
@@ -781,13 +753,3 @@ Delete a specific submission in a form
             raise NoConfirmationProvidedException()
 
         return postgres_query, mongo_query
-
-    def __validate_permission_on_bulk_action(self, request, permission):
-
-        xform = self.get_object()
-        if not request.user.has_perm(permission, xform):
-            raise PermissionDenied(
-                _(u"You do not have sufficient rights to perform this operation.")
-            )
-        return xform
-

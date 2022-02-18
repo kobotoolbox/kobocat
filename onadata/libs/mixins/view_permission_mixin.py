@@ -1,8 +1,9 @@
+# coding: utf-8
 from django.core.exceptions import ImproperlyConfigured
 from guardian.shortcuts import get_objects_for_user
 
 
-class ViewPermissionMixin(object):
+class ViewPermissionMixin:
 
     def get_queryset(self):
         """

@@ -1,4 +1,4 @@
-# encoding=utf-8
+# coding: utf-8
 import os
 import shutil
 import tempfile
@@ -31,7 +31,7 @@ def django_file(path, field_name, content_type):
     # adapted from here:
     # http://groups.google.com/group/django-users/browse_thread/thread/
     # 834f988876ff3c45/
-    f = open(path)
+    f = open(path, 'rb')
     return InMemoryUploadedFile(
         file=f,
         field_name=field_name,
@@ -54,12 +54,12 @@ def iterate_through_instances(dirpath, callback):
                 xfxs = XFormInstanceFS(filepath)
                 try:
                     success_count += callback(xfxs)
-                except Exception, e:
+                except Exception as e:
                     errors.append("%s => %s" % (xfxs.filename, str(e)))
-                del(xfxs)
+                del xfxs
                 total_file_count += 1
 
-    return (total_file_count, success_count, errors)
+    return total_file_count, success_count, errors
 
 
 def import_instances_from_zip(zipfile_path, user, status="zip"):
@@ -68,8 +68,8 @@ def import_instances_from_zip(zipfile_path, user, status="zip"):
         zf = zipfile.ZipFile(zipfile_path)
 
         zf.extractall(temp_directory)
-    except zipfile.BadZipfile, e:
-        errors = [u"%s" % e]
+    except zipfile.BadZipfile as e:
+        errors = ["%s" % e]
         return 0, 0, errors
     else:
         return import_instances_from_path(temp_directory, user, status)
@@ -95,6 +95,7 @@ def import_instances_from_path(path, user, status="zip"):
 
             for i in images:
                 i.close()
+                i.close()
 
             if instance:
                 return 1
@@ -104,4 +105,4 @@ def import_instances_from_path(path, user, status="zip"):
     total_count, success_count, errors = iterate_through_instances(
         path, callback)
 
-    return (total_count, success_count, errors)
+    return total_count, success_count, errors

@@ -1,3 +1,4 @@
+# coding: utf-8
 import os
 
 from django.test import RequestFactory
@@ -10,7 +11,7 @@ from onadata.apps.main.tests.test_base import TestBase
 class TestExportViewSet(TestBase):
 
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self._create_user_and_login()
         self._publish_transportation_form()
         self.factory = RequestFactory()

@@ -1,14 +1,13 @@
-import os
-import re
+# coding: utf-8
 import mimetypes
-
-from hashlib import md5
+import os
 
 from django.conf import settings
 from django.db import models
 from django.utils.http import urlencode
 
-from instance import Instance
+from onadata.libs.utils.hash import get_hash
+from .instance import Instance
 
 
 def generate_attachment_filename(instance, filename):
@@ -16,8 +15,8 @@ def generate_attachment_filename(instance, filename):
     return os.path.join(
         xform.user.username,
         'attachments',
-        xform.uuid or 'form',
-        instance.uuid or 'instance',
+        xform.uuid or xform.id_string or '__pk-{}'.format(xform.pk),
+        instance.uuid or '__pk-{}'.format(instance.pk),
         os.path.split(filename)[1])
 
 
@@ -26,14 +25,17 @@ def upload_to(attachment, filename):
 
 
 def hash_attachment_contents(contents):
-    return u'%s' % md5(contents).hexdigest()
+    return get_hash(contents)
 
 
 class Attachment(models.Model):
-    instance = models.ForeignKey(Instance, related_name="attachments")
+    instance = models.ForeignKey(Instance, related_name="attachments", on_delete=models.CASCADE)
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
     media_file_basename = models.CharField(
         max_length=260, null=True, blank=True, db_index=True)
+    # `PositiveIntegerField` will only accomodate 2 GiB, so we should consider
+    # `PositiveBigIntegerField` after upgrading to Django 3.1+
+    media_file_size = models.PositiveIntegerField(blank=True, null=True)
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
 
@@ -48,8 +50,11 @@ class Attachment(models.Model):
                 mimetype, encoding = mimetypes.guess_type(self.media_file.name)
                 if mimetype:
                     self.mimetype = mimetype
+            # Cache the file size in the database to avoid expensive calls to
+            # the storage engine when running reports
+            self.media_file_size = self.media_file.size
 
-        super(Attachment, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     @property
     def file_hash(self):
@@ -59,7 +64,7 @@ class Attachment(models.Model):
             media_file_hash = hash_attachment_contents(self.media_file.read())
             self.media_file.seek(media_file_position)
             return media_file_hash
-        return u''
+        return ''
 
     @property
     def filename(self):
@@ -74,7 +79,7 @@ class Attachment(models.Model):
         if suffix != "original" and suffix not in settings.THUMB_CONF.keys():
             raise Exception("Invalid image thumbnail")
 
-        return u"{kobocat_url}{media_url}{suffix}?{media_file}".format(
+        return "{kobocat_url}{media_url}{suffix}?{media_file}".format(
             kobocat_url=settings.KOBOCAT_URL,
             media_url=settings.MEDIA_URL,
             suffix=suffix,

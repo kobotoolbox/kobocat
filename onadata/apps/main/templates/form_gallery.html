@@ -25,7 +25,7 @@
         <td>
           <img src='{{ data_dictionary.user.profile.gravatar }}' alt='gravatar' width='20' height='20' />&nbsp;<a href="/{{ data_dictionary.user.username }}">{{ data_dictionary.user.username }}</a>
         </td>
-        <td><a href="{% url "onadata.apps.main.views.show" data_dictionary.user.username data_dictionary.id_string %}">{{ data_dictionary.title }}</a>
+        <td><a href="{% url "show_form" data_dictionary.user.username data_dictionary.id_string %}">{{ data_dictionary.title }}</a>
         </td>
         <td>{{ data_dictionary.description }}</td>
         <td>
@@ -33,7 +33,7 @@
             <a href="{% url "download_xlsform" data_dictionary.user.username data_dictionary.id_string %}" class="btn btn-small btn-success">{% trans "Excel" %}</a>
             {% if not data_dictionary.id_string in cloned %}
                 {% if loggedin_user and data_dictionary.xls|length > 0  and loggedin_user.username != data_dictionary.user.username %}
-                    <a href="" data-url="{% url "onadata.apps.main.views.clone_xlsform" data_dictionary.user.username %}"
+                    <a href="" data-url="{% url "clone_xlsform" data_dictionary.user.username %}"
                     data-username="{{ data_dictionary.user.username }}" data-id="{{ data_dictionary.id_string }}" class="clonexls btn small" onclick="$(this).hide()">{% trans "Clone" %}</a>
                 {% endif %}
             {% endif %}

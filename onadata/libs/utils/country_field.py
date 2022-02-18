@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -262,7 +263,7 @@ class CountryField(models.CharField):
         kwargs.setdefault('maxlength', 2)
         kwargs.setdefault('choices', COUNTRIES)
 
-        super(CountryField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_internal_type(self):
         return "CharField"

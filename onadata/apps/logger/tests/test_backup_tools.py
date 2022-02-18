@@ -1,3 +1,4 @@
+# coding: utf-8
 from datetime import datetime
 import os
 import tempfile
@@ -9,13 +10,16 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.import_tools import django_file
 from onadata.apps.logger.import_tools import create_instance
-from onadata.libs.utils.backup_tools import _date_created_from_filename,\
-    create_zip_backup, restore_backup_from_zip
+from onadata.libs.utils.backup_tools import (
+    _date_created_from_filename,
+    create_zip_backup,
+    restore_backup_from_zip
+)
 
 
 class TestBackupTools(TestBase):
     def setUp(self):
-        super(TestBackupTools, self).setUp()
+        super().setUp()
         self._publish_xls_file_and_set_xform(
             os.path.join(
                 settings.ONADATA_DIR,

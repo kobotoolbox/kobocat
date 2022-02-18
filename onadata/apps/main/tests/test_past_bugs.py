@@ -1,7 +1,8 @@
+# coding: utf-8
 import os
 
 from onadata.apps.logger.models import XForm, Instance
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestInputs(TestBase):
@@ -15,9 +16,8 @@ class TestInputs(TestBase):
         self._create_user_and_login()
         response = self._publish_xls_file(
             'fixtures/group_names_must_be_unique.xls')
-        self.assertTrue(
-            "There are two sections with the name group_names_must_be_unique."
-            in response.content)
+        message = 'The name "group_names_must_be_unique" is the same as the form name'
+        self.assertTrue(message in response.json()['text'])
         self.assertEqual(XForm.objects.count(), pre_count)
 
     def test_mch(self):
@@ -48,7 +48,7 @@ class TestCascading(TestBase):
     def test_correct_id_string_picked(self):
         XForm.objects.all().delete()
         name = 'new_cascading_select.xls'
-        id_string = u'cascading_select_test'
+        id_string = 'cascading_select_test'
         self._publish_xls_file(os.path.join(
             self.this_directory, 'fixtures', 'bug_fixes', name))
         self.assertEqual(XForm.objects.count(), 1)

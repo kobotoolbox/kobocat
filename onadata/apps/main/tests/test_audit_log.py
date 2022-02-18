@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -20,8 +21,10 @@ class TestAuditLog(TestCase):
         sort = {"created_on": -1}
         cursor = AuditLog.query_mongo(
             account_user.username, None, None, sort, 0, 1)
-        self.assertTrue(cursor.count() > 0)
-        record = cursor.next()
+        result = AuditLog.query_mongo(account_user.username, count=True)
+
+        self.assertTrue(result[0]['count'] > 0)
+        record = next(cursor)
         self.assertEqual(record['account'], "alice")
         self.assertEqual(record['user'], "bob")
         self.assertEqual(record['action'], Actions.FORM_PUBLISHED)

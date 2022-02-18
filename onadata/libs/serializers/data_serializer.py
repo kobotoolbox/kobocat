@@ -1,3 +1,4 @@
+# coding: utf-8
 import json
 
 from django.utils.translation import ugettext as _
@@ -10,6 +11,7 @@ from onadata.apps.api.mongo_helper import MongoHelper
 
 
 class DataSerializer(serializers.HyperlinkedModelSerializer):
+
     url = serializers.HyperlinkedIdentityField(
         view_name='data-list', lookup_field='pk')
 
@@ -20,16 +22,20 @@ class DataSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DataListSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     def to_representation(self, obj):
         request = self.context.get('request')
 
         if not isinstance(obj, XForm):
-            return super(DataListSerializer, self).to_representation(obj)
+            return super().to_representation(obj)
 
         query_params = (request and request.query_params) or {}
         query = {
             ParsedInstance.USERFORM_ID:
-            u'%s_%s' % (obj.user.username, obj.id_string)
+            '%s_%s' % (obj.user.username, obj.id_string)
         }
         limit = query_params.get('limit', False)
         start = query_params.get('start', False)
@@ -68,16 +74,20 @@ class DataListSerializer(serializers.Serializer):
 
 
 class DataInstanceSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
-            return super(DataInstanceSerializer, self).to_representation(obj)
+            return super().to_representation(obj)
 
         request = self.context.get('request')
         query_params = (request and request.query_params) or {}
         query = {
             ParsedInstance.USERFORM_ID:
-            u'%s_%s' % (obj.xform.user.username, obj.xform.id_string),
-            u'_id': obj.pk
+            '%s_%s' % (obj.xform.user.username, obj.xform.id_string),
+            '_id': obj.pk
         }
         query_kwargs = {
             'query': json.dumps(query),
@@ -92,15 +102,19 @@ class DataInstanceSerializer(serializers.Serializer):
 
 
 class SubmissionSerializer(serializers.Serializer):
+
+    class Meta:
+        fields = '__all__'
+
     def to_representation(self, obj):
         if not hasattr(obj, 'xform'):
-            return super(SubmissionSerializer, self).to_representation(obj)
+            return super().to_representation(obj)
 
         return {
             'message': _("Successful submission."),
             'formid': obj.xform.id_string,
             'encrypted': obj.xform.encrypted,
-            'instanceID': u'uuid:%s' % obj.uuid,
+            'instanceID': 'uuid:%s' % obj.uuid,
             'submissionDate': obj.date_created.isoformat(),
             'markedAsCompleteDate': obj.date_modified.isoformat()
         }

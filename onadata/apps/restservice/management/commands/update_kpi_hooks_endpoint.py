@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 coding=utf-8
+# coding: utf-8
 from django.core.management.base import BaseCommand
 from django.utils.translation import ugettext as _
 

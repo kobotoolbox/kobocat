@@ -1,7 +1,8 @@
-from django.core.urlresolvers import reverse
+# coding: utf-8
+from django.urls import reverse
 
 from onadata.apps.main.views import login_redirect
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormAuth(TestBase):
@@ -11,4 +12,4 @@ class TestFormAuth(TestBase):
 
     def test_login_redirect_redirects(self):
         response = self.client.get(reverse(login_redirect))
-        self.assertEquals(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)

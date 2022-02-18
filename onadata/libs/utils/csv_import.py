@@ -1,12 +1,15 @@
-import unicodecsv as ucsv
-import uuid
+# coding: utf-8
+import io
 import json
-
-import cStringIO
+import uuid
 from datetime import datetime
+from typing import TextIO, Union
+
+import unicodecsv as ucsv
 from django.contrib.auth.models import User
-from onadata.libs.utils.logger_tools import dict2xml, safe_create_instance
+
 from onadata.apps.logger.models import Instance
+from onadata.libs.utils.logger_tools import dict2xml, safe_create_instance
 
 
 def get_submission_meta_dict(xform, instance_id):
@@ -46,7 +49,7 @@ def dict2xmlsubmission(submission_dict, xform, instance_id, submission_date):
     :return: An xml submission string
     :rtype: string
     """
-    return (u'<?xml version="1.0" ?>'
+    return ('<?xml version="1.0" ?>'
             '<{0} id="{1}" instanceID="uuid:{2}" submissionDate="{3}" '
             'xmlns="http://opendatakit.org/submissions">{4}'
             '</{0}>'.format(
@@ -55,23 +58,22 @@ def dict2xmlsubmission(submission_dict, xform, instance_id, submission_date):
                 dict2xml(submission_dict).replace('\n', '')))
 
 
-def submit_csv(username, xform, csv_file):
+def submit_csv(
+    request: 'django.http.HttpRequest',
+    xform: 'onadata.apps.logger.models.XForm',
+    csv_file: Union[str, TextIO],
+) -> dict:
     """ Imports CSV data to an existing form
 
     Takes a csv formatted file or string containing rows of submission/instance
     and converts those to xml submissions and finally submits them by calling
     :py:func:`onadata.libs.utils.logger_tools.safe_create_instance`
 
-    :param str username: the subission user
-    :param onadata.apps.logger.models.XForm xfrom: The submission's XForm.
-    :param (str or file): A CSV formatted file with submission rows.
-    :return: If sucessful, a dict with import summary else dict with error str.
-    :rtype: Dict
     """
-    if isinstance(csv_file, (str, unicode)):
-        csv_file = cStringIO.StringIO(csv_file)
+    if isinstance(csv_file, str):
+        csv_file = io.StringIO(csv_file)
     elif csv_file is None or not hasattr(csv_file, 'read'):
-        return {'error': (u'Invalid param type for `csv_file`. '
+        return {'error': ('Invalid param type for `csv_file`. '
                           'Expected file or String '
                           'got {} instead.'.format(type(csv_file).__name__))}
 
@@ -84,10 +86,10 @@ def submit_csv(username, xform, csv_file):
     for row in csv_reader:
         # fetch submission uuid before purging row metadata
         row_uuid = row.get('_uuid')
-        submitted_by = row.get('_submitted_by')
         submission_date = row.get('_submission_time', submission_time)
 
-        for key in row.keys():  # seems faster than a comprehension
+        row_iter = dict(row)
+        for key in row_iter:  # seems faster than a comprehension
             # remove metadata (keys starting with '_')
             if key.startswith('_'):
                 del row[key]
@@ -109,12 +111,13 @@ def submit_csv(username, xform, csv_file):
         row_uuid = row.get('meta').get('instanceID')
         rollback_uuids.append(row_uuid.replace('uuid:', ''))
 
-        xml_file = cStringIO.StringIO(dict2xmlsubmission(row, xform, row_uuid,
-                                      submission_date))
+        xml_file = io.StringIO(
+            dict2xmlsubmission(row, xform, row_uuid, submission_date))
 
         try:
-            error, instance = safe_create_instance(username, xml_file, [],
-                                                   xform.uuid, None)
+            error, instance = safe_create_instance(
+                request.user.username, xml_file, [], xform.uuid, request
+            )
         except ValueError as e:
             error = e
 
@@ -124,10 +127,5 @@ def submit_csv(username, xform, csv_file):
             return {'error': str(error)}
         else:
             additions += 1
-            users = User.objects.filter(
-                username=submitted_by) if submitted_by else []
-            if users:
-                instance.user = users[0]
-                instance.save()
 
     return {'additions': additions - inserts, 'updates': inserts}

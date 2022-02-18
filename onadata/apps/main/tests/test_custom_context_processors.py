@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.conf import settings
 from django.test import TestCase
 from onadata.apps.main.context_processors import site_name

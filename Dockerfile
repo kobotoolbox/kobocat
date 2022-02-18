@@ -1,65 +1,116 @@
-FROM kobotoolbox/kobocat_base:latest
+FROM python:3.8 as build-python
 
-ENV KOBOCAT_SRC_DIR=/srv/src/kobocat \
-    BACKUPS_DIR=/srv/backups \
-    KOBOCAT_LOGS_DIR=/srv/logs
+ENV VIRTUAL_ENV=/opt/venv \
+    KOBOCAT_SRC_DIR=/srv/src/kobocat \
+    TMP_DIR=/srv/tmp
 
-# Install post-base-image `apt` additions from `apt_requirements.txt`, if modified.
-COPY ./apt_requirements.txt "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt"
-RUN if ! diff "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt" "${KOBOCAT_TMP_DIR}/base_apt_requirements.txt"; then \
-        apt-get update && \
-        apt-get install -y $(cat "${KOBOCAT_TMP_DIR}/current_apt_requirements.txt") && \
-        apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    ; fi
-
-# Version 8 of pip doesn't really seem to upgrade packages when switching from
-# PyPI to editable Git
-RUN pip install --upgrade 'pip>=10,<11'
-
-# Install post-base-image `pip` additions/upgrades from `requirements/base.pip`, if modified.
-COPY ./requirements/ "${KOBOCAT_TMP_DIR}/current_requirements/"
-# FIXME: Replace this with the much simpler command `pip-sync ${KOBOCAT_TMP_DIR}/current_requirements/base.pip`.
-RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" "${KOBOCAT_TMP_DIR}/base_requirements/base.pip"; then \
-        pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/base.pip" \
-    ; fi
-
-# Install post-base-image `pip` additions/upgrades from `requirements/s3.pip`, if modified.
-RUN if ! diff "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" "${KOBOCAT_TMP_DIR}/base_requirements/s3.pip"; then \
-        pip install --src "${PIP_EDITABLE_PACKAGES_DIR}/" -r "${KOBOCAT_TMP_DIR}/current_requirements/s3.pip" \
-    ; fi
-
-# Uninstall `pip` packages installed in the base image from `requirements/uninstall.pip`, if present.
-# FIXME: Replace this with the much simpler `pip-sync` command equivalent.
-RUN if [ -e "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" ]; then \
-        pip uninstall --yes -r "${KOBOCAT_TMP_DIR}/current_requirements/uninstall.pip" \
-    ; fi
-
-# Wipe out the base image's `kobocat` dir (**including migration files**) and copy over this directory in its current state.
-RUN rm -rf "${KOBOCAT_SRC_DIR}"
+# Copy KoBoCAT directory
 COPY . "${KOBOCAT_SRC_DIR}"
 
-# Prepare for execution.
-RUN mkdir -p /etc/service/uwsgi && \
-    cp "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" /etc/service/uwsgi/run && \
-    mkdir -p /etc/service/celery && \
-    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" /etc/service/celery/run && \
-    mkdir -p /etc/service/celery_beat && \
-    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash" /etc/service/celery_beat/run && \
-    cp "${KOBOCAT_SRC_DIR}/docker/init.bash" /etc/my_init.d/10_init_kobocat.bash && \
-    cp "${KOBOCAT_SRC_DIR}/docker/sync_static.sh" /etc/my_init.d/11_sync_static.bash && \
-    mkdir -p "${KOBOCAT_SRC_DIR}/emails/" && \
-    chown -R "${UWSGI_USER}" "${KOBOCAT_SRC_DIR}/emails/" && \
-    mkdir -p "${BACKUPS_DIR}" && \
-    mkdir -p "${KOBOCAT_LOGS_DIR}" && \
-    chown -R "${UWSGI_USER}" "${KOBOCAT_LOGS_DIR}"
+# Install `pip` packages
+RUN python3 -m venv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install  --quiet --upgrade pip && \
+    pip install  --quiet pip-tools
+COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
+RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
+    rm -rf ~/.cache/pip
 
-RUN echo "db:*:*:kobo:kobo" > /root/.pgpass && \
-    chmod 600 /root/.pgpass
+FROM python:3.8-slim
+
+# Declare environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+ENV VIRTUAL_ENV=/opt/venv \
+    KOBOCAT_LOGS_DIR=/srv/logs \
+    DJANGO_SETTINGS_MODULE=onadata.settings.prod \
+    # The mountpoint of a volume shared with the `nginx` container. Static files will
+    # be copied there.
+    NGINX_STATIC_DIR=/srv/static \
+    KOBOCAT_SRC_DIR=/srv/src/kobocat \
+    BACKUPS_DIR=/srv/backups \
+    TMP_DIR=/srv/tmp \
+    UWSGI_USER=kobo \
+    UWSGI_GROUP=kobo \
+    SERVICES_DIR=/etc/service \
+    CELERY_PID_DIR=/var/run/celery \
+    INIT_PATH=/srv/init
+
+# Create needed directories
+RUN mkdir -p ${NGINX_STATIC_DIR} && \
+    mkdir -p ${KOBOCAT_SRC_DIR} && \
+    mkdir -p ${TMP_DIR} && \
+    mkdir -p ${BACKUPS_DIR} && \
+    mkdir -p ${CELERY_PID_DIR} && \
+    mkdir -p ${SERVICES_DIR}/uwsgi && \
+    mkdir -p ${SERVICES_DIR}/uwsgi_wrong_port_warning && \
+    mkdir -p ${SERVICES_DIR}/celery && \
+    mkdir -p ${SERVICES_DIR}/celery_beat && \
+    mkdir -p ${KOBOCAT_LOGS_DIR}/ && \
+    mkdir -p ${KOBOCAT_SRC_DIR}/emails && \
+    mkdir -p ${INIT_PATH}
+
+RUN apt-get -qq update && \
+    apt-get -qq -y install \
+        cron \
+        gdal-bin \
+        gettext \
+        git \
+        gosu \
+        less \
+        libproj-dev \
+        libsqlite3-mod-spatialite \
+        locales \
+        openjdk-11-jre \
+        postgresql-client \
+        rsync \
+        runit-init \
+        vim-tiny \
+        wait-for-it && \
+    apt-get clean && \
+        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install locales
+RUN echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && \
+    locale-gen && dpkg-reconfigure locales -f noninteractive
+
+# Create local user UWSGI_USER`
+RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
+
+# Copy virtualenv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
+COPY --from=build-python "$VIRTUAL_ENV" "$VIRTUAL_ENV"
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
-RUN echo 'source /etc/profile' >> /root/.bashrc
+RUN echo "export PATH=${PATH}" >> /etc/profile && \
+    echo 'source /etc/profile' >> /root/.bashrc && \
+    echo 'source /etc/profile' >> /home/${UWSGI_USER}/.bashrc
 
+# Remove getty* services to avoid errors of absent tty at sv start-up
+RUN rm -rf /etc/runit/runsvdir/default/getty-tty*
+
+# Create symlinks for runsv services
+RUN ln -s "${KOBOCAT_SRC_DIR}/docker/run_uwsgi_wrong_port_warning.bash" "${SERVICES_DIR}/uwsgi_wrong_port_warning/run" && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_uwsgi.bash" "${SERVICES_DIR}/uwsgi/run" && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery.bash" "${SERVICES_DIR}/celery/run" && \
+    ln -s "${KOBOCAT_SRC_DIR}/docker/run_celery_beat.bash" "${SERVICES_DIR}/celery_beat/run"
+
+# Add/Restore `UWSGI_USER`'s permissions
+RUN chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
+    chmod g+w ${CELERY_PID_DIR} && \
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_SRC_DIR}/emails/ && \
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_LOGS_DIR} && \
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${TMP_DIR} && \
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${VIRTUAL_ENV} && \
+    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${BACKUPS_DIR}
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
 
-EXPOSE 8000
+# TODO: Remove port 8000, say, at the start of 2021 (see kobotoolbox/kobo-docker#301 and wrong port warning above)
+EXPOSE 8001 8000
+
+CMD ["/bin/bash", "-c", "exec ${KOBOCAT_SRC_DIR}/docker/init.bash"]

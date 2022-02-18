@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 coding=utf-8
-from django.conf import settings
-from django.db import connection
+# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
+# coding: utf-8
+from django.core.management.base import BaseCommand
 from django.db.models import Q, Func
-from django.db.models.functions import Substr
-from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _, ugettext_lazy
-from optparse import make_option
 
 from onadata.apps.logger.models.attachment import Attachment
 
@@ -18,13 +15,15 @@ class SubstrFromPattern(Func):
 
 class Command(BaseCommand):
 
-    help = ugettext_lazy("Updates indexed field `media_file_basename` which is empty or null")
-    option_list = BaseCommand.option_list + (
-        make_option(
+    help = ugettext_lazy("Updates indexed field `media_file_basename` "
+                         "which is empty or null")
+
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--batchsize',
-            type='int',
+            type=int,
             default=1000,
-            help=ugettext_lazy("Number of records to process per query")),)
+            help=ugettext_lazy("Number of records to process per query"))
 
     def handle(self, *args, **kwargs):
         batchsize = kwargs.get("batchsize")

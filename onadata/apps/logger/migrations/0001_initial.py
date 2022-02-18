@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from django.db import migrations, models
-import onadata.apps.logger.models.xform
+# coding: utf-8
 import django.contrib.gis.db.models.fields
 import jsonfield.fields
-from django.conf import settings
-import onadata.apps.logger.models.attachment
 import taggit.managers
+from django.conf import settings
+from django.db import migrations, models
+
+import onadata.apps.logger.models.attachment
+import onadata.apps.logger.models.xform
 
 
 class Migration(migrations.Migration):
@@ -23,7 +22,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('media_file', models.FileField(upload_to=onadata.apps.logger.models.attachment.upload_to)),
-                ('mimetype', models.CharField(default=b'', max_length=50, blank=True)),
+                ('mimetype', models.CharField(default='', max_length=50, blank=True)),
             ],
         ),
         migrations.CreateModel(
@@ -48,7 +47,7 @@ class Migration(migrations.Migration):
                 ('uuid', models.CharField(default='', max_length=249)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('xform_instance', models.ForeignKey(related_name='submission_history', to='logger.Instance')),
+                ('xform_instance', models.ForeignKey(related_name='submission_history', to='logger.Instance', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -58,7 +57,7 @@ class Migration(migrations.Migration):
                 ('note', models.TextField()),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('instance', models.ForeignKey(related_name='notes', to='logger.Instance')),
+                ('instance', models.ForeignKey(related_name='notes', to='logger.Instance', on_delete=models.CASCADE)),
             ],
             options={
                 'permissions': (('view_note', 'View note'),),
@@ -85,7 +84,7 @@ class Migration(migrations.Migration):
                 ('downloadable', models.BooleanField(default=True)),
                 ('allows_sms', models.BooleanField(default=False)),
                 ('encrypted', models.BooleanField(default=False)),
-                ('sms_id_string', models.SlugField(default=b'', verbose_name='SMS ID', max_length=100, editable=False)),
+                ('sms_id_string', models.SlugField(default='', verbose_name='SMS ID', max_length=100, editable=False)),
                 ('id_string', models.SlugField(verbose_name='ID', max_length=100, editable=False)),
                 ('title', models.CharField(max_length=255, editable=False)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
@@ -97,7 +96,7 @@ class Migration(migrations.Migration):
                 ('instances_with_geopoints', models.BooleanField(default=False)),
                 ('num_of_submissions', models.IntegerField(default=0)),
                 ('tags', taggit.managers.TaggableManager(to='taggit.Tag', through='taggit.TaggedItem', help_text='A comma-separated list of tags.', verbose_name='Tags')),
-                ('user', models.ForeignKey(related_name='xforms', to=settings.AUTH_USER_MODEL, null=True)),
+                ('user', models.ForeignKey(related_name='xforms', to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ('id_string',),
@@ -119,14 +118,14 @@ class Migration(migrations.Migration):
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
                 ('date_deleted', models.DateTimeField(default=None, null=True)),
-                ('reporter', models.ForeignKey(related_name='ziggys', to=settings.AUTH_USER_MODEL)),
-                ('xform', models.ForeignKey(related_name='ziggy_submissions', to='logger.XForm', null=True)),
+                ('reporter', models.ForeignKey(related_name='ziggys', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('xform', models.ForeignKey(related_name='ziggy_submissions', to='logger.XForm', null=True, on_delete=models.CASCADE)),
             ],
         ),
         migrations.AddField(
             model_name='instance',
             name='survey_type',
-            field=models.ForeignKey(to='logger.SurveyType'),
+            field=models.ForeignKey(to='logger.SurveyType', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='instance',
@@ -136,17 +135,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instance',
             name='user',
-            field=models.ForeignKey(related_name='instances', to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='instances', to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='instance',
             name='xform',
-            field=models.ForeignKey(related_name='instances', to='logger.XForm', null=True),
+            field=models.ForeignKey(related_name='instances', to='logger.XForm', null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='attachment',
             name='instance',
-            field=models.ForeignKey(related_name='attachments', to='logger.Instance'),
+            field=models.ForeignKey(related_name='attachments', to='logger.Instance', on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='xform',

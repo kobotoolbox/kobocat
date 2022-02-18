@@ -1,11 +1,14 @@
+# coding: utf-8
 from collections import defaultdict
+
+from django.utils.six import text_type
 from pyxform import Section, Question
 from xlwt import Workbook
 
 from onadata.libs.utils.export_tools import question_types_to_exclude
 
 
-class XlsWriter(object):
+class XlsWriter:
 
     def __init__(self):
         self.set_file()
@@ -20,7 +23,7 @@ class XlsWriter(object):
         if file_object is not None:
             self._file = file_object
         else:
-            from StringIO import StringIO
+            from io import StringIO
             self._file = StringIO()
 
     def reset_workbook(self):
@@ -50,7 +53,7 @@ class XlsWriter(object):
                 self.add_column(sheet_name, key)
         for j, column_name in enumerate(self._columns[sheet_name]):
             # leaving this untranslated as I'm not sure it's in django context
-            self._sheets[sheet_name].write(i, j, row.get(column_name, u"n/a"))
+            self._sheets[sheet_name].write(i, j, row.get(column_name, "n/a"))
         self._current_index[sheet_name] += 1
 
     def add_obs(self, obs):
@@ -64,11 +67,11 @@ class XlsWriter(object):
     def _fix_indices(self, obs):
         for sheet_name, rows in obs.items():
             for row in rows:
-                row[u'_index'] += self._current_index[sheet_name]
-                if row[u'_parent_index'] == -1:
+                row['_index'] += self._current_index[sheet_name]
+                if row['_parent_index'] == -1:
                     continue
-                i = self._current_index[row[u'_parent_table_name']]
-                row[u'_parent_index'] += i
+                i = self._current_index[row['_parent_table_name']]
+                row['_parent_index'] += i
 
     def write_tables_to_workbook(self, tables):
         """
@@ -83,7 +86,7 @@ class XlsWriter(object):
             self.add_sheet(table_name)
             for i, row in enumerate(table):
                 for j, value in enumerate(row):
-                    self._sheets[table_name].write(i, j, unicode(value))
+                    self._sheets[table_name].write(i, j, text_type(value))
         return self._workbook
 
     def save_workbook_to_file(self):

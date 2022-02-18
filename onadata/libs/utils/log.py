@@ -1,9 +1,10 @@
+# coding: utf-8
 import logging
 from datetime import datetime
 from onadata.libs.utils.viewer_tools import get_client_ip
 
 
-class Enum(object):
+class Enum:
     __name__ = "Enum"
 
     def __init__(self, **enums):
@@ -16,7 +17,8 @@ class Enum(object):
         return self.__getattr__(item)
 
     def __iter__(self):
-        return self.enums.itervalues()
+        return iter(self.enums.values())
+
 
 Actions = Enum(
     PROFILE_ACCESSED="profile-accessed",
@@ -48,17 +50,13 @@ Actions = Enum(
     SUBMISSION_DELETED="submission-deleted",
     SUBMISSION_ACCESSED="submission-accessed",
     SUBMISSION_EDIT_REQUESTED="submission-edit-requested",
-    BAMBOO_LINK_CREATED="bamboo-link-created",
-    BAMBOO_LINK_DELETED="bamboo-link-deleted",
-    SMS_SUPPORT_ACTIVATED="sms-support-activated",
-    SMS_SUPPORT_DEACTIVATED="sms-support-deactivated",
 )
 
 
 class AuditLogHandler(logging.Handler):
 
     def __init__(self, model=""):
-        super(AuditLogHandler, self).__init__()
+        super().__init__()
         self.model_name = model
 
     def _format(self, record):

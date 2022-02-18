@@ -1,29 +1,26 @@
-import base64
+# coding: utf-8
 import os
-import re
 import socket
-import urllib2
-from tempfile import NamedTemporaryFile
-
-from cStringIO import StringIO
+from io import BytesIO
+from urllib.request import urlopen
+from urllib.error import URLError
 
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.test import TransactionTestCase
+from django.contrib.auth.models import AnonymousUser, User, Permission
+from django.test import TestCase
 from django.test.client import Client
-from django_digest.test import Client as DigestClient
-from django_digest.test import DigestAuth
-from django.contrib.auth import authenticate
 from django.utils import timezone
-
+from django_digest.test import Client as DigestClient
+from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
-from onadata.apps.logger.models import XForm, Instance, Attachment
-from onadata.apps.logger.views import submission
+from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.main.models import UserProfile
+from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
+from onadata.libs.utils.string import base64_encodestring
 
 
-class TestBase(TransactionTestCase):
+class TestBase(MakeSubmissionMixin, TestCase):
 
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
@@ -36,6 +33,7 @@ class TestBase(TransactionTestCase):
         self._create_user_and_login()
         self.base_url = 'http://testserver'
         self.factory = APIRequestFactory()
+        self._add_permissions_to_user(AnonymousUser())
 
     def tearDown(self):
         # clear mongo db after each test
@@ -44,9 +42,21 @@ class TestBase(TransactionTestCase):
     def _fixture_path(self, *args):
         return os.path.join(os.path.dirname(__file__), 'fixtures', *args)
 
+    def _add_permissions_to_user(self, user, save=True):
+        # Gives `user` unrestricted model-level access to everything listed in
+        # `auth_permission`.  Without this, actions
+        # on individual instances are immediately denied and object-level permissions
+        # are never considered.
+        if user.is_anonymous:
+            user = User.objects.get(id=settings.ANONYMOUS_USER_ID)
+        user.user_permissions.set(Permission.objects.all())
+        if save:
+            user.save()
+
     def _create_user(self, username, password):
         user, created = User.objects.get_or_create(username=username)
         user.set_password(password)
+        self._add_permissions_to_user(user, save=False)
         user.save()
 
         return user
@@ -75,18 +85,23 @@ class TestBase(TransactionTestCase):
         self.anon = Client()
 
     def _publish_xls_file(self, path):
-        if not path.startswith('/%s/' % self.user.username):
+
+        xform_list_url = reverse('xform-list')
+
+        if not path.startswith(f'/{self.user.username}/'):
             path = os.path.join(self.this_directory, path)
-        with open(path) as xls_file:
+
+        with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            return self.client.post('/%s/' % self.user.username, post_data)
+            response = self.client.post(xform_list_url, data=post_data)
+            return response
 
     def _publish_xlsx_file(self):
         path = os.path.join(self.this_directory, 'fixtures', 'exp.xlsx')
         pre_count = XForm.objects.count()
         response = TestBase._publish_xls_file(self, path)
         # make sure publishing the survey worked
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(XForm.objects.count(), pre_count + 1)
 
     def _publish_xls_file_and_set_xform(self, path):
@@ -129,7 +144,7 @@ class TestBase(TransactionTestCase):
             os.path.join(self.this_directory, 'fixtures',
                          'transportation', 'instances', s, media_file))
         self.attachment = Attachment.objects.all().reverse()[0]
-        self.attachment_media_file = self.attachment.media_file
+        self.attachment_media_file = str(self.attachment.media_file)
 
     def _publish_transportation_form_and_submit_instance(self):
         self._publish_transportation_form()
@@ -142,107 +157,11 @@ class TestBase(TransactionTestCase):
             path = self._fixture_path('gps', 'instances', survey + '.xml')
             self._make_submission(path)
 
-    def _make_submission(self, path, username=None, add_uuid=False,
-                         forced_submission_time=None, auth=None, client=None):
-        # store temporary file with dynamic uuid
-
-        self.factory = APIRequestFactory()
-        if auth is None:
-            auth = DigestAuth('bob', 'bob')
-
-        tmp_file = None
-
-        if add_uuid:
-            tmp_file = NamedTemporaryFile(delete=False)
-            split_xml = None
-
-            with open(path) as _file:
-                split_xml = re.split(r'(<transport>)', _file.read())
-
-            split_xml[1:1] = [
-                '<formhub><uuid>%s</uuid></formhub>' % self.xform.uuid
-            ]
-            tmp_file.write(''.join(split_xml))
-            path = tmp_file.name
-            tmp_file.close()
-
-        with open(path) as f:
-            post_data = {'xml_submission_file': f}
-
-            if username is None:
-                username = self.user.username
-
-            url_prefix = '%s/' % username if username else ''
-            url = '/%ssubmission' % url_prefix
-
-            request = self.factory.post(url, post_data)
-            request.user = authenticate(username=auth.username,
-                                        password=auth.password)
-
-            self.response = submission(request, username=username)
-
-            if auth and self.response.status_code == 401:
-                request.META.update(auth(request.META, self.response))
-                self.response = submission(request, username=username)
-
-        if forced_submission_time:
-            instance = Instance.objects.order_by('-pk').all()[0]
-            instance.date_created = forced_submission_time
-            instance.save()
-            instance.parsed_instance.save()
-
-        # remove temporary file if stored
-        if add_uuid:
-            os.unlink(tmp_file.name)
-
-    def _make_submission_w_attachment(self, path, attachment_path):
-        with open(path) as f:
-            a = open(attachment_path)
-            post_data = {'xml_submission_file': f, 'media_file': a}
-            url = '/%s/submission' % self.user.username
-            auth = DigestAuth('bob', 'bob')
-            self.factory = APIRequestFactory()
-            request = self.factory.post(url, post_data)
-            request.user = authenticate(username='bob',
-                                        password='bob')
-            self.response = submission(request,
-                                       username=self.user.username)
-
-            if auth and self.response.status_code == 401:
-                request.META.update(auth(request.META, self.response))
-                self.response = submission(request,
-                                           username=self.user.username)
-
-    def _make_submissions(self, username=None, add_uuid=False,
-                          should_store=True):
-        """Make test fixture submissions to current xform.
-
-        :param username: submit under this username, default None.
-        :param add_uuid: add UUID to submission, default False.
-        :param should_store: should submissions be save, default True.
-        """
-
-        paths = [os.path.join(
-            self.this_directory, 'fixtures', 'transportation',
-            'instances', s, s + '.xml') for s in self.surveys]
-        pre_count = Instance.objects.count()
-
-        for path in paths:
-            self._make_submission(path, username, add_uuid)
-
-        post_count = pre_count + len(self.surveys) if should_store\
-            else pre_count
-        self.assertEqual(Instance.objects.count(), post_count)
-        self.assertEqual(self.xform.instances.count(), post_count)
-        xform = XForm.objects.get(pk=self.xform.pk)
-        self.assertEqual(xform.num_of_submissions, post_count)
-        self.assertEqual(xform.user.profile.num_of_submissions, post_count)
-
     def _check_url(self, url, timeout=1):
         try:
-            urllib2.urlopen(url, timeout=timeout)
+            urlopen(url, timeout=timeout)
             return True
-        except (urllib2.URLError, socket.timeout):
+        except (URLError, socket.timeout):
             pass
         return False
 
@@ -253,7 +172,7 @@ class TestBase(TransactionTestCase):
     def _set_auth_headers(self, username, password):
         return {
             'HTTP_AUTHORIZATION':
-            'Basic ' + base64.b64encode('%s:%s' % (username, password)),
+                'Basic ' + base64_encodestring('%s:%s' % (username, password)),
         }
 
     def _get_authenticated_client(
@@ -267,9 +186,9 @@ class TestBase(TransactionTestCase):
         return client
 
     def _get_response_content(self, response):
-        contents = u''
+        contents = ''
         if response.streaming:
-            actual_content = StringIO()
+            actual_content = BytesIO()
             for content in response.streaming_content:
                 actual_content.write(content)
             contents = actual_content.getvalue()

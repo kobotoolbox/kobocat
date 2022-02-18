@@ -1,9 +1,9 @@
-from rest_framework import negotiation
-from django.utils.xmlutils import SimplerXMLGenerator
+# coding: utf-8
+import io
 
-from django.utils import six
-from django.utils.six.moves import StringIO
+from django.utils.xmlutils import SimplerXMLGenerator
 from django.utils.encoding import smart_text
+from rest_framework.negotiation import DefaultContentNegotiation
 from rest_framework.renderers import BaseRenderer
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.renderers import StaticHTMLRenderer
@@ -28,19 +28,6 @@ class CSVRenderer(BaseRenderer):
     format = 'csv'
     charset = 'utf-8'
 
-
-class CSVZIPRenderer(BaseRenderer):
-    media_type = 'application/octet-stream'
-    format = 'csvzip'
-    charset = None
-
-
-class SAVZIPRenderer(BaseRenderer):
-    media_type = 'application/octet-stream'
-    format = 'savzip'
-    charset = None
-
-
 # TODO add KML, ZIP(attachments) support
 
 
@@ -53,7 +40,8 @@ class RawXMLRenderer(BaseRenderer):
         return data
 
 
-class MediaFileContentNegotiation(negotiation.DefaultContentNegotiation):
+class MediaFileContentNegotiation(DefaultContentNegotiation):
+
     def filter_renderers(self, renderers, format):
         """
         If there is a '.json' style format suffix, filter the renderers
@@ -96,10 +84,10 @@ class XFormListRenderer(BaseRenderer):
         """
         if data is None:
             return ''
-        elif isinstance(data, six.string_types):
+        elif isinstance(data, str):
             return data
 
-        stream = StringIO()
+        stream = io.StringIO()
 
         xml = SimplerXMLGenerator(stream, self.charset)
         xml.startDocument()
@@ -109,7 +97,6 @@ class XFormListRenderer(BaseRenderer):
 
         xml.endElement(self.root_node)
         xml.endDocument()
-
         return stream.getvalue()
 
     def _to_xml(self, xml, data):
@@ -120,7 +107,7 @@ class XFormListRenderer(BaseRenderer):
                 xml.endElement(self.element_node)
 
         elif isinstance(data, dict):
-            for key, value in six.iteritems(data):
+            for key, value in data.items():
                 xml.startElement(key, {})
                 self._to_xml(xml, value)
                 xml.endElement(key)
@@ -151,7 +138,7 @@ class TemplateXMLRenderer(TemplateHTMLRenderer):
             return XMLRenderer().render(
                 data, accepted_media_type, renderer_context)
 
-        return super(TemplateXMLRenderer, self).render(
+        return super().render(
             data, accepted_media_type, renderer_context)
 
 
@@ -160,7 +147,7 @@ class StaticXMLRenderer(StaticHTMLRenderer):
     media_type = 'text/xml'
 
 
-class InstanceContentNegotiation(negotiation.DefaultContentNegotiation):
+class InstanceContentNegotiation(DefaultContentNegotiation):
 
     def filter_renderers(self, renderers, format):
         """

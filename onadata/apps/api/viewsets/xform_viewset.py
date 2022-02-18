@@ -1,62 +1,49 @@
-import os
+# coding: utf-8
 import json
-
+import os
 from datetime import datetime
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
-from django.contrib.auth.models import User
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.utils.translation import ugettext as _
-from django.utils import six
 from django.shortcuts import get_object_or_404
-
+from django.utils import six
+from django.utils.translation import ugettext as _
 from rest_framework import exceptions
 from rest_framework import status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ModelViewSet
 
+from onadata.apps.api import tools as utils
+from onadata.apps.api.permissions import XFormPermissions
+from onadata.apps.logger.models.xform import XForm
+from onadata.apps.viewer.models.export import Export
 from onadata.libs import filters
+from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
 from onadata.libs.mixins.labels_mixin import LabelsMixin
 from onadata.libs.renderers import renderers
 from onadata.libs.serializers.xform_serializer import XFormSerializer
-from onadata.libs.serializers.clone_xform_serializer import \
-    CloneXFormSerializer
-from onadata.libs.serializers.share_xform_serializer import (
-    ShareXFormSerializer)
-from onadata.apps.main.models import UserProfile
-from onadata.apps.api import tools as utils
-from onadata.apps.api.permissions import XFormPermissions
-from onadata.apps.logger.models.xform import XForm
-from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
-from onadata.apps.viewer.models.export import Export
-from onadata.libs.exceptions import NoRecordsFoundError, J2XException
-from onadata.libs.utils.export_tools import generate_export,\
-    should_create_new_export, generate_external_export
-from onadata.libs.utils.common_tags import SUBMISSION_TIME
 from onadata.libs.utils import log
+from onadata.libs.utils.common_tags import SUBMISSION_TIME
+from onadata.libs.utils.csv_import import submit_csv
+from onadata.libs.utils.export_tools import generate_export, \
+    should_create_new_export
 from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.string import str2bool
-
-from onadata.libs.utils.csv_import import submit_csv
 from onadata.libs.utils.viewer_tools import _get_form_url
+from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
 
 EXPORT_EXT = {
     'xls': Export.XLS_EXPORT,
     'xlsx': Export.XLS_EXPORT,
     'csv': Export.CSV_EXPORT,
-    'csvzip': Export.CSV_ZIP_EXPORT,
-    'savzip': Export.SAV_ZIP_EXPORT,
-    'uuid': Export.EXTERNAL_EXPORT,
 }
-
-# Supported external exports
-external_export_types = ['xls']
 
 
 def _get_export_type(export_type):
@@ -64,7 +51,7 @@ def _get_export_type(export_type):
         export_type = EXPORT_EXT[export_type]
     else:
         raise exceptions.ParseError(
-            _(u"'%(export_type)s' format not known or not implemented!" %
+            _("'%(export_type)s' format not known or not implemented!" %
               {'export_type': export_type})
         )
 
@@ -76,8 +63,6 @@ def _get_extension_from_export_type(export_type):
 
     if export_type == Export.XLS_EXPORT:
         extension = 'xlsx'
-    elif export_type in [Export.CSV_ZIP_EXPORT, Export.SAV_ZIP_EXPORT]:
-        extension = 'zip'
 
     return extension
 
@@ -115,17 +100,10 @@ def _generate_new_export(request, xform, query, export_type):
     extension = _get_extension_from_export_type(export_type)
 
     try:
-        if export_type == Export.EXTERNAL_EXPORT:
-            export = generate_external_export(
-                export_type, xform.user.username,
-                xform.id_string, None, request.GET.get('token'), query,
-                request.GET.get('meta')
-            )
-        else:
-            export = generate_export(
-                export_type, extension, xform.user.username,
-                xform.id_string, None, query
-            )
+        export = generate_export(
+            export_type, extension, xform.user.username,
+            xform.id_string, None, query
+        )
         audit = {
             "xform": xform.id_string,
             "export_type": export_type
@@ -139,9 +117,6 @@ def _generate_new_export(request, xform, query, export_type):
             }, audit, request)
     except NoRecordsFoundError:
         raise Http404(_("No records found to export"))
-    except J2XException as e:
-        # j2x exception
-        return {'error': str(e)}
     else:
         return export
 
@@ -160,7 +135,7 @@ def _get_owner(request):
 
         if owner is None:
             raise ValidationError(
-                u"User with username %(owner)s does not exist."
+                "User with username %(owner)s does not exist."
             )
 
     return owner
@@ -184,8 +159,7 @@ def response_for_format(form, format=None):
 def should_regenerate_export(xform, export_type, request):
     return should_create_new_export(xform, export_type) or\
         'start' in request.GET or 'end' in request.GET or\
-        'query' in request.GET or 'meta' in request.GET or\
-        'token' in request.GET
+        'query' in request.GET
 
 
 def value_for_type(form, field, value):
@@ -193,17 +167,6 @@ def value_for_type(form, field, value):
         return str2bool(value)
 
     return value
-
-
-def external_export_response(export):
-    if isinstance(export, Export) \
-            and export.internal_status == Export.SUCCESSFUL:
-        return HttpResponseRedirect(export.export_url)
-    else:
-        http_status = status.HTTP_400_BAD_REQUEST
-
-    return Response(json.dumps(export), http_status,
-                    content_type="application/json")
 
 
 def log_export(request, xform, export_type):
@@ -221,13 +184,8 @@ def log_export(request, xform, export_type):
         }, audit, request)
 
 
-def custom_response_handler(request, xform, query, export_type,
-                            token=None, meta=None):
+def custom_response_handler(request, xform, query, export_type):
     export_type = _get_export_type(export_type)
-
-    if export_type in external_export_types and \
-            (token is not None) or (meta is not None):
-        export_type = Export.EXTERNAL_EXPORT
 
     # check if we need to re-generate,
     # we always re-generate if a filter is specified
@@ -240,9 +198,6 @@ def custom_response_handler(request, xform, query, export_type,
             export = _generate_new_export(request, xform, query, export_type)
 
     log_export(request, xform, export_type)
-
-    if export_type == Export.EXTERNAL_EXPORT:
-        return external_export_response(export)
 
     # get extension from file_path, exporter could modify to
     # xlsx if it exceeds limits
@@ -274,7 +229,6 @@ published using the `owner` parameter, which specifies the username to the
 account.
 
 - `xls_file`: the xlsform file.
-- `xls_url`: the url to an xlsform
 - `owner`: username to the target account (Optional)
 
 <pre class="prettyprint">
@@ -284,11 +238,6 @@ account.
 >       curl -X POST -F xls_file=@/path/to/form.xls \
 https://example.com/api/v1/forms
 >
-> OR post an xlsform url
->
->       curl -X POST -d \
-"xls_url=https://example.com/ukanga/forms/tutorial/form.xls" \
-https://example.com/api/v1/forms
 
 > Response
 >
@@ -297,10 +246,7 @@ https://example.com/api/v1/forms
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
->           "bamboo_dataset": "",
 >           "description": "",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -355,10 +301,7 @@ https://example.com/api/v1/forms
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
->           "bamboo_dataset": "",
 >           "description": "",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -392,10 +335,7 @@ https://example.com/api/v1/forms/28058
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
->           "allows_sms": false,
->           "bamboo_dataset": "",
 >           "description": "Le description",
 >           "downloadable": true,
 >           "encrypted": false,
@@ -410,7 +350,7 @@ https://example.com/api/v1/forms/28058
 
 You may overwrite the form's contents while preserving its submitted data,
 `id_string` and all other attributes, by sending a `PATCH` that includes
-`xls_file` or `text_xls_form`. Use with caution, as this may compromise the
+`xls_file`. Use with caution, as this may compromise the
 methodology of your study!
 
 <pre class="prettyprint">
@@ -448,7 +388,6 @@ https://example.com/api/v1/forms/28058
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
 >           ...
 >       }, ...]
@@ -524,7 +463,6 @@ List forms tagged `smart` or `brand new` or both.
 >           "formid": 28058,
 >           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1f",
 >           "id_string": "Birds",
->           "sms_id_string": "Birds",
 >           "title": "Birds",
 >           ...
 >       }, ...]
@@ -604,11 +542,6 @@ Where:
 - `pk` - is the form unique identifier
 - `format` - is the data export format i.e csv, xls, csvzip, savzip
 
-Params for the custom xls report
-
-- `meta`  - the metadata id containing the template url
--  `token`  - the template url
-
 <pre class="prettyprint">
 <b>GET</b> /api/v1/forms/{pk}.{format}</code>
 </pre>
@@ -622,73 +555,6 @@ Params for the custom xls report
 > Response
 >
 >        HTTP 200 OK
-
-> Example 2 Custom XLS reports (beta)
->
->       curl -X GET https://example.com/api/v1/forms/28058.xls?meta=12121
->                   or
->       curl -X GET https://example.com/api/v1/forms/28058.xls?token={url}
->
-> XLS file is downloaded
->
-> Response
->
->        HTTP 200 OK
-
-## Get list of public forms
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/forms/public
-</pre>
-
-## Share a form with a specific user
-
-You can share a form with a  specific user by `POST` a payload with
-
-- `username` of the user you want to share the form with and
-- `role` you want the user to have on the form. Available roles are `readonly`,
-`dataentry`, `editor`, `manager`.
-
-<pre class="prettyprint">
-<b>POST</b> /api/v1/forms/<code>{pk}</code>/share
-</pre>
-
-> Example
->
->       curl -X POST -d '{"username": "alice", "role": "readonly"}' \
-https://example.com/api/v1/forms/123.json
-
-> Response
->
->        HTTP 204 NO CONTENT
-
-## Clone a form to a specific user account
-
-You can clone a form to a specific user account using `GET` with
-
-- `username` of the user you want to clone the form to
-
-<pre class="prettyprint">
-<b>GET</b> /api/v1/forms/<code>{pk}</code>/clone
-</pre>
-
-> Example
->
->       curl -X GET https://example.com/api/v1/forms/123/clone \
--d username=alice
-
-> Response
->
->        HTTP 201 CREATED
->       {
->           "url": "https://example.com/api/v1/forms/124",
->           "formid": 124,
->           "uuid": "853196d7d0a74bca9ecfadbf7e2f5c1e",
->           "id_string": "Birds_cloned_1",
->           "sms_id_string": "Birds_cloned_1",
->           "title": "Birds_cloned_1",
->           ...
->       }
 
 ## Import CSV data to existing form
 
@@ -716,8 +582,6 @@ data (instance/submission per row)
         renderers.XLSRenderer,
         renderers.XLSXRenderer,
         renderers.CSVRenderer,
-        renderers.CSVZIPRenderer,
-        renderers.SAVZIPRenderer,
         renderers.RawXMLRenderer
     ]
     queryset = XForm.objects.all()
@@ -725,15 +589,10 @@ data (instance/submission per row)
     lookup_field = 'pk'
     extra_lookup_fields = None
     permission_classes = [XFormPermissions, ]
-    # TODO: Figure out what `updatable_fields` does; if nothing, remove it
-    updatable_fields = set(('description', 'downloadable', 'require_auth',
-                            'shared', 'shared_data', 'title'))
     filter_backends = (filters.AnonDjangoObjectPermissionFilter,
                        filters.TagFilter,
                        filters.XFormOwnerFilter,
                        filters.XFormIdStringFilter)
-
-    public_forms_endpoint = 'public'
 
     def create(self, request, *args, **kwargs):
         owner = _get_owner(request)
@@ -742,9 +601,8 @@ data (instance/submission per row)
         if isinstance(survey, XForm):
             xform = XForm.objects.get(pk=survey.pk)
             # The XForm has been created, but `publish_xlsform` relies on
-            # `onadata.apps.main.forms.QuickConverter`, which uses standard
-            # Django forms and only recognizes the `xls_file`, `xls_url`,
-            # `dropbox_xls_url`, and `text_xls_form` fields.
+            # `onadata.apps.main.forms.QuickConverterForm`, which uses standard
+            # Django forms and only recognizes the `xls_file` fields.
             # Use the DRF serializer to update the XForm with values for other
             # fields.
             serializer = XFormSerializer(
@@ -756,14 +614,32 @@ data (instance/submission per row)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             headers = self.get_success_headers(serializer.data)
-
             return Response(serializer.data, status=status.HTTP_201_CREATED,
                             headers=headers)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['GET'])
+    def enketo(self, request, **kwargs):
+        self.object = self.get_object()
+        form_url = _get_form_url(self.object.user.username)
+
+        data = {'message': _("Enketo not properly configured.")}
+        http_status = status.HTTP_400_BAD_REQUEST
+
+        try:
+            url = enketo_url(form_url, self.object.id_string)
+        except EnketoError:
+            pass
+        else:
+            if url:
+                http_status = status.HTTP_200_OK
+                data = {"enketo_url": url}
+
+        return Response(data, http_status)
+
     def update(self, request, pk, *args, **kwargs):
-        if 'xls_file' in request.FILES or 'text_xls_form' in request.data:
+        if 'xls_file' in request.FILES:
             # A new XLSForm has been uploaded and will replace the existing
             # form
             existing_xform = get_object_or_404(XForm, pk=pk)
@@ -782,9 +658,9 @@ data (instance/submission per row)
                     # Something odd; hopefully it can be coerced into a string
                     raise exceptions.ParseError(detail=survey)
         # Let the superclass handle updates to the other fields
-        return super(XFormViewSet, self).update(request, pk, *args, **kwargs)
+        return super().update(request, pk, *args, **kwargs)
 
-    @detail_route(methods=['GET'])
+    @action(detail=True, methods=['GET'])
     def form(self, request, format='json', **kwargs):
         form = self.get_object()
         if format not in ['json', 'xml', 'xls', 'csv']:
@@ -798,115 +674,40 @@ data (instance/submission per row)
 
         return response
 
-    @detail_route(methods=['GET'])
-    def enketo(self, request, **kwargs):
-        self.object = self.get_object()
-        form_url = _get_form_url(request, self.object.user.username)
-
-        data = {'message': _(u"Enketo not properly configured.")}
-        http_status = status.HTTP_400_BAD_REQUEST
-
-        try:
-            url = enketo_url(form_url, self.object.id_string)
-        except EnketoError:
-            pass
-        else:
-            if url:
-                http_status = status.HTTP_200_OK
-                data = {"enketo_url": url}
-
-        return Response(data, http_status)
-
     def retrieve(self, request, *args, **kwargs):
-        lookup_field = self.lookup_field
-        lookup = self.kwargs.get(lookup_field)
-
-        if lookup == self.public_forms_endpoint:
-            self.object_list = self._get_public_forms_queryset()
-
-            page = self.paginate_queryset(self.object_list)
-            if page is not None:
-                serializer = self.get_pagination_serializer(page)
-            else:
-                serializer = self.get_serializer(self.object_list, many=True)
-
-            return Response(serializer.data)
-
         xform = self.get_object()
         export_type = kwargs.get('format')
-        query = request.GET.get("query", {})
-        token = request.GET.get('token')
-        meta = request.GET.get('meta')
+        query = request.GET.get('query', {})
 
         if export_type is None or export_type in ['json']:
             # perform default viewset retrieve, no data export
-            return super(XFormViewSet, self).retrieve(request, *args, **kwargs)
+            return super().retrieve(request, *args, **kwargs)
 
         return custom_response_handler(request,
                                        xform,
                                        query,
-                                       export_type,
-                                       token,
-                                       meta)
+                                       export_type)
 
-    @detail_route(methods=['POST'])
-    def share(self, request, *args, **kwargs):
-        self.object = self.get_object()
-
-        data = {}
-        for key, val in request.data.iteritems():
-            data[key] = val
-        data.update({'xform': self.object.pk})
-
-        serializer = ShareXFormSerializer(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(data=serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @detail_route(methods=['GET'])
-    def clone(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        data = {'xform': self.object.pk, 'username': request.data['username']}
-        serializer = CloneXFormSerializer(data=data)
-        if serializer.is_valid():
-            clone_to_user = User.objects.get(username=data['username'])
-            if not request.user.has_perm(
-                'can_add_xform',
-                UserProfile.objects.get_or_create(user=clone_to_user)[0]
-            ):
-                raise exceptions.PermissionDenied(
-                    detail=_(u"User %(user)s has no permission to add "
-                             "xforms to account %(account)s" %
-                             {'user': request.user.username,
-                              'account': data['username']}))
-            xform = serializer.save()
-            serializer = XFormSerializer(
-                xform.cloned_form, context={'request': request})
-
-            return Response(data=serializer.data,
-                            status=status.HTTP_201_CREATED)
-
-        return Response(data=serializer.errors,
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    @detail_route(methods=['POST'])
+    @action(detail=True, methods=['POST'])
     def csv_import(self, request, *args, **kwargs):
-        """ Endpoint for CSV data imports
+        """
+        Endpoint for CSV data imports
 
         Calls :py:func:`onadata.libs.utils.csv_import.submit_csv`
         passing with the `request.FILES.get('csv_file')` upload for import.
         """
-        resp = submit_csv(request.user.username,
-                          self.get_object(),
-                          request.FILES.get('csv_file'))
-
+        xform = self.get_object()
+        if request.user != xform.user:
+            # Access control for this endpoint previously relied on testing
+            # that the user had `logger.add_xform` on this specific XForm,
+            # which is meaningless but does get assigned to the XForm owner by
+            # the post-save signal handler
+            # `onadata.apps.logger.models.xform.set_object_permissions()`.
+            # For safety and clarity, this endpoint now explicitly denies
+            # access to all non-owners.
+            raise PermissionDenied
+        resp = submit_csv(request, xform, request.FILES.get('csv_file'))
         return Response(
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
             status.HTTP_400_BAD_REQUEST)
-

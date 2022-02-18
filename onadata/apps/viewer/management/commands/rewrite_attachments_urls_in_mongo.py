@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+# coding: utf-8
 import sys
 
 from django.conf import settings
@@ -57,8 +55,8 @@ class Command(BaseCommand):
                                     self.__secure_url(filename, suffix)
 
                         except Exception as e:
-                            print("ERROR - {}".format(str(e)))
-                            print(instance)
+                            self.stderr.write("ERROR - {}".format(str(e)))
+                            self.stderr.write(instance)
 
                     done += 1
                     self.__last_id = instance.get("_id")
@@ -70,7 +68,6 @@ class Command(BaseCommand):
                     sys.stdout.write(progress)
                     sys.stdout.flush()
 
-                settings.MONGO_CONNECTION.admin.command({'fsync': 1})
                 cursor = self.__get_data()
             else:
                 stop = True
@@ -79,10 +76,6 @@ class Command(BaseCommand):
 
     def __get_data(self):
         query = {"$and": [
-            {"$or": [
-                {"_deleted_at": {"$exists": False}},
-                {"_deleted_at": None}
-            ]},
             {"_attachments": {"$ne": ""}},
             {"_attachments": {"$ne": []}},
             {"$or": [

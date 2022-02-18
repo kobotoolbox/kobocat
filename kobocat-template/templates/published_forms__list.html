@@ -21,7 +21,7 @@
       <tr class="published_forms__form">
         <td></td>
         <td class="published_forms__cell published_forms__cell--project">
-            <a href="{% url "onadata.apps.main.views.show" xform.user.username xform.id_string %}">{{ xform.title }}</a> 
+            <a href="{% url "show_form" xform.user.username xform.id_string %}">{{ xform.title }}</a>
             {% if xform.description %}
             <div class="project__description">
               {{ xform.description }}

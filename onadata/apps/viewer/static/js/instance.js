@@ -115,7 +115,7 @@ function parseLanguages(children)
     }
 }
 
-function createTable(canEdit)
+function createTable(canEdit, canDeleteData)
 {
     var dataContainer = $('#data');
     dataContainer.empty();
@@ -149,10 +149,37 @@ function createTable(canEdit)
     topStatusNavRows.append(topPager);
     dataContainer.append(topStatusNavRows);
 
-    if(canEdit === true){
-        var editDelete = '<div class="row"><div class="span6"><a id="title_edit" href="#kate" class="btn btn-small bind-edit disabled">' + gettext("edit") + '</a>&nbsp;<a href="#"class="btn btn-small btn-danger">' + gettext("Delete") + '</a></div></div>';
-        dataContainer.append(editDelete);
+    if (canEdit === true || canDeleteData === true) {
+        var buttonsContainer = $('<div>').addClass('row'),
+            innerContainer = $('<div>').addClass('span6');
+
+        if (canEdit) {
+            var editLink = $('<a>');
+            editLink.attr({
+                'id': 'title_edit',
+                'href': '#kate',
+                'data-js-selector': 'btn-edit'
+            }).addClass('btn btn-small disabled');
+            editLink.html(gettext('edit'));
+            innerContainer.append(editLink);
+            innerContainer.append('&nbsp;');
+        }
+
+        if (canDeleteData) {
+            var deleteLink = $('<a>');
+            deleteLink.attr({
+                'href': '#',
+                'data-js-selector': 'btn-delete'
+            }).addClass('btn btn-small btn-danger disabled');
+
+            deleteLink.html(gettext('Delete'));
+            innerContainer.append(deleteLink);
+        }
+
+        buttonsContainer.append(innerContainer);
+        dataContainer.append(buttonsContainer);
     }
+
     var notesSection = '<div id="notes" style="display: none; margin: 10px"> \
     <form action="" onsubmit="return addOrEditNote()" method="post" name="notesform" id="notesform"> \
         <input type="hidden" value="" name="instance_id" id="instance_id" /> \
@@ -241,20 +268,20 @@ function deleteData(context, data_id, redirect_route){
             })
 }
 
-function loadData(context, query, canEdit)
+
+function loadData(context, query, canEdit, canDeleteData)
 {
 
     //TODO: show loader
     $.getJSON(mongoAPIUrl, {'query': query, 'limit':1})
             .success(function(data){
-                reDraw(context, data[0], canEdit);
+                reDraw(context, data[0], canEdit, canDeleteData);
 
-                //ADD EDIT AND BUTTON CHECK PERMISSION
+                // Update Edit and Delete button links
                 updateButtons(data[0]);
 
-                //alert(data[0]['_id']);
                 // check if we initialised the browsePos
-                if(false)//TODO: find a way to increment browsePos client-side
+                if (false) //TODO: find a way to increment browsePos client-side
                 {
                     updatePrevNextControls(data[0]);
 
@@ -292,20 +319,23 @@ function updatePosStatus()
     $('.record-pos').html(posText);
 }
 
-function updateButtons(data){
+function updateButtons(data) {
 
-    //Make Edit Button visible and add link
+    // Enable Edit button and add link
+    var editButton = $('#data a[data-js-selector="btn-edit"]'),
+        deleteButton = $('#data a[data-js-selector="btn-delete"]');
 
-    var editbutton = $('a.bind-edit');
-    editbutton.removeClass('disabled');
-    editbutton.attr('href', 'edit-data/' + data['_id']);
+    if (editButton.length > 0) {
+        editButton.removeClass('disabled');
+        editButton.attr('href', 'edit-data/' + data['_id']);
+    }
 
-
-     //Make Delete Button visible and add link
-    var deletebutton = $('#data a.btn-danger');
-    deletebutton.removeClass('disabled');
-    deletebutton.attr('href', '#del/' + data['_id']);
-    $('#delete-modal a.btn-danger').attr('href', '#delete/' + data['_id']);
+    // Enable Delete button and add link
+    if (deleteButton.length > 0) {
+        deleteButton.removeClass('disabled');
+        deleteButton.attr('href', '#del/' + data['_id']);
+        $('#delete-modal a.btn-danger').attr('href', '#delete/' + data['_id']);
+    }
 
     // Add a note section
     $("#instance_id").val(data['_id']);
@@ -359,7 +389,7 @@ function updatePrevNextControls(data)
             });
 }
 
-function reDraw(context, data, canEdit)
+function reDraw(context, data, canEdit, canDeleteData)
 {
     // make sure we have some data, if the id was in valid we would gte a blank array
     if(data)
@@ -392,7 +422,7 @@ function reDraw(context, data, canEdit)
 
         // check if table has been created, if not reCreate
         if($('#data table').length == 0)
-            createTable(canEdit);
+            createTable(canEdit, canDeleteData);
         // clear data cells before we re-populate
         $('#data table td[data-key]').html('');
         context.meld($('#data'), cleanData, {

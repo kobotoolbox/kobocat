@@ -1,9 +1,11 @@
+# coding: utf-8
 import os
 import time
 import csv
 import tempfile
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
+from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.utils import timezone
 from xlrd import open_workbook
 
@@ -11,7 +13,7 @@ from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.views import kml_export, export_download
 from onadata.libs.utils.export_tools import generate_export
 from onadata.libs.utils.user_auth import http_auth_string
-from test_base import TestBase
+from .test_base import TestBase
 
 
 class TestFormExports(TestBase):
@@ -32,10 +34,7 @@ class TestFormExports(TestBase):
             return open_workbook(file_contents=f).sheets()[0].nrows
 
         def csv_rows(f):
-            with tempfile.TemporaryFile() as tmp:
-                tmp.write(f.encode('utf-8'))
-                tmp.seek(0)
-                return len([line for line in csv.reader(tmp)])
+            return len([line for line in csv.reader(f.decode().strip().split('\n'))])
         num_rows_fn = {
             'xls': xls_rows,
             'csv': csv_rows,
@@ -195,4 +194,8 @@ class TestFormExports(TestBase):
             'filename': export.filename
         })
         response = self.anon.get(url, **extra)
-        self.assertEqual(response.status_code, 200)
+        default_storage = get_storage_class()()
+        if not isinstance(default_storage, FileSystemStorage):
+            self.assertEqual(response.status_code, 302)
+        else:
+            self.assertEqual(response.status_code, 200)

@@ -1,26 +1,19 @@
-import traceback
+# coding: utf-8
 
 from django.db import connection
 from django.http import HttpResponseNotAllowed
-from django.template import RequestContext
 from django.template import loader
 from django.middleware.locale import LocaleMiddleware
+from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation.trans_real import parse_accept_lang_header
 
 
-class ExceptionLoggingMiddleware(object):
-
-    def process_exception(self, request, exception):
-        print(traceback.format_exc())
-
-
-class HTTPResponseNotAllowedMiddleware(object):
+class HTTPResponseNotAllowedMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if isinstance(response, HttpResponseNotAllowed):
-            context = RequestContext(request)
             response.content = loader.render_to_string(
-                "405.html", context_instance=context)
+                "405.html", request=request)
 
         return response
 
@@ -42,36 +35,21 @@ class LocaleMiddlewareWithTweaks(LocaleMiddleware):
             # this might fail if i18n is disabled.
             pass
 
-        super(LocaleMiddlewareWithTweaks, self).process_request(request)
+        super().process_request(request)
 
 
-class SqlLogging:
+class SqlLogging(MiddlewareMixin):
     def process_response(self, request, response):
         from sys import stdout
         if stdout.isatty():
             for query in connection.queries:
-                print "\033[1;31m[%s]\033[0m \033[1m%s\033[0m" % (
-                    query['time'], " ".join(query['sql'].split()))
+                print("\033[1;31m[%s]\033[0m \033[1m%s\033[0m" % (
+                    query['time'], " ".join(query['sql'].split())))
 
         return response
 
 
-class BrokenClientMiddleware(object):
-    """
-    ODK Collect sends HTTP-violating localized date strings, e.g.
-    'mar., 25 ao\xfbt 2015 07:11:56 GMT+00:00', which wreak havoc on oauthlib.
-    This middleware detects and discards HTTP_DATE headers that contain invalid
-    characters.
-    """
-    def process_request(self, request):
-        if 'HTTP_DATE' in request.META:
-            try:
-                request.META['HTTP_DATE'].decode()
-            except UnicodeDecodeError:
-                del request.META['HTTP_DATE']
-
-
-class UsernameInResponseHeaderMiddleware(object):
+class UsernameInResponseHeaderMiddleware(MiddlewareMixin):
     """
     Record the authenticated user (if any) in the `X-KoBoNaUt` HTTP header
     """
@@ -80,6 +58,6 @@ class UsernameInResponseHeaderMiddleware(object):
             user = request.user
         except AttributeError:
             return response
-        if user.is_authenticated():
+        if user.is_authenticated:
             response['X-KoBoNaUt'] = request.user.username
         return response

@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+import collections
+
 from django.core.exceptions import FieldError
 from django.db import models
 
@@ -32,17 +34,16 @@ class LazyDefaultBooleanField(models.PositiveSmallIntegerField):
 
         kwargs['null'] = True
         kwargs['default'] = None
-        super(LazyDefaultBooleanField, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _get_lazy_default(self):
-        if callable(self.lazy_default):
+        if isinstance(self.lazy_default, collections.Callable):
             return self.lazy_default()
         else:
             return self.lazy_default
 
     def deconstruct(self):
-        name, path, args, kwargs = super(
-            LazyDefaultBooleanField, self).deconstruct()
+        name, path, args, kwargs = super().deconstruct()
         kwargs['default'] = self.lazy_default
         del kwargs['null']
         return name, path, args, kwargs

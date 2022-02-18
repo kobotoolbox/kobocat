@@ -1,21 +1,21 @@
-# -*- coding: utf-8 -*-
 import re
-import base64
+
 
 from onadata.libs.utils.common_tags import NESTED_RESERVED_ATTRIBUTES
+from onadata.libs.utils.string import base64_encodestring
 
 
-class MongoHelper(object):
+class MongoHelper:
 
     KEY_WHITELIST = ['$or', '$and', '$exists', '$in', '$gt', '$gte',
                      '$lt', '$lte', '$regex', '$options', '$all']
     ENCODING_SUBSTITUTIONS = [
-        (re.compile(r'^\$'), base64.encodestring('$').strip()),
-        (re.compile(r'\.'), base64.encodestring('.').strip()),
+        (re.compile(r'^\$'), base64_encodestring('$').strip()),
+        (re.compile(r'\.'), base64_encodestring('.').strip()),
     ]
     DECODING_SUBSTITUTIONS = [
-        (re.compile(r'^' + base64.encodestring('$').strip()), '$'),
-        (re.compile(base64.encodestring('.').strip()), '.'),
+        (re.compile(r'^' + base64_encodestring('$').strip()), '$'),
+        (re.compile(base64_encodestring('.').strip()), '.'),
     ]
 
     @classmethod
@@ -178,6 +178,6 @@ class MongoHelper(object):
         :return: boolean
         """
         for reserved_attribute in NESTED_RESERVED_ATTRIBUTES:
-            if key.startswith(u"{}.".format(reserved_attribute)):
+            if key.startswith("{}.".format(reserved_attribute)):
                 return True
         return False

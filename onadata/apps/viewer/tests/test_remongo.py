@@ -1,8 +1,10 @@
+# coding: utf-8
 import os
 
 from django.conf import settings
 from django.core.management import call_command
 from django_digest.test import DigestAuth
+from django.utils.six import string_types
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
@@ -21,7 +23,7 @@ class TestRemongo(TestBase):
         c = Command()
         c.handle(batchsize=3)
         # mongo db should now have 5 records
-        count = settings.MONGO_DB.instances.count()
+        count = settings.MONGO_DB.instances.count_documents(filter={})
         self.assertEqual(count, 4)
 
     def test_remongo_with_username_id_string(self):
@@ -47,7 +49,7 @@ class TestRemongo(TestBase):
         c.handle(batchsize=3, username=self.user.username,
                  id_string=self.xform.id_string)
         # mongo db should now have 2 records
-        count = settings.MONGO_DB.instances.count()
+        count = settings.MONGO_DB.instances.count_documents(filter={})
         self.assertEqual(count, 1)
 
     def test_indexes_exist(self):
@@ -61,10 +63,10 @@ class TestRemongo(TestBase):
         # get index info
         index_info = settings.MONGO_DB.instances.index_information()
         # index_info looks like this - {
-        #     u'_id_': {u'key': [(u'_id', 1)], u'v': 1},
-        #     u'_userform_id_1': {u'key': [(u'_userform_id', 1)], u'v': 1}}
+        #     '_id_': {'key': [('_id', 1)], 'v': 1},
+        #     '_userform_id_1': {'key': [('_userform_id', 1)], 'v': 1}}
         # lets make a list of the indexes
-        existing_indexes = [v['key'][0][0] for v in index_info.itervalues()
+        existing_indexes = [v['key'][0][0] for v in index_info.values()
                             if v['key'][0][1] == 1]
         all_indexes_found = True
         for index_item in index_list:
@@ -76,32 +78,32 @@ class TestRemongo(TestBase):
     def test_sync_mongo_with_all_option_deletes_existing_records(self):
         self._publish_transportation_form()
         userform_id = "%s_%s" % (self.user.username, self.xform.id_string)
-        initial_mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        initial_mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         for i in range(len(self.surveys)):
             self._submit_transport_instance(i)
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         # check our mongo count
         self.assertEqual(mongo_count, initial_mongo_count + len(self.surveys))
         # add dummy instance
-        settings.MONGO_DB.instances.save(
+        settings.MONGO_DB.instances.insert_one(
             {"_id": 12345, "_userform_id": userform_id})
         # make sure the dummy is returned as part of the forms mongo instances
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         self.assertEqual(mongo_count,
                          initial_mongo_count + len(self.surveys) + 1)
         # call sync_mongo WITHOUT the all option
         call_command("sync_mongo", remongo=True)
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         self.assertEqual(mongo_count,
                          initial_mongo_count + len(self.surveys) + 1)
         # call sync_mongo WITH the all option
         call_command("sync_mongo", remongo=True, update_all=True)
         # check that we are back to just the submitted set
-        mongo_count = settings.MONGO_DB.instances.find(
-            {USERFORM_ID: userform_id}).count()
+        mongo_count = settings.MONGO_DB.instances.count_documents(
+            {USERFORM_ID: userform_id})
         self.assertEqual(mongo_count,
                          initial_mongo_count + len(self.surveys))

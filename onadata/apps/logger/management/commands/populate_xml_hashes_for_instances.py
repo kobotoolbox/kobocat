@@ -1,3 +1,4 @@
+# coding: utf-8
 '''
 Django management command to populate `Instance` instances with hashes for use in duplicate
 detection.

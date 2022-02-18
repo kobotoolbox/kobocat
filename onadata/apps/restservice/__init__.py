@@ -1,4 +1,5 @@
-SERVICE_KPI_HOOK = (u"kpi_hook", u"KPI Hook POST")
+# coding: utf-8
+SERVICE_KPI_HOOK = ("kpi_hook", "KPI Hook POST")
 
 SERVICE_CHOICES = (
     SERVICE_KPI_HOOK,

@@ -1,3 +1,4 @@
+# coding: utf-8
 from rest_framework import serializers
 from onadata.apps.logger.models import XForm
 

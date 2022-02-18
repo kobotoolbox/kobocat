@@ -1,11 +1,13 @@
-import base64
+# coding: utf-8
 import json
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from onadata.apps.main.views import api
 from onadata.apps.api.mongo_helper import MongoHelper
-from test_base import TestBase
+from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.libs.utils.string import base64_encodestring
+from .test_base import TestBase
 
 
 def dict_for_mongo_without_userform_id(parsed_instance):
@@ -54,20 +56,20 @@ class TestFormAPI(TestBase):
         data = {'query': query}
         response = self.client.get(self.api_url, data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '[]')
+        self.assertEqual(response.content.decode(), '[]')
 
     def test_handle_bad_json(self):
         response = self.client.get(self.api_url, {'query': 'bad'})
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(True, 'JSON' in response.content)
+        self.assertEqual(True, 'Expecting value' in response.content.decode())
 
     def test_api_jsonp(self):
         # query string
         callback = 'jsonpCallback'
         response = self.client.get(self.api_url, {'callback': callback})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.startswith(callback + '('), True)
-        self.assertEqual(response.content.endswith(')'), True)
+        self.assertEqual(response.content.decode().startswith(callback + '('), True)
+        self.assertEqual(response.content.decode().endswith(')'), True)
         start = callback.__len__() + 1
         end = response.content.__len__() - 1
         content = response.content[start: end]
@@ -127,8 +129,8 @@ class TestFormAPI(TestBase):
         encoded = MongoHelper.encode(field)
         self.assertEqual(encoded, (
             "%(dollar)ssection1%(dot)sgroup01%(dot)squestion1" % {
-                "dollar": base64.b64encode("$"),
-                "dot": base64.b64encode(".")}))
+                "dollar": base64_encodestring("$").strip(),
+                "dot": base64_encodestring(".").strip()}))
         decoded = MongoHelper.decode(encoded)
         self.assertEqual(field, decoded)
 

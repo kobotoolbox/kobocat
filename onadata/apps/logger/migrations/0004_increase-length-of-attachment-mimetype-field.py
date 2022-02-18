@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+# coding: utf-8
 from django.db import migrations, models
 
 
@@ -14,6 +12,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='attachment',
             name='mimetype',
-            field=models.CharField(default=b'', max_length=100, blank=True),
+            field=models.CharField(default='', max_length=100, blank=True),
         ),
     ]

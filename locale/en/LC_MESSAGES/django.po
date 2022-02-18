@@ -2875,10 +2875,6 @@ msgstr ""
 msgid "Successful Logout"
 msgstr ""
 
-#: onadata/libs/templates/registration/logout.html:10
-msgid "Thank you for using Ona, please come again!"
-msgstr ""
-
 #: onadata/libs/templates/registration/password_change_done.html:6
 msgid "Password changed"
 msgstr ""

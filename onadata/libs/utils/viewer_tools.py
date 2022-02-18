@@ -1,4 +1,7 @@
+# coding: utf-8
 import os
+import json
+import logging
 import traceback
 import requests
 import zipfile
@@ -7,7 +10,7 @@ from tempfile import NamedTemporaryFile
 from xml.dom import minidom
 
 from django.conf import settings
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
 from django.utils.translation import ugettext as _
@@ -15,7 +18,7 @@ from django.utils.translation import ugettext as _
 from onadata.libs.utils import common_tags
 
 
-SLASH = u"/"
+SLASH = "/"
 
 
 class MyError(Exception):
@@ -37,6 +40,7 @@ def get_path(path, suffix):
     return fileName + suffix + fileExtension
 
 
+# TODO VERIFY IF STILL USED
 def image_urls(instance):
     image_urls_dict_ = image_urls_dict(instance)
     return image_urls_dict_.values()
@@ -72,9 +76,9 @@ def parse_xform_instance(xml_str):
     # THIS IS OKAY FOR OUR USE CASE, BUT OTHER USERS SHOULD BEWARE.
     survey_data = dict(_path_value_pairs(root_node))
     assert len(list(_all_attributes(root_node))) == 1, \
-        _(u"There should be exactly one attribute in this document.")
+        _("There should be exactly one attribute in this document.")
     survey_data.update({
-        common_tags.XFORM_ID_STRING: root_node.getAttribute(u"id"),
+        common_tags.XFORM_ID_STRING: root_node.getAttribute("id"),
         common_tags.INSTANCE_DOC_NAME: root_node.nodeName,
     })
     return survey_data
@@ -123,13 +127,13 @@ def _all_attributes(node):
 def report_exception(subject, info, exc_info=None):
     if exc_info:
         cls, err = exc_info[:2]
-        info += _(u"Exception in request: %(class)s: %(error)s") \
+        info += _("Exception in request: %(class)s: %(error)s") \
             % {'class': cls.__name__, 'error': err}
-        info += u"".join(traceback.format_exception(*exc_info))
+        info += "".join(traceback.format_exception(*exc_info))
 
     if settings.DEBUG:
-        print subject
-        print info
+        print(subject)
+        print(info)
     else:
         mail_admins(subject=subject, message=info)
 
@@ -137,7 +141,7 @@ def report_exception(subject, info, exc_info=None):
 def django_file(path, field_name, content_type):
     # adapted from here: http://groups.google.com/group/django-users/browse_th\
     # read/thread/834f988876ff3c45/
-    f = open(path)
+    f = open(path, 'rb')
     return InMemoryUploadedFile(
         file=f,
         field_name=field_name,
@@ -167,11 +171,20 @@ def get_client_ip(request):
     return ip
 
 
-def enketo_url(form_url, id_string, instance_xml=None,
-               instance_id=None, return_url=None, instance_attachments=None):
+def enketo_url(
+    form_url,
+    id_string,
+    instance_xml=None,
+    instance_id=None,
+    return_url=None,
+    instance_attachments=None,
+    action=None,
+):
 
-    if not hasattr(settings, 'ENKETO_URL')\
-            and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
+    if (
+        not hasattr(settings, 'ENKETO_URL')
+        and not hasattr(settings, 'ENKETO_API_SURVEY_PATH')
+    ):
         return False
 
     if instance_attachments is None:
@@ -191,12 +204,19 @@ def enketo_url(form_url, id_string, instance_xml=None,
             'instance_id': instance_id,
             'return_url': return_url
         })
-        for key, value in instance_attachments.iteritems():
+        for key, value in instance_attachments.items():
             values.update({
                 'instance_attachments[' + key + ']': value
             })
+
+    # The Enketo view-only endpoint differs to the edit by the addition of /view
+    # as shown in the docs: https://apidocs.enketo.org/v2#/post-instance-view
+    if action == 'view':
+        url = f'{url}/view'
+
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
+
     if req.status_code in [200, 201]:
         try:
             response = req.json()
@@ -205,6 +225,8 @@ def enketo_url(form_url, id_string, instance_xml=None,
         else:
             if 'edit_url' in response:
                 return response['edit_url']
+            elif 'view_url' in response:
+                return response['view_url']
             if settings.ENKETO_OFFLINE_SURVEYS and ('offline_url' in response):
                 return response['offline_url']
             if 'url' in response:
@@ -223,6 +245,28 @@ def enketo_url(form_url, id_string, instance_xml=None,
 def create_attachments_zipfile(attachments, output_file=None):
     if not output_file:
         output_file = NamedTemporaryFile()
+    else:
+        # Disable seeking in a way understood by Python's zipfile module. See
+        # https://github.com/python/cpython/blob/ca2009d72a52a98bf43aafa9ad270a4fcfabfc89/Lib/zipfile.py#L1270-L1274
+        # This is a workaround for https://github.com/kobotoolbox/kobocat/issues/475
+        # and https://github.com/jschneier/django-storages/issues/566
+        def no_seeking(*a, **kw):
+            raise AttributeError(
+                'Seeking disabled! See '
+                'https://github.com/kobotoolbox/kobocat/issues/475'
+            )
+        try:
+            output_file.seek = no_seeking
+        except AttributeError as e:
+            # The default, file-system storage won't allow changing the `seek`
+            # attribute, which is fine because seeking on local files works
+            # perfectly anyway
+            storage_class = get_storage_class()
+            if not issubclass(storage_class, FileSystemStorage):
+                logging.warning(
+                    f'{storage_class} may not be a local storage class, but '
+                    f'disabling seeking failed: {e}'
+                )
 
     storage = get_storage_class()()
     with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_STORED, allowZip64=True) as zip_file:
@@ -231,38 +275,32 @@ def create_attachments_zipfile(attachments, output_file=None):
                 try:
                     with storage.open(attachment.media_file.name, 'rb') as source_file:
                         zip_file.writestr(attachment.media_file.name, source_file.read())
-                except Exception, e:
+                except Exception as e:
                     report_exception("Error adding file \"{}\" to archive.".format(attachment.media_file.name), e)
 
     return output_file
 
 
-def _get_form_url(request, username, protocol='https'):
+def _get_form_url(username):
     if settings.TESTING_MODE:
-        http_host = settings.TEST_HTTP_HOST
+        http_host = 'http://{}'.format(settings.TEST_HTTP_HOST)
         username = settings.TEST_USERNAME
     else:
-        http_host = request.get_host()
+        # Always use a public url to prevent Enketo SSRF from blocking request
+        http_host = settings.KOBOCAT_URL
 
-    # In case INTERNAL_DOMAIN_NAME is equal to PUBLIC_DOMAIN_NAME,
-    # configuration doesn't use docker internal network.
-    # Don't overwrite `protocol.
-    is_call_internal = settings.KOBOCAT_INTERNAL_HOSTNAME == http_host and \
-                       settings.KOBOCAT_PUBLIC_HOSTNAME != http_host
-
-    # Make sure protocol is enforced to `http` when calling `kc` internally
-    protocol = "http" if is_call_internal else protocol
-
-    return '%s://%s/%s' % (protocol, http_host, username)
+    # Internal requests use the public url, KOBOCAT_URL already has the protocol
+    return '{http_host}/{username}'.format(
+        http_host=http_host,
+        username=username
+    )
 
 
-def get_enketo_edit_url(request, instance, return_url):
-    form_url = _get_form_url(request,
-                             instance.xform.user.username,
-                             settings.ENKETO_PROTOCOL)
+def get_enketo_submission_url(request, instance, return_url, action=None):
+    form_url = _get_form_url(instance.xform.user.username)
     instance_attachments = image_urls_dict(instance)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
         instance_id=instance.uuid, return_url=return_url,
-        instance_attachments=instance_attachments)
+        instance_attachments=instance_attachments, action=action)
     return url

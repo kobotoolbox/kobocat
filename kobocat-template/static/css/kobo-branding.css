@@ -330,7 +330,7 @@ section {
 .single-project__header .container,
 .projects-list__header .container,
 .data-page__header .container {
-  max-width: 984px;
+  max-width: 960px;
 }
 
 .single-project__header .fa-caret-right,

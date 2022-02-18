@@ -1,7 +1,7 @@
+# coding: utf-8
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext_lazy
-from optparse import make_option
 
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.libs.utils.common_tags import USERFORM_ID
@@ -9,16 +9,19 @@ from onadata.libs.utils.common_tags import USERFORM_ID
 
 class Command(BaseCommand):
     help = ugettext_lazy("Insert all existing parsed instances into MongoDB")
-    option_list = BaseCommand.option_list + (
-        make_option(
+
+    def add_arguments(self, parser):
+        parser.add_argument(
             '--batchsize',
-            type='int',
+            type=int,
             default=100,
-            help=ugettext_lazy("Number of records to process per query")),
-        make_option('-u', '--username',
-                    help=ugettext_lazy("Username of the form user")),
-        make_option('-i', '--id_string',
-                    help=ugettext_lazy("id string of the form")))
+            help=ugettext_lazy("Number of records to process per query"))
+
+        parser.add_argument('-u', '--username',
+                            help=ugettext_lazy("Username of the form user"))
+
+        parser.add_argument('-i', '--id_string',
+                            help=ugettext_lazy("id string of the form"))
 
     def handle(self, *args, **kwargs):
         ids = None
@@ -44,17 +47,14 @@ class Command(BaseCommand):
         record_count = filter_queryset.count()
         i = 0
         while start < record_count:
-            print 'Querying record %s to %s' % (start, end-1)
+            print('Querying record %s to %s' % (start, end-1))
             queryset = filter_queryset.order_by('pk')[start:end]
             for pi in queryset.iterator():
-                if pi.update_mongo(async=False):
+                if pi.update_mongo(asynchronous=False):
                     i += 1
                 else:
                     print("\033[91m[ERROR] Could not parse instance {}\033[0m".format(pi.instance.uuid))
 
-                if (i % 1000) == 0:
-                    print 'Updated %d records, flushing MongoDB...' % i
-                    settings.MONGO_CONNECTION.admin.command({'fsync': 1})
             start = start + batchsize
             end = min(record_count, start + batchsize)
         # add indexes after writing so the writing operation above is not

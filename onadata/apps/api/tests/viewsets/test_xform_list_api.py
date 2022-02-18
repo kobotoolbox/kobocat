@@ -1,24 +1,26 @@
+# coding: utf-8
 import os
-import unittest
 
 from django.conf import settings
-from django.test import TransactionTestCase
 from django_digest.test import DigestAuth
+from guardian.shortcuts import assign_perm
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
-from onadata.libs.permissions import DataEntryRole
-from onadata.libs.permissions import ReadOnlyRole
+from onadata.libs.constants import (
+    CAN_ADD_SUBMISSIONS,
+    CAN_VIEW_XFORM
+)
 
 
-class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
+class TestXFormListApi(TestAbstractViewSet):
     def setUp(self):
-        super(self.__class__, self).setUp()
+        super().setUp()
         self.view = XFormListApi.as_view({
             "get": "list"
         })
-        self._publish_xls_form_to_project()
+        self.publish_xls_form()
 
     def test_get_xform_list(self):
         request = self.factory.get('/')
@@ -33,11 +35,11 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
+        with open(path, 'r') as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(content, form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -56,9 +58,9 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
 
-        xml = u'<?xml version="1.0" encoding="utf-8"?>\n<xforms '
-        xml += u'xmlns="http://openrosa.org/xforms/xformsList"></xforms>'
-        content = response.render().content
+        xml = '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
+        xml += 'xmlns="http://openrosa.org/xforms/xformsList"></xforms>'
+        content = response.render().content.decode('utf-8')
         self.assertEqual(content, xml)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
@@ -78,11 +80,11 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
+        with open(path, 'r') as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(content, form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -102,18 +104,23 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
     def test_get_xform_list_other_user_with_no_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
         self.assertFalse(
-            ReadOnlyRole.user_has_role(alice_profile.user, self.xform)
+            alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        content = response.render().content
+        content = response.render().content.decode('utf-8')
         self.assertNotIn(self.xform.id_string, content)
         self.assertEqual(
             content, '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
@@ -127,19 +134,24 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
     def test_get_xform_list_other_user_with_readonly_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
-        ReadOnlyRole.add(alice_profile.user, self.xform)
+        assign_perm(CAN_VIEW_XFORM, alice_profile.user, self.xform)
         self.assertTrue(
-            ReadOnlyRole.user_has_role(alice_profile.user, self.xform)
+            alice_profile.user.has_perms([CAN_VIEW_XFORM], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
-        content = response.render().content
+        content = response.render().content.decode('utf-8')
         self.assertNotIn(self.xform.id_string, content)
         self.assertEqual(
             content, '<?xml version="1.0" encoding="utf-8"?>\n<xforms '
@@ -153,16 +165,20 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
     def test_get_xform_list_other_user_with_dataentry_role(self):
         request = self.factory.get('/')
         response = self.view(request)
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
+        alice_data = {
+            'username': 'alice',
+            'password1': 'alicealice',
+            'password2': 'alicealice',
+            'email': 'alice@localhost.com',
+        }
         alice_profile = self._create_user_profile(alice_data)
 
-        DataEntryRole.add(alice_profile.user, self.xform)
-
+        assign_perm(CAN_ADD_SUBMISSIONS, alice_profile.user, self.xform)
         self.assertTrue(
-            DataEntryRole.user_has_role(alice_profile.user, self.xform)
+            alice_profile.user.has_perms([CAN_ADD_SUBMISSIONS], self.xform)
         )
 
-        auth = DigestAuth('alice', 'bobbob')
+        auth = DigestAuth('alice', 'alicealice')
         request.META.update(auth(request.META, response))
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
@@ -171,11 +187,11 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
             os.path.dirname(__file__),
             '..', 'fixtures', 'formList.xml')
 
-        with open(path) as f:
+        with open(path, 'r') as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.hash, "pk": self.xform.pk}
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
             content = response.render().content
-            self.assertEqual(content, form_list_xml % data)
+            self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
             self.assertTrue(
                 response.has_header('X-OpenRosa-Accept-Content-Length'))
@@ -183,7 +199,30 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
             self.assertEqual(response['Content-Type'],
                              'text/xml; charset=utf-8')
 
-    @unittest.skip('Fails under Django 1.6')
+    def test_get_xform_list_with_formid_parameter(self):
+        """
+        Test `formList` with `?formID=[id_string]` filter
+        """
+        # Test unrecognized `formID`
+        request = self.factory.get('/', {'formID': 'unrecognizedID'})
+        response = self.view(request, username=self.user.username)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])
+
+        # Test a valid `formID`
+        request = self.factory.get('/', {'formID': self.xform.id_string})
+        response = self.view(request, username=self.user.username)
+        self.assertEqual(response.status_code, 200)
+        path = os.path.join(
+            os.path.dirname(__file__), '..', 'fixtures', 'formList.xml'
+        )
+
+        with open(path) as f:
+            form_list_xml = f.read().strip()
+            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
+            content = response.render().content.decode('utf-8')
+            self.assertEqual(content, form_list_xml % data)
+
     def test_retrieve_xform_xml(self):
         self.view = XFormListApi.as_view({
             "get": "retrieve"
@@ -196,6 +235,13 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
         response = self.view(request, pk=self.xform.pk)
         self.assertEqual(response.status_code, 200)
 
+        self.assertEqual(response['Content-Type'],
+                         'text/xml; charset=utf-8')
+        self.assertTrue(response.has_header('X-OpenRosa-Version'))
+        self.assertTrue(
+            response.has_header('X-OpenRosa-Accept-Content-Length'))
+        self.assertTrue(response.has_header('Date'))
+
         path = os.path.join(
             os.path.dirname(__file__),
             '..', 'fixtures', 'Transportation Form.xml')
@@ -203,14 +249,8 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
         with open(path) as f:
             form_xml = f.read().strip()
             data = {"form_uuid": self.xform.uuid}
-            content = response.render().content.strip()
+            content = response.render().content.decode('utf-8').strip()
             self.assertEqual(content, form_xml % data)
-            self.assertTrue(response.has_header('X-OpenRosa-Version'))
-            self.assertTrue(
-                response.has_header('X-OpenRosa-Accept-Content-Length'))
-            self.assertTrue(response.has_header('Date'))
-            self.assertEqual(response['Content-Type'],
-                             'text/xml; charset=utf-8')
 
     def _load_metadata(self, xform=None):
         data_value = "screenshot.png"
@@ -239,9 +279,9 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
 
         manifest_xml = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
-        data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
+        data = {"hash": self.metadata.md5_hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
-        content = response.render().content.strip()
+        content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(
@@ -263,9 +303,9 @@ class TestXFormListApi(TestAbstractViewSet, TransactionTestCase):
 
         manifest_xml = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
-        data = {"hash": self.metadata.hash, "pk": self.metadata.pk,
+        data = {"hash": self.metadata.md5_hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
-        content = response.render().content.strip()
+        content = response.render().content.decode('utf-8').strip()
         self.assertEqual(content, manifest_xml % data)
         self.assertTrue(response.has_header('X-OpenRosa-Version'))
         self.assertTrue(

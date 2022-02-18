@@ -1,18 +1,18 @@
+# coding: utf-8
+import logging
+import math
+import mimetypes
 import os
 import time
-import math
-import logging
-import mimetypes
-import requests
-from requests.auth import HTTPDigestAuth
-from urlparse import urljoin
+from io import StringIO
+from urllib.parse import urljoin
 from xml.parsers.expat import ExpatError
 
-from cStringIO import StringIO
-
+import requests
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from requests.auth import HTTPDigestAuth
 
 from onadata.apps.logger.xform_instance_parser import clean_and_parse_xml
 from onadata.libs.utils.logger_tools import publish_xml_form, publish_form, \
@@ -33,7 +33,7 @@ def django_file(file_obj, field_name, content_type):
 
 
 def retry(tries, delay=3, backoff=2):
-    '''
+    """
     Adapted from code found here:
         http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
 
@@ -43,8 +43,7 @@ def retry(tries, delay=3, backoff=2):
     factor by which the delay should lengthen after each failure.
     *backoff* must be greater than 1, or else it isn't really a backoff.
     *tries* must be at least 0, and *delay* greater than 0.
-    '''
-
+    """
     if backoff <= 1:  # pragma: no cover
         raise ValueError("backoff must be greater than 1")
 
@@ -78,7 +77,7 @@ def node_value(node, tag_name):
     return tag.childNodes[0].nodeValue
 
 
-class BriefcaseClient(object):
+class BriefcaseClient:
     def __init__(self, url, username, password, user):
         self.url = url
         self.user = user
@@ -134,7 +133,7 @@ class BriefcaseClient(object):
         response = self._current_response
         forms = self._get_form_list(response.content)
 
-        self.logger.debug('Successfull fetched %s.' % self.form_list_url)
+        self.logger.debug('Successfully fetched %s.' % self.form_list_url)
 
         for id_string, download_url, manifest_url in forms:
             form_path = os.path.join(
@@ -239,8 +238,8 @@ class BriefcaseClient(object):
 
         for uuid in instances:
             self.logger.debug("Fetching %s %s submission" % (uuid, form_id))
-            form_str = u'%(formId)s[@version=null and @uiVersion=null]/'\
-                u'%(formId)s[@key=%(instanceId)s]' % {
+            form_str = '%(formId)s[@version=null and @uiVersion=null]/'\
+                '%(formId)s[@key=%(instanceId)s]' % {
                     'formId': form_id,
                     'instanceId': uuid
                 }
@@ -276,7 +275,7 @@ class BriefcaseClient(object):
                 self.download_instances(form_id, cursor)
 
     def _upload_xform(self, path, file_name):
-        class PublishXForm(object):
+        class PublishXForm:
             def __init__(self, xml_file, user):
                 self.xml_file = xml_file
                 self.user = user

@@ -49,7 +49,7 @@
       <bind nodeset="/exp_line_break/photo" type="binary"/>
       <bind nodeset="/exp_line_break/kind" type="select1"/>
       <bind nodeset="/exp_line_break/required" required="true()" type="select1"/>
-      <bind calculate="concat('uuid:', uuid())" nodeset="/exp_line_break/meta/instanceID" readonly="true()" type="string"/>
+      <bind jr:preload="uid" nodeset="/exp_line_break/meta/instanceID" readonly="true()" type="string"/>
       <bind calculate="'663123a849e54bffa8f9832ef016bfac'" nodeset="/exp_line_break/formhub/uuid" type="string"/>
     </model>
   </h:head>

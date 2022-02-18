@@ -1,9 +1,10 @@
+# coding: utf-8
 from rest_framework import serializers, mixins
 from rest_framework.exceptions import ParseError
 from rest_framework.generics import get_object_or_404
 
 
-class ObjectLookupMixin(object):
+class ObjectLookupMixin:
     def get_object(self):
         """
         Incase the lookup is on an object that has been hyperlinked

@@ -21,7 +21,7 @@
       <bind nodeset="/contributions/age" type="int"/>
       <bind nodeset="/contributions/amount" type="decimal"/>
       <bind nodeset="/contributions/date_of_contribution" type="date"/>
-      <bind calculate="concat('uuid:', uuid())" nodeset="/contributions/meta/instanceID" readonly="true()" type="string"/>
+      <bind jr:preload="uid" nodeset="/contributions/meta/instanceID" readonly="true()" type="string"/>
       <bind calculate="'e24036d80c0644a9b5674178892d6b6f'" nodeset="/contributions/formhub/uuid" type="string"/>
     </model>
   </h:head>

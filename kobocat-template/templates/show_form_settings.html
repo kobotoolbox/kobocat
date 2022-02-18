@@ -6,7 +6,6 @@
 {% load i18n %}
   <!-- a temporary way to hide the kobocat deprecated features -->
   <style type="text/css">
-  .kc-hide { display: none !important; }
   #addserviceform { display: none !important; }
   </style>
 {% endblock %}
@@ -28,9 +27,9 @@
             {% for media in media_upload %}
               <li class="{% cycle 'odd' 'even' %}">
                 <div>{{ media.data_value }}</div>
-                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
+                <a href="{% url "download_media_data" content_user.username xform.id_string media.id %}" class="settings__files-download" {% trans "download" %}><i class="fa fa-download"></i></a>
                 {% if can_edit %}
-                <a href="{% url "onadata.apps.main.views.download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
+                <a href="{% url "download_media_data" content_user.username xform.id_string media.id %}?del=true" class="settings__files-delete" title="{% trans "remove" %}"><i class="fa fa-trash-o"></i></a>
                 {% endif %}
               </li>
             {% endfor %}
@@ -39,7 +38,7 @@
           {% if can_edit %}
           <button class="single-project__button single-project__add-media">+ Add Document</button>
 
-          <form action="{% url "onadata.apps.main.views.edit" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
+          <form action="{% url "edit_form" content_user.username xform.id_string %}" method="post" enctype="multipart/form-data" class="single-project__media-upload hidden">
               {% csrf_token %}
               <ul class="nav nav-tabs">
                   <li class="active"><a href="#media_upload" data-toggle="tab">Media Upload</a></li>
@@ -47,7 +46,7 @@
               </ul>
               <div class="tab-content">
                   <div class="tab-pane active" id="media_upload">
-                      <input type="file" multiple="" name="media" id="id_media">
+                      <input type="file" accept="{{ media_upload_types }}" multiple="" name="media" id="id_media">
                       <input type="submit" class="single-project__button" value="{% trans 'Upload' %}" />
                   </div>
                   <div class="tab-pane" id="media_url_add">
@@ -173,12 +172,6 @@ $(document).ready(function() {
               $('#' + el + '-private').toggle();
             });
         });
-      // add click event to all public (x)forms
-      $('a.clonexls').click(function(){
-        el = $(this);
-        clone_xlsform(el.data('url'), el.data('username'), el.data('id'));
-        return false;
-      });
     {% endif %}
     });
 

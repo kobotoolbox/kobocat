@@ -1,12 +1,8 @@
-import csv
-from datetime import datetime, date
+# coding: utf-8
 import json
 import os
 import re
-import six
-import tempfile
-from urlparse import urlparse
-from zipfile import ZipFile
+from datetime import datetime, date, time, timedelta
 
 from bson import json_util
 from django.conf import settings
@@ -16,48 +12,59 @@ from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
 from django.shortcuts import render_to_response
 from django.utils.text import slugify
-from openpyxl.date_time import SharedDate
+from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
+from pyxform.constants import SELECT_ALL_THAT_APPLY
 from pyxform.question import Question
 from pyxform.section import Section, RepeatingSection
-from savReaderWriter import SavWriter
-from json2xlsclient.client import Client
 
 from onadata.apps.logger.models import Attachment, Instance, XForm
-from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.viewer.models.export import Export
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.libs.utils.viewer_tools import create_attachments_zipfile
 from onadata.libs.utils.common_tags import (
-    ID, XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION, BAMBOO_DATASET_ID,
-    DELETEDAT, USERFORM_ID, INDEX, PARENT_INDEX, PARENT_TABLE_NAME,
-    SUBMISSION_TIME, UUID, TAGS, NOTES)
-from onadata.libs.exceptions import J2XException
-from .analyser_export import generate_analyser
-
+    ID,
+    XFORM_ID_STRING,
+    STATUS,
+    ATTACHMENTS,
+    GEOLOCATION,
+    DELETEDAT,
+    USERFORM_ID,
+    INDEX,
+    PARENT_INDEX,
+    PARENT_TABLE_NAME,
+    SUBMISSION_TIME,
+    UUID,
+    TAGS,
+    NOTES
+)
 
 # this is Mongo Collection where we will store the parsed submissions
 xform_instances = settings.MONGO_DB.instances
 
 QUESTION_TYPES_TO_EXCLUDE = [
-    u'note',
+    'note',
 ]
-# the bind type of select multiples that we use to compare
-MULTIPLE_SELECT_BIND_TYPE = u"select"
-GEOPOINT_BIND_TYPE = u"geopoint"
+GEOPOINT_BIND_TYPE = "geopoint"
 
 
-def encode_if_str(row, key, encode_dates=False):
+def to_str(row, key, encode_dates=False, empty_on_none=True):
     val = row.get(key)
 
-    if isinstance(val, six.string_types):
-        return val.encode('utf-8')
+    if empty_on_none and val is None:
+        return ''
 
     if encode_dates and isinstance(val, datetime):
-        return val.strftime('%Y-%m-%dT%H:%M:%S%z').encode('utf-8')
+        return val.strftime('%Y-%m-%dT%H:%M:%S%z')
 
     if encode_dates and isinstance(val, date):
-        return val.strftime('%Y-%m-%d').encode('utf-8')
+        return val.strftime('%Y-%m-%d')
+
+    if isinstance(val, bytes):
+        return val.decode()
+
+    if not isinstance(val, str):
+        return str(val)
 
     return val
 
@@ -66,7 +73,7 @@ def question_types_to_exclude(_type):
     return _type in QUESTION_TYPES_TO_EXCLUDE
 
 
-class DictOrganizer(object):
+class DictOrganizer:
 
     def set_dict_iterator(self, dict_iterator):
         self._dict_iterator = dict_iterator
@@ -80,14 +87,14 @@ class DictOrganizer(object):
             obs[table_name] = []
         this_index = len(obs[table_name])
         obs[table_name].append({
-            u"_parent_table_name": parent_table_name,
-            u"_parent_index": parent_index,
+            "_parent_table_name": parent_table_name,
+            "_parent_index": parent_index,
         })
         for k, v in d.items():
             if type(v) != dict and type(v) != list:
                 assert k not in obs[table_name][-1]
                 obs[table_name][-1][k] = v
-        obs[table_name][-1][u"_index"] = this_index
+        obs[table_name][-1]["_index"] = this_index
 
         for k, v in d.items():
             if type(v) == dict:
@@ -114,12 +121,12 @@ class DictOrganizer(object):
     def get_observation_from_dict(self, d):
         result = {}
         assert len(d.keys()) == 1
-        root_name = d.keys()[0]
+        root_name = list(d)[0]
         kwargs = {
             "d": d[root_name],
             "obs": result,
             "table_name": root_name,
-            "parent_table_name": u"",
+            "parent_table_name": "",
             "parent_index": -1,
         }
         self._build_obs_from_dict(**kwargs)
@@ -133,7 +140,7 @@ def dict_to_joined_export(data, index, indices, name):
     output = {}
     # TODO: test for _geolocation and attachment lists
     if isinstance(data, dict):
-        for key, val in data.iteritems():
+        for key, val in data.items():
             if isinstance(val, list) and key not in [NOTES, TAGS]:
                 output[key] = []
                 for child in val:
@@ -147,7 +154,7 @@ def dict_to_joined_export(data, index, indices, name):
                          PARENT_TABLE_NAME: name}
                     # iterate over keys within new_output and append to
                     # main output
-                    for out_key, out_val in new_output.iteritems():
+                    for out_key, out_val in new_output.items():
                         if isinstance(out_val, list):
                             if out_key not in output:
                                 output[out_key] = []
@@ -169,9 +176,14 @@ def dict_to_joined_export(data, index, indices, name):
     return output
 
 
-class ExportBuilder(object):
-    IGNORED_COLUMNS = [XFORM_ID_STRING, STATUS, ATTACHMENTS, GEOLOCATION,
-                       BAMBOO_DATASET_ID, DELETEDAT]
+class ExportBuilder:
+    IGNORED_COLUMNS = [
+        XFORM_ID_STRING,
+        STATUS,
+        ATTACHMENTS,
+        GEOLOCATION,
+        DELETEDAT,  # no longer used but may persist in old submissions
+    ]
     # fields we export but are not within the form's structure
     EXTRA_FIELDS = [ID, UUID, SUBMISSION_TIME, INDEX, PARENT_TABLE_NAME,
                     PARENT_INDEX, TAGS, NOTES]
@@ -197,7 +209,17 @@ class ExportBuilder(object):
     def string_to_date_with_xls_validation(cls, date_str):
         date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
         try:
-            SharedDate().datetime_to_julian(date_obj)
+            # SharedDate().datetime_to_julian(date_obj)
+            # Copy code from v2.0.5. Could not find where SharedDate is in
+            # latest version of openpyxl (and if it's useful)
+            if isinstance(date_obj, datetime):
+                to_excel(date_obj)
+            elif isinstance(date_obj, date):
+                to_excel(date_obj)
+            elif isinstance(date_obj, time):
+                time_to_days(date_obj)
+            elif isinstance(date_obj, timedelta):
+                timedelta_to_days(date_obj)
         except ValueError:
             return date_str
         else:
@@ -236,7 +258,7 @@ class ExportBuilder(object):
                         build_sections(
                             current_section, child, sections, select_multiples,
                             gps_fields, encoded_fields, field_delimiter)
-                elif isinstance(child, Question) and child.bind.get(u"type")\
+                elif isinstance(child, Question) and child.bind.get("type")\
                         not in QUESTION_TYPES_TO_EXCLUDE:
                     # add to survey_sections
                     if isinstance(child, Question):
@@ -246,7 +268,7 @@ class ExportBuilder(object):
                                 child.get_abbreviated_xpath(),
                                 field_delimiter),
                             'xpath': child_xpath,
-                            'type': child.bind.get(u"type")
+                            'type': child.bind.get("type")
                         })
 
                         if MongoHelper.is_attribute_invalid(child_xpath):
@@ -256,7 +278,7 @@ class ExportBuilder(object):
                                 {child_xpath: MongoHelper.encode(child_xpath)})
 
                     # if its a select multiple, make columns out of its choices
-                    if child.bind.get(u"type") == MULTIPLE_SELECT_BIND_TYPE\
+                    if child.type == SELECT_ALL_THAT_APPLY\
                             and self.SPLIT_SELECT_MULTIPLES:
                         for c in child.children:
                             _xpath = c.get_abbreviated_xpath()
@@ -277,7 +299,7 @@ class ExportBuilder(object):
                              for c in child.children])
 
                     # split gps fields within this section
-                    if child.bind.get(u"type") == GEOPOINT_BIND_TYPE:
+                    if child.bind.get("type") == GEOPOINT_BIND_TYPE:
                         # add columns for geopoint components
                         xpaths = DataDictionary.get_additional_geopoint_xpaths(
                             child.get_abbreviated_xpath())
@@ -314,20 +336,20 @@ class ExportBuilder(object):
             self.GROUP_DELIMITER)
 
     def section_by_name(self, name):
-        matches = filter(lambda s: s['name'] == name, self.sections)
+        matches = [s for s in self.sections if s['name'] == name]
         assert(len(matches) == 1)
         return matches[0]
 
     @classmethod
     def split_select_multiples(cls, row, select_multiples):
         # for each select_multiple, get the associated data and split it
-        for xpath, choices in select_multiples.iteritems():
+        for xpath, choices in select_multiples.items():
             # get the data matching this xpath
             data = row.get(xpath)
             selections = []
             if data:
                 selections = [
-                    u'{0}/{1}'.format(
+                    '{0}/{1}'.format(
                         xpath, selection) for selection in data.split()]
             if not cls.BINARY_SELECT_MULTIPLES:
                 row.update(dict(
@@ -344,7 +366,7 @@ class ExportBuilder(object):
     @classmethod
     def split_gps_components(cls, row, gps_fields):
         # for each gps_field, get associated data and split it
-        for xpath, gps_components in gps_fields.iteritems():
+        for xpath, gps_components in gps_fields.items():
             data = row.get(xpath)
             if data:
                 gps_parts = data.split()
@@ -354,7 +376,7 @@ class ExportBuilder(object):
 
     @classmethod
     def decode_mongo_encoded_fields(cls, row, encoded_fields):
-        for xpath, encoded_xpath in encoded_fields.iteritems():
+        for xpath, encoded_xpath in encoded_fields.items():
             if row.get(encoded_xpath):
                 val = row.pop(encoded_xpath)
                 row.update({xpath: val})
@@ -362,7 +384,7 @@ class ExportBuilder(object):
 
     @classmethod
     def decode_mongo_encoded_section_names(cls, data):
-        return dict([(MongoHelper.decode(k), v) for k, v in data.iteritems()])
+        return dict([(MongoHelper.decode(k), v) for k, v in data.items()])
 
     @classmethod
     def convert_type(cls, value, data_type):
@@ -411,74 +433,6 @@ class ExportBuilder(object):
 
         return row
 
-    def to_zipped_csv(self, path, data, *args):
-        def write_row(row, csv_writer, fields):
-            csv_writer.writerow(
-                [encode_if_str(row, field) for field in fields])
-
-        csv_defs = {}
-        for section in self.sections:
-            csv_file = NamedTemporaryFile(suffix=".csv")
-            csv_writer = csv.writer(csv_file)
-            csv_defs[section['name']] = {
-                'csv_file': csv_file, 'csv_writer': csv_writer}
-
-        # write headers
-        for section in self.sections:
-            fields = [element['title'] for element in section['elements']]\
-                + self.EXTRA_FIELDS
-            csv_defs[section['name']]['csv_writer'].writerow(
-                [f.encode('utf-8') for f in fields])
-
-        index = 1
-        indices = {}
-        survey_name = self.survey.name
-        for d in data:
-            # decode mongo section names
-            joined_export = dict_to_joined_export(d, index, indices,
-                                                  survey_name)
-            output = ExportBuilder.decode_mongo_encoded_section_names(
-                joined_export)
-            # attach meta fields (index, parent_index, parent_table)
-            # output has keys for every section
-            if survey_name not in output:
-                output[survey_name] = {}
-            output[survey_name][INDEX] = index
-            output[survey_name][PARENT_INDEX] = -1
-            for section in self.sections:
-                # get data for this section and write to csv
-                section_name = section['name']
-                csv_def = csv_defs[section_name]
-                fields = [
-                    element['xpath'] for element in
-                    section['elements']] + self.EXTRA_FIELDS
-                csv_writer = csv_def['csv_writer']
-                # section name might not exist within the output, e.g. data was
-                # not provided for said repeat - write test to check this
-                row = output.get(section_name, None)
-                if type(row) == dict:
-                    write_row(
-                        self.pre_process_row(row, section),
-                        csv_writer, fields)
-                elif type(row) == list:
-                    for child_row in row:
-                        write_row(
-                            self.pre_process_row(child_row, section),
-                            csv_writer, fields)
-            index += 1
-
-        # write zipfile
-        with ZipFile(path, 'w') as zip_file:
-            for section_name, csv_def in csv_defs.iteritems():
-                csv_file = csv_def['csv_file']
-                csv_file.seek(0)
-                zip_file.write(
-                    csv_file.name, "_".join(section_name.split("/")) + ".csv")
-
-        # close files when we are done
-        for section_name, csv_def in csv_defs.iteritems():
-            csv_def['csv_file'].close()
-
     @classmethod
     def get_valid_sheet_name(cls, desired_name, existing_names):
         # a sheet name has to be <= 31 characters and not a duplicate of an
@@ -508,14 +462,14 @@ class ExportBuilder(object):
                 data.get(PARENT_TABLE_NAME))
             work_sheet.append([data.get(f) for f in fields])
 
-        wb = Workbook(optimized_write=True)
+        wb = Workbook(write_only=True)
         work_sheets = {}
         # map of section_names to generated_names
         work_sheet_titles = {}
         for section in self.sections:
             section_name = section['name']
             work_sheet_title = ExportBuilder.get_valid_sheet_name(
-                "_".join(section_name.split("/")), work_sheet_titles.values())
+                "_".join(section_name.split("/")), list(work_sheet_titles.values()))
             work_sheet_titles[section_name] = work_sheet_title
             work_sheets[section_name] = wb.create_sheet(
                 title=work_sheet_title)
@@ -568,32 +522,10 @@ class ExportBuilder(object):
 
         wb.save(filename=path)
 
-    def to_analyser_export(self, path, data, username, xform_id_string, *args):
-        # Get the XLSForm.
-        xform = XForm.objects.get(user__username__iexact=username, id_string__exact=xform_id_string)
-        xlsform_io= xform.to_xlsform()
-
-        if xlsform_io is None:
-            raise RuntimeError('XLSForm `{}` for user `{}` could not be retrieved from storage.'.
-                               format(xform_id_string, username))
-
-        prefix = slugify('analyser_data__{}__{}'.format(username, xform_id_string))
-        with tempfile.NamedTemporaryFile('w+b', prefix=prefix, suffix='.xlsx',) as xls_data:
-            # Generate a new XLS export to work from.
-            self.to_xls_export(xls_data.name, data)
-            xls_data.file.seek(0)
-
-            # Generate the analyser file.
-            analyser_io= generate_analyser(xlsform_io, xls_data)
-
-        # Write the generated analyser file to the specified path
-        #   ...which itself points to a temp file.
-        with open(path, 'wb') as analyser_file:
-            analyser_file.write(analyser_io.read())
-
     def to_flat_csv_export(
             self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
+
         from onadata.apps.viewer.pandas_mongo_bridge import\
             CSVDataFrameBuilder
 
@@ -601,94 +533,6 @@ class ExportBuilder(object):
             username, id_string, filter_query, self.GROUP_DELIMITER,
             self.SPLIT_SELECT_MULTIPLES, self.BINARY_SELECT_MULTIPLES)
         csv_builder.export_to(path)
-
-    def to_zipped_sav(self, path, data, *args):
-        def write_row(row, csv_writer, fields):
-            sav_writer.writerow(
-                [encode_if_str(row, field, True) for field in fields])
-
-        sav_defs = {}
-
-        # write headers
-        for section in self.sections:
-            fields = [element['title'] for element in section['elements']]\
-                + self.EXTRA_FIELDS
-            c = 0
-            var_labels = {}
-            var_names = []
-            tmp_k = {}
-            for field in fields:
-                c += 1
-                var_name = 'var%d' % c
-                var_labels[var_name] = field
-                var_names.append(var_name)
-                tmp_k[field] = var_name
-
-            var_types = dict(
-                [(tmp_k[element['title']],
-                  0 if element['type'] in ['decimal', 'int'] else 255)
-                 for element in section['elements']]
-                + [(tmp_k[item],
-                    0 if item in ['_id', '_index', '_parent_index'] else 255)
-                   for item in self.EXTRA_FIELDS]
-            )
-            sav_file = NamedTemporaryFile(suffix=".sav")
-            sav_writer = SavWriter(sav_file.name, varNames=var_names,
-                                   varTypes=var_types,
-                                   varLabels=var_labels, ioUtf8=True)
-            sav_defs[section['name']] = {
-                'sav_file': sav_file, 'sav_writer': sav_writer}
-
-        index = 1
-        indices = {}
-        survey_name = self.survey.name
-        for d in data:
-            # decode mongo section names
-            joined_export = dict_to_joined_export(d, index, indices,
-                                                  survey_name)
-            output = ExportBuilder.decode_mongo_encoded_section_names(
-                joined_export)
-            # attach meta fields (index, parent_index, parent_table)
-            # output has keys for every section
-            if survey_name not in output:
-                output[survey_name] = {}
-            output[survey_name][INDEX] = index
-            output[survey_name][PARENT_INDEX] = -1
-            for section in self.sections:
-                # get data for this section and write to csv
-                section_name = section['name']
-                sav_def = sav_defs[section_name]
-                fields = [
-                    element['xpath'] for element in
-                    section['elements']] + self.EXTRA_FIELDS
-                sav_writer = sav_def['sav_writer']
-                row = output.get(section_name, None)
-                if type(row) == dict:
-                    write_row(
-                        self.pre_process_row(row, section),
-                        sav_writer, fields)
-                elif type(row) == list:
-                    for child_row in row:
-                        write_row(
-                            self.pre_process_row(child_row, section),
-                            sav_writer, fields)
-            index += 1
-
-        for section_name, sav_def in sav_defs.iteritems():
-            sav_def['sav_writer'].closeSavFile(
-                sav_def['sav_writer'].fh, mode='wb')
-
-        # write zipfile
-        with ZipFile(path, 'w') as zip_file:
-            for section_name, sav_def in sav_defs.iteritems():
-                sav_file = sav_def['sav_file']
-                sav_file.seek(0)
-                zip_file.write(
-                    sav_file.name, "_".join(section_name.split("/")) + ".sav")
-
-        # close files when we are done
-        for section_name, sav_def in sav_defs.iteritems():
-            sav_def['sav_file'].close()
 
 
 def dict_to_flat_export(d, parent_index=0):
@@ -706,9 +550,6 @@ def generate_export(export_type, extension, username, id_string,
     export_type_func_map = {
         Export.XLS_EXPORT: 'to_xls_export',
         Export.CSV_EXPORT: 'to_flat_csv_export',
-        Export.CSV_ZIP_EXPORT: 'to_zipped_csv',
-        Export.SAV_ZIP_EXPORT: 'to_zipped_sav',
-        Export.ANALYSER_EXPORT: 'to_analyser_export'
     }
 
     xform = XForm.objects.get(
@@ -735,9 +576,6 @@ def generate_export(export_type, extension, username, id_string,
     # generate filename
     basename = "%s_%s" % (
         id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
-    if export_type == Export.ANALYSER_EXPORT:
-        # Analyser exports should be distinguished by more than just their file extension.
-        basename= '{}_ANALYSER_{}'.format(id_string, datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     filename = basename + "." + extension
 
     # check filename is unique
@@ -776,22 +614,19 @@ def generate_export(export_type, extension, username, id_string,
     return export
 
 
-def query_mongo(username, id_string, query=None, hide_deleted=True):
+def query_mongo(username, id_string, query=None):
     query = json.loads(query, object_hook=json_util.object_hook)\
         if query else {}
     query = MongoHelper.to_safe_dict(query)
-    query[USERFORM_ID] = u'{0}_{1}'.format(username, id_string)
-    if hide_deleted:
-        # display only active elements
-        # join existing query with deleted_at_query on an $and
-        query = {"$and": [query, {"_deleted_at": None}]}
-    return xform_instances.find(query)
+    query[USERFORM_ID] = '{0}_{1}'.format(username, id_string)
+    return xform_instances.find(query, max_time_ms=settings.MONGO_DB_MAX_TIME_MS)
 
 
 def should_create_new_export(xform, export_type):
-    if Export.objects.filter(
-            xform=xform, export_type=export_type).count() == 0\
-            or Export.exports_outdated(xform, export_type=export_type):
+    if (
+        not Export.objects.filter(xform=xform, export_type=export_type).exists()
+        or Export.exports_outdated(xform, export_type=export_type)
+    ):
         return True
     return False
 
@@ -913,7 +748,6 @@ def kml_export_data(id_string, user):
     instances = Instance.objects.filter(
         xform__user=user,
         xform__id_string=id_string,
-        deleted_at=None,
         geom__isnull=False
     ).order_by('id')
     data_for_template = []
@@ -928,125 +762,4 @@ def kml_export_data(id_string, user):
                 'lng': point.x,
                 })
 
-
     return data_for_template
-
-
-def _get_records(instances):
-    records = []
-    for instance in instances:
-        record = instance.get_dict()
-        # Get the keys
-        for key in record:
-            if '/' in key:
-                # replace with _
-                record[key.replace('/', '_')]\
-                    = record.pop(key)
-        records.append(record)
-
-    return records
-
-
-def _get_server_from_metadata(xform, meta, token):
-    report_templates = MetaData.external_export(xform)
-
-    if meta:
-        try:
-            int(meta)
-        except ValueError:
-            raise Exception(u"Invalid metadata pk {0}".format(meta))
-
-        # Get the external server from the metadata
-        result = report_templates.get(pk=meta)
-        server = result.external_export_url
-        name = result.external_export_name
-    elif token:
-        server = token
-        name = None
-    else:
-        # Take the latest value in the metadata
-        if not report_templates:
-            raise Exception(
-                u"Could not find the template token: Please upload template.")
-
-        server = report_templates[0].external_export_url
-        name = report_templates[0].external_export_name
-
-    return server, name
-
-
-def generate_external_export(
-    export_type, username, id_string, export_id=None,  token=None,
-        filter_query=None, meta=None):
-
-    xform = XForm.objects.get(
-        user__username__iexact=username, id_string__exact=id_string)
-    user = User.objects.get(username=username)
-
-    server, name = _get_server_from_metadata(xform, meta, token)
-
-    # dissect the url
-    parsed_url = urlparse(server)
-
-    token = parsed_url.path[5:]
-
-    ser = parsed_url.scheme + '://' + parsed_url.netloc
-
-    records = _get_records(Instance.objects.filter(
-        xform__user=user, xform__id_string=id_string))
-
-    status_code = 0
-    if records and server:
-
-        try:
-
-            client = Client(ser)
-            response = client.xls.create(token, json.dumps(records))
-
-            if hasattr(client.xls.conn, 'last_response'):
-                status_code = client.xls.conn.last_response.status_code
-        except Exception as e:
-            raise J2XException(
-                u"J2X client could not generate report. Server -> {0},"
-                u" Error-> {1}".format(server, e)
-            )
-    else:
-        if not server:
-            raise J2XException(u"External server not set")
-        elif not records:
-            raise J2XException(
-                u"No record to export. Form -> {0}".format(id_string)
-            )
-
-    # get or create export object
-    if export_id:
-        export = Export.objects.get(id=export_id)
-    else:
-        export = Export.objects.create(xform=xform, export_type=export_type)
-
-    export.export_url = response
-    if status_code == 201:
-        export.internal_status = Export.SUCCESSFUL
-        export.filename = name + '-' + response[5:] if name else response[5:]
-        export.export_url = ser + response
-    else:
-        export.internal_status = Export.FAILED
-
-    export.save()
-
-    return export
-
-
-def upload_template_for_external_export(server, file_obj):
-
-    try:
-        client = Client(server)
-        response = client.template.create(template_file=file_obj)
-
-        if hasattr(client.template.conn, 'last_response'):
-            status_code = client.template.conn.last_response.status_code
-    except Exception as e:
-        response = str(e)
-        status_code = 500
-
-    return str(status_code) + '|' + response

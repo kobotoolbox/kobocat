@@ -1,40 +1,43 @@
-from django.db.models import Q
+# coding: utf-8
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
 from django.utils import six
 from rest_framework import filters
+from rest_framework_guardian import filters as guardian_filters
 from rest_framework.exceptions import ParseError
 
+from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
+from onadata.apps.logger.models import Instance, XForm
 
-from onadata.apps.logger.models import XForm, Instance
 
-
-class AnonDjangoObjectPermissionFilter(filters.DjangoObjectPermissionsFilter):
+class AnonDjangoObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
         """
         Anonymous user has no object permissions, return queryset as it is.
         """
-        if request.user.is_anonymous():
+        if request.user.is_anonymous:
             return queryset
 
-        return super(AnonDjangoObjectPermissionFilter, self)\
-            .filter_queryset(request, queryset, view)
+        return super().filter_queryset(request, queryset, view)
 
 
-class XFormListObjectPermissionFilter(AnonDjangoObjectPermissionFilter):
-    perm_format = '%(app_label)s.report_%(model_name)s'
-
-
-class OrganizationPermissionFilter(filters.DjangoObjectPermissionsFilter):
+class RowLevelObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
-        filtered_queryset = super(self.__class__, self).filter_queryset(
-            request, queryset, view)
-        org_users = set([group.team.organization
-                         for group in request.user.groups.all()] + [
-            o.user for o in filtered_queryset])
+        """
+        Return queryset as-is if user is anonymous or headers contain
+        a one-time authentication request token (validation of the token is
+        delegated to the permission class)
+        """
+        if (
+            request.user.is_anonymous
+            or OneTimeAuthToken.is_signed_request(request)[0]
+        ):
+            return queryset
 
-        return queryset.model.objects.filter(user__in=org_users)
+        return super().filter_queryset(request, queryset, view)
+
+
+class XFormListObjectPermissionFilter(RowLevelObjectPermissionFilter):
+    perm_format = '%(app_label)s.report_%(model_name)s'
 
 
 class XFormOwnerFilter(filters.BaseFilterBackend):
@@ -62,42 +65,6 @@ class XFormIdStringFilter(filters.BaseFilterBackend):
         return queryset
 
 
-class ProjectOwnerFilter(XFormOwnerFilter):
-    owner_prefix = 'organization'
-
-
-class AnonUserProjectFilter(filters.DjangoObjectPermissionsFilter):
-    def filter_queryset(self, request, queryset, view):
-        """
-        Anonymous user has no object permissions, return queryset as it is.
-        """
-        user = request.user
-        project_id = view.kwargs.get(view.lookup_field)
-
-        if user.is_anonymous():
-            return queryset.filter(Q(shared=True))
-
-        if project_id:
-            try:
-                int(project_id)
-            except ValueError:
-                raise ParseError(
-                    u"Invalid value for project_id '%s' must be a positive "
-                    "integer." % project_id)
-
-            # check if project is public and return it
-            try:
-                project = queryset.get(id=project_id)
-            except ObjectDoesNotExist:
-                raise Http404
-
-            if project.shared:
-                return queryset.filter(Q(id=project_id))
-
-        return super(AnonUserProjectFilter, self)\
-            .filter_queryset(request, queryset, view)
-
-
 class TagFilter(filters.BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         # filter by tags if available.
@@ -110,35 +77,72 @@ class TagFilter(filters.BaseFilterBackend):
         return queryset
 
 
-class XFormPermissionFilterMixin(object):
+class XFormPermissionFilterMixin:
+
+    @staticmethod
+    def _get_xform(request, queryset, view, keyword):
+        xform_id = request.query_params.get('xform')
+        if not xform_id:
+            lookup_field = view.lookup_field
+            lookup = view.kwargs.get(lookup_field)
+            if not lookup:
+                return
+            try:
+                xform_id = queryset.values_list(
+                    '{keyword}_id'.format(keyword=keyword), flat=True
+                ).get(pk=lookup)
+            except ObjectDoesNotExist:
+                raise Http404
+
+        try:
+            int(xform_id)
+        except ValueError:
+            raise ParseError(
+                'Invalid value for formid {form_id}.'.format(form_id=xform_id)
+            )
+
+        return get_object_or_404(XForm, pk=xform_id)
+
     def _xform_filter_queryset(self, request, queryset, view, keyword):
         """Use XForm permissions"""
-        xform = request.query_params.get('xform')
-        if xform:
-            try:
-                int(xform)
-            except ValueError:
-                raise ParseError(
-                    u"Invalid value for formid %s." % xform)
-            xform = get_object_or_404(XForm, pk=xform)
-            xform_qs = XForm.objects.filter(pk=xform.pk)
-        else:
-            xform_qs = XForm.objects.all()
-        xforms = super(XFormPermissionFilterMixin, self).filter_queryset(
-            request, xform_qs, view)
-        kwarg = {"%s__in" % keyword: xforms}
 
-        return queryset.filter(**kwarg)
+        xform_qs = XForm.objects.all()
+        xform = self._get_xform(request, queryset, view, keyword)
+
+        # Anonymous user should not be able to list any data from publicly
+        # shared xforms except if they know the direct link.
+        # if `xform` is provided,
+        # e.g.: `/api/v1/metadata.json?xform=1` for XForm #1
+        # or they access a metadata object directly
+        # e.g.: `/api/v1/metadata/5.json` for MetaData #5
+        # we include all publicly shared xforms
+        if xform:
+            if xform.shared:
+                kwargs = {keyword: xform.pk}
+                return queryset.filter(**kwargs)
+
+            xform_qs = xform_qs.filter(pk=xform.pk)
+
+        xforms = super(XFormPermissionFilterMixin, self).filter_queryset(
+            request, xform_qs, view
+        )
+
+        kwargs = {'{keyword}__in'.format(keyword=keyword): xforms}
+        return queryset.filter(**kwargs)
 
 
 class MetaDataFilter(XFormPermissionFilterMixin,
-                     filters.DjangoObjectPermissionsFilter):
+                     guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
-        return self._xform_filter_queryset(request, queryset, view, 'xform')
+        queryset = self._xform_filter_queryset(request, queryset, view, 'xform')
+        data_type = request.query_params.get('data_type')
+        if data_type is not None:
+            queryset = queryset.filter(data_type=data_type)
+        return queryset
 
 
 class AttachmentFilter(XFormPermissionFilterMixin,
-                       filters.DjangoObjectPermissionsFilter):
+                       guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
         queryset = self._xform_filter_queryset(request, queryset, view,
                                                'instance__xform')
@@ -148,7 +152,7 @@ class AttachmentFilter(XFormPermissionFilterMixin,
                 int(instance_id)
             except ValueError:
                 raise ParseError(
-                    u"Invalid value for instance %s." % instance_id)
+                    "Invalid value for instance %s." % instance_id)
             instance = get_object_or_404(Instance, pk=instance_id)
             queryset = queryset.filter(instance=instance)
 

@@ -1,3 +1,4 @@
+# coding: utf-8
 import glob
 import os
 
@@ -88,7 +89,7 @@ class TestInstanceCreation(TestCase):
             path = get_absolute_path(subdirectory)
             postdata = create_post_data(path)
             response = self.client.post('/bob/submission', postdata)
-            self.failUnlessEqual(response.status_code, 201)
+            self.assertEqual(response.status_code, 201)
 
     def test_submission_for_missing_form(self):
         xml_file = open(os.path.join(
@@ -97,4 +98,4 @@ class TestInstanceCreation(TestCase):
         ))
         postdata = {"xml_submission_file": xml_file}
         response = self.client.post('/bob/submission', postdata)
-        self.failUnlessEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 404)

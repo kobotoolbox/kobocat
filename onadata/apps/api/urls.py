@@ -1,35 +1,26 @@
-from django.conf.urls import url
+# coding: utf-8
+from django.urls import re_path
 from rest_framework import routers
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework.views import APIView
 
-from onadata.apps.api.viewsets.charts_viewset import ChartsViewSet
+from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
+from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
 from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
-from onadata.apps.api.viewsets.organization_profile_viewset import\
-    OrganizationProfileViewSet
-from onadata.apps.api.viewsets.project_viewset import ProjectViewSet
-from onadata.apps.api.viewsets.stats_viewset import StatsViewSet
-from onadata.apps.api.viewsets.team_viewset import TeamViewSet
-from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
-from onadata.apps.api.viewsets.user_profile_viewset import UserProfileViewSet
-from onadata.apps.api.viewsets.user_viewset import UserViewSet
-from onadata.apps.api.viewsets.submissionstats_viewset import\
-    SubmissionStatsViewSet
-from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
-from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
+from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 
 
 class MultiLookupRouter(routers.DefaultRouter):
 
     def __init__(self, *args, **kwargs):
-        super(MultiLookupRouter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.lookups_routes = []
         self.lookups_routes.append(routers.Route(
             url=r'^{prefix}/{lookups}{trailing_slash}$',
@@ -40,12 +31,14 @@ class MultiLookupRouter(routers.DefaultRouter):
                 'delete': 'destroy'
             },
             name='{basename}-detail',
+            detail=True,
             initkwargs={'suffix': 'Instance'}
         ))
         self.lookups_routes.append(self.make_routes('lookup'))
         self.lookups_routes.append(self.make_routes('lookups'))
         # Dynamically generated routes.
         # Generated using @action or @link decorators on methods of the viewset
+
         self.lookups_routes.append(routers.Route(
             url=[
                 r'^{prefix}/{lookups}/{methodname}{trailing_slash}$',
@@ -54,6 +47,7 @@ class MultiLookupRouter(routers.DefaultRouter):
                 '{httpmethod}': '{methodname}',
             },
             name='{basename}-{methodnamehyphen}',
+            detail=True,
             initkwargs={}
         ))
 
@@ -66,11 +60,10 @@ class MultiLookupRouter(routers.DefaultRouter):
                 'post': 'create'
             },
             name='{basename}-list',
+            detail=False,
             initkwargs={'suffix': 'List'})
 
     def get_extra_lookup_regexes(self, route):
-
-
         ret = []
         base_regex = '(?P<{lookup_field}>[^/]+)'
         if 'extra_lookup_fields' in route.initkwargs:
@@ -80,8 +73,6 @@ class MultiLookupRouter(routers.DefaultRouter):
 
     def get_lookup_regexes(self, viewset):
         ret = []
-
-
         lookup_fields = getattr(viewset, 'lookup_fields', None)
         if lookup_fields:
             for i in range(1, len(lookup_fields)):
@@ -97,35 +88,33 @@ class MultiLookupRouter(routers.DefaultRouter):
 
     def get_lookup_routes(self, viewset):
         ret = [self.routes[0]]
-        # Determine any `@action` or `@link` decorated methods on the viewset
-        dynamic_routes = []
-        for methodname in dir(viewset):
-            attr = getattr(viewset, methodname)
-            httpmethods = getattr(attr, 'bind_to_methods', None)
-            if httpmethods:
-                httpmethods = [method.lower() for method in httpmethods]
-                dynamic_routes.append((httpmethods, methodname))
-
         for route in self.lookups_routes:
             if route.mapping == {'{httpmethod}': '{methodname}'}:
-                # Dynamic routes (@link or @action decorator)
-                for httpmethods, methodname in dynamic_routes:
+                for extra_action in viewset.get_extra_actions():
+                    methodname = extra_action.__name__
+                    mapping = extra_action.mapping
+                    detail = extra_action.detail
                     initkwargs = route.initkwargs.copy()
-                    initkwargs.update(getattr(viewset, methodname).kwargs)
-                    mapping = dict(
-                        (httpmethod, methodname) for httpmethod in httpmethods)
-                    name = routers.replace_methodname(route.name, methodname)
+                    initkwargs.update(extra_action.kwargs)
+                    name = self.replace_methodname(route.name, methodname)
                     if 'extra_lookup_fields' in initkwargs:
                         uri = route.url[1]
-                        uri = routers.replace_methodname(uri, methodname)
+                        uri = self.replace_methodname(uri, methodname)
                         ret.append(routers.Route(
-                            url=uri, mapping=mapping, name='%s-extra' % name,
+                            url=uri,
+                            mapping=mapping,
+                            name=f'{name}-extra',
                             initkwargs=initkwargs,
+                            detail=detail
                         ))
-                    uri = routers.replace_methodname(route.url[0], methodname)
+
+                    uri = self.replace_methodname(route.url[0], methodname)
                     ret.append(routers.Route(
-                        url=uri, mapping=mapping, name=name,
+                        url=uri,
+                        mapping=mapping,
+                        name=name,
                         initkwargs=initkwargs,
+                        detail=detail
                     ))
             else:
                 # Standard route
@@ -138,7 +127,7 @@ class MultiLookupRouter(routers.DefaultRouter):
         if lookup_fields:
             ret = self.get_lookup_routes(viewset)
         else:
-            ret = super(MultiLookupRouter, self).get_routes(viewset)
+            ret = super().get_routes(viewset)
         return ret
 
     def get_api_root_view(self):
@@ -155,25 +144,16 @@ class MultiLookupRouter(routers.DefaultRouter):
 ## KoBo JSON Rest API endpoints:
 
 ### Data
-* [/api/v1/charts](/api/v1/charts) - List, Retrieve Charts of collected data
 * [/api/v1/data](/api/v1/data) - List, Retrieve submission data
-* [/api/v1/stats](/api/v1/stats) - Summary statistics
 
 ### Forms
 * [/api/v1/forms](/api/v1/forms) - List, Retrieve form information
 * [/api/v1/media](/api/v1/media) - List, Retrieve media attachments
 * [/api/v1/metadata](/api/v1/metadata) - List, Retrieve form metadata
-* [/api/v1/projects](/api/v1/projects) - List, Retrieve, Create,
- Update organization projects, forms
 * [/api/v1/submissions](/api/v1/submissions) - Submit XForms to a form
 
 ### Users and Organizations
-* [/api/v1/orgs](/api/v1/orgs) - List, Retrieve, Create,
-Update organization and organization info
-* [/api/v1/profiles](/api/v1/profiles) - List, Create, Update user information
-* [/api/v1/teams](/api/v1/teams) - List, Retrieve, Create, Update teams
 * [/api/v1/user](/api/v1/user) - Return authenticated user profile info
-* [/api/v1/users](/api/v1/users) - List, Retrieve user data
 
 ## Status Codes
 
@@ -331,17 +311,17 @@ Example using curl:
         ret = []
 
         if self.include_root_view:
-            root_url = url(r'^$', self.get_api_root_view(),
-                           name=self.root_view_name)
+            root_url = re_path(r'^$', self.get_api_root_view(),
+                               name=self.root_view_name)
             ret.append(root_url)
         for prefix, viewset, basename in self.registry:
             lookup = self.get_lookup_regex(viewset)
             lookup_list = self.get_lookup_regexes(viewset)
             if lookup_list:
                 # lookup = lookups[0]
-                lookup_list = [u'/'.join(k) for k in lookup_list]
+                lookup_list = ['/'.join(k) for k in lookup_list]
             else:
-                lookup_list = [u'']
+                lookup_list = ['']
             routes = self.get_routes(viewset)
             for route in routes:
                 mapping = self.get_method_map(viewset, route.mapping)
@@ -357,9 +337,27 @@ Example using curl:
                     )
                     view = viewset.as_view(mapping, **route.initkwargs)
                     name = route.name.format(basename=basename)
-                    ret.append(url(regex, view, name=name))
+                    ret.append(re_path(regex, view, name=name))
         if self.include_format_suffixes:
             ret = format_suffix_patterns(ret, allowed=['[a-z0-9]+'])
+        return ret
+
+    @staticmethod
+    def replace_methodname(format_string, methodname):
+        """
+        Taken from old version of DRF for retro-compatibility.
+        (AFAIK, this method has been dropped in DRF 3.8)
+
+        Partially format a format_string, swapping out any
+        '{methodname}' or '{methodnamehyphen}' components.
+
+        @ToDo If DRF got rid of it, we should too? Let's find a better way to
+        achieve the same goal.
+        """
+        methodnamehyphen = methodname.replace('_', '-')
+        ret = format_string
+        ret = ret.replace('{methodname}', methodname)
+        ret = ret.replace('{methodnamehyphen}', methodnamehyphen)
         return ret
 
 
@@ -378,28 +376,23 @@ class MultiLookupRouterWithPatchList(MultiLookupRouter):
                 'delete': 'bulk_delete'
             },
             name='{basename}-list',
+            detail=False,
             initkwargs={'suffix': 'List'})
 
 
 router = MultiLookupRouter(trailing_slash=False)
-router.register(r'users', UserViewSet)
 router.register(r'user', ConnectViewSet)
-router.register(r'profiles', UserProfileViewSet)
-router.register(r'orgs', OrganizationProfileViewSet)
 router.register(r'forms', XFormViewSet)
-router.register(r'projects', ProjectViewSet)
-router.register(r'teams', TeamViewSet)
-router.register(r'notes', NoteViewSet, base_name='notes')
-router.register(r'stats', StatsViewSet, base_name='stats')
-router.register(r'stats/submissions', SubmissionStatsViewSet,
-                base_name='submissionstats')
-router.register(r'charts', ChartsViewSet, base_name='chart')
-router.register(r'metadata', MetaDataViewSet, base_name='metadata')
-router.register(r'media', AttachmentViewSet, base_name='attachment')
-router.register(r'formlist', XFormListApi, base_name='formlist')
-router.register(r'submissions', XFormSubmissionApi, base_name='submissions')
-router.register(r'briefcase', BriefcaseApi, base_name='briefcase')
+router.register(r'notes', NoteViewSet, basename='notes')
+router.register(r'metadata', MetaDataViewSet, basename='metadata')
+router.register(r'media', AttachmentViewSet, basename='attachment')
+router.register(r'formlist', XFormListApi, basename='formlist')
+router.register(r'submissions', XFormSubmissionApi, basename='submissions')
+router.register(r'briefcase', BriefcaseApi, basename='briefcase')
 
 
 router_with_patch_list = MultiLookupRouterWithPatchList(trailing_slash=False)
-router_with_patch_list.register(r'data', DataViewSet, base_name='data')
+router_with_patch_list.register(r'data', DataViewSet, basename='data')
+
+#router_api_v1 = ExtendedDefaultRouter()
+#data_routes = router_api_v1.register(r'data', DataViewSet, basename='data')

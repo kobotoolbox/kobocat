@@ -1,31 +1,41 @@
-# -*- coding: utf-8 -*-
-from datetime import datetime
+# coding: utf-8
+import pytz
+from datetime import date
 from hashlib import sha256
 
 import reversion
-
-from django.db.models import F
-from django.db import transaction
-from django.contrib.gis.db import models
-from django.db.models.signals import post_save
-from django.db.models.signals import post_delete
 from django.contrib.auth.models import User
+from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
+from django.db import transaction
+from django.db.models import F
+from django.db.models.signals import post_delete
+from django.db.models.signals import post_save
 from django.utils import timezone
-from django.utils.translation import ugettext as _
+from django.utils.encoding import smart_text
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
+from onadata.apps.logger.exceptions import FormInactiveError
+from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.xform_instance_parser import XFormInstanceParser,\
+from onadata.apps.logger.models.submission_counter import SubmissionCounter
+from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
-from onadata.libs.utils.common_tags import ATTACHMENTS, BAMBOO_DATASET_ID,\
-    DELETEDAT, GEOLOCATION, ID, MONGO_STRFTIME, NOTES, SUBMISSION_TIME, TAGS,\
-    UUID, XFORM_ID_STRING, SUBMITTED_BY
+from onadata.libs.utils.common_tags import (
+    ATTACHMENTS,
+    GEOLOCATION,
+    ID,
+    MONGO_STRFTIME,
+    NOTES,
+    SUBMISSION_TIME,
+    TAGS,
+    UUID,
+    XFORM_ID_STRING,
+    SUBMITTED_BY
+)
 from onadata.libs.utils.model_tools import set_uuid
-from onadata.apps.logger.fields import LazyDefaultBooleanField
-from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
 
 
 # need to establish id_string of the xform before we run get_dict since
@@ -33,7 +43,7 @@ from onadata.apps.logger.exceptions import DuplicateUUIDError, FormInactiveError
 def get_id_string_from_xml_str(xml_str):
     xml_obj = clean_and_parse_xml(xml_str)
     root_node = xml_obj.documentElement
-    id_string = root_node.getAttribute(u"id")
+    id_string = root_node.getAttribute("id")
 
     if len(id_string) == 0:
         # may be hidden in submission/data/id_string
@@ -56,7 +66,7 @@ def submission_time():
     return timezone.now()
 
 
-def update_xform_submission_count(sender, instance, created, **kwargs):
+def update_xform_submission_count(instance, created, **kwargs):
     if not created:
         return
     # `defer_counting` is a Python-only attribute
@@ -81,6 +91,56 @@ def update_xform_submission_count(sender, instance, created, **kwargs):
         )
 
 
+def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
+    """
+    Formerly, "deleting" a submission would set a flag on the `Instance`,
+    causing the `date_modified` attribute to be set to the current timestamp.
+    `Export.exports_outdated()` relied on this to detect when a new `Export`
+    needed to be generated due to submission deletion, but now that we always
+    delete `Instance`s outright, this trick doesn't work. This kludge simply
+    makes every `Export` for a form appear stale by nulling out its
+    `time_of_last_submission` attribute.
+    """
+    # Avoid circular import
+    try:
+        export_model = instance.xform.export_set.model
+    except XForm.DoesNotExist:
+        return
+    f = instance.xform.export_set.filter(
+        # Match the statuses considered by `Export.exports_outdated()`
+        internal_status__in=[export_model.SUCCESSFUL, export_model.PENDING],
+    )
+    f.update(time_of_last_submission=None)
+
+
+def update_user_submissions_counter(instance, created, **kwargs):
+    if not created:
+        return
+    if getattr(instance, 'defer_counting', False):
+        return
+
+    # Querying the database this way because it's faster than querying
+    # the instance model for the data
+    user_id = XForm.objects.values_list('user_id', flat=True).get(
+        pk=instance.xform_id
+    )
+    date_created = instance.date_created
+    first_day_of_month = date(
+        year=date_created.year, month=date_created.month, day=1
+    )
+
+    queryset = SubmissionCounter.objects.filter(
+        user_id=user_id, timestamp=first_day_of_month
+    )
+    if not queryset.exists():
+        SubmissionCounter.objects.create(
+            user_id=user_id,
+            timestamp=first_day_of_month,
+        )
+
+    queryset.update(count=F('count') + 1)
+
+
 def update_xform_submission_count_delete(sender, instance, **kwargs):
     try:
         xform = XForm.objects.select_for_update().get(pk=instance.xform.pk)
@@ -90,7 +150,9 @@ def update_xform_submission_count_delete(sender, instance, **kwargs):
         xform.num_of_submissions -= 1
         if xform.num_of_submissions < 0:
             xform.num_of_submissions = 0
-        xform.save(update_fields=['num_of_submissions'])
+        # Update `date_modified` to detect outdated exports
+        # with deleted instances
+        xform.save(update_fields=['num_of_submissions', 'date_modified'])
         profile_qs = User.profile.get_queryset()
         try:
             profile = profile_qs.select_for_update()\
@@ -113,9 +175,9 @@ class Instance(models.Model):
     xml = models.TextField()
     xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,
                                 default=DEFAULT_XML_HASH)
-    user = models.ForeignKey(User, related_name='instances', null=True)
-    xform = models.ForeignKey(XForm, null=True, related_name='instances')
-    survey_type = models.ForeignKey(SurveyType)
+    user = models.ForeignKey(User, related_name='instances', null=True, on_delete=models.CASCADE)
+    xform = models.ForeignKey(XForm, null=True, related_name='instances', on_delete=models.CASCADE)
+    survey_type = models.ForeignKey(SurveyType, on_delete=models.CASCADE)
 
     # shows when we first received this instance
     date_created = models.DateTimeField(auto_now_add=True)
@@ -123,19 +185,19 @@ class Instance(models.Model):
     # this will end up representing "date last parsed"
     date_modified = models.DateTimeField(auto_now=True)
 
-    # this will end up representing "date instance was deleted"
+    # this formerly represented "date instance was deleted".
+    # do not use it anymore.
     deleted_at = models.DateTimeField(null=True, default=None)
 
     # ODK keeps track of three statuses for an instance:
     # incomplete, submitted, complete
     # we add a fourth status: submitted_via_web
     status = models.CharField(max_length=20,
-                              default=u'submitted_via_web')
-    uuid = models.CharField(max_length=249, default=u'', db_index=True)
+                              default='submitted_via_web')
+    uuid = models.CharField(max_length=249, default='', db_index=True)
 
     # store an geographic objects associated with this instance
     geom = models.GeometryCollectionField(null=True)
-    objects = models.GeoManager()
 
     tags = TaggableManager()
 
@@ -162,15 +224,6 @@ class Instance(models.Model):
         """
         return self.xform
 
-    @classmethod
-    def set_deleted_at(cls, instance_id, deleted_at=timezone.now()):
-        try:
-            instance = cls.objects.get(id=instance_id)
-        except cls.DoesNotExist:
-            pass
-        else:
-            instance.set_deleted(deleted_at)
-
     def _check_active(self, force):
         """Check that form is active and raise exception if not.
 
@@ -188,7 +241,7 @@ class Instance(models.Model):
 
         if len(geo_xpaths):
             for xpath in geo_xpaths:
-                geometry = [float(s) for s in doc.get(xpath, u'').split()]
+                geometry = [float(s) for s in doc.get(xpath, '').split()]
 
                 if len(geometry):
                     lat, lng = geometry[0:2]
@@ -234,15 +287,15 @@ class Instance(models.Model):
         set_uuid(self)
 
     def _populate_xml_hash(self):
-        '''
+        """
         Populate the `xml_hash` attribute of this `Instance` based on the content of the `xml`
         attribute.
-        '''
+        """
         self.xml_hash = self.get_hash(self.xml)
 
     @classmethod
     def populate_xml_hashes_for_instances(cls, usernames=None, pk__in=None, repopulate=False):
-        '''
+        """
         Populate the `xml_hash` field for `Instance` instances limited to the specified users
         and/or DB primary keys.
 
@@ -253,7 +306,7 @@ class Instance(models.Model):
         :param bool repopulate: Optional argument to force repopulation of existing hashes.
         :returns: Total number of `Instance`s updated.
         :rtype: int
-        '''
+        """
 
         filter_kwargs = dict()
         if usernames:
@@ -316,8 +369,7 @@ class Instance(models.Model):
         data = {
             UUID: self.uuid,
             ID: self.id,
-            BAMBOO_DATASET_ID: self.xform.bamboo_dataset,
-            self.USERFORM_ID: u'%s_%s' % (
+            self.USERFORM_ID: '%s_%s' % (
                 self.user.username,
                 self.xform.id_string),
             ATTACHMENTS: [a.media_file.name for a in
@@ -326,9 +378,6 @@ class Instance(models.Model):
             TAGS: list(self.tags.names()),
             NOTES: self.get_notes()
         }
-
-        if isinstance(self.instance.deleted_at, datetime):
-            data[DELETEDAT] = self.deleted_at.strftime(MONGO_STRFTIME)
 
         d.update(data)
 
@@ -347,16 +396,15 @@ class Instance(models.Model):
 
     @staticmethod
     def get_hash(input_string):
-        '''
+        """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param basestring input_sting: The string to be hashed.
+        :param string_types input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
-        '''
-        if isinstance(input_string, unicode):
-            input_string = input_string.encode('utf-8')
-        return sha256(input_string).hexdigest()
+        """
+        input_string = smart_text(input_string)
+        return sha256(input_string.encode()).hexdigest()
 
     @property
     def point(self):
@@ -380,14 +428,7 @@ class Instance(models.Model):
         if self.validation_status is None:
             self.validation_status = {}
 
-        super(Instance, self).save(*args, **kwargs)
-
-    def set_deleted(self, deleted_at=timezone.now()):
-        self.deleted_at = deleted_at
-        self.save()
-        # force submission count re-calculation
-        self.xform.submission_count(force_update=True)
-        self.parsed_instance.save()
+        super().save(*args, **kwargs)
 
     def get_validation_status(self):
         """
@@ -405,6 +446,12 @@ class Instance(models.Model):
 post_save.connect(update_xform_submission_count, sender=Instance,
                   dispatch_uid='update_xform_submission_count')
 
+post_delete.connect(nullify_exports_time_of_last_submission, sender=Instance,
+                    dispatch_uid='nullify_exports_time_of_last_submission')
+
+post_save.connect(update_user_submissions_counter, sender=Instance,
+                  dispatch_uid='update_user_submissions_counter')
+
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
 
@@ -418,10 +465,10 @@ class InstanceHistory(models.Model):
         app_label = 'logger'
 
     xform_instance = models.ForeignKey(
-        Instance, related_name='submission_history')
+        Instance, related_name='submission_history', on_delete=models.CASCADE)
     xml = models.TextField()
     # old instance id
-    uuid = models.CharField(max_length=249, default=u'')
+    uuid = models.CharField(max_length=249, default='')
 
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)

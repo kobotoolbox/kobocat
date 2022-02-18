@@ -1,6 +1,6 @@
+# coding: utf-8
 import os
 import sys
-import codecs
 import unittest
 
 from django.core.management import call_command
@@ -46,7 +46,7 @@ class TestPublishXLS(TestBase):
         self.xform = XForm.objects.order_by('id').reverse()[0]
         data_dictionary = self.xform.data_dictionary()
         is_updated_form = len([e.name for e in data_dictionary.survey_elements
-                               if e.name == u'preferred_means']) > 0
+                               if e.name == 'preferred_means']) > 0
         self.assertTrue(is_updated_form)
 
     @unittest.skip('Fails under Django 1.6')
@@ -64,15 +64,13 @@ class TestPublishXLS(TestBase):
         xform.xml = xform.xml.replace(
             xform.uuid, '663123a849e54bffa8f9832ef016bfac')
         xform.save()
-        f = codecs.open(test_xml_file_path, 'w', encoding="utf-8")
+        f = open(test_xml_file_path, 'wb')
         f.write(xform.xml)
         f.close()
-        with codecs.open(
-                xml_file_path, 'rb', encoding="utf-8") as expected_file:
-            with codecs.open(
-                    test_xml_file_path, 'rb', encoding="utf-8") as actual_file:
+        with open(xml_file_path, 'rb') as expected_file:
+            with open(test_xml_file_path, 'rb') as actual_file:
                 self.assertMultiLineEqual(
-                    expected_file.read(), actual_file.read())
+                    expected_file.read().decode(), actual_file.read().decode())
         os.remove(test_xml_file_path)
 
     def test_report_exception_with_exc_info(self):

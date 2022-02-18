@@ -1,13 +1,14 @@
-from django.test import TransactionTestCase
+# coding: utf-8
+from django.test import TestCase
 
 from onadata.libs.serializers.attachment_serializer import get_path
 
 
-class TestAttachmentSerializer(TransactionTestCase):
+class TestAttachmentSerializer(TestCase):
 
     def setUp(self):
         """
-        self.data is a json represenatation of an xform
+        self.data is a json representation of an xform
         """
         self.data = {
             "name": "photo_in_group",
@@ -59,4 +60,4 @@ class TestAttachmentSerializer(TransactionTestCase):
 
     def test_get_field_xpath_of_an_object(self):
         path = get_path(self.data, self.question)
-        self.assertEquals(path, "group1/group2/photograph")
+        self.assertEqual(path, "group1/group2/photograph")
