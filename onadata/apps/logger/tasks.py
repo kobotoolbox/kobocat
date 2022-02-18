@@ -113,15 +113,15 @@ def generate_stats_zip(output_filename):
 
 
 @shared_task
-@lock(key='remove_s3_orphans', timeout=3600)
-def remove_s3_orphans():
-    call_command('remove_s3_orphans')
-
-
-@shared_task
-@lock(key='remove_revisions', timeout=3600)
+@lock(key='remove_revisions', timeout=604800)  # Lock for one week
 def remove_revisions():
     # We can also use `keep=1` to keep at least
     # on version of each object.
     # e.g.: `call_command('remove_revisions', days=90, keep=1)`
     call_command('remove_revisions', days=90)
+
+
+@shared_task
+@lock(key='remove_storage_orphans', timeout=604800)  # Lock for one week
+def remove_storage_orphans():
+    call_command('remove_storage_orphans')
