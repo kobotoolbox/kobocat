@@ -332,7 +332,6 @@ class XFormInstanceParser:
                 logger = logging.getLogger("console_logger")
                 logger.debug("Skipping duplicate attribute: %s"
                              " with value %s" % (key, value))
-                logger.debug(str(all_attributes))
             else:
                 self._attributes[key] = value
 

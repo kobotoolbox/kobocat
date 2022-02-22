@@ -211,7 +211,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'taggit',
     'readonly',
-    'onadata.apps.logger',
+    'onadata.apps.logger.LoggerAppConfig',
     'onadata.apps.viewer',
     'onadata.apps.main',
     'onadata.apps.restservice',
