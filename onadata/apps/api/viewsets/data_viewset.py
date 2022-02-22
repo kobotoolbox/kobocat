@@ -24,6 +24,7 @@ from onadata.apps.api.tools import add_tags_to_instance, \
     remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.instance import Instance
+from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, ParsedInstance
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
@@ -588,7 +589,7 @@ Delete a specific submission in a form
     )
     def enketo(self, request, *args, **kwargs):
         # keep `/enketo` for retro-compatibility
-        return self._enketo_request(request, action_='edit', *args, **kwargs)
+        return self.enketo_edit(request, *args, **kwargs)
 
     @action(
         detail=True,
@@ -596,6 +597,21 @@ Delete a specific submission in a form
         permission_classes=[EnketoSubmissionEditPermissions],
     )
     def enketo_edit(self, request, *args, **kwargs):
+        """
+        Trying to edit in Enketo while `profile.require_auth == False` leads to
+        an infinite authentication loop because Enketo never sends credentials
+        unless it receives a 401 response to an unauthenticated HEAD request.
+        There's no way to send such a response for editing only while
+        simultaneously allowing anonymous submissions to the same endpoint.
+        Avoid the infinite loop by blocking doomed requests here and returning
+        a helpful error message.
+        """
+        profile = UserProfile.objects.get_or_create(user=request.user)[0]
+        if not profile.require_auth:
+            raise ValidationError(_(
+                'Cannot edit submissions while "Require authentication to see '
+                'forms and submit data" is disabled for your account'
+            ))
         return self._enketo_request(request, action_='edit', *args, **kwargs)
 
     @action(

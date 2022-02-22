@@ -8,6 +8,5 @@ class LoggerAppConfig(AppConfig):
 
     def ready(self):
         # Makes sure all signal handlers are connected
-        # Uncomment the lines below if you need signals
         from onadata.apps.logger import signals
         super().ready()
