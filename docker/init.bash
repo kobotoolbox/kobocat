@@ -27,7 +27,7 @@ else
     if ! diff -q "${KOBOCAT_SRC_DIR}/dependencies/pip/dev.txt" "${TMP_DIR}/pip_dependencies.txt"
     then
         echo "Syncing development pip dependencies..."
-        gosu "${UWSGI_USER}" pip-sync dependencies/pip/dev.txt 1>/dev/null
+        pip-sync dependencies/pip/dev.txt 1>/dev/null
         cp "dependencies/pip/dev.txt" "${TMP_DIR}/pip_dependencies.txt"
     fi
 fi
