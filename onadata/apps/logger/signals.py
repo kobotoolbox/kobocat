@@ -7,13 +7,13 @@ from onadata.apps.logger.models.attachment import Attachment
 
 
 @receiver(pre_delete, sender=Attachment)
-def post_delete_asset(instance, **kwargs):
-    # Unfortunately, it seems that Django does not call Model.delete() on
-    # delete CASCADE. But this signal is called though.
+def pre_delete_attachment(attachment, **kwargs):
+    # "Model.delete() isn’t called on related models, but the pre_delete and
+    # post_delete signals are sent for all deleted objects." See
+    # https://docs.djangoproject.com/en/2.2/ref/models/fields/#django.db.models.CASCADE
     # We want to delete all files when an Instance (or Attachment) object is
     # deleted.
     try:
-        instance.media_file.delete()
+        attachment.media_file.delete()
     except Exception as e:
-        logger = logging.getLogger('console_logger')
-        logger.error(str(e), exc_info=True)
+        logging.error('Failed to delete attachment: ' + str(e), exc_info=True)
