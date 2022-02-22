@@ -4,7 +4,6 @@ import re
 import sys
 import traceback
 from datetime import date, datetime
-from xml.etree import ElementTree as ET
 from xml.parsers.expat import ExpatError
 
 import pytz
