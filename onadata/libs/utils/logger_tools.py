@@ -53,7 +53,8 @@ from onadata.apps.logger.xform_instance_parser import (
     clean_and_parse_xml,
     get_uuid_from_xml,
     get_deprecated_uuid_from_xml,
-    get_submission_date_from_xml)
+    get_submission_date_from_xml,
+)
 from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
