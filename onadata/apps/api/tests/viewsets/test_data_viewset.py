@@ -300,7 +300,9 @@ class TestDataViewSet(TestBase):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertTrue(
                 response.data[0].startswith(
-                    'Cannot edit submissions while "Require authentication'
+                    'Cannot edit submissions while "Require authentication '
+                    'to see forms and submit data" is disabled for your '
+                    'account'
                 )
             )
 
