@@ -325,8 +325,18 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 # The maximum size (in bytes) that an upload will be before it gets streamed to the file system # noqa
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
-# File permissions provided explicitly because by default it sets 0o600 when streamed to the file system. 
-# The absence of this setting causes nginx to not be able to read larger submission attachments and return a 403 Forbidden error.
+# When an uploaded file exceeds FILE_UPLOAD_MAX_MEMORY_SIZE, Django streams it
+# to the OS' temporary directory, which usually sets restrictive owner-only
+# read permissions on files created within it. Django then *moves* the file to
+# its destination path:
+# https://github.com/django/django/blob/9d13d8c10b18da9f8a9a7ea9325c1e2a23279c72/django/core/files/storage.py#L271-L273
+# By contrast, smaller files are stored in memory and then written directly to
+# their destination paths, where they usually receive less-restrictive
+# permissions. The Django documentation recommends explicitly setting the
+# permissions of uploaded files to avoid this discrepancy. This solves the
+# problem of NGINX returning 403 when large submission attachments are
+# requested. See
+# https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/#file-upload-permissions
 FILE_UPLOAD_PERMISSIONS = 0o644
 
 LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
