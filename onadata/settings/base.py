@@ -121,6 +121,7 @@ STATICFILES_FINDERS = [
 MIDDLEWARE = [
     'onadata.koboform.redirect_middleware.ConditionalRedirects',
     'reversion.middleware.RevisionMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -314,6 +315,12 @@ CSRF_COOKIE_HTTPONLY = True
 if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+if os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False") == "True":
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+if os.environ.get("SECURE_HSTS_PRELOAD", "False") == "True":
+    SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_SECONDS = os.environ.get("SECURE_HSTS_SECONDS", 0)
 
 # Limit sessions to 1 week (the default is 2 weeks)
 SESSION_COOKIE_AGE = 604800
