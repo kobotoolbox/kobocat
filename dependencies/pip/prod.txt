@@ -62,6 +62,8 @@ django-cors-headers==3.4.0
     # via -r dependencies/pip/requirements.in
 django-db-readonly==0.6.0
     # via -r dependencies/pip/requirements.in
+django-environ==0.8.1
+    # via -r dependencies/pip/requirements.in
 django-extensions==3.0.3
     # via -r dependencies/pip/requirements.in
 django-filter==2.3.0
