@@ -705,7 +705,7 @@ MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
 # Sentry settings              #
 ################################
 
-if env.str("RAVEN_DSN"):
+if env.str("RAVEN_DSN", None):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
