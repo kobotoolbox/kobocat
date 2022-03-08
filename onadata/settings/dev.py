@@ -6,7 +6,7 @@ from .base import *
 ################################
 
 SESSION_ENGINE = "redis_sessions.session"
-SESSION_REDIS = env.cache_url("REDIS_SESSION_URL", default="redis://redis_cache:6380/2")
+SESSION_REDIS = env.cache_url('REDIS_SESSION_URL', default='redis://redis_cache:6380/2')
 
 ################################
 # KoBoCAT settings             #

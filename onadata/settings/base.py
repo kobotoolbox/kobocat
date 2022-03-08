@@ -6,8 +6,8 @@ import sys
 from datetime import timedelta
 from urllib.parse import quote_plus
 
-from django.core.exceptions import SuspiciousOperation
 import environ
+from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
 
@@ -39,7 +39,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 ################################
 
 # Django `SECRET_KEY`
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 TEMPLATED_EMAIL_TEMPLATE_DIR = 'templated_email/'
 
@@ -349,8 +349,9 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
     DEFAULT_FILE_STORAGE = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
 
-EMAIL_BACKEND = env.str('EMAIL_BACKEND',
-                            'django.core.mail.backends.filebased.EmailBackend')
+EMAIL_BACKEND = env.str(
+    'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'
+)
 
 if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
     EMAIL_FILE_PATH = env.str('EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
@@ -705,7 +706,7 @@ MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
 # Sentry settings              #
 ################################
 
-if env.str("RAVEN_DSN", None):
+if env.str('RAVEN_DSN', None):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
