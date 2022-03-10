@@ -1,4 +1,18 @@
-FROM nikolaik/python-nodejs:python3.8-nodejs10
+FROM python:3.8 as build-python
+
+ENV VIRTUAL_ENV=/opt/venv \
+    KOBOCAT_SRC_DIR=/srv/src/kobocat \
+    TMP_DIR=/srv/tmp
+
+# Install `pip` packages
+RUN python3 -m venv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install  --quiet --upgrade pip && \
+    pip install  --quiet pip-tools
+COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
+RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null
+
+FROM python:3.8-slim
 
 # Declare environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -21,13 +35,6 @@ ENV VIRTUAL_ENV=/opt/venv \
     CELERY_PID_DIR=/var/run/celery \
     INIT_PATH=/srv/init
 
-# Install Dockerize
-# TODO: Remove this after merging kobotoolbox/kobo-docker#322
-ENV DOCKERIZE_VERSION v0.6.1
-RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz -P /tmp \
-    && tar -C /usr/local/bin -xzvf /tmp/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && rm /tmp/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-
 # Create needed directories
 RUN mkdir -p ${NGINX_STATIC_DIR} && \
     mkdir -p ${KOBOCAT_SRC_DIR} && \
@@ -42,14 +49,12 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
     mkdir -p ${KOBOCAT_SRC_DIR}/emails && \
     mkdir -p ${INIT_PATH}
 
-# Install `apt` packages.
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-
 RUN apt-get -qq update && \
     apt-get -qq -y install \
         cron \
         gdal-bin \
         gettext \
+        git \
         gosu \
         less \
         libproj-dev \
@@ -57,10 +62,9 @@ RUN apt-get -qq update && \
         locales \
         openjdk-11-jre \
         postgresql-client \
-        python3-virtualenv \
         rsync \
         runit-init \
-        vim \
+        vim-tiny \
         wait-for-it && \
     apt-get clean && \
         rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -72,17 +76,11 @@ RUN echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen && \
 # Create local user UWSGI_USER`
 RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 
-# Copy KoBoCAT directory
-COPY . "${KOBOCAT_SRC_DIR}"
-
-# Install `pip` packages
-RUN virtualenv "$VIRTUAL_ENV"
+# Copy virtualenv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install  --quiet --upgrade pip && \
-    pip install  --quiet pip-tools
 COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
-RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
-    rm -rf ~/.cache/pip
+COPY --from=build-python "$VIRTUAL_ENV" "$VIRTUAL_ENV"
+COPY . "${KOBOCAT_SRC_DIR}"
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo "export PATH=${PATH}" >> /etc/profile && \

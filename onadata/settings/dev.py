@@ -1,18 +1,14 @@
 # coding: utf-8
-from onadata.libs.utils.redis_helper import RedisHelper
 from .base import *
 
 ################################
 # Django Framework settings    #
 ################################
 
-LOGGING['root'] = {
-    'handlers': ['console'],
-    'level': 'DEBUG'
-}
-
-SESSION_ENGINE = "redis_sessions.session"
-SESSION_REDIS = RedisHelper.config(default="redis://redis_cache:6380/2")
+SESSION_ENGINE = 'redis_sessions.session'
+# django-redis-session expects a dictionary with `url`
+redis_session_url = env.cache_url('REDIS_SESSION_URL', default='redis://redis_cache:6380/2')
+SESSION_REDIS = {'url': redis_session_url['LOCATION']}
 
 ################################
 # KoBoCAT settings             #

@@ -589,6 +589,11 @@ class TestPandasMongoBridge(TestBase):
         os.unlink(temp_file.name)
 
     def test_csv_column_indices_in_groups_within_repeats(self):
+        # By default, `_create_user_and_login()` creates users without
+        # authentication required. We force it when submitting data to persist
+        # collector's username because this test expects it.
+        # See `_submitted_data` in `expected_data_0` below
+        self._set_require_auth(auth=True)
         self._publish_xls_fixture_set_xform("groups_in_repeats")
         self._submit_fixture_instance("groups_in_repeats", "01")
         dd = self.xform.data_dictionary()

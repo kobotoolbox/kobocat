@@ -1,8 +1,10 @@
 # coding: utf-8
 import os
 import re
+from io import StringIO
 
 from django.conf import settings
+from django.urls import reverse
 from guardian.shortcuts import assign_perm
 from rest_framework import status
 from xml.dom import minidom, Node
@@ -10,8 +12,10 @@ from xml.dom import minidom, Node
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
-from onadata.apps.logger.models import XForm
+from onadata.apps.logger.models import XForm, Instance
 from onadata.libs.constants import (
+    CAN_ADD_SUBMISSIONS,
+    CAN_CHANGE_XFORM,
     CAN_VIEW_XFORM
 )
 from onadata.libs.serializers.xform_serializer import XFormSerializer
@@ -271,10 +275,11 @@ class TestXFormViewSet(TestAbstractViewSet):
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            error_msg = ("There should be a choices sheet in this xlsform. "
-                         "Please ensure that the choices sheet name is all in "
-                         "small caps and has columns 'list name', 'name', "
-                         "and 'label' (or aliased column names).")
+            error_msg = (
+                "There should be a choices sheet in this xlsform. "
+                "Please ensure that the choices sheet has the mandatory "
+                "columns 'list_name', 'name', and 'label'."
+            )
             self.assertEqual(response.data.get('text'), error_msg)
 
     def test_partial_update(self):
@@ -419,6 +424,159 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = view(request, pk=self.xform.id)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIsNotNone(response.data.get('error'))
+
+    def test_csv_import_fail_anonymous(self):
+        self.publish_xls_form()
+        view = XFormViewSet.as_view({'post': 'csv_import'})
+        csv_import = open(os.path.join(settings.ONADATA_DIR, 'libs',
+                                       'tests', 'fixtures', 'good.csv'))
+        post_data = {'csv_file': csv_import}
+        request = self.factory.post(
+            reverse('xform-csv-import', kwargs={'pk': self.xform.pk}),
+            data=post_data
+        )
+        response = view(request, pk=self.xform.id)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_csv_import_fail_non_owner(self):
+        self.publish_xls_form()
+        self._make_submissions()
+
+        # Retain Bob's credentials for later use
+        bob_request_extra = self.extra
+
+        # Switch to a privileged but non-owning user
+        self._login_user_and_profile(
+            extra_post_data={
+                'username': 'alice',
+                'email': 'alice@localhost.com',
+            }
+        )
+        self.assertEqual(self.user.username, 'alice')
+        assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
+        assign_perm(CAN_CHANGE_XFORM, self.user, self.xform)
+        assign_perm(CAN_ADD_SUBMISSIONS, self.user, self.xform)
+
+        # Surprise: `meta/instanceID` is ignored; `_uuid` is what's examined by
+        # the CSV importer to determine whether or not a row updates (edits) an
+        # existing submission
+        bob_instance = self.xform.instances.first()
+        edit_csv_bob = (
+            'formhub/uuid,_uuid,transport/available_transportation_types_to_referral_facility\n'
+            f'{self.xform.uuid},{bob_instance.uuid},boo!'
+        )
+
+        request = self.factory.post(
+            reverse('xform-csv-import', kwargs={'pk': self.xform.pk}),
+            data={'csv_file': StringIO(edit_csv_bob)},
+            **self.extra
+        )
+        view = XFormViewSet.as_view({'post': 'csv_import'})
+        response = view(request, pk=self.xform.id)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Check that we are sane and that Bob can edit their own submissions
+        request = self.factory.post(
+            reverse('xform-csv-import', kwargs={'pk': self.xform.pk}),
+            data={'csv_file': StringIO(edit_csv_bob)},
+            **bob_request_extra
+        )
+        view = XFormViewSet.as_view({'post': 'csv_import'})
+        response = view(request, pk=self.xform.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        bob_instance_old_uuid = bob_instance.uuid
+        bob_instance.refresh_from_db()
+        self.assertEqual(
+            bob_instance.json[
+                'transport/available_transportation_types_to_referral_facility'
+            ],
+            'boo!'
+        )
+        self.assertEqual(
+            bob_instance.json[
+                'meta/deprecatedID'
+            ],
+            f'uuid:{bob_instance_old_uuid}'
+        )
+
+    def test_csv_import_fail_edit_unauthorized_submission(self):
+        view = XFormViewSet.as_view({'post': 'csv_import'})
+
+        # Publish a form as Bob
+        self.publish_xls_form()
+        self._make_submissions()
+        bob_instance = self.xform.instances.first()
+
+        # Publish another form as Alice
+        self._login_user_and_profile(
+            extra_post_data={
+                'username': 'alice',
+                'email': 'alice@localhost.com',
+            }
+        )
+        self.assertEqual(self.user.username, 'alice')
+        self.publish_xls_form()
+        self.assertEqual(self.xform.user.username, 'alice')
+
+        # Make a submission, but not using `self._make_submissions()` because
+        # that allows for only one XForm at a time
+        new_csv_alice = (
+            'formhub/uuid,transport/available_transportation_types_to_referral_facility\n'
+            f'{self.xform.uuid},alice unedited'
+        )
+        request = self.factory.post(
+            reverse('xform-csv-import', kwargs={'pk': self.xform.pk}),
+            data={'csv_file': StringIO(new_csv_alice)},
+            **self.extra
+        )
+        response = view(request, pk=self.xform.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify that Alice can edit their own submissions
+        alice_instance = self.xform.instances.first()
+        edit_csv_alice = (
+            'formhub/uuid,_uuid,transport/available_transportation_types_to_referral_facility\n'
+            f'{self.xform.uuid},{alice_instance.uuid},alice edited'
+        )
+        request = self.factory.post(
+            reverse('xform-csv-import', kwargs={'pk': self.xform.pk}),
+            data={'csv_file': StringIO(edit_csv_alice)},
+            **self.extra
+        )
+        response = view(request, pk=self.xform.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        alice_instance.refresh_from_db()
+        self.assertEqual(
+            alice_instance.json[
+                'transport/available_transportation_types_to_referral_facility'
+            ],
+            'alice edited'
+        )
+
+        # Attempt to edit Bob's submission as Alice
+        original_bob_xml = bob_instance.xml
+        edit_csv_bob = (
+            'formhub/uuid,_uuid,transport/available_transportation_types_to_referral_facility\n'
+            f'{self.xform.uuid},{bob_instance.uuid},where does this go?!'
+        )
+        request = self.factory.post(
+            reverse('xform-csv-import', kwargs={'pk': self.xform.pk}),
+            data={'csv_file': StringIO(edit_csv_bob)},
+            **self.extra
+        )
+        response = view(request, pk=self.xform.id)
+
+        # The attempted edit should appear as a new submission in Alice's form
+        # with the form and instance UUIDs overwritten
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        bob_instance.refresh_from_db()
+        self.assertEqual(bob_instance.xml, original_bob_xml)
+        found_instance = Instance.objects.get(
+            xml__contains='where does this go?!'
+        )
+        self.assertEqual(found_instance.xform, alice_instance.xform)
+        self.assertNotEqual(found_instance.xform, bob_instance.xform)
+        self.assertNotEqual(found_instance.uuid, bob_instance.uuid)
 
     def test_cannot_publish_id_string_starting_with_number(self):
         data = {
