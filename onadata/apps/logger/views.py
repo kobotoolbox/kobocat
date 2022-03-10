@@ -5,13 +5,10 @@ import tempfile
 import re
 from datetime import datetime, date
 
-import pytz
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.files.storage import get_storage_class
-from django.core.files import File
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -23,26 +20,23 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.template import loader
-from django.utils.six import string_types, text_type
+from django.utils.six import text_type
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import require_GET, require_POST
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
-from onadata.apps.main.models import UserProfile, MetaData
+from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.import_tools import import_instances_from_zip
-from onadata.apps.logger.models.attachment import Attachment
-from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.libs.authentication import digest_authentication
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import BaseOpenRosaResponse
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
-from onadata.libs.utils.user_auth import (helper_auth_helper,
-                                          has_permission,
-                                          HttpResponseNotAuthorized,
-                                          add_cors_headers,
-                                          )
+from onadata.libs.utils.user_auth import (
+    helper_auth_helper,
+    has_permission,
+    add_cors_headers,
+)
 from .tasks import generate_stats_zip
 from ...koboform.pyxform_utils import convert_csv_to_xls
 

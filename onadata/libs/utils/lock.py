@@ -6,7 +6,7 @@ import redis
 from django.conf import settings
 
 
-REDIS_LOCK_CLIENT = redis.Redis(**settings.LOCK_REDIS)
+REDIS_LOCK_CLIENT = redis.Redis.from_url(settings.LOCK_REDIS['LOCATION'])
 
 
 def lock(key='', timeout=None):

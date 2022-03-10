@@ -240,9 +240,9 @@ def _flatten_dict_nest_repeats(d, prefix):
                     repeats.append(repeat)
                 else:
                     repeats.append({"/".join(item_prefix[1:]): item})
-            yield (new_prefix, repeats)
+            yield new_prefix, repeats
         else:
-            yield (new_prefix, value)
+            yield new_prefix, value
 
 
 def _gather_parent_node_list(node):
@@ -332,7 +332,6 @@ class XFormInstanceParser:
                 logger = logging.getLogger("console_logger")
                 logger.debug("Skipping duplicate attribute: %s"
                              " with value %s" % (key, value))
-                logger.debug(str(all_attributes))
             else:
                 self._attributes[key] = value
 

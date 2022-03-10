@@ -1,5 +1,4 @@
 # coding: utf-8
-from onadata.libs.utils.redis_helper import RedisHelper
 from .base import *
 
 ################################

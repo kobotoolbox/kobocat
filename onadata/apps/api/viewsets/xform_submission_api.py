@@ -189,12 +189,12 @@ Here is some example JSON, it would replace `[the JSON]` above:
 
         is_json_request = is_json(request)
 
+        create_instance_func = (
+            create_instance_from_json
+            if is_json_request
+            else create_instance_from_xml
+        )
         try:
-            create_instance_func = (
-                create_instance_from_json
-                if is_json_request
-                else create_instance_from_xml
-            )
             error, instance = create_instance_func(username, request)
         except UnauthenticatedEditAttempt:
             # It's important to respond with a 401 instead of a 403 so that

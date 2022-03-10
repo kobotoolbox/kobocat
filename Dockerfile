@@ -4,17 +4,13 @@ ENV VIRTUAL_ENV=/opt/venv \
     KOBOCAT_SRC_DIR=/srv/src/kobocat \
     TMP_DIR=/srv/tmp
 
-# Copy KoBoCAT directory
-COPY . "${KOBOCAT_SRC_DIR}"
-
 # Install `pip` packages
 RUN python3 -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install  --quiet --upgrade pip && \
     pip install  --quiet pip-tools
 COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
-RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
-    rm -rf ~/.cache/pip
+RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null
 
 FROM python:3.8-slim
 
@@ -84,6 +80,7 @@ RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
 COPY --from=build-python "$VIRTUAL_ENV" "$VIRTUAL_ENV"
+COPY . "${KOBOCAT_SRC_DIR}"
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo "export PATH=${PATH}" >> /etc/profile && \
