@@ -385,7 +385,9 @@ if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
 
 SESSION_ENGINE = 'redis_sessions.session'
 # django-redis-session expects a dictionary with `url`
-redis_session_url = env.cache_url('REDIS_SESSION_URL', default='redis://redis_cache:6380/2')
+redis_session_url = env.cache_url(
+    'REDIS_SESSION_URL', default='redis://redis_cache:6380/2'
+)
 SESSION_REDIS = {
     'url': redis_session_url['LOCATION'],
     'prefix': env.str('REDIS_SESSION_PREFIX', 'session'),
