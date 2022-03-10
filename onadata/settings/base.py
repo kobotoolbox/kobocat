@@ -13,6 +13,7 @@ from pymongo import MongoClient
 
 env = environ.Env()
 
+
 def skip_suspicious_operations(record):
     """Prevent django from sending 500 error
     email notifications for SuspiciousOperation
@@ -379,6 +380,16 @@ if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
     if not os.path.isdir(EMAIL_FILE_PATH):
         os.mkdir(EMAIL_FILE_PATH)
 
+SESSION_ENGINE = 'redis_sessions.session'
+# django-redis-session expects a dictionary with `url`
+redis_session_url = env.cache_url(
+    'REDIS_SESSION_URL', default='redis://redis_cache:6380/2'
+)
+SESSION_REDIS = {
+    'url': redis_session_url['LOCATION'],
+    'prefix': env.str('REDIS_SESSION_PREFIX', 'session'),
+    'socket_timeout': env.int('REDIS_SESSION_SOCKET_TIMEOUT', 1),
+}
 
 ###################################
 # Django Rest Framework settings  #
