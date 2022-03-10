@@ -23,6 +23,8 @@ LOGGING['loggers']['django.db.backends'] = {
 
 SECRET_KEY = os.urandom(50).hex()
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
 ###################################
 # Django Rest Framework settings  #
 ###################################
