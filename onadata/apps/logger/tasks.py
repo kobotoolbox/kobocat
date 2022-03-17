@@ -11,8 +11,9 @@ from django.contrib.auth.models import User
 from django.core.files.storage import get_storage_class
 from django.core.management import call_command
 
-from .models.submission_counter import SubmissionCounter
 from .models import Instance, XForm
+from .models.submission_counter import SubmissionCounter
+from .models.xform_submissions_counter import XFormSubmissionCounter
 
 
 @task()
@@ -20,6 +21,11 @@ def create_monthly_counters():
     user_ids = User.objects.values_list('pk', flat=True)
     for user_id in user_ids:
         SubmissionCounter.objects.create(user_id=user_id)
+
+
+@task()
+def create_xform_monthly_counters():
+    pass
 
 
 # ## ISSUE 242 TEMPORARY FIX ##

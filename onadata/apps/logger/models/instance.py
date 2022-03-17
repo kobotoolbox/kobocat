@@ -21,6 +21,7 @@ from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.submission_counter import SubmissionCounter
+from onadata.apps.logger.models.xform_submissions_counter import XFormSubmissionCounter
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
@@ -138,6 +139,35 @@ def update_user_submissions_counter(instance, created, **kwargs):
             timestamp=first_day_of_month,
         )
 
+    queryset.update(count=F('count') + 1)
+
+
+def update_xforms_monthly_submission_counter(instance, created, **kwargs):
+    if not created:
+        return
+    if getattr(instance, 'defer_counting', False):
+        return
+
+    user_id = XForm.objects.values_list('user_id', flat=True).get(
+        pk=instance.xform_id
+    )
+    date_created = instance.date_created
+    first_day_of_month = date(
+        year=date_created.year,
+        month=date_created.month,
+        day=1
+    )
+    queryset = XFormSubmissionCounter.objects.filter(
+        user_id=user_id,
+        xform=instance.xform,
+        timestamp=first_day_of_month,
+    )
+    if not queryset.exists():
+        XFormSubmissionCounter.objects.create(
+            user_id=user_id,
+            xform=instance.xform,
+            timestamp=first_day_of_month,
+        )
     queryset.update(count=F('count') + 1)
 
 
@@ -454,6 +484,9 @@ post_save.connect(update_user_submissions_counter, sender=Instance,
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')
+
+post_save.connect(update_xforms_monthly_submission_counter, sender=Instance,
+                  dispatch_uid='update_xforms_monthly_submission_counter')
 
 if Instance.XML_HASH_LENGTH / 2 != sha256().digest_size:
     raise AssertionError('SHA256 hash `digest_size` expected to be `{}`, not `{}`'.format(
