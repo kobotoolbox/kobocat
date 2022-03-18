@@ -25,7 +25,9 @@ def create_monthly_counters():
 
 @task()
 def create_xform_monthly_counters():
-    pass
+    xforms = XForm.objects.all()
+    for xform in xforms.iterator():
+        XFormSubmissionCounter.create(user_id=xform.user.id, xform=xform)
 
 
 # ## ISSUE 242 TEMPORARY FIX ##
