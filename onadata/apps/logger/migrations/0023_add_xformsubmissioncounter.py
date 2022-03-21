@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('count', models.IntegerField(default=0)),
                 ('timestamp', models.DateField()),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
-                ('xform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='logger.XForm')),
+                ('xform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='xformsubmissioncounter', to='logger.XForm')),
             ],
             options={
                 'unique_together': {('user', 'xform', 'timestamp')},
