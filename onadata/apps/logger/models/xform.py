@@ -291,6 +291,17 @@ post_delete.connect(update_profile_num_submissions, sender=XForm,
                     dispatch_uid='update_profile_num_submissions')
 
 
+def create_monthly_counters(sender, instance, **kwargs):
+    from onadata.apps.logger.models.xform_submissions_counter import XFormSubmissionCounter
+    XFormSubmissionCounter.objects.get_or_create(
+        user=instance.user, xform_id=instance.id
+    )
+
+
+post_save.connect(create_monthly_counters, sender=XForm,
+                  dispatch_uid='create_monthly_counters')
+
+
 def set_object_permissions(sender, instance=None, created=False, **kwargs):
     if created:
         for perm in get_perms_for_model(XForm):
