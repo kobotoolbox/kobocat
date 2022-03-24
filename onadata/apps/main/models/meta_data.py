@@ -182,7 +182,12 @@ class MetaData(models.Model):
             # `PAIRED_DATA_EXPIRATION` period. However, this introduces a race
             # condition where it's possible that KPI *deletes* this file before
             # we attempt to update it. We avoid that by locking the row
-            MetaData.objects.filter(pk=self.pk).select_for_update().update(
+            ### TODO: this previously used `select_for_update()`, which
+            ### locked the object for the duration of the entire request
+            ### (Django's `ATOMIC_REQUESTS`). This caused performance issues,
+            ### but perhaps not having it will introduce problems(?)
+            ### Figure it out.
+            MetaData.objects.filter(pk=self.pk).update(
                 date_modified=timezone.now()
             )
             return True
