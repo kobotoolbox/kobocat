@@ -1,4 +1,5 @@
 # coding: utf-8
+import datetime
 import json
 import os
 import re
@@ -293,8 +294,14 @@ post_delete.connect(update_profile_num_submissions, sender=XForm,
 
 def create_monthly_counters(sender, instance, **kwargs):
     from onadata.apps.logger.models.xform_submissions_counter import XFormSubmissionCounter
+
+    today = datetime.date.today()
+    first_of_month = today.replace(day=1)
+
     XFormSubmissionCounter.objects.get_or_create(
-        user=instance.user, xform_id=instance.id
+        user=instance.user,
+        xform_id=instance.id,
+        timestamp=first_of_month
     )
 
 
