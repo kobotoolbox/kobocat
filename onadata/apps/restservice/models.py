@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.restservice import SERVICE_CHOICES
@@ -12,7 +12,7 @@ class RestService(models.Model):
         app_label = 'restservice'
         unique_together = ('service_url', 'xform', 'name')
 
-    service_url = models.URLField(ugettext_lazy("Service URL"))
+    service_url = models.URLField(gettext_lazy("Service URL"))
     xform = models.ForeignKey(XForm, related_name="restservices", on_delete=models.CASCADE)
     name = models.CharField(max_length=50, choices=SERVICE_CHOICES)
 

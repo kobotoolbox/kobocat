@@ -3,21 +3,21 @@
 # coding: utf-8
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as t, gettext_lazy
 
 from onadata.apps.logger.models.instance import Instance
 
 
 class Command(BaseCommand):
 
-    help = ugettext_lazy("Updates is_synced_with_mongo property of Instance model")
+    help = gettext_lazy("Updates is_synced_with_mongo property of Instance model")
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--batchsize',
             type=int,
             default=100,
-            help=ugettext_lazy("Number of records to process per query"))
+            help=gettext_lazy("Number of records to process per query"))
 
     def handle(self, *args, **kwargs):
         batchsize = kwargs.get("batchsize", 100)
@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 mongo_ids = list(record.get("_id") for record in cursor)
                 not_synced_ids = set(instance_ids).difference(mongo_ids)
 
-                self.stdout.write(_("Updating instances from #{} to #{}\n").format(
+                self.stdout.write(t("Updating instances from #{} to #{}\n").format(
                     instance_ids[0],
                     instance_ids[-1]))
 

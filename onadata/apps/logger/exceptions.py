@@ -1,5 +1,5 @@
 # coding: utf-8
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as t
 
 
 class DuplicateUUIDError(Exception):
@@ -8,4 +8,4 @@ class DuplicateUUIDError(Exception):
 
 class FormInactiveError(Exception):
     def __str__(self):
-        return _("Form is inactive")
+        return t("Form is inactive")

@@ -19,7 +19,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils.http import urlquote
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from django.views.decorators.http import require_POST
 from rest_framework.settings import api_settings
 
@@ -57,7 +57,7 @@ def _set_submission_time_to_query(query, request):
                 request.GET['end'])
     except ValueError:
         return HttpResponseBadRequest(
-            _("Dates must be in the format YY_MM_DD_hh_mm_ss"))
+            t("Dates must be in the format YY_MM_DD_hh_mm_ss"))
 
     return query
 
@@ -72,7 +72,7 @@ def data_export(request, username, id_string, export_type):
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     helper_auth_helper(request)
     if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
     query = request.GET.get("query")
     extension = export_type
 
@@ -100,20 +100,20 @@ def data_export(request, username, id_string, export_type):
                 export_type, extension, username, id_string, None, query)
             audit_log(
                 Actions.EXPORT_CREATED, request.user, owner,
-                _("Created %(export_type)s export on '%(id_string)s'.") %
+                t("Created %(export_type)s export on '%(id_string)s'.") %
                 {
                     'id_string': xform.id_string,
                     'export_type': export_type.upper()
                 }, audit, request)
         except NoRecordsFoundError:
-            return HttpResponseNotFound(_("No records found to export"))
+            return HttpResponseNotFound(t("No records found to export"))
     else:
         export = newset_export_for(xform, export_type)
 
     # log download as well
     audit_log(
         Actions.EXPORT_DOWNLOADED, request.user, owner,
-        _("Downloaded %(export_type)s export on '%(id_string)s'.") %
+        t("Downloaded %(export_type)s export on '%(id_string)s'.") %
         {
             'id_string': xform.id_string,
             'export_type': export_type.upper()
@@ -143,7 +143,7 @@ def create_export(request, username, id_string, export_type):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
 
     query = request.POST.get("query")
     force_xlsx = request.POST.get('xls') != 'true'
@@ -152,7 +152,7 @@ def create_export(request, username, id_string, export_type):
     group_delimiter = request.POST.get("options[group_delimiter]", '/')
     if group_delimiter not in ['.', '/']:
         return HttpResponseBadRequest(
-            _("%s is not a valid delimiter" % group_delimiter))
+            t("%s is not a valid delimiter" % group_delimiter))
 
     # default is True, so when dont_.. is yes
     # split_select_multiples becomes False
@@ -171,7 +171,7 @@ def create_export(request, username, id_string, export_type):
         create_async_export(xform, export_type, query, force_xlsx, options)
     except Export.ExportTypeError:
         return HttpResponseBadRequest(
-            _("%s is not a valid export type" % export_type))
+            t("%s is not a valid export type" % export_type))
     else:
         audit = {
             "xform": xform.id_string,
@@ -179,7 +179,7 @@ def create_export(request, username, id_string, export_type):
         }
         audit_log(
             Actions.EXPORT_CREATED, request.user, owner,
-            _("Created %(export_type)s export on '%(id_string)s'.") %
+            t("Created %(export_type)s export on '%(id_string)s'.") %
             {
                 'export_type': export_type.upper(),
                 'id_string': xform.id_string,
@@ -198,12 +198,12 @@ def export_list(request, username, id_string, export_type):
     try:
         Export.EXPORT_TYPE_DICT[export_type]
     except KeyError:
-        return HttpResponseBadRequest(_('Invalid export type'))
+        return HttpResponseBadRequest(t('Invalid export type'))
 
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
 
     data = {
         'username': owner.username,
@@ -221,7 +221,7 @@ def export_progress(request, username, id_string, export_type):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
 
     # find the export entry in the db
     export_ids = request.GET.getlist('export_ids')
@@ -258,7 +258,7 @@ def export_download(request, username, id_string, export_type, filename):
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     helper_auth_helper(request)
     if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
 
     # find the export entry in the db
     export = get_object_or_404(Export, xform=xform, filename=filename)
@@ -271,7 +271,7 @@ def export_download(request, username, id_string, export_type, filename):
     }
     audit_log(
         Actions.EXPORT_DOWNLOADED, request.user, owner,
-        _("Downloaded %(export_type)s export '%(filename)s' "
+        t("Downloaded %(export_type)s export '%(filename)s' "
           "on '%(id_string)s'.") %
         {
             'export_type': export.export_type.upper(),
@@ -298,7 +298,7 @@ def delete_export(request, username, id_string, export_type):
     owner = get_object_or_404(User, username__iexact=username)
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
 
     export_id = request.POST.get('export_id')
 
@@ -312,7 +312,7 @@ def delete_export(request, username, id_string, export_type):
     }
     audit_log(
         Actions.EXPORT_DOWNLOADED, request.user, owner,
-        _("Deleted %(export_type)s export '%(filename)s'"
+        t("Deleted %(export_type)s export '%(filename)s'"
           " on '%(id_string)s'.") %
         {
             'export_type': export.export_type.upper(),
@@ -334,7 +334,7 @@ def kml_export(request, username, id_string):
     xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
     helper_auth_helper(request)
     if not has_permission(xform, owner, request):
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
     data = {'data': kml_export_data(id_string, user=owner)}
     response = \
         render(request, "survey.kml", data,
@@ -347,14 +347,14 @@ def kml_export(request, username, id_string):
     }
     audit_log(
         Actions.EXPORT_CREATED, request.user, owner,
-        _("Created KML export on '%(id_string)s'.") %
+        t("Created KML export on '%(id_string)s'.") %
         {
             'id_string': xform.id_string,
         }, audit, request)
     # log download as well
     audit_log(
         Actions.EXPORT_DOWNLOADED, request.user, owner,
-        _("Downloaded KML export on '%(id_string)s'.") %
+        t("Downloaded KML export on '%(id_string)s'.") %
         {
             'id_string': xform.id_string,
         }, audit, request)
@@ -395,7 +395,7 @@ def attachment_url(request, size='medium'):
             attachment = result[0]
         except IndexError:
             media_file_logger.info('attachment not found')
-            return HttpResponseNotFound(_('Attachment not found'))
+            return HttpResponseNotFound(t('Attachment not found'))
 
         # Checks whether users are allowed to see the media file before giving them
         # the url
@@ -431,7 +431,7 @@ def attachment_url(request, size='medium'):
                     return digest_response
 
             # Otherwise, return a HTTP 403 (access forbidden)
-            return HttpResponseForbidden(_('Not shared.'))
+            return HttpResponseForbidden(t('Not shared.'))
 
         media_url = None
 
@@ -467,4 +467,4 @@ def attachment_url(request, size='medium'):
             response["X-Accel-Redirect"] = protected_url
             return response
 
-    return HttpResponseNotFound(_('Error: Attachment not found'))
+    return HttpResponseNotFound(t('Error: Attachment not found'))

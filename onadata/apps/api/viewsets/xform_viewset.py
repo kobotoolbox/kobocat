@@ -9,7 +9,7 @@ from django.core.files.storage import get_storage_class
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import six
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from rest_framework import exceptions
 from rest_framework import status
 from rest_framework.decorators import action
@@ -51,7 +51,7 @@ def _get_export_type(export_type):
         export_type = EXPORT_EXT[export_type]
     else:
         raise exceptions.ParseError(
-            _("'%(export_type)s' format not known or not implemented!" %
+            t("'%(export_type)s' format not known or not implemented!" %
               {'export_type': export_type})
         )
 
@@ -87,7 +87,7 @@ def _set_start_end_params(request, query):
                     request.GET['end'], datetime)
         except ValueError:
             raise exceptions.ParseError(
-                _("Dates must be in the format YY_MM_DD_hh_mm_ss")
+                t("Dates must be in the format YY_MM_DD_hh_mm_ss")
             )
         else:
             query = json.dumps(query)
@@ -110,13 +110,13 @@ def _generate_new_export(request, xform, query, export_type):
         }
         log.audit_log(
             log.Actions.EXPORT_CREATED, request.user, xform.user,
-            _("Created %(export_type)s export on '%(id_string)s'.") %
+            t("Created %(export_type)s export on '%(id_string)s'.") %
             {
                 'id_string': xform.id_string,
                 'export_type': export_type.upper()
             }, audit, request)
     except NoRecordsFoundError:
-        raise Http404(_("No records found to export"))
+        raise Http404(t("No records found to export"))
     else:
         return export
 
@@ -150,7 +150,7 @@ def response_for_format(form, format=None):
         if file_path != '' and default_storage.exists(file_path):
             formatted_data = form.xls
         else:
-            raise Http404(_("No XLSForm found."))
+            raise Http404(t("No XLSForm found."))
     else:
         formatted_data = json.loads(form.json)
     return Response(formatted_data)
@@ -177,7 +177,7 @@ def log_export(request, xform, export_type):
     }
     log.audit_log(
         log.Actions.EXPORT_DOWNLOADED, request.user, xform.user,
-        _("Downloaded %(export_type)s export on '%(id_string)s'.") %
+        t("Downloaded %(export_type)s export on '%(id_string)s'.") %
         {
             'id_string': xform.id_string,
             'export_type': export_type.upper()
@@ -624,7 +624,7 @@ data (instance/submission per row)
         self.object = self.get_object()
         form_url = _get_form_url(self.object.user.username)
 
-        data = {'message': _("Enketo not properly configured.")}
+        data = {'message': t("Enketo not properly configured.")}
         http_status = status.HTTP_400_BAD_REQUEST
 
         try:
@@ -648,7 +648,7 @@ data (instance/submission per row)
             owner = existing_xform.user
             if request.user.pk != owner.pk:
                 raise exceptions.PermissionDenied(
-                    detail=_("Only a form's owner can overwrite its contents"))
+                    detail=t("Only a form's owner can overwrite its contents"))
             survey = utils.publish_xlsform(request, owner, existing_xform)
             if not isinstance(survey, XForm):
                 if isinstance(survey, dict) and 'text' in survey:

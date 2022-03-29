@@ -14,6 +14,9 @@ class SubmissionCounter(models.Model):
     count = models.IntegerField(default=0)
     timestamp = models.DateField()
 
+    class Meta:
+        unique_together = (('user', 'timestamp'),)
+
     def save(self, *args, **kwargs):
         if not self.timestamp:
             today = datetime.date.today()

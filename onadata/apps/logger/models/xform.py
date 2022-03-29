@@ -13,7 +13,7 @@ from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils.encoding import smart_text
 
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import gettext_lazy, gettext as t
 from guardian.shortcuts import (
     assign_perm,
     get_perms_for_model
@@ -62,7 +62,7 @@ class XForm(BaseModel):
 
     id_string = models.SlugField(
         editable=False,
-        verbose_name=ugettext_lazy("ID"),
+        verbose_name=gettext_lazy("ID"),
         max_length=MAX_ID_LENGTH
     )
     title = models.CharField(editable=False, max_length=XFORM_TITLE_LENGTH)
@@ -89,14 +89,14 @@ class XForm(BaseModel):
     class Meta:
         app_label = 'logger'
         unique_together = (("user", "id_string"),)
-        verbose_name = ugettext_lazy("XForm")
-        verbose_name_plural = ugettext_lazy("XForms")
+        verbose_name = gettext_lazy("XForm")
+        verbose_name_plural = gettext_lazy("XForms")
         ordering = ("id_string",)
         permissions = (
-            (CAN_ADD_SUBMISSIONS, _('Can make submissions to the form')),
-            (CAN_TRANSFER_OWNERSHIP, _('Can transfer form ownership.')),
-            (CAN_VALIDATE_XFORM, _('Can validate submissions')),
-            (CAN_DELETE_DATA_XFORM, _('Can delete submissions')),
+            (CAN_ADD_SUBMISSIONS, t('Can make submissions to the form')),
+            (CAN_TRANSFER_OWNERSHIP, t('Can transfer form ownership.')),
+            (CAN_VALIDATE_XFORM, t('Can validate submissions')),
+            (CAN_DELETE_DATA_XFORM, t('Can delete submissions')),
         )
 
     def file_name(self):
@@ -131,7 +131,7 @@ class XForm(BaseModel):
     def _set_id_string(self):
         matches = self.instance_id_regex.findall(self.xml)
         if len(matches) != 1:
-            raise XLSFormError(_("There should be a single id string."))
+            raise XLSFormError(t("There should be a single id string."))
         self.id_string = matches[0]
 
     def _set_title(self):
@@ -141,7 +141,7 @@ class XForm(BaseModel):
         title_xml = matches[0][:XFORM_TITLE_LENGTH]
 
         if len(matches) != 1:
-            raise XLSFormError(_("There should be a single title."), matches)
+            raise XLSFormError(t("There should be a single title."), matches)
 
         if self.title and title_xml != self.title:
             title_xml = self.title[:XFORM_TITLE_LENGTH]
@@ -176,13 +176,13 @@ class XForm(BaseModel):
         # if so, the one must match but only if xform is NOT new
         if self.pk and old_id_string and old_id_string != self.id_string:
             raise XLSFormError(
-                _("Your updated form's id_string '%(new_id)s' must match "
+                t("Your updated form's id_string '%(new_id)s' must match "
                   "the existing forms' id_string '%(old_id)s'." %
                   {'new_id': self.id_string, 'old_id': old_id_string}))
 
         if getattr(settings, 'STRICT', True) and \
                 not re.search(r"^[\w-]+$", self.id_string):
-            raise XLSFormError(_('In strict mode, the XForm ID must be a '
+            raise XLSFormError(t('In strict mode, the XForm ID must be a '
                                'valid slug and contain no spaces.'))
 
         super().save(*args, **kwargs)
@@ -196,7 +196,7 @@ class XForm(BaseModel):
             self.num_of_submissions = count
             self.save(update_fields=['num_of_submissions'])
         return self.num_of_submissions
-    submission_count.short_description = ugettext_lazy("Submission Count")
+    submission_count.short_description = gettext_lazy("Submission Count")
 
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""

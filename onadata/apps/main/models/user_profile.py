@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from guardian.conf import settings as guardian_settings
 from guardian.shortcuts import get_perms_for_model, assign_perm
 from jsonfield import JSONField
@@ -29,7 +29,7 @@ class UserProfile(models.Model):
     description = models.CharField(max_length=255, blank=True)
     require_auth = models.BooleanField(
         default=False,
-        verbose_name=ugettext_lazy(
+        verbose_name=gettext_lazy(
             "Require authentication to see forms and submit data"
         )
     )

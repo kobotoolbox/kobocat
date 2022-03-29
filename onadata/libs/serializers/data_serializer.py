@@ -1,7 +1,7 @@
 # coding: utf-8
 import json
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
@@ -44,7 +44,7 @@ class DataListSerializer(serializers.Serializer):
         try:
             query.update(json.loads(query_params.get('query', '{}')))
         except ValueError:
-            raise ParseError(_("Invalid query: %(query)s"
+            raise ParseError(t("Invalid query: %(query)s"
                              % {'query': query_params.get('query')}))
 
         query_kwargs = {
@@ -111,7 +111,7 @@ class SubmissionSerializer(serializers.Serializer):
             return super().to_representation(obj)
 
         return {
-            'message': _("Successful submission."),
+            'message': t("Successful submission."),
             'formid': obj.xform.id_string,
             'encrypted': obj.xform.encrypted,
             'instanceID': 'uuid:%s' % obj.uuid,

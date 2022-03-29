@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.core.management.base import BaseCommand
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 
 from onadata.apps.restservice.models import RestService
 
@@ -17,7 +17,7 @@ class Command(BaseCommand):
             WHERE service_url LIKE '/assets/%';
     """
 
-    help = _('Updates KPI rest service endpoint')
+    help = t('Updates KPI rest service endpoint')
 
     def handle(self, *args, **kwargs):
 

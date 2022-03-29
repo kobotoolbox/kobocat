@@ -3,7 +3,7 @@
 # coding: utf-8
 from django.core.management.base import BaseCommand
 from django.db.models import Q, Func
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as t, gettext_lazy
 
 from onadata.apps.logger.models.attachment import Attachment
 
@@ -15,7 +15,7 @@ class SubstrFromPattern(Func):
 
 class Command(BaseCommand):
 
-    help = ugettext_lazy("Updates indexed field `media_file_basename` "
+    help = gettext_lazy("Updates indexed field `media_file_basename` "
                          "which is empty or null")
 
     def add_arguments(self, parser):
@@ -23,7 +23,7 @@ class Command(BaseCommand):
             '--batchsize',
             type=int,
             default=1000,
-            help=ugettext_lazy("Number of records to process per query"))
+            help=gettext_lazy("Number of records to process per query"))
 
     def handle(self, *args, **kwargs):
         batchsize = kwargs.get("batchsize")
@@ -35,7 +35,7 @@ class Command(BaseCommand):
                                                      .filter(Q(media_file_basename=None) | Q(media_file_basename=""))
                                                      .order_by("id")[offset:limit])
             if attachments_ids:
-                self.stdout.write(_("Updating attachments from #{} to #{}\n").format(
+                self.stdout.write(t("Updating attachments from #{} to #{}\n").format(
                     attachments_ids[0],
                     attachments_ids[-1]))
 
