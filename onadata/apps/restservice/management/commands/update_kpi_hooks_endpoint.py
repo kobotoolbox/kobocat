@@ -17,7 +17,7 @@ class Command(BaseCommand):
             WHERE service_url LIKE '/assets/%';
     """
 
-    help = t('Updates KPI rest service endpoint')
+    help = 'Updates KPI rest service endpoint'
 
     def handle(self, *args, **kwargs):
 

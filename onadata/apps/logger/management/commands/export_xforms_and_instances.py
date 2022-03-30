@@ -12,7 +12,7 @@ from onadata.apps.logger.models import XForm, Instance
 
 
 class Command(BaseCommand):
-    help = gettext_lazy("Export ODK forms and instances to JSON.")
+    help = "Export ODK forms and instances to JSON."
 
     def handle(self, *args, **kwargs):
         fixtures_dir = os.path.join(ONADATA_DIR, "json_xform_fixtures")
