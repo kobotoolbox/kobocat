@@ -13,7 +13,7 @@ from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.utils.encoding import smart_text
 
-from django.utils.translation import gettext_lazy, gettext as t
+from django.utils.translation import gettext_lazy as t
 from guardian.shortcuts import (
     assign_perm,
     get_perms_for_model
@@ -62,7 +62,7 @@ class XForm(BaseModel):
 
     id_string = models.SlugField(
         editable=False,
-        verbose_name=gettext_lazy("ID"),
+        verbose_name=t("ID"),
         max_length=MAX_ID_LENGTH
     )
     title = models.CharField(editable=False, max_length=XFORM_TITLE_LENGTH)
@@ -89,8 +89,8 @@ class XForm(BaseModel):
     class Meta:
         app_label = 'logger'
         unique_together = (("user", "id_string"),)
-        verbose_name = gettext_lazy("XForm")
-        verbose_name_plural = gettext_lazy("XForms")
+        verbose_name = t("XForm")
+        verbose_name_plural = t("XForms")
         ordering = ("id_string",)
         permissions = (
             (CAN_ADD_SUBMISSIONS, t('Can make submissions to the form')),
@@ -196,7 +196,7 @@ class XForm(BaseModel):
             self.num_of_submissions = count
             self.save(update_fields=['num_of_submissions'])
         return self.num_of_submissions
-    submission_count.short_description = gettext_lazy("Submission Count")
+    submission_count.short_description = t("Submission Count")
 
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""
