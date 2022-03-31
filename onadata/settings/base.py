@@ -7,8 +7,11 @@ from datetime import timedelta
 from urllib.parse import quote_plus
 
 import environ
+from celery.schedules import crontab
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
+
+from onadata.libs.utils.redis_helper import RedisHelper
 
 
 env = environ.Env()
@@ -617,6 +620,8 @@ MFA_SUPPORTED_AUTH_CLASSES = [
     'onadata.libs.authentication.TokenAuthentication',
 ]
 
+LOCK_REDIS = env.cache_url('REDIS_LOCK_URL', default='redis://redis_cache:6380/2')
+
 ################################
 # Celery settings              #
 ################################
@@ -660,9 +665,23 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=6),
         'options': {'queue': 'kobocat_queue'}
     },
+    # Schedule every day at 5:00 AM UTC. Can be customized in admin section
+    'remove-revisions': {
+        'task': 'onadata.apps.logger.tasks.remove_revisions',
+        'schedule': crontab(hour=5, minute=0),
+        'options': {'queue': 'kobocat_queue'},
+        'enabled': False,
+    },
+    # Schedule every Saturday at 4:00 AM UTC. Can be customized in admin section
+    'remove-storage-orphans': {
+        'task': 'onadata.apps.logger.tasks.remove_storage_orphans',
+        'schedule': crontab(hour=4, minute=0, day_of_week=6),
+        'options': {'queue': 'kobocat_queue'},
+        'enabled': False,
+    },
 }
 
-CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
+CELERY_TASK_DEFAULT_QUEUE = 'kobocat_queue'
 
 
 ################################

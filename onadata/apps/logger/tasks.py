@@ -3,7 +3,7 @@ import csv
 import datetime
 import zipfile
 from collections import defaultdict
-from io import StringIO
+from io import BytesIO
 
 from celery import task, shared_task
 from dateutil import relativedelta
@@ -11,8 +11,9 @@ from django.contrib.auth.models import User
 from django.core.files.storage import get_storage_class
 from django.core.management import call_command
 
-from .models.submission_counter import SubmissionCounter
+from onadata.libs.utils.lock import lock
 from .models import Instance, XForm
+from .models.submission_counter import SubmissionCounter
 
 
 @task()
@@ -25,15 +26,14 @@ def create_monthly_counters():
 # ## ISSUE 242 TEMPORARY FIX ##
 # See https://github.com/kobotoolbox/kobocat/issues/242
 
-
 @shared_task(soft_time_limit=600, time_limit=900)
+@lock(key='fix_root_node_names', timeout=900)
 def fix_root_node_names(**kwargs):
     call_command(
         'fix_root_node_names',
         **kwargs
     )
-
-# #### END ISSUE 242 FIX ######
+# ##### END ISSUE 242 FIX ######
 
 
 @shared_task
@@ -110,3 +110,18 @@ def generate_stats_zip(output_filename):
             csv_io.close()
 
         zip_file.close()
+
+
+@shared_task
+@lock(key='remove_revisions', timeout=604800)  # Lock for one week
+def remove_revisions():
+    # We can also use `keep=1` to keep at least
+    # on version of each object.
+    # e.g.: `call_command('remove_revisions', days=90, keep=1)`
+    call_command('remove_revisions', days=90)
+
+
+@shared_task
+@lock(key='remove_storage_orphans', timeout=604800)  # Lock for one week
+def remove_storage_orphans():
+    call_command('remove_storage_orphans')

@@ -1,40 +1,36 @@
-#!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
 # coding: utf-8
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Sum
 from django.db.models.aggregates import Count
-from django.utils import timezone
 
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.logger.models.xform import XForm
-from onadata.libs.utils.common_tags import MONGO_STRFTIME
 
 
 class Command(BaseCommand):
 
-    help = "Deletes duplicated submissions (i.e same `uuid` and same `xml`)"
+    help = "Removes duplicated submissions (i.e same `uuid` and same `xml`)"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.__vaccuum = False
+        self.__vacuum = False
         self.__users = set([])
 
     def add_arguments(self, parser):
         super().add_arguments(parser)
 
         parser.add_argument(
-            "--user",
+            '--user',
             default=None,
-            help="Specify a username to clean up only their forms",
+            help='Specify a username to clean up only their forms',
         )
 
         parser.add_argument(
-            "--xform",
+            '--xform',
             default=None,
             help="Specify a XForm's `id_string` to clean up only this form",
         )
@@ -51,18 +47,20 @@ class Command(BaseCommand):
         if username:
             query = query.filter(xform__user__username=username)
 
-        query = query.values_list('uuid', flat=True)\
-            .annotate(count_uuid=Count('uuid'))\
-            .filter(count_uuid__gt=1)\
+        query = (
+            query.values_list('uuid', flat=True)
+            .annotate(count_uuid=Count('uuid'))
+            .filter(count_uuid__gt=1)
             .distinct()
+        )
 
         for uuid in query.all():
 
             duplicated_query = Instance.objects.filter(uuid=uuid)
 
-            instances_with_same_uuid = duplicated_query.values_list('id',
-                                                                    'xml_hash')\
-                .order_by('xml_hash', 'date_created')
+            instances_with_same_uuid = duplicated_query.values_list(
+                'id', 'xml_hash'
+            ).order_by('xml_hash', 'date_created')
             xml_hash_ref = None
             instance_id_ref = None
 
@@ -84,24 +82,26 @@ class Command(BaseCommand):
             self.__clean_up(instance_id_ref,
                             duplicated_instance_ids)
 
-        if not self.__vaccuum:
+        if not self.__vacuum:
             self.stdout.write('No instances have been purged.')
         else:
             # Update number of submissions for each user.
             for user_ in list(self.__users):
-                result = XForm.objects.filter(user_id=user_.id)\
-                    .aggregate(count=Sum('num_of_submissions'))
+                result = XForm.objects.filter(user_id=user_.id).aggregate(
+                    count=Sum('num_of_submissions')
+                )
                 user_.profile.num_of_submissions = result['count']
                 self.stdout.write(
-                    "\tUpdating `{}`'s number of submissions".format(
-                        user_.username))
+                    f"\tUpdating `{user_.username}`'s number of submissions"
+                )
                 user_.profile.save(update_fields=['num_of_submissions'])
                 self.stdout.write(
-                    '\t\tDone! New number: {}'.format(result['count']))
+                    f"\t\tDone! New number: {result['count']}"
+                )
 
     def __clean_up(self, instance_id_ref, duplicated_instance_ids):
         if instance_id_ref is not None and len(duplicated_instance_ids) > 0:
-            self.__vaccuum = True
+            self.__vacuum = True
             with transaction.atomic():
                 self.stdout.write('Link attachments to instance #{}'.format(
                     instance_id_ref))
@@ -115,12 +115,15 @@ class Command(BaseCommand):
                     .get(id=instance_id_ref)
                 main_instance.parsed_instance.save()
 
-                self.stdout.write('\tPurging instances: {}'.format(
-                    duplicated_instance_ids))
-                Instance.objects.select_for_update()\
-                    .filter(id__in=duplicated_instance_ids).delete()
-                ParsedInstance.objects.select_for_update()\
-                    .filter(instance_id__in=duplicated_instance_ids).delete()
+                self.stdout.write(
+                    '\tPurging instances: {}'.format(duplicated_instance_ids)
+                )
+                Instance.objects.select_for_update().filter(
+                    id__in=duplicated_instance_ids
+                ).delete()
+                ParsedInstance.objects.select_for_update().filter(
+                    instance_id__in=duplicated_instance_ids
+                ).delete()
                 settings.MONGO_DB.instances.remove(
                     {'_id': {'$in': duplicated_instance_ids}}
                 )

@@ -1,4 +1,6 @@
 # coding: utf-8
+from django.utils.six.moves.urllib.parse import urlencode
+from django.utils.six.moves.urllib.request import urlopen
 from urllib.request import urlopen
 
 from django.utils.http import urlencode

@@ -2,7 +2,6 @@
 import os
 import time
 import csv
-import tempfile
 
 from django.urls import reverse
 from django.core.files.storage import get_storage_class, FileSystemStorage

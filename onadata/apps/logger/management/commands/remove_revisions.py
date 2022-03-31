@@ -10,7 +10,7 @@ from reversion.management.commands.deleterevisions import Command as RevisionCom
 
 class Command(RevisionCommand):
 
-    help = "Deletes revisions (by chunks) for a given app [and model]"
+    help = "Removes revisions (by chunks) for a given app [and model]"
 
     def add_arguments(self, parser):
         super().add_arguments(parser)
@@ -54,8 +54,14 @@ class Command(RevisionCommand):
         keep_revision_ids = set()
         # By default, delete nothing.
         can_delete = False
+
         # Get all revisions for the given revision manager and model.
         for model in self.get_models(options):
+            # Force keep assets' revisions even if `self.models()` returns only
+            # registered models.
+            if model._meta.verbose_name == 'asset':
+                continue
+
             if verbosity >= 1:
                 self.stdout.write("Finding stale revisions for {name}".format(
                     name=model._meta.verbose_name,

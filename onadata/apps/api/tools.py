@@ -4,7 +4,6 @@ import os
 import re
 import time
 from datetime import datetime
-from urllib.parse import unquote
 
 import requests
 import rest_framework.views as rest_framework_views
@@ -31,8 +30,6 @@ from onadata.apps.viewer.models.parsed_instance import datetime_from_str
 from onadata.libs.utils.logger_tools import (
     publish_form,
     response_with_mimetype_and_name,
-    OPEN_ROSA_VERSION_HEADER,
-    OPEN_ROSA_VERSION,
 )
 from onadata.libs.utils.user_auth import (
     check_and_set_form_by_id,
