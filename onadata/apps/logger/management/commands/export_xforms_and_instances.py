@@ -5,7 +5,6 @@ import os
 
 from django.core.management.base import BaseCommand
 from django.core.serializers import serialize
-from django.utils.translation import gettext_lazy
 
 from settings import ONADATA_DIR
 from onadata.apps.logger.models import XForm, Instance

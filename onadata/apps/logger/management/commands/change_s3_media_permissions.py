@@ -5,7 +5,6 @@ import sys
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.storage import get_storage_class
-from django.utils.translation import gettext as t
 
 
 class Command(BaseCommand):
@@ -15,7 +14,7 @@ class Command(BaseCommand):
         permissions = ('private', 'public-read', 'authenticated-read')
 
         if len(args) < 1:
-            raise CommandError(t("Missing permission argument"))
+            raise CommandError("Missing permission argument")
 
         permission = args[0]
 

@@ -1,6 +1,5 @@
 # coding: utf-8
 from django.core.management.base import BaseCommand
-from django.utils.translation import gettext as t
 
 from onadata.apps.restservice.models import RestService
 
