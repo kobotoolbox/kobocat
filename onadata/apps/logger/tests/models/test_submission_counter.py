@@ -1,10 +1,9 @@
 # coding: utf-8
 from datetime import datetime
 
-from mock import patch
+from django.contrib.auth.models import User
 
 from onadata.apps.logger.models.submission_counter import SubmissionCounter
-from onadata.apps.logger.tasks import create_monthly_counters
 from onadata.apps.main.tests.test_base import TestBase
 
 
@@ -13,23 +12,22 @@ class TestSubmissionCounter(TestBase):
     def setup(self):
         super.setup()
 
-    @patch('onadata.apps.logger.tasks.create_monthly_counters')
-    def test_user_created(self, monthly_counter):
+    def test_counter_created_on_submission(self):
         """
-        Tests that when a new user is created the celery task runs
+        Tests that the counter is created when submission is received
         """
-        self._create_user('amy', 'amy')
-        self._create_user('johnny', 'johnny')
-
-        create_monthly_counters()
-        counters = SubmissionCounter.objects.only('user__username')
-        self.assertEqual(counters.count(), 4)
+        self._create_user_and_login()
+        no_counter = SubmissionCounter.objects.filter(user__username='bob')
+        self.assertEqual(no_counter.count(), 0)
+        self._publish_transportation_form_and_submit_instance()
+        counter_added = SubmissionCounter.objects.filter(user__username='bob')
+        self.assertEqual(counter_added.count(), 1)
 
     def test_counter_increment(self):
         """
         Tests that when a submission is revieved, the counter increments
         """
-        create_monthly_counters()
+        self._create_user_and_login()
         self._publish_transportation_form_and_submit_instance()
         counters = SubmissionCounter.objects.get(user__username='bob')
         self.assertEqual(counters.count, 1)
@@ -38,7 +36,8 @@ class TestSubmissionCounter(TestBase):
         """
         Test that the data stored is the same as the data expected
         """
-        create_monthly_counters()
+        self._create_user_and_login()
+        SubmissionCounter.objects.create(user=User.objects.get(username='bob'))
         counter = SubmissionCounter.objects.last()
         today = datetime.now()
         self.assertEqual(counter.timestamp.year, today.year)
