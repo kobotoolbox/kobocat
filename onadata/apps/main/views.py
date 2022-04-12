@@ -17,7 +17,7 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponseServerError
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_http_methods
 from rest_framework.authtoken.models import Token
@@ -71,14 +71,14 @@ def profile(request, username):
         migrate_response = _make_authenticated_request(request, content_user)
         message = {}
         if migrate_response.status_code == status.HTTP_200_OK:
-            message['text'] = _(
+            message['text'] = t(
                 'The migration process has started and may take several '
                 'minutes. Please check the project list in the '
                 '<a href={}>regular interface</a> and ensure your projects have '
                 'synced.'
             ).format(settings.KOBOFORM_URL)
         else:
-            message['text'] = _(
+            message['text'] = t(
                 'Something went wrong trying to migrate your forms. Please try '
                 'again or reach out on the <a'
                 'href="https://community.kobotoolbox.org/">community forum</a> '
@@ -114,20 +114,20 @@ def profile(request, username):
             {
                 'id': 'published',
                 'xforms': user_xforms,
-                'title': _("Published Forms"),
-                'small': _("Export, map, and view submissions.")
+                'title': t("Published Forms"),
+                'small': t("Export, map, and view submissions.")
             },
             {
                 'id': 'shared',
                 'xforms': forms_shared_with,
-                'title': _("Shared Forms"),
-                'small': _("List of forms shared with you.")
+                'title': t("Shared Forms"),
+                'small': t("List of forms shared with you.")
             },
             {
                 'id': 'published_or_shared',
                 'xforms': published_or_shared,
-                'title': _("Published Forms"),
-                'small': _("Export, map, and view submissions.")
+                'title': t("Published Forms"),
+                'small': t("Export, map, and view submissions.")
             }
         ]
         data.update({
@@ -261,7 +261,7 @@ def api(request, username=None, id_string=None):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
 
     if not xform:
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
 
     try:
         args = {
@@ -305,7 +305,7 @@ def api_token(request, username=None):
 
         return render(request, "api_token.html", data)
 
-    return HttpResponseForbidden(_('Permission denied.'))
+    return HttpResponseForbidden(t('Permission denied.'))
 
 
 # ToDo Remove when `form-media` features is released in KPI
@@ -324,7 +324,7 @@ def edit(request, username, id_string):
                 SSRFProtect.validate(uri)
             except SSRFProtectException:
                 return HttpResponseForbidden(
-                    _('URL {uri} is forbidden.').format(uri=uri)
+                    t('URL {uri} is forbidden.').format(uri=uri)
                 )
             MetaData.media_add_uri(xform, uri)
         elif request.FILES.get('media'):
@@ -333,7 +333,7 @@ def edit(request, username, id_string):
             }
             audit_log(
                 Actions.FORM_UPDATED, request.user, owner,
-                _("Media added to '%(id_string)s'.") %
+                t("Media added to '%(id_string)s'.") %
                 {
                     'id_string': xform.id_string
                 }, audit, request)
@@ -343,7 +343,7 @@ def edit(request, username, id_string):
         xform.update()
 
         if request.is_ajax():
-            return HttpResponse(_('Updated succeeded.'))
+            return HttpResponse(t('Updated succeeded.'))
         else:
             if 'HTTP_REFERER' in request.META and request.META['HTTP_REFERER'].strip(): 
                 return HttpResponseRedirect(request.META['HTTP_REFERER'])               
@@ -353,7 +353,7 @@ def edit(request, username, id_string):
                 'id_string': id_string
             }))
 
-    return HttpResponseForbidden(_('Update failed.'))
+    return HttpResponseForbidden(t('Update failed.'))
 
 
 def download_media_data(request, username, id_string, data_id):
@@ -376,7 +376,7 @@ def download_media_data(request, username, id_string, data_id):
                 }
                 audit_log(
                     Actions.FORM_UPDATED, request.user, owner,
-                    _("Media download '%(filename)s' deleted from "
+                    t("Media download '%(filename)s' deleted from "
                         "'%(id_string)s'.") %
                     {
                         'id_string': xform.id_string,
@@ -409,7 +409,7 @@ def download_media_data(request, username, id_string, data_id):
             }
             audit_log(
                 Actions.FORM_UPDATED, request.user, owner,
-                _("Media '%(filename)s' downloaded from "
+                t("Media '%(filename)s' downloaded from "
                     "'%(id_string)s'.") %
                 {
                     'id_string': xform.id_string,
@@ -423,7 +423,7 @@ def download_media_data(request, username, id_string, data_id):
         else:
             return HttpResponseNotFound()
 
-    return HttpResponseForbidden(_('Permission denied.'))
+    return HttpResponseForbidden(t('Permission denied.'))
 
 
 def download_metadata(request, username, id_string, data_id):
@@ -445,7 +445,7 @@ def download_metadata(request, username, id_string, data_id):
             }
             audit_log(
                 Actions.FORM_UPDATED, request.user, owner,
-                _("Document '%(filename)s' for '%(id_string)s' downloaded.") %
+                t("Document '%(filename)s' for '%(id_string)s' downloaded.") %
                 {
                     'id_string': xform.id_string,
                     'filename': "%s.%s" % (filename, extension)
@@ -458,7 +458,7 @@ def download_metadata(request, username, id_string, data_id):
         else:
             return HttpResponseNotFound()
 
-    return HttpResponseForbidden(_('Permission denied.'))
+    return HttpResponseForbidden(t('Permission denied.'))
 
 
 @login_required()
@@ -479,7 +479,7 @@ def delete_metadata(request, username, id_string, data_id):
             }
             audit_log(
                 Actions.FORM_UPDATED, request.user, owner,
-                _("Document '%(filename)s' deleted from '%(id_string)s'.") %
+                t("Document '%(filename)s' deleted from '%(id_string)s'.") %
                 {
                     'id_string': xform.id_string,
                     'filename': os.path.basename(data.data_file.name)
@@ -500,7 +500,7 @@ def form_photos(request, username, id_string):
     xform, owner = check_and_set_user_and_form(username, id_string, request)
 
     if not xform:
-        return HttpResponseForbidden(_('Not shared.'))
+        return HttpResponseForbidden(t('Not shared.'))
 
     data = {}
     data['form_view'] = True
@@ -559,7 +559,7 @@ def make_kpi_data_redirect_view(kpi_data_route):
         owner = get_object_or_404(User, username__iexact=username)
         xform = get_object_or_404(XForm, id_string__exact=id_string, user=owner)
         if not has_permission(xform, owner, request):
-            return HttpResponseForbidden(_('Not shared.'))
+            return HttpResponseForbidden(t('Not shared.'))
         data = {'xform': xform}
         if xform.kpi_asset_uid:
             data['kpi_url'] = (

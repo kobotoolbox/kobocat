@@ -4,7 +4,6 @@ import sys
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _
 
 from onadata.apps.viewer.models.parsed_instance import xform_instances
 from onadata.apps.logger.models.instance import Instance
@@ -12,7 +11,7 @@ from onadata.apps.logger.models.instance import Instance
 
 class Command(BaseCommand):
 
-    help = _('Rewrite attachments urls to point to new protected endpoint')
+    help = 'Rewrite attachments urls to point to new protected endpoint'
     BATCH_SIZE = 1000
 
     def handle(self, *args, **kwargs):

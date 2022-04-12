@@ -10,7 +10,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.utils.six import string_types
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.logger.models import Instance
@@ -111,7 +111,7 @@ class ParsedInstance(models.Model):
         sort = sort if sort else {}
 
         if start < 0 or limit < 0:
-            raise ValueError(_("Invalid start/limit params"))
+            raise ValueError(t("Invalid start/limit params"))
 
         return cls._get_paginated_and_sorted_cursor(cursor, start, limit, sort)
 
@@ -127,9 +127,9 @@ class ParsedInstance(models.Model):
             query = json.loads(
                 query, object_hook=json_util.object_hook) if query else {}
         if not (isinstance(pipeline, dict) or isinstance(pipeline, list)):
-            raise Exception(_("Invalid pipeline! %s" % pipeline))
+            raise Exception(t("Invalid pipeline! %s" % pipeline))
         if not isinstance(query, dict):
-            raise Exception(_("Invalid query! %s" % query))
+            raise Exception(t("Invalid query! %s" % query))
         query = MongoHelper.to_safe_dict(query)
         k = [{'$match': query}]
         if isinstance(pipeline, list):
@@ -163,7 +163,7 @@ class ParsedInstance(models.Model):
         sort = sort if sort else {}
 
         if start < 0 or limit < 0:
-            raise ValueError(_("Invalid start/limit params"))
+            raise ValueError(t("Invalid start/limit params"))
 
         if limit > cls.DEFAULT_LIMIT:
             limit = cls.DEFAULT_LIMIT

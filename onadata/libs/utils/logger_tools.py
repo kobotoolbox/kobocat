@@ -24,7 +24,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.encoding import DjangoUnicodeDecodeError, smart_str
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
@@ -101,7 +101,7 @@ def check_submission_permissions(
         and xform.user != request.user
         and not request.user.has_perm('report_xform', xform)
     ):
-        raise PermissionDenied(_('Forbidden'))
+        raise PermissionDenied(t('Forbidden'))
 
 
 def check_edit_submission_permissions(
@@ -110,7 +110,7 @@ def check_edit_submission_permissions(
     if request.user.is_anonymous:
         raise UnauthenticatedEditAttempt
     if not _has_edit_xform_permission(request, xform, instance):
-        raise PermissionDenied(_(
+        raise PermissionDenied(t(
             'Forbidden attempt to edit a submission. To make a new submission, '
             'Remove `deprecatedID` from the submission XML and try again.'
         ))
@@ -258,7 +258,7 @@ def inject_instanceid(xml_str, uuid):
         xml = clean_and_parse_xml(xml_str)
         children = xml.childNodes
         if children.length == 0:
-            raise ValueError(_("XML string must have a survey element."))
+            raise ValueError(t("XML string must have a survey element."))
 
         # check if we have a meta tag
         survey_node = children.item(0)
@@ -382,7 +382,7 @@ def publish_form(callback):
         # on clone invalid URL
         return {
             'type': 'alert-error',
-            'text': _('Invalid URL format.'),
+            'text': t('Invalid URL format.'),
         }
     except AttributeError as e:
         # form.publish returned None, not sure why...
@@ -394,7 +394,7 @@ def publish_form(callback):
         # catch timeout errors
         return {
             'type': 'alert-error',
-            'text': _('Form validation timeout, please try again.'),
+            'text': t('Form validation timeout, please try again.'),
         }
     except Exception as e:
         # TODO: Something less horrible. This masks storage backend
@@ -454,7 +454,7 @@ def report_exception(subject, info, exc_info=None):
     # TODO: replace with standard logging (i.e. `import logging`)
     if exc_info:
         cls, err = exc_info[:2]
-        message = _("Exception in request:"
+        message = t("Exception in request:"
                     " %(class)s: %(error)s")\
             % {'class': cls.__name__, 'error': err}
         message += "".join(traceback.format_exception(*exc_info))
@@ -490,7 +490,7 @@ def response_with_mimetype_and_name(
                 response['Content-Length'] = os.path.getsize(file_path)
         except IOError:
             response = HttpResponseNotFound(
-                _("The requested file could not be found."))
+                t("The requested file could not be found."))
     else:
         response = HttpResponse(content_type=mimetype)
     response['Content-Disposition'] = disposition_ext_and_date(
@@ -510,21 +510,21 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
         instance = create_instance(
             username, xml_file, media_files, uuid=uuid, request=request)
     except InstanceInvalidUserError:
-        error = OpenRosaResponseBadRequest(_("Username or ID required."))
+        error = OpenRosaResponseBadRequest(t("Username or ID required."))
     except InstanceEmptyError:
         error = OpenRosaResponseBadRequest(
-            _("Received empty submission. No instance was created")
+            t("Received empty submission. No instance was created")
         )
     except FormInactiveError:
-        error = OpenRosaResponseNotAllowed(_("Form is not active"))
+        error = OpenRosaResponseNotAllowed(t("Form is not active"))
     except XForm.DoesNotExist:
         error = OpenRosaResponseNotFound(
-            _("Form does not exist on this account")
+            t("Form does not exist on this account")
         )
     except ExpatError as e:
-        error = OpenRosaResponseBadRequest(_("Improperly formatted XML."))
+        error = OpenRosaResponseBadRequest(t("Improperly formatted XML."))
     except DuplicateInstance:
-        response = OpenRosaResponse(_("Duplicate submission"))
+        response = OpenRosaResponse(t("Duplicate submission"))
         response.status_code = 202
         response['Location'] = request.build_absolute_uri(request.path)
         error = response
@@ -533,7 +533,7 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
     except InstanceMultipleNodeError as e:
         error = OpenRosaResponseBadRequest(e)
     except DjangoUnicodeDecodeError:
-        error = OpenRosaResponseBadRequest(_("File likely corrupted during "
+        error = OpenRosaResponseBadRequest(t("File likely corrupted during "
                                              "transmission, please try later."
                                              ))
 

@@ -18,7 +18,7 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
 )
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from rest_framework import exceptions
 from rest_framework.authtoken.models import Token
 from rest_framework.request import Request
@@ -69,13 +69,13 @@ def publish_xlsform(request, user, existing_xform=None):
         UserProfile.objects.get_or_create(user=user)[0]
     ):
         raise exceptions.PermissionDenied(
-            detail=_("User %(user)s has no permission to add xforms to "
+            detail=t("User %(user)s has no permission to add xforms to "
                      "account %(account)s" % {'user': request.user.username,
                                               'account': user.username}))
     if existing_xform and not request.user.has_perm(
             'change_xform', existing_xform):
         raise exceptions.PermissionDenied(
-            detail=_("User %(user)s has no permission to change this "
+            detail=t("User %(user)s has no permission to change this "
                      "form." % {'user': request.user.username, })
         )
 
@@ -99,7 +99,7 @@ def get_xform(formid, request, username=None):
         xform = check_and_set_form_by_id(int(formid), request)
 
     if not xform:
-        raise exceptions.PermissionDenied(_(
+        raise exceptions.PermissionDenied(t(
             "You do not have permission to view data from this form."))
 
     return xform

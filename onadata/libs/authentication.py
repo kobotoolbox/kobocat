@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.conf import settings
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as t
 from django.http import HttpResponse
 from django_digest import HttpDigestAuthenticator
 from rest_framework.authentication import (
@@ -53,7 +53,7 @@ class DigestAuthentication(MFABlockerMixin, BaseAuthentication):
 
             return request.user, None
         else:
-            raise AuthenticationFailed(_('Invalid username/password'))
+            raise AuthenticationFailed(t('Invalid username/password'))
 
     def authenticate_header(self, request):
         response = self.build_challenge_response()
@@ -85,7 +85,7 @@ class HttpsOnlyBasicAuthentication(MFABlockerMixin, BasicAuthentication):
         ):
             # Scold the user if they provided correct credentials for basic
             # auth but didn't use HTTPS
-            raise AuthenticationFailed(_(
+            raise AuthenticationFailed(t(
                 'Using basic authentication without HTTPS transmits '
                 'credentials in clear text! You MUST connect via HTTPS '
                 'to use basic authentication.'

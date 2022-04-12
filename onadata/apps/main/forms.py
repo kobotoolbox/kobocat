@@ -1,7 +1,7 @@
 # coding: utf-8
 from django import forms
 from django.forms import ModelForm
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from onadata.apps.main.models import UserProfile
 from onadata.libs.utils.logger_tools import publish_xls_form
@@ -15,7 +15,7 @@ class UserProfileForm(ModelForm):
 
 
 class MediaForm(forms.Form):
-    media = forms.FileField(label=ugettext_lazy("Media upload"),
+    media = forms.FileField(label=gettext_lazy("Media upload"),
                             required=True)
 
     def clean_media(self):
@@ -28,7 +28,7 @@ class MediaForm(forms.Form):
 class QuickConverterForm(forms.Form):
 
     xls_file = forms.FileField(
-        label=ugettext_lazy('XLS File'), required=True)
+        label=gettext_lazy('XLS File'), required=True)
 
     def publish(self, user, id_string=None):
         if self.is_valid():

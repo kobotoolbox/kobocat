@@ -6,7 +6,7 @@ import sys
 import dateutil.parser
 import six
 from django.utils.encoding import smart_str
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from django.utils.six import text_type
 from xml.dom import minidom, Node
 
@@ -19,22 +19,22 @@ class XLSFormError(Exception):
 
 class DuplicateInstance(Exception):
     def __str__(self):
-        return _("Duplicate Instance")
+        return t("Duplicate Instance")
 
 
 class InstanceInvalidUserError(Exception):
     def __str__(self):
-        return _("Could not determine the user.")
+        return t("Could not determine the user.")
 
 
 class InstanceParseError(Exception):
     def __str__(self):
-        return _("The instance could not be parsed.")
+        return t("The instance could not be parsed.")
 
 
 class InstanceEmptyError(InstanceParseError):
     def __str__(self):
-        return _("Empty instance")
+        return t("Empty instance")
 
 
 class InstanceMultipleNodeError(Exception):
@@ -47,7 +47,7 @@ def get_meta_from_xml(xml_str, meta_name):
     # children ideally contains a single element
     # that is the parent of all survey elements
     if children.length == 0:
-        raise ValueError(_("XML string must have a survey element."))
+        raise ValueError(t("XML string must have a survey element."))
     survey_node = children[0]
     meta_tags = [n for n in survey_node.childNodes if
                  n.nodeType == Node.ELEMENT_NODE and
@@ -86,7 +86,7 @@ def get_uuid_from_xml(xml):
     # children ideally contains a single element
     # that is the parent of all survey elements
     if children.length == 0:
-        raise ValueError(_("XML string must have a survey element."))
+        raise ValueError(t("XML string must have a survey element."))
     survey_node = children[0]
     uuid = survey_node.getAttribute('instanceID')
     if uuid != '':
@@ -101,7 +101,7 @@ def get_submission_date_from_xml(xml):
     # children ideally contains a single element
     # that is the parent of all survey elements
     if children.length == 0:
-        raise ValueError(_("XML string must have a survey element."))
+        raise ValueError(t("XML string must have a survey element."))
     survey_node = children[0]
     submissionDate = survey_node.getAttribute('submissionDate')
     if submissionDate != '':

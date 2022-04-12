@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 
 
 SLASH = "/"
@@ -51,7 +51,7 @@ def image_urls_dict(instance):
 def report_exception(subject, info, exc_info=None):
     if exc_info:
         cls, err = exc_info[:2]
-        info += _("Exception in request: %(class)s: %(error)s") \
+        info += t("Exception in request: %(class)s: %(error)s") \
             % {'class': cls.__name__, 'error': err}
         info += "".join(traceback.format_exception(*exc_info))
 

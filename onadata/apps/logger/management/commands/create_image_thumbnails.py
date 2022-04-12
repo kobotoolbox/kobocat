@@ -12,23 +12,20 @@ from onadata.apps.logger.models.xform import XForm
 from onadata.libs.utils.image_tools import resize
 from onadata.libs.utils.model_tools import queryset_iterator
 from onadata.libs.utils.viewer_tools import get_path
-from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 class Command(BaseCommand):
-    help = ugettext_lazy("Creates thumbnails for "
-                         "all form images and stores them")
+    help = "Creates thumbnails for all form images and stores them"
 
     def add_arguments(self, parser):
         parser.add_argument('-u', '--username',
-                            help=ugettext_lazy("Username of the form user"))
+                            help="Username of the form user")
 
         parser.add_argument('-i', '--id_string',
-                            help=ugettext_lazy("id string of the form"))
+                            help="id string of the form")
 
         parser.add_argument('-f', '--force', action='store_false',
-                            help=ugettext_lazy("regenerate thumbnails if they "
-                                               "exist."))
+                            help="regenerate thumbnails if they exist.")
 
     def handle(self, *args, **kwargs):
         attachments_qs = Attachment.objects.select_related(
@@ -72,11 +69,11 @@ class Command(BaseCommand):
                     if default_storage.exists(get_path(
                             filename,
                             '%s' % settings.THUMB_CONF['small']['suffix'])):
-                        print(_('Thumbnails created for %(file)s')
+                        print('Thumbnails created for %(file)s'
                               % {'file': filename})
                     else:
-                        print(_('Problem with the file %(file)s')
+                        print('Problem with the file %(file)s'
                               % {'file': filename})
                 except (IOError, OSError) as e:
-                    print(_('Error on %(filename)s: %(error)s')
+                    print('Error on %(filename)s: %(error)s'
                           % {'filename': filename, 'error': e})
