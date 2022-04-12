@@ -29,7 +29,7 @@ Pillow
 psycopg2-binary
 pymongo
 lxml
-pyxform==1.7.0
+pyxform==1.9.0
 django-reversion<3.0.2
 xlrd
 xlwt
