@@ -3,11 +3,12 @@ import os
 import time
 import csv
 import tempfile
+from io import BytesIO
 
 from django.urls import reverse
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.utils import timezone
-from xlrd import open_workbook
+from openpyxl import load_workbook
 
 from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.views import kml_export, export_download
@@ -31,7 +32,8 @@ class TestFormExports(TestBase):
 
     def _num_rows(self, content, export_format):
         def xls_rows(f):
-            return open_workbook(file_contents=f).sheets()[0].nrows
+            wb = load_workbook(BytesIO(f))
+            return wb[wb.sheetnames[0]].max_row
 
         def csv_rows(f):
             return len([line for line in csv.reader(f.decode().strip().split('\n'))])

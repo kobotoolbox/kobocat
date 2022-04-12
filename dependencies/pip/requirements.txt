@@ -226,8 +226,6 @@ vine==1.3.0
 werkzeug==2.0.1
     # via -r dependencies/pip/requirements.in
 xlrd==2.0.1
-    # via
-    #   -r dependencies/pip/requirements.in
-    #   pyxform
+    # via pyxform
 xlwt==1.3.0
     # via -r dependencies/pip/requirements.in
