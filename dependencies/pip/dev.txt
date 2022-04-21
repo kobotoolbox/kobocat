@@ -42,8 +42,10 @@ decorator==4.4.2
     # via
     #   ipython
     #   traitlets
-defusedxml==0.6.0
-    # via djangorestframework-xml
+defusedxml==0.7.1
+    # via
+    #   djangorestframework-xml
+    #   pyxform
 dict2xml==1.7.0
     # via -r dependencies/pip/requirements.in
 django==2.2.14
@@ -141,8 +143,6 @@ ipython==7.16.1
     #   ipdb
 ipython-genutils==0.2.0
     # via traitlets
-jdcal==1.4.1
-    # via openpyxl
 jedi==0.17.2
     # via ipython
 jmespath==0.10.0
@@ -173,8 +173,10 @@ numpy==1.19.0
     # via pandas
 oauthlib==3.1.0
     # via django-oauth-toolkit
-openpyxl==3.0.4
-    # via -r dependencies/pip/requirements.in
+openpyxl==3.0.9
+    # via
+    #   -r dependencies/pip/requirements.in
+    #   pyxform
 packaging==20.4
     # via pytest
 pandas==1.0.5
@@ -230,7 +232,7 @@ pytz==2020.1
     #   django
     #   django-timezone-field
     #   pandas
-pyxform==1.7.0
+pyxform==1.9.0
     # via -r dependencies/pip/requirements.in
 redis==3.5.3
     # via
@@ -298,10 +300,8 @@ wcwidth==0.2.5
     #   pytest
 werkzeug==1.0.1
     # via -r dependencies/pip/requirements.in
-xlrd==1.2.0
-    # via
-    #   -r dependencies/pip/requirements.in
-    #   pyxform
+xlrd==2.0.1
+    # via pyxform
 xlwt==1.3.0
     # via -r dependencies/pip/requirements.in
 

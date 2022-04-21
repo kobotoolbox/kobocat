@@ -5,12 +5,13 @@ import json
 import os
 import re
 import unittest
+from io import BytesIO
 
 from django.urls import reverse
 from django.conf import settings
 from django_digest.test import Client as DigestClient
 from django.core.files.uploadedfile import UploadedFile
-from xlrd import open_workbook
+from openpyxl import load_workbook
 from xml.dom import minidom, Node
 
 from onadata.apps.main.models import MetaData
@@ -368,24 +369,24 @@ class TestProcess(TestBase):
             'xls_export', kwargs={'username': self.user.username,
                                   'id_string': self.xform.id_string})
         response = self.client.get(xls_export_url)
-        expected_xls = open_workbook(os.path.join(
-            self.this_directory, "fixtures", "transportation",
-            "transportation_export.xls"))
+        expected_xls = load_workbook(os.path.join(
+            self.this_directory, 'fixtures', 'transportation',
+            'transportation_export.xlsx'))
         content = self._get_response_content(response)
-        actual_xls = open_workbook(file_contents=content)
-        actual_sheet = actual_xls.sheet_by_index(0)
-        expected_sheet = expected_xls.sheet_by_index(0)
+        actual_xls = load_workbook(BytesIO(content))
+        actual_sheet = actual_xls[actual_xls.sheetnames[0]]
+        expected_sheet = expected_xls[expected_xls.sheetnames[0]]
 
         # check headers
-        self.assertEqual(actual_sheet.row_values(0),
-                         expected_sheet.row_values(0))
+        self.assertEqual([cell.value for cell in actual_sheet[1]],
+                        [cell.value for cell in expected_sheet[1]])
 
         # check cell data
-        self.assertEqual(actual_sheet.ncols, expected_sheet.ncols)
-        self.assertEqual(actual_sheet.nrows, expected_sheet.nrows)
-        for i in range(1, actual_sheet.nrows):
-            actual_row = actual_sheet.row_values(i)
-            expected_row = expected_sheet.row_values(i)
+        self.assertEqual(actual_sheet.max_column, expected_sheet.max_column)
+        self.assertEqual(actual_sheet.max_row, expected_sheet.max_row)
+        for i in range(2, actual_sheet.max_row):
+            actual_row = [cell.value for cell in actual_sheet[i]]
+            expected_row = [cell.value for cell in expected_sheet[i]]
 
             # remove _id from result set, varies depending on the database
             del actual_row[22]

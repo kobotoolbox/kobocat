@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
-from xlrd import open_workbook
+from openpyxl import load_workbook
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.tests.export_helpers import viewer_fixture_path
@@ -696,11 +696,11 @@ class TestExports(TestBase):
     def _get_xls_data(self, filepath):
         storage = get_storage_class()()
         with storage.open(filepath) as f:
-            workbook = open_workbook(file_contents=f.read())
-        transportation_sheet = workbook.sheet_by_name("transportation_2011_07_25")
-        self.assertTrue(transportation_sheet.nrows > 1)
-        headers = transportation_sheet.row_values(0)
-        column1 = transportation_sheet.row_values(1)
+            workbook = load_workbook(f)
+        transportation_sheet = workbook['transportation_2011_07_25']
+        self.assertTrue(transportation_sheet.max_row > 1)
+        headers = [cell.value for cell in transportation_sheet[1]]
+        column1 = [cell.value for cell in transportation_sheet[2]]
         return dict(zip(headers, column1))
 
     def test_column_header_delimiter_export_option(self):
@@ -751,8 +751,7 @@ class TestExports(TestBase):
         self.assertTrue(bool(export.filepath))
         data = self._get_xls_data(export.filepath)
         self.assertTrue(AMBULANCE_KEY in data)
-        # xlrd reader seems to convert bools into integers i.e. 0 or 1
-        self.assertEqual(data[AMBULANCE_KEY], 1)
+        self.assertTrue(data[AMBULANCE_KEY])
 
         sleep(1)
         # test xls with dot delimiter
@@ -763,8 +762,7 @@ class TestExports(TestBase):
         self.assertTrue(bool(export.filepath))
         data = self._get_xls_data(export.filepath)
         self.assertTrue(AMBULANCE_KEY_DOTS in data)
-        # xlrd reader seems to convert bools into integers i.e. 0 or 1
-        self.assertEqual(data[AMBULANCE_KEY_DOTS], 1)
+        self.assertTrue(data[AMBULANCE_KEY_DOTS])
 
     def test_split_select_multiple_export_option(self):
         self._publish_transportation_form()
