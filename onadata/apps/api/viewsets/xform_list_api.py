@@ -109,27 +109,38 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
+        start_time = datetime.now()
         self.object_list = self.filter_queryset(self.get_queryset())
 
         serializer = self.get_serializer(self.object_list, many=True)
-
-        return Response(serializer.data, headers=self.get_openrosa_headers())
+        headers = self.get_openrosa_headers()
+        
+        response_time = (datetime.now() - start_time)
+        headers['X-Process-Response-Time'] = '{}s'.format(response_time.seconds + (response_time.microseconds / 1000000))
+        return Response(serializer.data, headers=headers)
 
     def retrieve(self, request, *args, **kwargs):
+        start_time = datetime.now()
         self.object = self.get_object()
-
-        return Response(self.object.xml, headers=self.get_openrosa_headers())
+        headers = self.get_openrosa_headers()
+        response_time = (datetime.now() - start_time)
+        headers['X-Process-Response-Time'] = '{}s'.format(response_time.seconds + (response_time.microseconds / 1000000))
+        return Response(self.object.xml, headers=headers)
 
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
+        start_time = datetime.now()
         self.object = self.get_object()
         object_list = MetaData.objects.filter(data_type='media',
                                               xform=self.object)
         context = self.get_serializer_context()
         serializer = XFormManifestSerializer(object_list, many=True,
                                              context=context)
+        headers = self.get_openrosa_headers()
+        response_time = (datetime.now() - start_time)
+        headers['X-Process-Response-Time'] = '{}s'.format(response_time.seconds + (response_time.microseconds / 1000000))
 
-        return Response(serializer.data, headers=self.get_openrosa_headers())
+        return Response(serializer.data, headers=headers)
 
     @action(detail=True, methods=['GET'])
     def media(self, request, *args, **kwargs):
