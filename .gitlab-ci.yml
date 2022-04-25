@@ -49,7 +49,7 @@ deploy-beta:
     url: https://kc.beta.kobotoolbox.org
   only:
     refs:
-      - master
+      - public-beta
       - gitlab-ci-build
     variables:
       - $CI_COMMIT_REF_PROTECTED
