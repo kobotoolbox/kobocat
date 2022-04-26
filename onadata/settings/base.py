@@ -352,8 +352,12 @@ DEBUG = env.bool('DJANGO_DEBUG', True)
 
 # Database (i.e. PostgreSQL)
 DATABASES = {
-    'default': env.db(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
+    'default': env.db_url(
+        'KC_DATABASE_URL' if 'KC_DATABASE_URL' in os.environ else 'DATABASE_URL',
+        default='sqlite:///%s/db.sqlite3' % BASE_DIR
+    ),
 }
+
 # Replacement for TransactionMiddleware
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
