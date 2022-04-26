@@ -32,7 +32,7 @@ pyxform==1.9.0
 django-reversion<3.0.2
 xlwt
 openpyxl
-celery>=5
+celery
 celery[redis]
 amqp
 # new export code relies on

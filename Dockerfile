@@ -52,13 +52,12 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
 RUN apt-get -qq update && \
     apt-get -qq -y install \
         cron \
-        gcc \
         gdal-bin \
         gettext \
         git \
         gosu \
         less \
-        libpq-dev \
+        libpq5 \
         libproj-dev \
         libsqlite3-mod-spatialite \
         locales \
