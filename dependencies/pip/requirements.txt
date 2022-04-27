@@ -177,7 +177,7 @@ pillow==9.1.0
     #   elaphe3
 prompt-toolkit==3.0.29
     # via click-repl
-psycopg2==2.8.6
+psycopg2==2.9.3
     # via -r dependencies/pip/requirements.in
 pycparser==2.21
     # via cffi

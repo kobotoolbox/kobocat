@@ -25,7 +25,7 @@ dpath
 gdata-python3
 modilabs-python-utils
 Pillow
-psycopg2>=2.8,<2.9
+psycopg2
 pymongo==3.12.3
 lxml
 pyxform==1.9.0
