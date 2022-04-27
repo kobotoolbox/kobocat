@@ -45,6 +45,7 @@ django==2.2.14
     #   -r dependencies/pip/requirements.in
     #   django-celery-beat
     #   django-cors-headers
+    #   django-csp
     #   django-filter
     #   django-guardian
     #   django-oauth-toolkit
@@ -59,6 +60,8 @@ django==2.2.14
 django-celery-beat==2.0.0
     # via -r dependencies/pip/requirements.in
 django-cors-headers==3.4.0
+    # via -r dependencies/pip/requirements.in
+django-csp==3.7
     # via -r dependencies/pip/requirements.in
 django-db-readonly==0.6.0
     # via -r dependencies/pip/requirements.in

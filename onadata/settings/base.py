@@ -316,11 +316,9 @@ if env.str('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-if os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False') == 'True':
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-if os.environ.get('SECURE_HSTS_PRELOAD', 'False') == 'True':
-    SECURE_HSTS_PRELOAD = True
-SECURE_HSTS_SECONDS = os.environ.get('SECURE_HSTS_SECONDS', 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', False)
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', 0)
 
 # Limit sessions to 1 week (the default is 2 weeks)
 SESSION_COOKIE_AGE = 604800
@@ -543,6 +541,24 @@ BINARY_SELECT_MULTIPLES = False
 
 # Use 'n/a' for empty values by default on csv exports
 NA_REP = 'n/a'
+
+# Content Security Policy (CSP)
+# CSP should "just work" by allowing any possible configuration
+# however CSP_EXTRA_DEFAULT_SRC is provided to allow for custom additions
+if env.bool("ENABLE_CSP", False):
+    MIDDLEWARE.append('csp.middleware.CSPMiddleware')
+CSP_DEFAULT_SRC = env.list('CSP_EXTRA_DEFAULT_SRC', str, []) + ["'self'"]
+CSP_SCRIPT_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
+CSP_STYLE_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
+CSP_IMG_SRC = CSP_DEFAULT_SRC + ['data:']
+if GOOGLE_ANALYTICS_PROPERTY_ID:
+    google_domain = '*.google-analytics.com'
+    CSP_SCRIPT_SRC.append(google_domain)
+    CSP_CONNECT_SRC.append(google_domain)
+csp_report_uri = env.url('CSP_REPORT_URI', None)
+if csp_report_uri:  # Let environ validate uri, but set as string
+    CSP_REPORT_URI = csp_report_uri.geturl()
+CSP_REPORT_ONLY = env.bool("CSP_REPORT_ONLY", False)
 
 SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
