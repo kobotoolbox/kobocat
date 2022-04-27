@@ -3,7 +3,7 @@ import mimetypes
 import os
 import requests
 from contextlib import closing
-
+from urllib.parse import urlparse
 
 from django.core.exceptions import ValidationError
 from django.core.files.temp import NamedTemporaryFile
@@ -12,7 +12,6 @@ from django.core.validators import URLValidator
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from six.moves.urllib.parse import urlparse
 from requests.exceptions import RequestException
 
 from onadata.apps.logger.models import XForm

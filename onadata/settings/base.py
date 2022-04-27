@@ -67,7 +67,7 @@ USE_TZ = True
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
-SITE_ID = env.str('DJANGO_SITE_ID', '1')
+SITE_ID = env.int('DJANGO_SITE_ID', 1)
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -430,6 +430,8 @@ REST_FRAMEWORK = {
     'VIEW_DESCRIPTION_FUNCTION': 'onadata.apps.api.tools.get_view_description',
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 ################################
 # KoBoCAT settings             #
 ################################
@@ -726,7 +728,7 @@ else:
 # PyMongo 3 does acknowledged writes by default
 # https://emptysqua.re/blog/pymongos-new-default-safe-writes/
 MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, j=True, tz_aware=True)
+    MONGO_CONNECTION_URL, journal=True, tz_aware=True)
 
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 

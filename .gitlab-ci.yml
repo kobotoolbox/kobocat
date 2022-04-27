@@ -27,9 +27,9 @@ test:
     POSTGRES_PASSWORD: kobo
     POSTGRES_DB: kobocat_test
   services:
-    - name: postgis/postgis:9.5-2.5
+    - name: postgis/postgis:14-3.2
       alias: postgres
-    - name: redis:3.2
+    - name: redis:6.2
       alias: redis_cache
   script:
     - apt-get update && apt-get install -y ghostscript gdal-bin libproj-dev gettext openjdk-11-jre

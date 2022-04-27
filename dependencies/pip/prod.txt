@@ -16,6 +16,8 @@ amqp==5.1.1
     # via
     #   -r dependencies/pip/requirements.in
     #   kombu
+asgiref==3.5.0
+    # via django
 async-timeout==4.0.2
     # via redis
 billiard==3.6.4.0
@@ -62,7 +64,7 @@ deprecated==1.2.13
     #   redis
 dict2xml==1.7.1
     # via -r dependencies/pip/requirements.in
-django==2.2.28
+django==3.2
     # via
     #   -r dependencies/pip/requirements.in
     #   django-celery-beat
