@@ -20,7 +20,7 @@ jobs:
         python-version: ['3.10']
     services:
       postgres:
-        image: postgis/postgis:9.5-2.5
+        image: postgis/postgis:14-3.2
         env:
           POSTGRES_USER: kobo
           POSTGRES_PASSWORD: kobo
@@ -29,7 +29,7 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis_cache:
-        image: redis:3.2
+        image: redis:6.2
         ports:
           - 6380:6379
     steps:
