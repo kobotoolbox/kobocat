@@ -1,7 +1,7 @@
 # coding: utf-8
-import pytz
 from datetime import date
 from hashlib import sha256
+from zoneinfo import ZoneInfo
 
 import reversion
 from django.contrib.auth.models import User

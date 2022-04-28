@@ -17,7 +17,7 @@ build:
 
 test:
   stage: build_test
-  image: python:3.8
+  image: python:3.10
   variables:
     DJANGO_SECRET_KEY: abcdef
     TEST_DATABASE_URL: postgis://kobo:kobo@postgres:5432/kobocat_test
