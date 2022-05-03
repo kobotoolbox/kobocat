@@ -360,7 +360,7 @@ ALLOWED_HOSTS = env.str('DJANGO_ALLOWED_HOSTS', '*').split(' ')
 # Domain must not exclude KPI when sharing sessions
 SESSION_COOKIE_DOMAIN = env.str('SESSION_COOKIE_DOMAIN', None)
 if SESSION_COOKIE_DOMAIN:
-    SESSION_COOKIE_NAME = 'kobonaut'
+    SESSION_COOKIE_NAME = env.str('SESSION_COOKIE_NAME', 'kobonaut')
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 

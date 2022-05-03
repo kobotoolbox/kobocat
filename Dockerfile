@@ -1,4 +1,4 @@
-FROM python:3.8 as build-python
+FROM python:3.10 as build-python
 
 ENV VIRTUAL_ENV=/opt/venv \
     KOBOCAT_SRC_DIR=/srv/src/kobocat \
@@ -12,7 +12,7 @@ RUN pip install  --quiet --upgrade pip && \
 COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
 RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null
 
-FROM python:3.8-slim
+FROM python:3.10-slim
 
 # Declare environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -57,6 +57,7 @@ RUN apt-get -qq update && \
         git \
         gosu \
         less \
+        libpq5 \
         libproj-dev \
         libsqlite3-mod-spatialite \
         locales \

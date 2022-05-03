@@ -5,17 +5,18 @@ import zipfile
 from collections import defaultdict
 from io import StringIO
 
-from celery import task, shared_task
+from celery import shared_task
 from dateutil import relativedelta
 from django.contrib.auth.models import User
 from django.core.files.storage import get_storage_class
 from django.core.management import call_command
 
+from onadata.celery import app
 from .models.submission_counter import SubmissionCounter
 from .models import Instance, XForm
 
 
-@task()
+@app.task()
 def create_monthly_counters():
     user_ids = User.objects.values_list('pk', flat=True)
     for user_id in user_ids:

@@ -1,8 +1,7 @@
 # coding: utf-8
-import pytz
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
-from django.db import transaction
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -50,8 +49,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         ]
 
     def get_openrosa_headers(self):
-        tz = pytz.timezone(settings.TIME_ZONE)
-        dt = datetime.now(tz).strftime('%a, %d %b %Y %H:%M:%S %Z')
+        dt = datetime.now(tz=ZoneInfo('UTC')).strftime('%a, %d %b %Y %H:%M:%S %Z')
 
         return {
             'Date': dt,

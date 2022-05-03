@@ -1,10 +1,8 @@
 # coding: utf-8
-import datetime
 import json
 import logging
 
-from bson import json_util, ObjectId
-from celery import task
+from bson import json_util
 from dateutil import parser
 from django.conf import settings
 from django.db import models
@@ -12,6 +10,7 @@ from django.db.models.signals import pre_delete
 from django.utils.six import string_types
 from django.utils.translation import gettext as t
 
+from onadata.celery import app
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
@@ -51,7 +50,8 @@ def datetime_from_str(text):
         return None
     return dt
 
-@task
+
+@app.task
 def update_mongo_instance(record):
     # since our dict always has an id, save will always result in an upsert op
     # - so we dont need to worry whether its an edit or not
