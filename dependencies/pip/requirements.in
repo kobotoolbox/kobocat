@@ -87,3 +87,6 @@ sentry-sdk
 
 # mimetype detection
 Werkzeug<=2.0.3
+
+# WSGI server
+uWSGI

@@ -45,7 +45,7 @@ jobs:
     - name: Install apt dependencies
       run: sudo apt-get install ghostscript libxml2-dev libxslt-dev python3-dev gdal-bin libproj-dev gettext postgresql-client openjdk-11-jre
     - name: Install Python dependencies
-      run: pip install -r dependencies/pip/dev.txt
+      run: pip install -r dependencies/pip/dev_requirements.txt
     - name: Run pytest
       run: pytest -vv -rf
       env:

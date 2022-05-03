@@ -9,7 +9,7 @@ RUN python3 -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install  --quiet --upgrade pip && \
     pip install  --quiet pip-tools
-COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
+COPY ./dependencies/pip/requirements.txt "${TMP_DIR}/pip_dependencies.txt"
 RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null
 
 FROM python:3.10-slim
@@ -79,7 +79,7 @@ RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 
 # Copy virtualenv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
+COPY ./dependencies/pip/requirements.txt "${TMP_DIR}/pip_dependencies.txt"
 COPY --from=build-python "$VIRTUAL_ENV" "$VIRTUAL_ENV"
 COPY . "${KOBOCAT_SRC_DIR}"
 
