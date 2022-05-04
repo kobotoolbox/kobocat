@@ -12,14 +12,10 @@ https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#
 # ssrf
 -e git+https://github.com/kobotoolbox/ssrf-protect@9b97d3f0fd8f737a38dd7a6b64efeffc03ab3cdd#egg=ssrf_protect
 
-# jnm's django storages
-# Necessary to use this fork until the resolution of
-# https://github.com/jschneier/django-storages/issues/566
--e git+https://github.com/jnm/django-storages@s3boto3_accurate_tell#egg=django_storages
-
 # Regular PyPI packages
 Django>=2.2,<2.3
 django-environ
+django-storages[azure,boto3]
 django-templated-email
 dpath
 gdata-python3
@@ -78,9 +74,6 @@ django-oauth-toolkit
 # Added packages
 simplejson
 djangorestframework-guardian
-
-# Django Storage AWS
-boto3
 
 # Sentry
 sentry-sdk

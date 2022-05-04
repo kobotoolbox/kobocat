@@ -370,6 +370,9 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
     DEFAULT_FILE_STORAGE = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
+    if DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
+        # Force usage of custom S3 tellable Storage
+        DEFAULT_FILE_STORAGE = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
 
 EMAIL_BACKEND = env.str(
     'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'
@@ -528,6 +531,12 @@ AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
 AWS_QUERYSTRING_EXPIRE = env.int("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
 AWS_S3_USE_SSL = env.bool("KOBOCAT_AWS_S3_USE_SSL", True)
 AWS_S3_HOST = env.str("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
+
+if 'AZURE_ACCOUNT_NAME' in os.environ:
+    AZURE_ACCOUNT_NAME = env.str('AZURE_ACCOUNT_NAME')
+    AZURE_ACCOUNT_KEY = env.str('AZURE_ACCOUNT_KEY')
+    AZURE_CONTAINER = env.str('AZURE_CONTAINER')
+    AZURE_URL_EXPIRATION_SECS = env.int('AZURE_URL_EXPIRATION_SECS', None)
 
 GOOGLE_ANALYTICS_PROPERTY_ID = env.str("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
