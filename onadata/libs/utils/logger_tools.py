@@ -6,7 +6,6 @@ import tempfile
 import traceback
 from datetime import date, datetime
 from xml.parsers.expat import ExpatError
-
 import pytz
 from dict2xml import dict2xml
 from django.conf import settings
@@ -63,6 +62,8 @@ from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, \
     xform_instances, ParsedInstance
 from onadata.libs.utils import common_tags
 from onadata.libs.utils.model_tools import queryset_iterator, set_uuid
+from veritree.xml_utils import inject_veritree_app_version_into_xml
+from veritree.constants import VERITREE_APP_VERSION_HEADER
 
 OPEN_ROSA_VERSION_HEADER = 'X-OpenRosa-Version'
 HTTP_OPEN_ROSA_VERSION_HEADER = 'HTTP_X_OPENROSA_VERSION'
@@ -231,7 +232,7 @@ def save_attachments(instance, media_files):
 
 
 def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
-                    date_created_override):
+                    date_created_override, app_version):
     if not date_created_override:
         date_created_override = get_submission_date_from_xml(xml)
 
@@ -249,6 +250,10 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     # attribute set to `True` *if* a new instance was created. We are
     # responsible for calling `update_xform_submission_count()` if the returned
     # `Instance` has `defer_counting = True`.
+    if app_version != None and app_version != '':
+        # inject app_version right into the xml
+        xml = inject_veritree_app_version_into_xml(xml, app_version)
+
     instance = _get_instance(xml, new_uuid, submitted_by, status, xform,
                              defer_counting=True)
 
@@ -341,9 +346,10 @@ def create_instance(username, xml_file, media_files,
             existing_instance.parsed_instance.save(asynchronous=False)
             return existing_instance
     else:
+        app_version = request.headers.get(VERITREE_APP_VERSION_HEADER, 'default') if request else None
         instance = save_submission(xform, xml, media_files, new_uuid,
                                    submitted_by, status,
-                                   date_created_override)
+                                   date_created_override, app_version)
         return instance
 
 

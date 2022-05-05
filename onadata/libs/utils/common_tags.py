@@ -67,3 +67,7 @@ MODE = "mode"
 NESTED_RESERVED_ATTRIBUTES = [
     VALIDATION_STATUS,
 ]
+
+# Veritree Tags
+VERITREE_APP_VERSION = 'veritree_app_version'
+META_VERITREE_APP_VERSION = 'meta/veritree_app_version'
