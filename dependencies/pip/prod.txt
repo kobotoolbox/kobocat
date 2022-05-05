@@ -72,6 +72,7 @@ django==2.2.28
     #   -r dependencies/pip/requirements.in
     #   django-celery-beat
     #   django-cors-headers
+    #   django-csp
     #   django-db-readonly
     #   django-extensions
     #   django-filter
@@ -88,6 +89,8 @@ django==2.2.28
 django-celery-beat==2.2.1
     # via -r dependencies/pip/requirements.in
 django-cors-headers==3.11.0
+    # via -r dependencies/pip/requirements.in
+django-csp==3.7
     # via -r dependencies/pip/requirements.in
 django-db-readonly==0.7.0
     # via -r dependencies/pip/requirements.in
