@@ -751,7 +751,11 @@ else:
 # PyMongo 3 does acknowledged writes by default
 # https://emptysqua.re/blog/pymongos-new-default-safe-writes/
 MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, j=True, tz_aware=True)
+    MONGO_CONNECTION_URL,
+    journal=True,
+    tz_aware=True,
+    tls=env.bool('MONGO_USE_TLS', False),
+)
 
 MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
 
