@@ -81,3 +81,6 @@ sentry-sdk
 
 # mimetype detection
 Werkzeug<=2.0.3
+
+# Python 3.8 support
+backports.zoneinfo; python_version < '3.9'

@@ -1,7 +1,10 @@
 # coding: utf-8
 from datetime import date
 from hashlib import sha256
-from zoneinfo import ZoneInfo
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 import reversion
 from django.contrib.auth.models import User

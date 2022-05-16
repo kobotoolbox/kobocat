@@ -5,7 +5,10 @@ import sys
 import traceback
 from datetime import date, datetime
 from xml.parsers.expat import ExpatError
-from zoneinfo import ZoneInfo
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from dict2xml import dict2xml
 from django.conf import settings
