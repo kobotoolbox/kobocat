@@ -767,8 +767,8 @@ MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
 ################################
 # Sentry settings              #
 ################################
-
-if env.str('RAVEN_DSN', None):
+sentry_dsn = env.str("SENTRY_DSN", env.str("RAVEN_DSN", None))
+if sentry_dsn:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
@@ -777,14 +777,15 @@ if env.str('RAVEN_DSN', None):
     # All of this is already happening by default!
     sentry_logging = LoggingIntegration(
         level=logging.INFO,  # Capture info and above as breadcrumbs
-        event_level=logging.ERROR  # Send errors as events
+        event_level=logging.ERROR  # Send warnings as events
     )
     sentry_sdk.init(
-        dsn=env.str('RAVEN_DSN'),
+        dsn=sentry_dsn,
         integrations=[
             DjangoIntegration(),
             CeleryIntegration(),
             sentry_logging
         ],
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", 0.05),
         send_default_pii=True
     )
