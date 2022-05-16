@@ -23,13 +23,6 @@ def create_monthly_counters():
         SubmissionCounter.objects.create(user_id=user_id)
 
 
-@task()
-def create_xform_monthly_counters():
-    xforms = XForm.objects.all()
-    for xform in xforms.iterator():
-        XFormSubmissionCounter.create(user_id=xform.user.id, xform=xform)
-
-
 # ## ISSUE 242 TEMPORARY FIX ##
 # See https://github.com/kobotoolbox/kobocat/issues/242
 
