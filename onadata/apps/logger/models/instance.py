@@ -148,6 +148,8 @@ def update_xforms_monthly_submission_counter(instance, created, **kwargs):
     if getattr(instance, 'defer_counting', False):
         return
 
+    # return the user_id only to be used when getting/creating a single
+    # row to minimize calltime to database
     user_id = XForm.objects.values_list('user_id', flat=True).get(
         pk=instance.xform_id
     )
@@ -157,17 +159,16 @@ def update_xforms_monthly_submission_counter(instance, created, **kwargs):
         month=date_created.month,
         day=1
     )
+    XFormSubmissionCounter.objects.get_or_create(
+        user_id=user_id,
+        xform=instance.xform,
+        timesptamp=first_day_of_month,
+    )
     queryset = XFormSubmissionCounter.objects.filter(
         user_id=user_id,
         xform=instance.xform,
         timestamp=first_day_of_month,
     )
-    if not queryset.exists():
-        XFormSubmissionCounter.objects.create(
-            user_id=user_id,
-            xform=instance.xform,
-            timestamp=first_day_of_month,
-        )
     queryset.update(count=F('count') + 1)
 
 
