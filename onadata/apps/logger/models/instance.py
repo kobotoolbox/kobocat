@@ -162,7 +162,7 @@ def update_xforms_monthly_submission_counter(instance, created, **kwargs):
     XFormSubmissionCounter.objects.get_or_create(
         user_id=user_id,
         xform=instance.xform,
-        timesptamp=first_day_of_month,
+        timestamp=first_day_of_month,
     )
     queryset = XFormSubmissionCounter.objects.filter(
         user_id=user_id,
