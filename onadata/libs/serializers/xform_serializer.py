@@ -74,6 +74,8 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
         data = super().data
         if 'num_of_submissions' in data and data['num_of_submissions'] is None:
             data['num_of_submissions'] = 0
+        if 'attachment_storage_bytes' in data and data['attachment_storage_bytes'] is None:
+            data['attachment_storage_bytes'] = 0
         return data
 
     def get_xform_permissions(self, obj):
