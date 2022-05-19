@@ -518,9 +518,13 @@ THUMB_ORDER = ['large', 'medium', 'small']
 REST_SERVICE_MAX_RETRIES = 3
 
 # BEGIN external service integration codes
-# ToDo Replace `KOBOCAT_AWS_*` with `AWS_*` . Only account is support anyway
+# ToDo Replace `KOBOCAT_AWS_*` with `AWS_*` . Only one account for
+# both KPI and KoBoCAT is supported anyway
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
+# Currently it is possible (though unlikely and not recommended?) to use
+# separate buckets for KPI and KoBoCAT. Doing so relies on
+# `KOBOCAT_AWS_STORAGE_BUCKET_NAME` being present in the environment for KPI
 AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
 AWS_DEFAULT_ACL = 'private'
 AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
