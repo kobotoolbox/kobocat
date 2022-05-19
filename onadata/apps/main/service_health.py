@@ -3,6 +3,7 @@ import time
 
 from django.conf import settings
 from django.http import HttpResponse
+from redis import Redis
 
 from onadata.apps.logger.models import Instance
 
@@ -34,14 +35,40 @@ def service_health(request):
         postgres_message = 'OK'
     postgres_time = time.time() - t0
 
+    t0 = time.time()
+    try:
+        rset = settings.SESSION_REDIS
+        success = Redis(socket_timeout=1).from_url(rset['url']).ping()
+        any_failure = not success
+        redis_cache_message = 'OK'
+    except Exception as e:
+        any_failure = True
+        redis_cache_message = repr(e)
+    redis_cache_time = time.time() - t0
+
+    t0 = time.time()
+    try:
+        redis_main_url = settings.CELERY_BROKER_URL
+        success = Redis(socket_timeout=1).from_url(redis_main_url).ping()
+        any_failure = not success
+        redis_main_message = 'OK'
+    except Exception as e:
+        any_failure = True
+        redis_main_message = repr(e)
+    redis_main_time = time.time() - t0
+
     output = (
         '{}\r\n\r\n'
         'Mongo: {} in {:.3} seconds\r\n'
         'Postgres: {} in {:.3} seconds\r\n'
+        'Redis Cache {} in {:.3} seconds\r\n'
+        'Redis Main {} in {:.3} seconds\r\n'
     ).format(
         'FAIL' if any_failure else 'OK',
         mongo_message, mongo_time,
         postgres_message, postgres_time,
+        redis_cache_message, redis_cache_time,
+        redis_main_message, redis_main_time
     )
 
     return HttpResponse(
