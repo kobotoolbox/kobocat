@@ -28,13 +28,13 @@ docker-run:
 	@docker run -it --rm ${APP_NAME}:${IMAGE_TAG}
 helm-dryrun:
 	@echo "Deploying Helm Chart version in Kubernetes..."
-	@helm upgrade ${APP_NAME} ${HELM_DIR}/${APP_NAME} --version ${APP_VERSION} -n ${NAMESPACE} --cleanup-on-fail --debug --dry-run --install --atomic --wait --set image.tag=${IMAGE_TAG} --values=${HELM_DIR}/${APP_NAME}/values/${ENVIRONMENT}.yaml
+	@helm upgrade ${APP_NAME} ${HELM_DIR} --version ${APP_VERSION} -n ${NAMESPACE} --cleanup-on-fail --debug --dry-run --install --atomic --wait --set image.tag=${IMAGE_TAG} --values=${HELM_DIR}/values/${ENVIRONMENT}.yaml
 helm-upgrade:
 	@echo "Deploying Helm Chart version in Kubernetes..."
-	@helm upgrade ${APP_NAME} ${HELM_DIR}/${APP_NAME} --version ${APP_VERSION} -n ${NAMESPACE} --install --wait --set image.tag=${IMAGE_TAG} --values=${HELM_DIR}/${APP_NAME}/values/${ENVIRONMENT}.yaml
+	@helm upgrade ${APP_NAME} ${HELM_DIR} --version ${APP_VERSION} -n ${NAMESPACE} --install --wait --set image.tag=${IMAGE_TAG} --values=${HELM_DIR}/values/${ENVIRONMENT}.yaml
 helm-template:
 	@echo "Template Helm Chart version in Kubernetes ${HELM_DIR}/values/${ENVIRONMENT}.yaml..."
-	@helm template ${APP_NAME} ${HELM_DIR}/${APP_NAME} --debug --version ${APP_VERSION} -n ${NAMESPACE} --values=${HELM_DIR}/${APP_NAME}/values/${ENVIRONMENT}.yaml --set image.tag=${IMAGE_TAG}
+	@helm template ${APP_NAME} ${HELM_DIR} --debug --version ${APP_VERSION} -n ${NAMESPACE} --values=${HELM_DIR}/values/${ENVIRONMENT}.yaml --set image.tag=${IMAGE_TAG}
 helm-rollback:
 	@echo "Rollback Helm Chart version in Kubernetes..."
 	@helm rollback ${APP_NAME} ${APP_VERSION} -n ${NAMESPACE}
