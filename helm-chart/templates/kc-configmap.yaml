@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+data:
+{{- range $key, $value := .Values.environmentVariables }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}-wait-for-kpi
+data:
+{{ (.Files.Glob "config/scripts/wait_for_kpi.bash").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}-wait-for-postgres
+data:
+{{ (.Files.Glob "config/scripts/wait_for_postgres.bash").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}-wait-for-mongo
+data:
+{{ (.Files.Glob "config/scripts/wait_for_mongo.bash").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}-runtime-variables-kobocat
+data:
+{{ (.Files.Glob "config/scripts/runtime_variables_kobocat_source.sh").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app.fullname" . }}-kc-uwsgi
+data:
+{{ (.Files.Glob "config/kobocat.ini").AsConfig | indent 2 }}
