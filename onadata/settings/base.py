@@ -521,11 +521,19 @@ THUMB_ORDER = ['large', 'medium', 'small']
 REST_SERVICE_MAX_RETRIES = 3
 
 # BEGIN external service integration codes
+# ToDo Replace `KOBOCAT_AWS_*` with `AWS_*` . Only one account for
+# both KPI and KoBoCAT is supported anyway
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
+# Currently it is possible (though unlikely and not recommended?) to use
+# separate buckets for KPI and KoBoCAT. Doing so relies on
+# `KOBOCAT_AWS_STORAGE_BUCKET_NAME` being present in the environment for KPI
 AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
 AWS_DEFAULT_ACL = 'private'
 AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
+AWS_S3_SIGNATURE_VERSION = env.str('AWS_S3_SIGNATURE_VERSION', 's3v4')
+if env.str('AWS_S3_REGION_NAME', False):
+    AWS_S3_REGION_NAME = env.str('AWS_S3_REGION_NAME')
 
 # TODO pass these variables from `kobo-docker` envfiles
 AWS_QUERYSTRING_EXPIRE = env.int("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
@@ -537,6 +545,7 @@ if 'AZURE_ACCOUNT_NAME' in os.environ:
     AZURE_ACCOUNT_KEY = env.str('AZURE_ACCOUNT_KEY')
     AZURE_CONTAINER = env.str('AZURE_CONTAINER')
     AZURE_URL_EXPIRATION_SECS = env.int('AZURE_URL_EXPIRATION_SECS', None)
+    AZURE_OVERWRITE_FILES = True
 
 GOOGLE_ANALYTICS_PROPERTY_ID = env.str("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
@@ -729,37 +738,43 @@ ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 ################################
 # MongoDB settings             #
 ################################
+if not (MONGO_DB_URL := env.str('MONGO_DB_URL', False)):
+    # ToDo Remove all this block by the end of 2022.
+    #   Update kobo-install accordingly
+    logging.warning(
+        '`MONGO_DB_URL` is not found. '
+        '`KOBOCAT_MONGO_HOST`, `KOBOCAT_MONGO_PORT`, `KOBOCAT_MONGO_NAME`, '
+        '`KOBOCAT_MONGO_USER`, `KOBOCAT_MONGO_PASS` '
+        'are deprecated and will not be supported anymore soon.'
+    )
 
-MONGO_DATABASE = {
-    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
-    'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
-    'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
-    'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
-    'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
-}
+    MONGO_DATABASE = {
+        'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
+        'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
+        'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
+        'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
+        'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
+    }
 
-if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
-    MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
-        format(
-            user=MONGO_DATABASE['USER'],
-            password=quote_plus(MONGO_DATABASE['PASSWORD']),
-            host=MONGO_DATABASE['HOST'],
-            port=MONGO_DATABASE['PORT'],
-            db_name=MONGO_DATABASE['NAME']
-        )
+    if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
+        MONGO_DB_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
+            format(
+                user=MONGO_DATABASE['USER'],
+                password=quote_plus(MONGO_DATABASE['PASSWORD']),
+                host=MONGO_DATABASE['HOST'],
+                port=MONGO_DATABASE['PORT'],
+                db_name=MONGO_DATABASE['NAME']
+            )
+    else:
+        MONGO_DB_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
+    mongo_db_name = MONGO_DATABASE['NAME']
 else:
-    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
+    # Get collection name from the connection string, fallback on 'formhub' if
+    # it is empty or None
+    mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or 'formhub'
 
-# PyMongo 3 does acknowledged writes by default
-# https://emptysqua.re/blog/pymongos-new-default-safe-writes/
-MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL,
-    journal=True,
-    tz_aware=True,
-    tls=env.bool('MONGO_USE_TLS', False),
-    tlsCAFile=env.str('MONGO_TLS_CA_FILE', None),
-)
-MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
+mongo_client = MongoClient(MONGO_DB_URL, journal=True, tz_aware=True)
+MONGO_DB = mongo_client[mongo_db_name]
 
 # Timeout for Mongo, must be, at least, as long as Celery timeout.
 MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
@@ -768,8 +783,8 @@ MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
 ################################
 # Sentry settings              #
 ################################
-
-if env.str('RAVEN_DSN', None):
+sentry_dsn = env.str('SENTRY_DSN', env.str('RAVEN_DSN', None))
+if sentry_dsn:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
@@ -781,11 +796,12 @@ if env.str('RAVEN_DSN', None):
         event_level=logging.ERROR  # Send errors as events
     )
     sentry_sdk.init(
-        dsn=env.str('RAVEN_DSN'),
+        dsn=sentry_dsn,
         integrations=[
             DjangoIntegration(),
             CeleryIntegration(),
             sentry_logging
         ],
+        traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', 0.05),
         send_default_pii=True
     )

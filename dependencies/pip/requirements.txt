@@ -22,6 +22,8 @@ azure-core==1.23.1
     # via azure-storage-blob
 azure-storage-blob==12.11.0
     # via django-storages
+backports-zoneinfo==0.2.1; python_version < '3.9'
+    # via -r dependencies/pip/requirements.in
 billiard==3.6.4.0
     # via celery
 boto3==1.22.2

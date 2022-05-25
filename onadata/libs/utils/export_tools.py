@@ -675,7 +675,7 @@ def generate_attachments_zip_export(
         export_type,
         filename)
 
-    export_filename = get_storage_class()().save(file_path, ContentFile(''))
+    export_filename = get_storage_class()().save(file_path, ContentFile(b''))
 
     with get_storage_class()().open(export_filename, 'wb') as destination_file:
         create_attachments_zipfile(
