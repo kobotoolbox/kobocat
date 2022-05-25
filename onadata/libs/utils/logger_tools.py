@@ -250,10 +250,6 @@ def save_submission(xform, xml, media_files, new_uuid, submitted_by, status,
     # attribute set to `True` *if* a new instance was created. We are
     # responsible for calling `update_xform_submission_count()` if the returned
     # `Instance` has `defer_counting = True`.
-    if app_version != None and app_version != '':
-        # inject app_version right into the xml
-        xml = inject_veritree_app_version_into_xml(xml, app_version)
-
     instance = _get_instance(xml, new_uuid, submitted_by, status, xform,
                              defer_counting=True)
 
@@ -306,6 +302,14 @@ def create_instance(username, xml_file, media_files,
         username = username.lower()
 
     xml = smart_str(xml_file.read())
+    
+    # NGO-162 inject the veritree app version into the xml because the mobile app cannot modify the xml
+    #         before sending. Also do this before hases are checked to prevent duplicate submissions
+    app_version = request.headers.get(VERITREE_APP_VERSION_HEADER, 'default') if request else None
+    if app_version != None and app_version != '':
+        # inject app_version right into the xml
+        xml = inject_veritree_app_version_into_xml(xml, app_version)
+    
     xml_hash = Instance.get_hash(xml)
     xform = get_xform_from_submission(xml, username, uuid)
     check_submission_permissions(request, xform)

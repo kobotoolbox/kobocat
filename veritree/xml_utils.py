@@ -15,5 +15,5 @@ def inject_veritree_app_version_into_xml(xml, app_version):
             if not existing_veritree_app_version:
                 app_version_element = SubElement(metaTag, common_tags.VERITREE_APP_VERSION)
                 app_version_element.text = app_version
-                return tostring(root)
+                return tostring(root, 'unicode')
     return xml
