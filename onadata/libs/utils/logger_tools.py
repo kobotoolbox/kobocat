@@ -306,9 +306,9 @@ def create_instance(username, xml_file, media_files,
     # NGO-162 inject the veritree app version into the xml because the mobile app cannot modify the xml
     #         before sending. Also do this before hases are checked to prevent duplicate submissions
     app_version = request.headers.get(VERITREE_APP_VERSION_HEADER, 'default') if request else None
-    if app_version != None and app_version != '':
-        # inject app_version right into the xml
-        xml = inject_veritree_app_version_into_xml(xml, app_version)
+    # if app_version != None and app_version != '':
+    #     # inject app_version right into the xml
+    #     xml = inject_veritree_app_version_into_xml(xml, app_version)
     
     xml_hash = Instance.get_hash(xml)
     xform = get_xform_from_submission(xml, username, uuid)
