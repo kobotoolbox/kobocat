@@ -1,30 +1,26 @@
 # coding: utf-8
 import os
-import re
 import socket
 from io import BytesIO
 from urllib.request import urlopen
 from urllib.error import URLError
-from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser, User, Permission
 from django.test import TestCase
 from django.test.client import Client
 from django.utils import timezone
 from django_digest.test import Client as DigestClient
-from django_digest.test import DigestAuth
 from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
-from onadata.apps.logger.models import XForm, Instance, Attachment
-from onadata.apps.logger.views import submission
+from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.main.models import UserProfile
+from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
 from onadata.libs.utils.string import base64_encodestring
 
 
-class TestBase(TestCase):
+class TestBase(MakeSubmissionMixin, TestCase):
 
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
@@ -160,102 +156,6 @@ class TestBase(TestCase):
         for survey in surveys:
             path = self._fixture_path('gps', 'instances', survey + '.xml')
             self._make_submission(path)
-
-    def _make_submission(self, path, username=None, add_uuid=False,
-                         forced_submission_time=None, auth=None, client=None):
-        # store temporary file with dynamic uuid
-
-        self.factory = APIRequestFactory()
-        if auth is None:
-            auth = DigestAuth('bob', 'bob')
-
-        tmp_file = None
-
-        if add_uuid:
-            tmp_file = NamedTemporaryFile(delete=False, mode='w')
-            split_xml = None
-
-            with open(path, 'rb') as _file:
-                split_xml = re.split(r'(<transport>)', _file.read().decode())
-
-            split_xml[1:1] = [
-                '<formhub><uuid>%s</uuid></formhub>' % self.xform.uuid
-            ]
-            tmp_file.write(''.join(split_xml))
-            path = tmp_file.name
-            tmp_file.close()
-
-        with open(path, 'rb') as f:
-            post_data = {'xml_submission_file': f}
-
-            if username is None:
-                username = self.user.username
-
-            url_prefix = '%s/' % username if username else ''
-            url = '/%ssubmission' % url_prefix
-            request = self.factory.post(url, post_data)
-            request.user = authenticate(username=auth.username,
-                                        password=auth.password)
-
-            self.response = submission(request, username=username)
-
-            if auth and self.response.status_code == 401:
-                request.META.update(auth(request.META, self.response))
-                self.response = submission(request, username=username)
-
-        if forced_submission_time:
-            instance = Instance.objects.order_by('-pk').all()[0]
-            instance.date_created = forced_submission_time
-            instance.save()
-            instance.parsed_instance.save()
-
-        # remove temporary file if stored
-        if add_uuid:
-            os.unlink(tmp_file.name)
-
-    def _make_submission_w_attachment(self, path, attachment_path):
-        with open(path, 'rb') as f:
-            a = open(attachment_path, 'rb')
-            post_data = {'xml_submission_file': f, 'media_file': a}
-            url = '/%s/submission' % self.user.username
-            auth = DigestAuth('bob', 'bob')
-            self.factory = APIRequestFactory()
-            request = self.factory.post(url, post_data)
-            request.user = authenticate(username='bob',
-                                        password='bob')
-            self.response = submission(request,
-                                       username=self.user.username)
-
-            if auth and self.response.status_code == 401:
-                request.META.update(auth(request.META, self.response))
-                self.response = submission(request,
-                                           username=self.user.username)
-
-    def _make_submissions(self, username=None, add_uuid=False,
-                          should_store=True):
-        """
-        Make test fixture submissions to current xform.
-
-        :param username: submit under this username, default None.
-        :param add_uuid: add UUID to submission, default False.
-        :param should_store: should submissions be save, default True.
-        """
-
-        paths = [os.path.join(
-            self.this_directory, 'fixtures', 'transportation',
-            'instances', s, s + '.xml') for s in self.surveys]
-        pre_count = Instance.objects.count()
-
-        for path in paths:
-            self._make_submission(path, username, add_uuid)
-
-        post_count = pre_count + len(self.surveys) if should_store \
-            else pre_count
-        self.assertEqual(Instance.objects.count(), post_count)
-        self.assertEqual(self.xform.instances.count(), post_count)
-        xform = XForm.objects.get(pk=self.xform.pk)
-        self.assertEqual(xform.num_of_submissions, post_count)
-        self.assertEqual(xform.user.profile.num_of_submissions, post_count)
 
     def _check_url(self, url, timeout=1):
         try:

@@ -1,20 +1,17 @@
 # coding: utf-8
 import os
-import json
+import logging
 import traceback
 import requests
 import zipfile
 
 from tempfile import NamedTemporaryFile
-from xml.dom import minidom
 
 from django.conf import settings
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import get_storage_class, FileSystemStorage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
-from django.utils.translation import ugettext as _
-
-from onadata.libs.utils import common_tags
+from django.utils.translation import gettext as t
 
 
 SLASH = "/"
@@ -28,21 +25,9 @@ class EnketoError(Exception):
     pass
 
 
-def image_urls_for_form(xform):
-    return sum([
-        image_urls(s) for s in xform.instances.all()
-    ], [])
-
-
 def get_path(path, suffix):
     fileName, fileExtension = os.path.splitext(path)
     return fileName + suffix + fileExtension
-
-
-# TODO VERIFY IF STILL USED
-def image_urls(instance):
-    image_urls_dict_ = image_urls_dict(instance)
-    return image_urls_dict_.values()
 
 
 def image_urls_dict(instance):
@@ -63,70 +48,10 @@ def image_urls_dict(instance):
     return urls
 
 
-def parse_xform_instance(xml_str):
-    """
-    'xml_str' is a str object holding the XML of an XForm
-    instance. Return a python object representation of this XML file.
-    """
-    xml_obj = minidom.parseString(xml_str)
-    root_node = xml_obj.documentElement
-    # go through the xml object creating a corresponding python object
-    # NOTE: THIS WILL DESTROY ANY DATA COLLECTED WITH REPEATABLE NODES
-    # THIS IS OKAY FOR OUR USE CASE, BUT OTHER USERS SHOULD BEWARE.
-    survey_data = dict(_path_value_pairs(root_node))
-    assert len(list(_all_attributes(root_node))) == 1, \
-        _("There should be exactly one attribute in this document.")
-    survey_data.update({
-        common_tags.XFORM_ID_STRING: root_node.getAttribute("id"),
-        common_tags.INSTANCE_DOC_NAME: root_node.nodeName,
-    })
-    return survey_data
-
-
-def _path(node):
-    n = node
-    levels = []
-    while n.nodeType != n.DOCUMENT_NODE:
-        levels = [n.nodeName] + levels
-        n = n.parentNode
-    return SLASH.join(levels[1:])
-
-
-def _path_value_pairs(node):
-    """
-    Using a depth first traversal of the xml nodes build up a python
-    object in parent that holds the tree structure of the data.
-    """
-    if len(node.childNodes) == 0:
-        # there's no data for this leaf node
-        yield _path(node), None
-    elif len(node.childNodes) == 1 and \
-            node.childNodes[0].nodeType == node.TEXT_NODE:
-        # there is data for this leaf node
-        yield _path(node), node.childNodes[0].nodeValue
-    else:
-        # this is an internal node
-        for child in node.childNodes:
-            for pair in _path_value_pairs(child):
-                yield pair
-
-
-def _all_attributes(node):
-    """
-    Go through an XML document returning all the attributes we see.
-    """
-    if hasattr(node, "hasAttributes") and node.hasAttributes():
-        for key in node.attributes.keys():
-            yield key, node.getAttribute(key)
-    for child in node.childNodes:
-        for pair in _all_attributes(child):
-            yield pair
-
-
 def report_exception(subject, info, exc_info=None):
     if exc_info:
         cls, err = exc_info[:2]
-        info += _("Exception in request: %(class)s: %(error)s") \
+        info += t("Exception in request: %(class)s: %(error)s") \
             % {'class': cls.__name__, 'error': err}
         info += "".join(traceback.format_exception(*exc_info))
 
@@ -170,11 +95,20 @@ def get_client_ip(request):
     return ip
 
 
-def enketo_url(form_url, id_string, instance_xml=None,
-               instance_id=None, return_url=None, instance_attachments=None):
+def enketo_url(
+    form_url,
+    id_string,
+    instance_xml=None,
+    instance_id=None,
+    return_url=None,
+    instance_attachments=None,
+    action=None,
+):
 
-    if not hasattr(settings, 'ENKETO_URL')\
-            and not hasattr(settings, 'ENKETO_API_SURVEY_PATH'):
+    if (
+        not hasattr(settings, 'ENKETO_URL')
+        and not hasattr(settings, 'ENKETO_API_SURVEY_PATH')
+    ):
         return False
 
     if instance_attachments is None:
@@ -198,6 +132,12 @@ def enketo_url(form_url, id_string, instance_xml=None,
             values.update({
                 'instance_attachments[' + key + ']': value
             })
+
+    # The Enketo view-only endpoint differs to the edit by the addition of /view
+    # as shown in the docs: https://apidocs.enketo.org/v2#/post-instance-view
+    if action == 'view':
+        url = f'{url}/view'
+
     req = requests.post(url, data=values,
                         auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
 
@@ -209,6 +149,8 @@ def enketo_url(form_url, id_string, instance_xml=None,
         else:
             if 'edit_url' in response:
                 return response['edit_url']
+            elif 'view_url' in response:
+                return response['view_url']
             if settings.ENKETO_OFFLINE_SURVEYS and ('offline_url' in response):
                 return response['offline_url']
             if 'url' in response:
@@ -237,7 +179,18 @@ def create_attachments_zipfile(attachments, output_file=None):
                 'Seeking disabled! See '
                 'https://github.com/kobotoolbox/kobocat/issues/475'
             )
-        output_file.seek = no_seeking
+        try:
+            output_file.seek = no_seeking
+        except AttributeError as e:
+            # The default, file-system storage won't allow changing the `seek`
+            # attribute, which is fine because seeking on local files works
+            # perfectly anyway
+            storage_class = get_storage_class()
+            if not issubclass(storage_class, FileSystemStorage):
+                logging.warning(
+                    f'{storage_class} may not be a local storage class, but '
+                    f'disabling seeking failed: {e}'
+                )
 
     storage = get_storage_class()()
     with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_STORED, allowZip64=True) as zip_file:
@@ -267,11 +220,11 @@ def _get_form_url(username):
     )
 
 
-def get_enketo_edit_url(request, instance, return_url):
+def get_enketo_submission_url(request, instance, return_url, action=None):
     form_url = _get_form_url(instance.xform.user.username)
     instance_attachments = image_urls_dict(instance)
     url = enketo_url(
         form_url, instance.xform.id_string, instance_xml=instance.xml,
         instance_id=instance.uuid, return_url=return_url,
-        instance_attachments=instance_attachments)
+        instance_attachments=instance_attachments, action=action)
     return url

@@ -2,15 +2,13 @@
 # vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
 # coding: utf-8
 from django.core.management.base import BaseCommand
-from django.utils.translation import ugettext_lazy
 
 from onadata.apps.logger.models.xform import XForm
 from onadata.libs.utils.model_tools import queryset_iterator
 
 
 class Command(BaseCommand):
-    help = ugettext_lazy("Import a folder of XForms for ODK.")
-
+    help = "Import a folder of XForms for ODK."
     def handle(self, *args, **kwargs):
         xforms = XForm.objects.all()
         total = xforms.count()

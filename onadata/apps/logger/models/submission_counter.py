@@ -12,11 +12,15 @@ class SubmissionCounter(models.Model):
         on_delete=models.CASCADE,
     )
     count = models.IntegerField(default=0)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateField()
+
+    class Meta:
+        unique_together = (('user', 'timestamp'),)
 
     def save(self, *args, **kwargs):
-        today = datetime.date.today()
-        first_day_of_month = today.replace(day=1)
+        if not self.timestamp:
+            today = datetime.date.today()
+            first_day_of_month = today.replace(day=1)
+            self.timestamp = first_day_of_month
 
-        self.timestamp = first_day_of_month
         super().save(*args, **kwargs) 

@@ -1,7 +1,7 @@
 # coding: utf-8
 from django.core.validators import ValidationError
 from django.contrib.auth.models import User
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 
 from rest_framework import serializers
 from onadata.libs.models.clone_xform import CloneXForm
@@ -31,7 +31,7 @@ class CloneXFormSerializer(serializers.Serializer):
         try:
             User.objects.get(username=value)
         except User.DoesNotExist:
-            raise ValidationError(_("User '%(value)s' does not exist."
+            raise ValidationError(t("User '%(value)s' does not exist."
                                     % {"value": value}))
 
         return value

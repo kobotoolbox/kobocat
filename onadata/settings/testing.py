@@ -1,7 +1,6 @@
 # coding: utf-8
 import os
 
-import dj_database_url
 from mongomock import MongoClient as MockMongoClient
 
 from .base import *
@@ -11,8 +10,7 @@ from .base import *
 ################################
 
 DATABASES = {
-    'default': dj_database_url.config(
-        env='TEST_DATABASE_URL', default="sqlite:///%s/db.sqlite3" % BASE_DIR)
+    'default': env.db_url('TEST_DATABASE_URL', default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
 }
 
 MEDIA_ROOT = '/tmp/test_media/'
@@ -24,6 +22,8 @@ LOGGING['loggers']['django.db.backends'] = {
 }
 
 SECRET_KEY = os.urandom(50).hex()
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 ###################################
 # Django Rest Framework settings  #

@@ -9,7 +9,7 @@ from django.core.files.storage import get_storage_class
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import six
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from rest_framework import exceptions
 from rest_framework import status
 from rest_framework.decorators import action
@@ -51,7 +51,7 @@ def _get_export_type(export_type):
         export_type = EXPORT_EXT[export_type]
     else:
         raise exceptions.ParseError(
-            _("'%(export_type)s' format not known or not implemented!" %
+            t("'%(export_type)s' format not known or not implemented!" %
               {'export_type': export_type})
         )
 
@@ -87,7 +87,7 @@ def _set_start_end_params(request, query):
                     request.GET['end'], datetime)
         except ValueError:
             raise exceptions.ParseError(
-                _("Dates must be in the format YY_MM_DD_hh_mm_ss")
+                t("Dates must be in the format YY_MM_DD_hh_mm_ss")
             )
         else:
             query = json.dumps(query)
@@ -110,13 +110,13 @@ def _generate_new_export(request, xform, query, export_type):
         }
         log.audit_log(
             log.Actions.EXPORT_CREATED, request.user, xform.user,
-            _("Created %(export_type)s export on '%(id_string)s'.") %
+            t("Created %(export_type)s export on '%(id_string)s'.") %
             {
                 'id_string': xform.id_string,
                 'export_type': export_type.upper()
             }, audit, request)
     except NoRecordsFoundError:
-        raise Http404(_("No records found to export"))
+        raise Http404(t("No records found to export"))
     else:
         return export
 
@@ -150,7 +150,7 @@ def response_for_format(form, format=None):
         if file_path != '' and default_storage.exists(file_path):
             formatted_data = form.xls
         else:
-            raise Http404(_("No XLSForm found."))
+            raise Http404(t("No XLSForm found."))
     else:
         formatted_data = json.loads(form.json)
     return Response(formatted_data)
@@ -177,7 +177,7 @@ def log_export(request, xform, export_type):
     }
     log.audit_log(
         log.Actions.EXPORT_DOWNLOADED, request.user, xform.user,
-        _("Downloaded %(export_type)s export on '%(id_string)s'.") %
+        t("Downloaded %(export_type)s export on '%(id_string)s'.") %
         {
             'id_string': xform.id_string,
             'export_type': export_type.upper()
@@ -517,6 +517,22 @@ https://example.com/api/v1/forms/28058/labels/hello%20world
 >
 >        HTTP 200 OK
 
+## Get webform/enketo link
+
+<pre class="prettyprint">
+<b>GET</b> /api/v1/forms/<code>{pk}</code>/enketo</pre>
+
+> Request
+>
+>       curl -X GET \
+https://example.com/api/v1/forms/28058/enketo
+>
+> Response
+>
+>       {"enketo_url": "https://h6ic6.enketo.org/webform"}
+>
+>        HTTP 200 OK
+
 ## Get form data in xls, csv format.
 
 Get form data exported as xls, csv, csv zip, sav zip format.
@@ -603,6 +619,25 @@ data (instance/submission per row)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['GET'])
+    def enketo(self, request, **kwargs):
+        self.object = self.get_object()
+        form_url = _get_form_url(self.object.user.username)
+
+        data = {'message': t("Enketo not properly configured.")}
+        http_status = status.HTTP_400_BAD_REQUEST
+
+        try:
+            url = enketo_url(form_url, self.object.id_string)
+        except EnketoError:
+            pass
+        else:
+            if url:
+                http_status = status.HTTP_200_OK
+                data = {"enketo_url": url}
+
+        return Response(data, http_status)
+
     def update(self, request, pk, *args, **kwargs):
         if 'xls_file' in request.FILES:
             # A new XLSForm has been uploaded and will replace the existing
@@ -613,7 +648,7 @@ data (instance/submission per row)
             owner = existing_xform.user
             if request.user.pk != owner.pk:
                 raise exceptions.PermissionDenied(
-                    detail=_("Only a form's owner can overwrite its contents"))
+                    detail=t("Only a form's owner can overwrite its contents"))
             survey = utils.publish_xlsform(request, owner, existing_xform)
             if not isinstance(survey, XForm):
                 if isinstance(survey, dict) and 'text' in survey:
@@ -661,10 +696,17 @@ data (instance/submission per row)
         Calls :py:func:`onadata.libs.utils.csv_import.submit_csv`
         passing with the `request.FILES.get('csv_file')` upload for import.
         """
-        resp = submit_csv(request.user.username,
-                          self.get_object(),
-                          request.FILES.get('csv_file'))
-
+        xform = self.get_object()
+        if request.user != xform.user:
+            # Access control for this endpoint previously relied on testing
+            # that the user had `logger.add_xform` on this specific XForm,
+            # which is meaningless but does get assigned to the XForm owner by
+            # the post-save signal handler
+            # `onadata.apps.logger.models.xform.set_object_permissions()`.
+            # For safety and clarity, this endpoint now explicitly denies
+            # access to all non-owners.
+            raise PermissionDenied
+        resp = submit_csv(request, xform, request.FILES.get('csv_file'))
         return Response(
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else

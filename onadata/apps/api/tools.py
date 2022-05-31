@@ -4,25 +4,40 @@ import os
 import re
 import time
 from datetime import datetime
+from urllib.parse import unquote
 
+import requests
 import rest_framework.views as rest_framework_views
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.files.storage import get_storage_class
-from django.http import HttpResponseNotFound
-from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext as _
+from django.http import (
+    HttpResponse,
+    HttpResponseNotFound,
+    HttpResponseRedirect,
+)
+from django.utils.translation import gettext as t
 from rest_framework import exceptions
+from rest_framework.authtoken.models import Token
+from rest_framework.request import Request
 from taggit.forms import TagField
 
 from onadata.apps.main.forms import QuickConverterForm
 from onadata.apps.main.models import UserProfile
+from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.viewer.models.parsed_instance import datetime_from_str
-from onadata.libs.utils.logger_tools import publish_form
-from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
-from onadata.libs.utils.user_auth import check_and_set_form_by_id
-from onadata.libs.utils.user_auth import check_and_set_form_by_id_string
+from onadata.libs.utils.logger_tools import (
+    publish_form,
+    response_with_mimetype_and_name,
+    OPEN_ROSA_VERSION_HEADER,
+    OPEN_ROSA_VERSION,
+)
+from onadata.libs.utils.user_auth import (
+    check_and_set_form_by_id,
+    check_and_set_form_by_id_string,
+)
 
 DECIMAL_PRECISION = 2
 
@@ -54,13 +69,13 @@ def publish_xlsform(request, user, existing_xform=None):
         UserProfile.objects.get_or_create(user=user)[0]
     ):
         raise exceptions.PermissionDenied(
-            detail=_("User %(user)s has no permission to add xforms to "
+            detail=t("User %(user)s has no permission to add xforms to "
                      "account %(account)s" % {'user': request.user.username,
                                               'account': user.username}))
     if existing_xform and not request.user.has_perm(
             'change_xform', existing_xform):
         raise exceptions.PermissionDenied(
-            detail=_("User %(user)s has no permission to change this "
+            detail=t("User %(user)s has no permission to change this "
                      "form." % {'user': request.user.username, })
         )
 
@@ -84,7 +99,7 @@ def get_xform(formid, request, username=None):
         xform = check_and_set_form_by_id(int(formid), request)
 
     if not xform:
-        raise exceptions.PermissionDenied(_(
+        raise exceptions.PermissionDenied(t(
             "You do not have permission to view data from this form."))
 
     return xform
@@ -118,22 +133,21 @@ def add_tags_to_instance(request, instance):
             instance.save()
 
 
-def add_validation_status_to_instance(request, instance):
+def add_validation_status_to_instance(
+    request: Request, instance: 'Instance'
+) -> bool:
     """
-    Saves instance validation status if it's valid (belong to XForm/Asset validation statuses)
-
-    :param request: REST framework's Request object
-    :param instance: Instance object
-    :return: Boolean
+    Save instance validation status if it is valid.
+    To be valid, it has to belong to XForm validation statuses
     """
-    validation_status_uid = request.data.get("validation_status.uid")
+    validation_status_uid = request.data.get('validation_status.uid')
     success = False
 
     # Payload must contain validation_status property.
     if validation_status_uid:
 
         validation_status = get_validation_status(
-            validation_status_uid, instance.asset, request.user.username)
+            validation_status_uid, instance.xform, request.user.username)
         if validation_status:
             instance.validation_status = validation_status
             instance.save()
@@ -168,7 +182,9 @@ def remove_validation_status_from_instance(instance):
     return instance.parsed_instance.update_mongo(asynchronous=False)
 
 
-def get_media_file_response(metadata):
+def get_media_file_response(
+    metadata: MetaData, request: Request = None
+) -> HttpResponse:
     if metadata.data_file:
         file_path = metadata.data_file.name
         filename, extension = os.path.splitext(file_path.split('/')[-1])
@@ -184,8 +200,26 @@ def get_media_file_response(metadata):
             return response
         else:
             return HttpResponseNotFound()
-    else:
+    elif not metadata.is_paired_data:
         return HttpResponseRedirect(metadata.data_value)
+
+    # When `request.user` is authenticated, their authentication is lost with
+    # an HTTP redirection. We use KoBoCAT to proxy the response from KPI
+    headers = {}
+    if not request.user.is_anonymous:
+        token = Token.objects.get(user=request.user)
+        headers['Authorization'] = f'Token {token.key}'
+
+    # Send the request internally to avoid extra traffic on the public interface
+    internal_url = metadata.data_value.replace(settings.KOBOFORM_URL,
+                                               settings.KOBOFORM_INTERNAL_URL)
+    response = requests.get(internal_url, headers=headers)
+
+    return HttpResponse(
+        content=response.content,
+        status=response.status_code,
+        content_type=response.headers['content-type'],
+    )
 
 
 def get_view_name(view_obj):

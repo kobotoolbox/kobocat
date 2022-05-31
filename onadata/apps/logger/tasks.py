@@ -3,7 +3,7 @@ import csv
 import datetime
 import zipfile
 from collections import defaultdict
-from io import BytesIO
+from io import StringIO
 
 from celery import task, shared_task
 from dateutil import relativedelta
@@ -95,13 +95,13 @@ def generate_stats_zip(output_filename):
             fieldnames = [
                 'Year',
                 'Month',
-                'New {}'.format(model_name_plural.capitalize()),
-                'Cumulative {}'.format(model_name_plural.capitalize()),
+                f'New {model_name_plural.capitalize()}',
+                f'Cumulative {model_name_plural.capitalize()}',
                 'Last Primary Key (possible clue about deleted objects)',
             ]
             data = list_created_by_month(
                 report_settings['model'], report_settings['date_field'])
-            csv_io = BytesIO()
+            csv_io = StringIO()
             writer = csv.DictWriter(csv_io, fieldnames=fieldnames)
             writer.writeheader()
             for row in data:

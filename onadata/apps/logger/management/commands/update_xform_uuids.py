@@ -4,7 +4,6 @@
 import csv
 
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.translation import ugettext_lazy
 
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.exceptions import DuplicateUUIDError
@@ -13,13 +12,13 @@ from onadata.libs.utils.model_tools import update_xform_uuid
 
 class Command(BaseCommand):
 
-    help = ugettext_lazy("Use a csv file with username, "
-                         "id_string and new_uuid to set new uuids")
+    help = ("Use a csv file with username, "
+            "id_string and new_uuid to set new uuids")
 
     def add_arguments(self, parser):
 
         parser.add_argument('-f', '--file',
-                            help=ugettext_lazy("Path to csv file"))
+                            help="Path to csv file")
 
     def handle(self, *args, **kwargs):
         # all options are required

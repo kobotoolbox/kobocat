@@ -10,7 +10,7 @@ def dict_key_for_value(_dict, value):
     """
     This function is used to get key by value in a dictionary
     """
-    return _dict.keys()[_dict.values().index(value)]
+    return list(_dict.keys())[list(_dict.values()).index(value)]
 
 
 def get_path(data, question_name, path_list=[]):

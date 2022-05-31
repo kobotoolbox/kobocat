@@ -1,12 +1,12 @@
 # coding: utf-8
 import mimetypes
 import os
-from hashlib import md5
 
 from django.conf import settings
 from django.db import models
 from django.utils.http import urlencode
 
+from onadata.libs.utils.hash import get_hash
 from .instance import Instance
 
 
@@ -25,17 +25,17 @@ def upload_to(attachment, filename):
 
 
 def hash_attachment_contents(contents):
-    if isinstance(contents, str):
-        contents = contents.encode()
-    return md5(contents).hexdigest()
+    return get_hash(contents)
 
 
 class Attachment(models.Model):
-    instance = models.ForeignKey(Instance, related_name="attachments", on_delete=models.CASCADE)
+    instance = models.ForeignKey(
+        Instance, related_name='attachments', on_delete=models.CASCADE
+    )
     media_file = models.FileField(upload_to=upload_to, max_length=380, db_index=True)
     media_file_basename = models.CharField(
         max_length=260, null=True, blank=True, db_index=True)
-    # `PositiveIntegerField` will only accomodate 2 GiB, so we should consider
+    # `PositiveIntegerField` will only accommodate 2 GiB, so we should consider
     # `PositiveBigIntegerField` after upgrading to Django 3.1+
     media_file_size = models.PositiveIntegerField(blank=True, null=True)
     mimetype = models.CharField(

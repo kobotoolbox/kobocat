@@ -1,8 +1,9 @@
 # coding: utf-8
 import os
 import reversion
+from datetime import datetime, timedelta
 
-from datetime import datetime
+from dateutil import parser
 from django.utils.timezone import utc
 from django_digest.test import DigestAuth
 from mock import patch
@@ -73,8 +74,14 @@ class TestInstance(TestBase):
         instances = Instance.objects.all()
 
         for instance in instances:
-            self.assertEqual(instance.json[SUBMISSION_TIME],
-                             instance.date_created.strftime(MONGO_STRFTIME))
+            # parse with timezone
+            date_created = instance.date_created.replace(microsecond=0)
+            json_time = parser.parse(f'{instance.json[SUBMISSION_TIME]}+00:00')
+            one_second_before = date_created - timedelta(seconds=1)
+            one_second_after = date_created + timedelta(seconds=1)
+            # GH actions can have 1 (or maybe a few) seconds' difference between
+            # instance creation and conversion to json
+            self.assertTrue(one_second_before <= json_time <= one_second_after)
 
     def test_set_instances_with_geopoints_on_submission_false(self):
         self._publish_transportation_form()

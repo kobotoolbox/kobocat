@@ -1,0 +1,55 @@
+stages:
+  - build_test
+  - deploy
+
+build:
+  stage: build_test
+  image: docker
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:CI_COMMIT_REF_NAME || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:CI_COMMIT_REF_NAME --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+test:
+  stage: build_test
+  image: python:3.8
+  variables:
+    DJANGO_SECRET_KEY: abcdef
+    TEST_DATABASE_URL: postgis://kobo:kobo@postgres:5432/kobocat_test
+    REDIS_SESSION_URL: redis://localhost:6380/2
+    USE_POSTGRESQL: "True"
+    POSTGRES_USER: kobo
+    POSTGRES_PASSWORD: kobo
+    POSTGRES_DB: kobocat_test
+  services:
+    - name: postgis/postgis:9.5-2.5
+      alias: postgres
+    - name: redis:3.2
+      alias: redis_cache
+  script:
+    - apt-get update && apt-get install -y ghostscript gdal-bin libproj-dev gettext openjdk-11-jre
+    - pip install -r dependencies/pip/dev.txt
+    - pytest -vv -rf
+
+deploy-beta:
+  stage: deploy
+  image:
+    name: alpine/helm:3.7.2
+    entrypoint: [""]
+  script:
+    - helm repo add kobo https://gitlab.com/api/v4/projects/32216873/packages/helm/stable
+    - helm -n beta upgrade kobo-beta kobo/kobo --atomic --set-string kobocat.image.tag=${CI_COMMIT_SHORT_SHA} --reuse-values
+  environment:
+    name: beta
+    url: https://kc.beta.kobotoolbox.org
+  only:
+    refs:
+      - public-beta
+      - gitlab-ci-build
+    variables:
+      - $CI_COMMIT_REF_PROTECTED

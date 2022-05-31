@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import requests
 from django.conf import settings
 from django.core.validators import URLValidator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from rest_framework import serializers
 from werkzeug.http import parse_options_header
 
@@ -15,12 +15,13 @@ from onadata.apps.logger.models import XForm
 from onadata.libs.constants import CAN_CHANGE_XFORM, CAN_VIEW_XFORM
 
 METADATA_TYPES = (
-    ('data_license', _("Data License")),
-    ('form_license', _("Form License")),
-    ('media', _("Media")),
-    ('public_link', _("Public Link")),
-    ('source', _("Source")),
-    ('supporting_doc', _("Supporting Document")),
+    ('data_license', t("Data License")),
+    ('form_license', t("Form License")),
+    ('media', t("Media")),
+    ('public_link', t("Public Link")),
+    ('source', t("Source")),
+    ('supporting_doc', t("Supporting Document")),
+    ('paired_data', t("Paired Data")),
 )
 
 
@@ -32,6 +33,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
     data_type = serializers.ChoiceField(choices=METADATA_TYPES)
     data_file = serializers.FileField(required=False)
     from_kpi = serializers.BooleanField(required=False)
+    data_filename = serializers.CharField(max_length=255, required=False)
 
     class Meta:
         model = MetaData
@@ -45,6 +47,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             'file_hash',
             'url',
             'from_kpi',
+            'data_filename',
         )
         read_only_fields = (
             'id',
@@ -66,10 +69,10 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         request = self.context.get('request')
 
         if not request.user.has_perm(CAN_VIEW_XFORM, xform):
-            raise serializers.ValidationError(_('Project not found'))
+            raise serializers.ValidationError(t('Project not found'))
 
         if not request.user.has_perm(CAN_CHANGE_XFORM, xform):
-            raise serializers.ValidationError(_(
+            raise serializers.ValidationError(t(
                 'You do not have sufficient permissions to perform this action'
             ))
 
@@ -85,6 +88,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_value = (
             data_file.name if data_file else validated_data.get('data_value')
         )
+        data_filename = validated_data.get('data_filename')
 
         return MetaData.objects.create(
             data_type=data_type,
@@ -94,6 +98,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
             data_file_type=data_file_type,
             file_hash=file_hash,
             from_kpi=from_kpi,
+            data_filename=data_filename,
         )
 
     def _validate_data_value(self, attrs):
@@ -114,12 +119,12 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
         data_value = attrs.get('data_value')
 
         if attrs.get('data_type') == 'media' and attrs.get('data_file') is None:
-            message = {'data_value': _('Invalid url {}').format(data_value)}
+            message = {'data_value': t('Invalid url {}').format(data_value)}
             URLValidator(message=message)(data_value)
 
         if not data_value:
             raise serializers.ValidationError(
-                {'data_value': _('This field is required.')}
+                {'data_value': t('This field is required.')}
             )
 
         return attrs
@@ -148,7 +153,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
                 except requests.exceptions.RequestException:
                     response.close()
                     raise serializers.ValidationError({
-                        {'data_file_type': _('Cannot determine content type')}
+                        {'data_file_type': t('Cannot determine content type')}
                     })
                 else:
                     response.close()
@@ -159,14 +164,14 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
                     )
                 except KeyError:
                     raise serializers.ValidationError({
-                        {'data_file_type': _('Cannot determine content type')}
+                        {'data_file_type': t('Cannot determine content type')}
                     })
 
                 try:
                     data_value = filename_from_header[1]['filename']
                 except (TypeError, IndexError, KeyError):
                     raise serializers.ValidationError({
-                        {'data_file_type': _('Cannot determine content type')}
+                        {'data_file_type': t('Cannot determine content type')}
                     })
             else:
                 # In case the url contains a querystring, let's rebuild the
@@ -181,7 +186,7 @@ class MetaDataSerializer(serializers.HyperlinkedModelSerializer):
 
         if attrs['data_file_type'] not in allowed_types:
             raise serializers.ValidationError(
-                {'data_file_type': _('Invalid content type')}
+                {'data_file_type': t('Invalid content type')}
             )
 
         return attrs

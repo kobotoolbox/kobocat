@@ -3,7 +3,7 @@ import mimetypes
 import os
 import requests
 from contextlib import closing
-from hashlib import md5
+
 
 from django.core.exceptions import ValidationError
 from django.core.files.temp import NamedTemporaryFile
@@ -11,9 +11,12 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.validators import URLValidator
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from six.moves.urllib.parse import urlparse
+from requests.exceptions import RequestException
 
 from onadata.apps.logger.models import XForm
+from onadata.libs.utils.hash import get_hash
 
 CHUNK_SIZE = 1024
 
@@ -100,7 +103,8 @@ def create_media(media):
 
 
 def media_resources(media_list, download=False):
-    """List of MetaData objects of type media
+    """
+    List of MetaData objects of type media
 
     @param media_list - list of MetaData objects of type `media`
     @param download - boolean, when True downloads media files when
@@ -112,7 +116,6 @@ def media_resources(media_list, download=False):
     for media in media_list:
         if media.data_file.name == '' and download:
             media = create_media(media)
-
             if media:
                 data.append(media)
         else:
@@ -122,6 +125,12 @@ def media_resources(media_list, download=False):
 
 
 class MetaData(models.Model):
+
+    MEDIA_FILES_TYPE = [
+        'media',
+        'paired_data',
+    ]
+
     xform = models.ForeignKey(XForm, on_delete=models.CASCADE)
     data_type = models.CharField(max_length=255)
     data_value = models.CharField(max_length=255)
@@ -129,39 +138,86 @@ class MetaData(models.Model):
     data_file_type = models.CharField(max_length=255, blank=True, null=True)
     file_hash = models.CharField(max_length=50, blank=True, null=True)
     from_kpi = models.BooleanField(default=False)
+    data_filename = models.CharField(max_length=255, blank=True, null=True)
+    date_created = models.DateTimeField(default=timezone.now)
+    date_modified = models.DateTimeField(default=timezone.now)
 
     class Meta:
         app_label = 'main'
         unique_together = ('xform', 'data_type', 'data_value')
 
+    @property
+    def is_paired_data(self) -> bool:
+        return self.data_type == 'paired_data'
+
     def save(self, *args, **kwargs):
+        self.date_modified = timezone.now()
         self._set_hash()
+
         super().save(*args, **kwargs)
 
     @property
-    def hash(self):
-        if self.file_hash is not None and self.file_hash != '':
-            return self.file_hash
-        else:
-            return self._set_hash()
+    def md5_hash(self) -> str:
+        return self._set_hash()
 
     @property
-    def filename(self):
+    def has_expired(self) -> bool:
+        """
+        It validates whether the file has been modified for the last X minutes.
+        (where `X` equals `settings.PAIRED_DATA_EXPIRATION`)
+
+        Notes: Only `xml-external` (paired data XML) files expire.
+        """
+        if not self.is_paired_data:
+            return False
+
+        timedelta = timezone.now() - self.date_modified
+        if timedelta.total_seconds() > settings.PAIRED_DATA_EXPIRATION:
+            # No need to download the whole file. Sending a `HEAD` request to
+            # KPI will cause KPI to delete and recreate the file in KoBoCAT if
+            # needed
+            requests.head(self.data_value)
+            # We update the modification time here to avoid requesting that KPI
+            # resynchronize this file multiple times per the
+            # `PAIRED_DATA_EXPIRATION` period. However, this introduces a race
+            # condition where it's possible that KPI *deletes* this file before
+            # we attempt to update it. We avoid that by locking the row
+            ### TODO: this previously used `select_for_update()`, which locked
+            ### the object for the duration of the *entire* request due to
+            ### Django's `ATOMIC_REQUESTS`. The `update()` method is itself
+            ### atomic since it does not reference any value previously read
+            ### from the database. Is that enough?
+            MetaData.objects.filter(pk=self.pk).update(
+                date_modified=timezone.now()
+            )
+            return True
+
+        return False
+
+    @property
+    def filename(self) -> str:
 
         # `self.__filename` has already been cached, return it.
         if getattr(self, '__filename', None):
             return self.__filename
 
         # If it is a remote URL, get the filename from it and return it
-        if self.data_type == 'media' and is_valid_url(self.data_value):
-            parsed_url = urlparse(self.data_value)
-            self.__filename = os.path.basename(parsed_url.path)
+        if (
+            self.data_type in self.MEDIA_FILES_TYPE
+            and is_valid_url(self.data_value)
+        ):
+            if self.data_filename:
+                self.__filename = self.data_filename
+            else:
+                parsed_url = urlparse(self.data_value)
+                self.__filename = os.path.basename(parsed_url.path)
+
             return self.__filename
 
         # Return `self.data_value` as fallback
         return self.data_value
 
-    def _set_hash(self):
+    def _set_hash(self) -> str:
         """
         Recalculates `file_hash` if it does not exist already. KPI, for
         example, sends a precalculated hash of the file content (or of the URL
@@ -171,27 +227,25 @@ class MetaData(models.Model):
         if self.file_hash:
             return self.file_hash
 
-        if not self.data_file:
-            return None
-
-        file_exists = self.data_file.storage.exists(self.data_file.name)
-
-        if (file_exists and self.data_file.name != '') \
-                or (not file_exists and self.data_file):
+        if self.data_file:
             try:
-                self.data_file.seek(os.SEEK_SET)
-            except IOError:
+                self.file_hash = get_hash(self.data_file, prefix=True)
+            except (IOError, FileNotFoundError) as e:
                 return ''
             else:
-                data_file_content = self.data_file.read()
-                if isinstance(data_file_content, str):
-                    data_file_content = data_file_content.encode()
-                md5_hash = md5(data_file_content).hexdigest()
-                self.file_hash = f'md5:{md5_hash}'
-
                 return self.file_hash
 
-        return ''
+        if not self.from_kpi:
+            return ''
+
+        # Object should be a URL at this point `POST`ed by KPI.
+        # We have to set the hash
+        try:
+            self.file_hash = get_hash(self.data_value, prefix=True, fast=True)
+        except RequestException as e:
+            return ''
+        else:
+            return self.file_hash
 
     @staticmethod
     def public_link(xform, data_value=None):

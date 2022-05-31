@@ -89,6 +89,11 @@ class TestDataViewSet(TestBase):
                          response.data)
 
     def test_data_anon(self):
+        # By default, `_create_user_and_login()` creates users without
+        # authentication required. We force it when submitting data to persist
+        # collector's username because this test expects it.
+        # See `_submitted_data` in `data` below
+        self._set_require_auth(True)
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
         request = self.factory.get('/')
@@ -273,29 +278,77 @@ class TestDataViewSet(TestBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
-    def test_get_enketo_edit_url(self):
+    def test_cannot_get_enketo_edit_url_without_require_auth(self):
+        """
+        It's not currently possible to support authenticated Enketo submission
+        editing while simultaneously accepting anonymous submissions. The
+        less-bad option is to reject edit requests with an explicit error
+        message when anonymous submissions are enabled.
+        """
+        self.assertFalse(self.user.profile.require_auth)
         self._make_submissions()
-        view = DataViewSet.as_view({'get': 'enketo'})
+        for view_ in ['enketo', 'enketo_edit']:
+            view = DataViewSet.as_view({'get': view_})
+            formid = self.xform.pk
+            dataid = self.xform.instances.all().order_by('id')[0].pk
+            request = self.factory.get(
+                '/',
+                data={'return_url': "http://test.io/test_url"},
+                **self.extra
+            )
+            response = view(request, pk=formid, dataid=dataid)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertTrue(
+                response.data[0].startswith(
+                    'Cannot edit submissions while "Require authentication '
+                    'to see forms and submit data" is disabled for your '
+                    'account'
+                )
+            )
+
+    def test_get_enketo_edit_url(self):
+        self.user.profile.require_auth = True
+        self.user.profile.save()
+        self._make_submissions()
+        for view_ in ['enketo', 'enketo_edit']:
+            # ensure both legacy `/enketo` and the new `/enketo_edit` endpoints
+            # do the same thing
+            view = DataViewSet.as_view({'get': view_})
+            formid = self.xform.pk
+            dataid = self.xform.instances.all().order_by('id')[0].pk
+
+            request = self.factory.get('/', **self.extra)
+            response = view(request, pk=formid, dataid=dataid)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            # add data check
+            self.assertEqual(
+                response.data['detail'], '`return_url` not provided.'
+            )
+
+            request = self.factory.get(
+                '/',
+                data={'return_url': "http://test.io/test_url"},
+                **self.extra
+            )
+
+            with HTTMock(enketo_mock):
+                response = view(request, pk=formid, dataid=dataid)
+                self.assertEqual(
+                    response.data['url'], "https://hmh2a.enketo.formhub.org"
+                )
+
+    def test_get_enketo_view_url(self):
+        self._make_submissions()
+        view = DataViewSet.as_view({'get': 'enketo_view'})
         request = self.factory.get('/', **self.extra)
         formid = self.xform.pk
         dataid = self.xform.instances.all().order_by('id')[0].pk
 
-        response = view(request, pk=formid, dataid=dataid)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        # add data check
-        self.assertEqual(
-            response.data,
-            {'detail': 'return_url not provided.'})
-
-        request = self.factory.get(
-            '/',
-            data={'return_url': "http://test.io/test_url"}, **self.extra)
-
         with HTTMock(enketo_mock):
             response = view(request, pk=formid, dataid=dataid)
             self.assertEqual(
-                response.data['url'],
-                "https://hmh2a.enketo.formhub.org")
+                response.data['url'], 'https://hmh2a.enketo.formhub.org'
+            )
 
     def test_get_form_public_data(self):
         self._make_submissions()
@@ -339,6 +392,7 @@ class TestDataViewSet(TestBase):
                          response_first_element)
 
     def test_data_w_attachment(self):
+        self._set_require_auth(auth=True)
         self._submit_transport_instance_w_attachment()
 
         view = DataViewSet.as_view({'get': 'list'})

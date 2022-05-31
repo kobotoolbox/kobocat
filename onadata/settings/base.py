@@ -6,9 +6,12 @@ import sys
 from datetime import timedelta
 from urllib.parse import quote_plus
 
-import dj_database_url
+import environ
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
+
+
+env = environ.Env()
 
 
 def skip_suspicious_operations(record):
@@ -37,10 +40,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(ONADATA_DIR, '..'))
 ################################
 
 # Django `SECRET_KEY`
-try:
-    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-except KeyError:
-    raise Exception('DJANGO_SECRET_KEY must be set in the environment.')
+SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 TEMPLATED_EMAIL_TEMPLATE_DIR = 'templated_email/'
 
@@ -60,14 +60,14 @@ DEFAULT_SESSION_EXPIRY_TIME = 21600  # 6 hours
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/New_York'
+TIME_ZONE = 'UTC'
 USE_TZ = True
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
-SITE_ID = os.environ.get('DJANGO_SITE_ID', '1')
+SITE_ID = env.str('DJANGO_SITE_ID', '1')
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -80,7 +80,7 @@ USE_L10N = True
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = f"/{os.environ.get('KOBOCAT_MEDIA_URL', 'media').strip('/')}/"
+MEDIA_URL = f"/{env.str('KOBOCAT_MEDIA_URL', 'media').strip('/')}/"
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -121,6 +121,7 @@ STATICFILES_FINDERS = [
 MIDDLEWARE = [
     'onadata.koboform.redirect_middleware.ConditionalRedirects',
     'reversion.middleware.RevisionMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -139,7 +140,7 @@ ROOT_URLCONF = 'onadata.apps.main.urls'
 # specify the root folder which may contain a templates folder and a static
 # folder used to override templates for site specific details
 # include the kobocat-template directory
-TEMPLATE_OVERRIDE_ROOT_DIR = os.environ.get(
+TEMPLATE_OVERRIDE_ROOT_DIR = env.str(
     'KOBOCAT_TEMPLATES_PATH',
     os.path.abspath(os.path.join(PROJECT_ROOT, 'kobocat-template'))
 )
@@ -172,7 +173,7 @@ TEMPLATES = [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
             ],
-            'debug': os.environ.get('TEMPLATE_DEBUG', 'False') == 'True',
+            'debug': env.bool('TEMPLATE_DEBUG', False),
         },
     }
 ]
@@ -203,7 +204,6 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.gis',
-    'registration',
     'reversion',
     'django_digest',
     'corsheaders',
@@ -212,7 +212,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'taggit',
     'readonly',
-    'onadata.apps.logger',
+    'onadata.apps.logger.LoggerAppConfig',
     'onadata.apps.viewer',
     'onadata.apps.main',
     'onadata.apps.restservice',
@@ -314,54 +314,84 @@ if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
 CSRF_COOKIE_HTTPONLY = True
 # SESSION_COOKIE_HTTPONLY is more useful, but it defaults to True.
 
-if os.environ.get('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
+if env.str('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+if os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False') == 'True':
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+if os.environ.get('SECURE_HSTS_PRELOAD', 'False') == 'True':
+    SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_SECONDS = os.environ.get('SECURE_HSTS_SECONDS', 0)
 
 # Limit sessions to 1 week (the default is 2 weeks)
 SESSION_COOKIE_AGE = 604800
 
-# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised
+# The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised  # noqa
 # This variable is available only in Django 1.10+. Only there for next upgrade
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760
 
-# The maximum size (in bytes) that an upload will be before it gets streamed to the file system
+# The maximum size (in bytes) that an upload will be before it gets streamed to the file system # noqa
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# When an uploaded file exceeds FILE_UPLOAD_MAX_MEMORY_SIZE, Django streams it
+# to the OS' temporary directory, which usually sets restrictive owner-only
+# read permissions on files created within it. Django then *moves* the file to
+# its destination path:
+# https://github.com/django/django/blob/9d13d8c10b18da9f8a9a7ea9325c1e2a23279c72/django/core/files/storage.py#L271-L273
+# By contrast, smaller files are stored in memory and then written directly to
+# their destination paths, where they usually receive less-restrictive
+# permissions. The Django documentation recommends explicitly setting the
+# permissions of uploaded files to avoid this discrepancy. This solves the
+# problem of NGINX returning 403 when large submission attachments are
+# requested. See
+# https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/#file-upload-permissions
+FILE_UPLOAD_PERMISSIONS = 0o644
 
 LOCALE_PATHS = [os.path.join(PROJECT_ROOT, 'locale'), ]
 
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = env.bool('DJANGO_DEBUG', True)
 
 # Database (i.e. PostgreSQL)
 DATABASES = {
-    'default': dj_database_url.config(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
+    'default': env.db(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
 }
 # Replacement for TransactionMiddleware
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(' ')
+ALLOWED_HOSTS = env.str('DJANGO_ALLOWED_HOSTS', '*').split(' ')
 
 # Domain must not exclude KPI when sharing sessions
-if os.environ.get('SESSION_COOKIE_DOMAIN'):
-    SESSION_COOKIE_DOMAIN = os.environ['SESSION_COOKIE_DOMAIN']
-    SESSION_COOKIE_NAME = 'kobonaut'
+SESSION_COOKIE_DOMAIN = env.str('SESSION_COOKIE_DOMAIN', None)
+if SESSION_COOKIE_DOMAIN:
+    SESSION_COOKIE_NAME = env.str('SESSION_COOKIE_NAME', 'kobonaut')
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 # If not properly overridden, leave uninitialized so Django can set the default.
 # (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
-    DEFAULT_FILE_STORAGE = os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE')
+    DEFAULT_FILE_STORAGE = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
 
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND',
-                               'django.core.mail.backends.filebased.EmailBackend')
+EMAIL_BACKEND = env.str(
+    'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'
+)
 
 if EMAIL_BACKEND == 'django.core.mail.backends.filebased.EmailBackend':
-    EMAIL_FILE_PATH = os.environ.get(
-        'EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
+    EMAIL_FILE_PATH = env.str('EMAIL_FILE_PATH', os.path.join(PROJECT_ROOT, 'emails'))
     if not os.path.isdir(EMAIL_FILE_PATH):
         os.mkdir(EMAIL_FILE_PATH)
 
+SESSION_ENGINE = 'redis_sessions.session'
+# django-redis-session expects a dictionary with `url`
+redis_session_url = env.cache_url(
+    'REDIS_SESSION_URL', default='redis://redis_cache:6380/2'
+)
+SESSION_REDIS = {
+    'url': redis_session_url['LOCATION'],
+    'prefix': env.str('REDIS_SESSION_PREFIX', 'session'),
+    'socket_timeout': env.int('REDIS_SESSION_SOCKET_TIMEOUT', 1),
+}
 
 ###################################
 # Django Rest Framework settings  #
@@ -381,9 +411,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'onadata.libs.authentication.DigestAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        'onadata.libs.authentication.TokenAuthentication',
+        # HttpsOnlyBasicAuthentication must come before SessionAuthentication because
+        # Django authentication is called before DRF authentication and users get authenticated with
+        # Session if it comes first (which bypass BasicAuthentication and MFA validation)
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         # Keep JSONRenderer at the top "in order to send JSON responses to
@@ -411,30 +444,31 @@ ANONYMOUS_USER_ID = -1
 # Needed to get ANONYMOUS_USER = -1
 GUARDIAN_GET_INIT_ANONYMOUS_USER = 'onadata.apps.main.models.user_profile.get_anonymous_user_instance'  # noqa
 
-PRINT_EXCEPTION = os.environ.get("PRINT_EXCEPTION", False)
+PRINT_EXCEPTION = env.bool("PRINT_EXCEPTION", False)
 
-KOBOFORM_SERVER = os.environ.get("KOBOFORM_SERVER", "localhost")
-KOBOFORM_SERVER_PORT = os.environ.get("KOBOFORM_SERVER_PORT", "8000")
-KOBOFORM_SERVER_PROTOCOL = os.environ.get("KOBOFORM_SERVER_PROTOCOL", "http")
+KOBOCAT_URL = env.url('KOBOCAT_URL', 'http://kc.kobo.local').geturl()
+KOBOFORM_SERVER = env.str('KOBOFORM_SERVER', 'localhost')
+KOBOFORM_SERVER_PORT = env.str('KOBOFORM_SERVER_PORT', '8000')
+KOBOFORM_SERVER_PROTOCOL = env.str('KOBOFORM_SERVER_PROTOCOL', 'http')
 KOBOFORM_LOGIN_AUTOREDIRECT = True
-KOBOFORM_URL = os.environ.get("KOBOFORM_URL", "http://kf.kobo.local")
-KOBOCAT_URL = os.environ.get("KOBOCAT_URL", "http://kc.kobo.local")
-KOBOFORM_INTERNAL_URL = os.environ.get("KPI_INTERNAL_URL", KOBOFORM_URL)
+KOBOFORM_URL = env.url('KOBOFORM_URL', 'http://kf.kobo.local').geturl()
+KOBOFORM_INTERNAL_URL = env.url('KOBOFORM_INTERNAL_URL', KOBOFORM_URL).geturl()
 KPI_HOOK_ENDPOINT_PATTERN = '/api/v2/assets/{asset_uid}/hook-signal/'
 
 # These 2 variables are needed to detect whether the ENKETO_PROTOCOL should overwritten or not.
 # See method `_get_form_url` in `onadata/libs/utils/viewer_tools.py`
-KOBOCAT_INTERNAL_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("INTERNAL_DOMAIN_NAME", "docker.internal"))
-KOBOCAT_PUBLIC_HOSTNAME = "{}.{}".format(
-    os.environ.get("KOBOCAT_PUBLIC_SUBDOMAIN", "kc"),
-    os.environ.get("PUBLIC_DOMAIN_NAME", "kobotoolbox.org"))
+KOBOCAT_INTERNAL_HOSTNAME = '{}.{}'.format(
+    os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
+    os.environ.get('INTERNAL_DOMAIN_NAME', 'docker.internal'))
+KOBOCAT_PUBLIC_HOSTNAME = '{}.{}'.format(
+    os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
+    os.environ.get('PUBLIC_DOMAIN_NAME', 'kobotoolbox.org'))
 
 # Default value for the `UserProfile.require_auth` attribute
-REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = os.environ.get(
-        'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
-        'False') == 'True'
+REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = env.bool(
+    'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
+    False
+)
 
 OAUTH2_PROVIDER = {
     # this is the list of available scopes
@@ -451,9 +485,9 @@ REGISTRATION_OPEN = False
 ACCOUNT_ACTIVATION_DAYS = 1
 
 SWAGGER_SETTINGS = {
-    "exclude_namespaces": [],    # List URL namespaces to ignore
-    "api_version": '1.0',  # Specify your API's version (optional)
-    "enabled_methods": [         # Methods to enable in UI
+    'exclude_namespaces': [],    # List URL namespaces to ignore
+    'api_version': '1.0',  # Specify your API's version (optional)
+    'enabled_methods': [         # Methods to enable in UI
         'get',
         'post',
         'put',
@@ -486,18 +520,26 @@ THUMB_ORDER = ['large', 'medium', 'small']
 REST_SERVICE_MAX_RETRIES = 3
 
 # BEGIN external service integration codes
+# ToDo Replace `KOBOCAT_AWS_*` with `AWS_*` . Only one account for
+# both KPI and KoBoCAT is supported anyway
 AWS_ACCESS_KEY_ID = os.environ.get('KOBOCAT_AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('KOBOCAT_AWS_SECRET_ACCESS_KEY')
+# Currently it is possible (though unlikely and not recommended?) to use
+# separate buckets for KPI and KoBoCAT. Doing so relies on
+# `KOBOCAT_AWS_STORAGE_BUCKET_NAME` being present in the environment for KPI
 AWS_STORAGE_BUCKET_NAME = os.environ.get('KOBOCAT_AWS_STORAGE_BUCKET_NAME')
 AWS_DEFAULT_ACL = 'private'
 AWS_S3_FILE_BUFFER_SIZE = 50 * 1024 * 1024
+AWS_S3_SIGNATURE_VERSION = env.str('AWS_S3_SIGNATURE_VERSION', 's3v4')
+if env.str('AWS_S3_REGION_NAME', False):
+    AWS_S3_REGION_NAME = env.str('AWS_S3_REGION_NAME')
 
 # TODO pass these variables from `kobo-docker` envfiles
-AWS_QUERYSTRING_EXPIRE = os.environ.get("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
-AWS_S3_USE_SSL = os.environ.get("KOBOCAT_AWS_S3_USE_SSL", True)
-AWS_S3_HOST = os.environ.get("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
+AWS_QUERYSTRING_EXPIRE = env.int("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
+AWS_S3_USE_SSL = env.bool("KOBOCAT_AWS_S3_USE_SSL", True)
+AWS_S3_HOST = env.str("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
 
-GOOGLE_ANALYTICS_PROPERTY_ID = os.environ.get("GOOGLE_ANALYTICS_TOKEN", False)
+GOOGLE_ANALYTICS_PROPERTY_ID = env.str("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
 
 # duration to keep zip exports before deletion (in seconds)
@@ -556,10 +598,34 @@ DEFAULT_VALIDATION_STATUSES = [
     },
 ]
 
+# Expiration time in sec. after which the hash of paired data xml file should be
+# validated.
+# Does not need to match KPI setting
+PAIRED_DATA_EXPIRATION = 300
+
+# Minimum size (in bytes) of files to allow fast calculation of hashes
+# Should match KoBoCAT setting
+HASH_BIG_FILE_SIZE_THRESHOLD = 0.5 * 1024 * 1024  # 512 kB
+
+# Chunk size in bytes to read per iteration when hash of a file is calculated
+# Should match KoBoCAT setting
+HASH_BIG_FILE_CHUNK = 16 * 1024  # 16 kB
+
 # PostgreSQL is considered as the default engine. Some DB queries
 # rely on PostgreSQL engine to be executed. It needs to be set to `False` if
 # the database is SQLite (e.g.: running unit tests locally).
 USE_POSTGRESQL = True
+
+# Added this because of https://github.com/onaio/onadata/pull/2139
+# Should bring support to ODK v1.17+
+SUPPORT_BRIEFCASE_SUBMISSION_DATE = (
+    os.environ.get('SUPPORT_BRIEFCASE_SUBMISSION_DATE') != 'True'
+)
+
+# Session Authentication is supported by default, no need to add it to supported classes
+MFA_SUPPORTED_AUTH_CLASSES = [
+    'onadata.libs.authentication.TokenAuthentication',
+]
 
 ################################
 # Celery settings              #
@@ -570,7 +636,7 @@ CELERY_BROKER_URL = os.environ.get(
 
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
-CELERY_TASK_ALWAYS_EAGER = os.environ.get('SKIP_CELERY', 'False') == 'True'
+CELERY_TASK_ALWAYS_EAGER = env.bool('SKIP_CELERY', False)
 
 # Celery defaults to having as many workers as there are cores. To avoid
 # excessive resource consumption, don't spawn more than 6 workers by default
@@ -646,33 +712,43 @@ ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 ################################
 # MongoDB settings             #
 ################################
+if not (MONGO_DB_URL := env.str('MONGO_DB_URL', False)):
+    # ToDo Remove all this block by the end of 2022.
+    #   Update kobo-install accordingly
+    logging.warning(
+        '`MONGO_DB_URL` is not found. '
+        '`KOBOCAT_MONGO_HOST`, `KOBOCAT_MONGO_PORT`, `KOBOCAT_MONGO_NAME`, '
+        '`KOBOCAT_MONGO_USER`, `KOBOCAT_MONGO_PASS` '
+        'are deprecated and will not be supported anymore soon.'
+    )
 
-MONGO_DATABASE = {
-    'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
-    'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
-    'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
-    'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
-    'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
-}
+    MONGO_DATABASE = {
+        'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
+        'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
+        'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
+        'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
+        'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
+    }
 
-if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
-    MONGO_CONNECTION_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
-        format(
-            user=MONGO_DATABASE['USER'],
-            password=quote_plus(MONGO_DATABASE['PASSWORD']),
-            host=MONGO_DATABASE['HOST'],
-            port=MONGO_DATABASE['PORT'],
-            db_name=MONGO_DATABASE['NAME']
-        )
+    if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
+        MONGO_DB_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
+            format(
+                user=MONGO_DATABASE['USER'],
+                password=quote_plus(MONGO_DATABASE['PASSWORD']),
+                host=MONGO_DATABASE['HOST'],
+                port=MONGO_DATABASE['PORT'],
+                db_name=MONGO_DATABASE['NAME']
+            )
+    else:
+        MONGO_DB_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
+    mongo_db_name = MONGO_DATABASE['NAME']
 else:
-    MONGO_CONNECTION_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
+    # Get collection name from the connection string, fallback on 'formhub' if
+    # it is empty or None
+    mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or 'formhub'
 
-# PyMongo 3 does acknowledged writes by default
-# https://emptysqua.re/blog/pymongos-new-default-safe-writes/
-MONGO_CONNECTION = MongoClient(
-    MONGO_CONNECTION_URL, j=True, tz_aware=True)
-
-MONGO_DB = MONGO_CONNECTION[MONGO_DATABASE['NAME']]
+mongo_client = MongoClient(MONGO_DB_URL, journal=True, tz_aware=True)
+MONGO_DB = mongo_client[mongo_db_name]
 
 # Timeout for Mongo, must be, at least, as long as Celery timeout.
 MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
@@ -682,7 +758,7 @@ MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
 # Sentry settings              #
 ################################
 
-if (os.getenv("RAVEN_DSN") or "") != "":
+if env.str('RAVEN_DSN', None):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
@@ -694,7 +770,7 @@ if (os.getenv("RAVEN_DSN") or "") != "":
         event_level=logging.ERROR  # Send errors as events
     )
     sentry_sdk.init(
-        dsn=os.environ['RAVEN_DSN'],
+        dsn=env.str('RAVEN_DSN'),
         integrations=[
             DjangoIntegration(),
             CeleryIntegration(),

@@ -71,7 +71,7 @@ urlpatterns = [
     re_path(r'^api/v1', RedirectView.as_view(url='/api/v1/')),
 
     # django default stuff
-    re_path(r'^accounts/', include('registration.auth_urls')),
+    re_path(r'^accounts/', include('django.contrib.auth.urls')),
     re_path(r'^admin/', admin.site.urls),
     re_path(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 

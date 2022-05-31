@@ -93,8 +93,8 @@ $ docker exec -it {{kobocat container}} /bin/bash
 
 Run pip install the development dependencies
 
-```sh
-$ pip install -r requirements/dev.pip
+``` sh
+$ pip install -r dependencies/pip/dev.txt
 ```
 
 Run pytest to run all automated tests

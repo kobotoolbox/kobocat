@@ -5,7 +5,7 @@ import io
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 
 from rest_framework import permissions
 from rest_framework import status
@@ -15,6 +15,7 @@ from rest_framework.authentication import (
     BasicAuthentication,
     TokenAuthentication,
     SessionAuthentication,)
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from onadata.apps.logger.models import Instance
@@ -24,7 +25,11 @@ from onadata.libs.authentication import DigestAuthentication
 from onadata.libs.mixins.openrosa_headers_mixin import OpenRosaHeadersMixin
 from onadata.libs.renderers.renderers import TemplateXMLRenderer
 from onadata.libs.serializers.data_serializer import SubmissionSerializer
-from onadata.libs.utils.logger_tools import dict2xform, safe_create_instance
+from onadata.libs.utils.logger_tools import (
+    dict2xform,
+    safe_create_instance,
+    UnauthenticatedEditAttempt,
+)
 
 
 # 10,000,000 bytes
@@ -66,7 +71,7 @@ def create_instance_from_json(username, request):
 
     if submission is None:
         # return an error
-        return [_("No submission key provided."), None]
+        return [t("No submission key provided."), None]
 
     # convert lists in submission dict to joined strings
     submission_joined = dict_lists2strings(submission)
@@ -151,30 +156,28 @@ Here is some example JSON, it would replace `[the JSON]` above:
             BasicAuthentication,
             TokenAuthentication
         ]
-        # Do not use `SessionAuthentication`, which implicitly requires CSRF prevention
-        # (which in turn requires that the CSRF token be submitted as a cookie and in the
-        # body of any "unsafe" requests).
+        # Do not use `SessionAuthentication`, which implicitly requires CSRF
+        # prevention (which in turn requires that the CSRF token be submitted
+        # as a cookie and in the body of any "unsafe" requests).
         self.authentication_classes = authentication_classes + [
-            auth_class for auth_class in self.authentication_classes
-                if not auth_class in authentication_classes and \
-                    not issubclass(auth_class, SessionAuthentication)
+            auth_class
+            for auth_class in self.authentication_classes
+            if auth_class not in authentication_classes
+            and not issubclass(auth_class, SessionAuthentication)
         ]
 
     def create(self, request, *args, **kwargs):
         username = self.kwargs.get('username')
         if self.request.user.is_anonymous:
             if username is None:
-                # raises a permission denied exception, forces authentication
-                self.permission_denied(self.request)
+                # Authentication is mandatory when username is omitted from the
+                # submission URL
+                raise NotAuthenticated
             else:
                 user = get_object_or_404(User, username=username.lower())
-
                 profile, created = UserProfile.objects.get_or_create(user=user)
-
                 if profile.require_auth:
-                    # raises a permission denied exception,
-                    # forces authentication
-                    self.permission_denied(self.request)
+                    raise NotAuthenticated
         elif not username:
             # get the username from the user if not set
             username = (request.user and request.user.username)
@@ -186,9 +189,17 @@ Here is some example JSON, it would replace `[the JSON]` above:
 
         is_json_request = is_json(request)
 
-        error, instance = (create_instance_from_json if is_json_request else
-                           create_instance_from_xml)(username, request)
-
+        create_instance_func = (
+            create_instance_from_json
+            if is_json_request
+            else create_instance_from_xml
+        )
+        try:
+            error, instance = create_instance_func(username, request)
+        except UnauthenticatedEditAttempt:
+            # It's important to respond with a 401 instead of a 403 so that
+            # digest authentication can work properly
+            raise NotAuthenticated
         if error or not instance:
             return self.error_response(error, is_json_request, request)
 
@@ -202,7 +213,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
 
     def error_response(self, error, is_json_request, request):
         if not error:
-            error_msg = _("Unable to create submission.")
+            error_msg = t("Unable to create submission.")
             status_code = status.HTTP_400_BAD_REQUEST
         elif isinstance(error, str):
             error_msg = error

@@ -18,12 +18,12 @@ from rest_framework.test import APIRequestFactory
 
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.logger.models import Instance, XForm, Attachment
-from onadata.apps.logger.views import submission
 from onadata.apps.main import tests as main_tests
 from onadata.apps.main.models import UserProfile, MetaData
+from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
 
 
-class TestAbstractViewSet(TestCase):
+class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
                'transport_2011-07-25_19-06-01',
@@ -155,103 +155,71 @@ class TestAbstractViewSet(TestCase):
         self.extra = {
             'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
 
-    def _add_uuid_to_submission_xml(self, path, xform):
-        tmp_file = NamedTemporaryFile(delete=False, mode='w')
-        split_xml = None
-
-        with open(path, 'rb') as _file:
-            split_xml = re.split(r'(<transport>)', _file.read().decode())
-
-        split_xml[1:1] = [
-            '<formhub><uuid>%s</uuid></formhub>' % xform.uuid
-        ]
-        tmp_file.write(''.join(split_xml))
-        path = tmp_file.name
-        tmp_file.close()
-
-        return path
-
-    def _make_submission(self, path, username=None, add_uuid=False,
-                         forced_submission_time=None,
-                         client=None, media_file=None, auth=None):
-        # store temporary file with dynamic uuid
-        self.factory = APIRequestFactory()
+    def _make_submission(
+        self,
+        path,
+        username=None,
+        add_uuid=False,
+        forced_submission_time=None,
+        auth=None,
+        media_file=None,
+    ):
         if auth is None:
-            auth = DigestAuth(self.profile_data['username'],
-                              self.profile_data['password1'])
+            auth = DigestAuth(
+                self.profile_data['username'], self.profile_data['password1']
+            )
 
-        tmp_file = None
+        super()._make_submission(
+            path,
+            username,
+            add_uuid,
+            forced_submission_time,
+            auth,
+            media_file,
+        )
 
-        if add_uuid:
-            path = self._add_uuid_to_submission_xml(path, self.xform)
-        with open(path, 'rb') as f:
-            post_data = {'xml_submission_file': f}
+    def _make_submissions(self, username=None):
 
-            if media_file is not None:
-                post_data['media_file'] = media_file
+        auth = DigestAuth(
+            self.profile_data['username'], self.profile_data['password1']
+        )
 
-            if username is None:
-                username = self.user.username
+        super()._make_submissions(
+            username, auth, self.main_directory
+        )
 
-            url_prefix = '%s/' % username if username else ''
-            url = '/%ssubmission' % url_prefix
-
-            request = self.factory.post(url, post_data)
-            request.user = authenticate(username=auth.username,
-                                        password=auth.password)
-            self.response = submission(request, username=username)
-
-            if auth and self.response.status_code == 401:
-                request.META.update(auth(request.META, self.response))
-                self.response = submission(request, username=username)
-
-        if forced_submission_time:
-            instance = Instance.objects.order_by('-pk').all()[0]
-            instance.date_created = forced_submission_time
-            instance.save()
-            instance.parsed_instance.save()
-
-        # remove temporary file if stored
-        if add_uuid:
-            os.unlink(tmp_file.name)
-
-    def _make_submissions(self, username=None, add_uuid=False,
-                          should_store=True):
-        """Make test fixture submissions to current xform.
-
-        :param username: submit under this username, default None.
-        :param add_uuid: add UUID to submission, default False.
-        :param should_store: should submissions be save, default True.
-        """
-        paths = [os.path.join(
-            self.main_directory, 'fixtures', 'transportation',
-            'instances', s, s + '.xml') for s in self.surveys]
-        pre_count = Instance.objects.count()
-
-        auth = DigestAuth(self.profile_data['username'],
-                          self.profile_data['password1'])
-        for path in paths:
-            self._make_submission(path, username, add_uuid, auth=auth)
-        post_count = pre_count + len(self.surveys) if should_store\
-            else pre_count
-        self.assertEqual(Instance.objects.count(), post_count)
-        self.assertEqual(self.xform.instances.count(), post_count)
-        xform = XForm.objects.get(pk=self.xform.pk)
-        self.assertEqual(xform.num_of_submissions, post_count)
-        self.assertEqual(xform.user.profile.num_of_submissions, post_count)
-
-    def _submit_transport_instance_w_attachment(self,
-                                                survey_at=0,
-                                                media_file=None):
-        s = self.surveys[survey_at]
+    def _submit_transport_instance_w_attachment(
+        self, survey_at=0, media_file=None, with_namespace=False
+    ):
+        survey_datetime = self.surveys[survey_at]
         if not media_file:
             media_file = "1335783522563.jpg"
-        path = os.path.join(self.main_directory, 'fixtures',
-                            'transportation', 'instances', s, media_file)
+        path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            survey_datetime,
+            media_file,
+        )
+
         with open(path, 'rb') as f:
-            self._make_submission(os.path.join(
-                self.main_directory, 'fixtures',
-                'transportation', 'instances', s, s + '.xml'), media_file=f)
+            xml_filename = (
+                f'{survey_datetime}_with_xmlns.xml'
+                if with_namespace
+                else f'{survey_datetime}.xml'
+            )
+            self._make_submission(
+                os.path.join(
+                    self.main_directory,
+                    'fixtures',
+                    'transportation',
+                    'instances',
+                    survey_datetime,
+                    xml_filename,
+                ),
+                media_file=f,
+            )
 
         attachment = Attachment.objects.all().reverse()[0]
         self.attachment = attachment
