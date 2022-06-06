@@ -8,8 +8,7 @@ except ImportError:
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
-from rest_framework import permissions
+from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
@@ -60,6 +59,15 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             'X-OpenRosa-Accept-Content-Length': DEFAULT_CONTENT_LENGTH,
             'Content-Type': 'text/xml; charset=utf-8'
         }
+
+    def get_response_for_head_request(self):
+        # Copied from
+        # https://github.com/kobotoolbox/kpi/commit/cabcaaa664159320ba281fd588423423a17f5b82
+        # See further discussion there
+        return Response(
+            headers=self.get_openrosa_headers(), status=status.HTTP_204_NO_CONTENT
+        )
+
 
     def get_renderers(self):
         if self.action and self.action == 'manifest':
@@ -113,6 +121,9 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
     def list(self, request, *args, **kwargs):
         self.object_list = self.filter_queryset(self.get_queryset())
 
+        if request.method == 'HEAD':
+            return self.get_response_for_head_request()
+
         serializer = self.get_serializer(self.object_list, many=True)
         return Response(serializer.data, headers=self.get_openrosa_headers())
 
@@ -126,6 +137,10 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         self.object = self.get_object()
         media_files = {}
         expired_objects = False
+
+        if request.method == 'HEAD':
+            return self.get_response_for_head_request()
+
         # Retrieve all media files for the current form
         queryset = MetaData.objects.filter(
             data_type__in=MetaData.MEDIA_FILES_TYPE, xform=self.object
@@ -175,4 +190,8 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             xform=self.object,
             pk=pk,
         )
+
+        if request.method == 'HEAD':
+            return self.get_response_for_head_request()
+
         return get_media_file_response(meta_obj, request)

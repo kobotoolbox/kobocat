@@ -12,7 +12,6 @@ from django.core.files.temp import NamedTemporaryFile
 from django.utils.six import string_types
 from openpyxl import load_workbook
 from pyxform.builder import create_survey_from_xls
-from savReaderWriter import SavReader
 
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.main.tests.test_base import TestBase
