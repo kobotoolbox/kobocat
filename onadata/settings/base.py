@@ -396,6 +396,13 @@ SESSION_REDIS = {
     'socket_timeout': env.int('REDIS_SESSION_SOCKET_TIMEOUT', 1),
 }
 
+CACHES = {
+    # Set CACHE_URL to override. Only redis is supported.
+    'default': env.cache(default='redis://redis_cache:6380/3'),
+}
+
+DIGEST_NONCE_BACKEND = "onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage"
+
 ###################################
 # Django Rest Framework settings  #
 ###################################
