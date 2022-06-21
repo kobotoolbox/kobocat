@@ -34,8 +34,8 @@ def delete_xform_attachment_storage_bytes(instance, **kwargs):
     model when an attachment is deleted
     """
     file_size = instance.media_file.size
-    xform = instance.instance.xform.pk
-    queryset = XForm.objects.filter(pk=xform)
+    xform_id = instance.instance.xform.pk
+    queryset = XForm.objects.filter(pk=xform_id)
     queryset.update(
         attachment_storage_bytes=F('attachment_storage_bytes') - file_size
     )
@@ -89,8 +89,8 @@ def update_xform_attachment_storage_bytes(instance, created, **kwargs):
     if getattr(instance, 'defer_counting', False):
         return
     file_size = instance.media_file.size
-    xform = instance.instance.xform.pk
-    queryset = XForm.objects.filter(pk=xform)
+    xform_id = instance.instance.xform_id
+    queryset = XForm.objects.filter(pk=xform_id)
     queryset.update(
         attachment_storage_bytes=F('attachment_storage_bytes') + file_size
     )
