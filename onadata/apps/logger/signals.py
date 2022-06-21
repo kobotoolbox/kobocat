@@ -14,26 +14,29 @@ from onadata.apps.main.models.user_profile import UserProfile
 
 
 @receiver(pre_delete, sender=Attachment)
-def delete_user_profile_attachment_storage_bytes(instance, **kwargs):
+def delete_attachment_subtract_user_profile_storage_bytes(instance, **kwargs):
     """
     Update the attachment_storage_bytes field in the UserProfile model
     when an attachment is deleted
     """
-    file_size = instance.media_file.size
-    owner_profile = instance.instance.xform.user.profile.pk
-    queryset = UserProfile.objects.filter(pk=owner_profile)
+    attachment = instance
+    file_size = attachment.media_file_size
+    queryset = UserProfile.objects.filter(
+        user_id=attachment.instance.xform.user_id
+    )
     queryset.update(
         attachment_storage_bytes=F('attachment_storage_bytes') - file_size
     )
 
 
 @receiver(pre_delete, sender=Attachment)
-def delete_xform_attachment_storage_bytes(instance, **kwargs):
+def delete_attachment_subtract_xform_storage_bytes(instance, **kwargs):
     """
     Update the attachment_storage_bytes field in the XForm
     model when an attachment is deleted
     """
-    file_size = instance.media_file.size
+    attachment = instance
+    file_size = attachment.media_file_size
     xform_id = instance.instance.xform.pk
     queryset = XForm.objects.filter(pk=xform_id)
     queryset.update(
@@ -69,9 +72,9 @@ def update_user_profile_attachment_storage_bytes(instance, created, **kwargs):
     # Probably not necessary right now, but in case needed in the future
     if getattr(instance, 'defer_counting', False):
         return
-    file_size = instance.media_file.size
-    user_profile = instance.instance.xform.user.profile.pk
-    queryset = UserProfile.objects.filter(pk=user_profile)
+    attachment = instance
+    file_size = attachment.media_file_size
+    queryset = UserProfile.objects.filter(user_id=attachment.instance.xform.user_id)
     queryset.update(
         attachment_storage_bytes=F('attachment_storage_bytes') + file_size
     )
@@ -88,7 +91,9 @@ def update_xform_attachment_storage_bytes(instance, created, **kwargs):
     # Probably not needed now, but in case needed in the future
     if getattr(instance, 'defer_counting', False):
         return
-    file_size = instance.media_file.size
+
+    attachment = instance
+    file_size = attachment.media_file_size
     xform_id = instance.instance.xform_id
     queryset = XForm.objects.filter(pk=xform_id)
     queryset.update(
