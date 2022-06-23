@@ -69,10 +69,9 @@ def update_user_profile_attachment_storage_bytes(instance, created, **kwargs):
     """
     if not created:
         return
-    # Probably not necessary right now, but in case needed in the future
-    if getattr(instance, 'defer_counting', False):
-        return
     attachment = instance
+    if getattr(attachment, 'defer_counting', False):
+        return
     file_size = attachment.media_file_size
     queryset = UserProfile.objects.filter(user_id=attachment.instance.xform.user_id)
     queryset.update(
@@ -88,11 +87,9 @@ def update_xform_attachment_storage_bytes(instance, created, **kwargs):
     """
     if not created:
         return
-    # Probably not needed now, but in case needed in the future
-    if getattr(instance, 'defer_counting', False):
-        return
-
     attachment = instance
+    if getattr(attachment, 'defer_counting', False):
+        return
     file_size = attachment.media_file_size
     xform_id = attachment.instance.xform_id
     queryset = XForm.objects.filter(pk=xform_id)
