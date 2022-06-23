@@ -106,6 +106,12 @@ class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
             'metadata': {},
         }
 
+    def validate_openrosa_head_response(self, response):
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(response.data)  # should be empty
+        self.assertIn('X-OpenRosa-Accept-Content-Length', response)
+        self.assertIn('X-OpenRosa-Version', response)
+
     def _add_permissions_to_user(self, user, save=True):
         """
         Gives `user` unrestricted model-level access to everything listed in
