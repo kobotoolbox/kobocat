@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import annotations
 import os
 import re
 import sys
@@ -120,7 +121,7 @@ def check_edit_submission_permissions(
 def create_instance(
     username: str,
     xml_file: str,
-    media_files: list,
+    media_files: list['django.core.files.uploadedfile.UploadedFile'],
     status: str = 'submitted_via_web',
     uuid: str = None,
     date_created_override: datetime = None,
@@ -168,8 +169,8 @@ def create_instance(
 
     if existing_instance:
         # ensure we have saved the extra attachments
-        any_new_attachment = save_attachments(existing_instance, media_files)
-        if not any_new_attachment:
+        new_attachments = save_attachments(existing_instance, media_files)
+        if not new_attachments:
             raise DuplicateInstance()
         else:
             # Update Mongo via the related ParsedInstance
@@ -540,12 +541,21 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
     return [error, instance]
 
 
-def save_attachments(instance, media_files):
+def save_attachments(
+    instance: Instance,
+    media_files: list['django.core.files.uploadedfile.UploadedFile'],
+    defer_counting: bool = False,
+) -> list[Attachment]:
     """
     Returns `True` if any new attachment was saved, `False` if all attachments
-    were duplicates or none were provided
+    were duplicates or none were provided.
+
+    `defer_counting=False` will set a Python-only attribute of the same name on
+    any *new* `Attachment` instances created. This will prevent
+    `update_xform_attachment_storage_bytes()` and friends from doing anything,
+    which avoids locking any rows in `logger_xform` or `main_userprofile`.
     """
-    any_new_attachment = False
+    new_attachments = []
     for f in media_files:
         attachment_filename = generate_attachment_filename(instance, f.name)
         existing_attachment = Attachment.objects.filter(
@@ -559,19 +569,23 @@ def save_attachments(instance, media_files):
             continue
         f.seek(0)
         # This is a new attachment; save it!
-        Attachment.objects.create(
-            instance=instance,
-            media_file=f, mimetype=f.content_type)
-        any_new_attachment = True
+        new_attachment = Attachment.objects.create(
+            instance=instance, media_file=f, mimetype=f.content_type
+        )
+        if defer_counting:
+            # Only set the attribute if requested, i.e. don't bother ever
+            # setting it to `False`
+            new_attachment.defer_counting = True
+        new_attachments.append(new_attachment)
 
-    return any_new_attachment
+    return new_attachments
 
 
 def save_submission(
     request: 'rest_framework.request.Request',
     xform: XForm,
     xml: str,
-    media_files: list,
+    media_files: list['django.core.files.uploadedfile.UploadedFile'],
     new_uuid: str,
     status: str,
     date_created_override: datetime,
@@ -597,7 +611,9 @@ def save_submission(
     instance = _get_instance(request, xml, new_uuid, status, xform,
                              defer_counting=True)
 
-    save_attachments(instance, media_files)
+    new_attachments = save_attachments(
+        instance, media_files, defer_counting=True
+    )
 
     # override date created if required
     if date_created_override:
@@ -623,6 +639,18 @@ def save_submission(
         del instance.defer_counting
         update_xform_submission_count(instance=instance, created=True)
         update_user_submissions_counter(instance=instance, created=True)
+    # Update the storage totals for new attachments as well, which were
+    # deferred for the same performance reasons
+    for new_attachment in new_attachments:
+        if getattr(new_attachment, 'defer_counting', False):
+            # Remove the Python-only attribute
+            del new_attachment.defer_counting
+            update_user_profile_attachment_storage_bytes(
+                instance=new_attachment, created=True
+            )
+            update_xform_attachment_storage_bytes(
+                instance=new_attachment, created=True
+            )
 
     return instance
 
