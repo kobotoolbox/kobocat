@@ -6,6 +6,8 @@ from django.utils.six import string_types
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
+from onadata.apps.logger.models import XForm
+from onadata.apps.main.models import UserProfile
 
 
 class TestAttachmentViewSet(TestAbstractViewSet):
@@ -139,3 +141,19 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(isinstance(response.data, string_types))
         self.assertEqual(response.data, self.attachment.secure_url())
+
+    def test_attachment_storage_bytes_signals(self):
+        self._submit_transport_instance_w_attachment()
+        media_file_size = self.attachment.media_file_size
+
+        xform = self.attachment.instance.xform
+        self.assertEqual(xform.attachment_storage_bytes, media_file_size)
+
+        profile = UserProfile.objects.get(user_id=xform.user.id)
+        self.assertEqual(profile.attachment_storage_bytes, media_file_size)
+
+        self.attachment.delete()
+        xform_updated = XForm.objects.get(id=xform.id)
+        self.assertEqual(xform_updated.attachment_storage_bytes, 0)
+        profile = UserProfile.objects.get(user_id=xform.user.id)
+        self.assertEqual(profile.attachment_storage_bytes, 0)

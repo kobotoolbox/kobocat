@@ -6,6 +6,12 @@ import sys
 import traceback
 from datetime import date, datetime
 from xml.parsers.expat import ExpatError
+
+from onadata.apps.logger.signals import (
+    update_user_profile_attachment_storage_bytes,
+    update_xform_attachment_storage_bytes,
+)
+
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
