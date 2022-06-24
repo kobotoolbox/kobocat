@@ -218,3 +218,9 @@ urlpatterns = [
     re_path(r"^(?P<username>[^/]+)/superuser_stats/(?P<base_filename>[^/]+)$",
             retrieve_superuser_stats),
 ]
+
+if settings.KOBOCAT_ROOT_URI_PREFIX:
+    prefixed_urlpatterns = urlpatterns
+    urlpatterns = [
+        path(settings.KOBOCAT_ROOT_URI_PREFIX, include(prefixed_urlpatterns)),
+    ]
