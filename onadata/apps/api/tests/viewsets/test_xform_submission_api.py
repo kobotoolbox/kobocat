@@ -25,6 +25,15 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         })
         self.publish_xls_form()
 
+    def test_head_response(self):
+        request = self.factory.head('/submission')
+        response = self.view(request)
+        self.assertEqual(response.status_code, 401)
+        auth = DigestAuth('bob', 'bobbob')
+        request.META.update(auth(request.META, response))
+        response = self.view(request)
+        self.validate_openrosa_head_response(response)
+
     def test_post_submission_anonymous(self):
         s = self.surveys[0]
         media_file = "1335783522563.jpg"

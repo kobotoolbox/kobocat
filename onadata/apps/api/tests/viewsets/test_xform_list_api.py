@@ -22,6 +22,15 @@ class TestXFormListApi(TestAbstractViewSet):
         })
         self.publish_xls_form()
 
+    def test_head_xform_list(self):
+        request = self.factory.head('/')
+        response = self.view(request)
+        self.assertEqual(response.status_code, 401)
+        auth = DigestAuth('bob', 'bobbob')
+        request.META.update(auth(request.META, response))
+        response = self.view(request)
+        self.validate_openrosa_head_response(response)
+
     def test_get_xform_list(self):
         request = self.factory.get('/')
         response = self.view(request)
@@ -264,6 +273,19 @@ class TestXFormListApi(TestAbstractViewSet):
 
         self._add_form_metadata(xform, data_type, data_value, path)
 
+    def test_head_xform_manifest(self):
+        self._load_metadata(self.xform)
+        self.view = XFormListApi.as_view({
+            "get": "manifest"
+        })
+        request = self.factory.head('/')
+        response = self.view(request, pk=self.xform.pk)
+        self.assertEqual(response.status_code, 401)
+        auth = DigestAuth('bob', 'bobbob')
+        request.META.update(auth(request.META, response))
+        response = self.view(request, pk=self.xform.pk)
+        self.validate_openrosa_head_response(response)
+
     def test_retrieve_xform_manifest(self):
         self._load_metadata(self.xform)
         self.view = XFormListApi.as_view({
@@ -327,6 +349,21 @@ class TestXFormListApi(TestAbstractViewSet):
                              username=self.user.username)
         self.assertEqual(response.status_code, 401)
 
+    def test_head_xform_media(self):
+        self._load_metadata(self.xform)
+        self.view = XFormListApi.as_view({
+            "get": "media"
+        })
+        request = self.factory.head('/')
+        response = self.view(request, pk=self.xform.pk,
+                             metadata=self.metadata.pk, format='png')
+        self.assertEqual(response.status_code, 401)
+        auth = DigestAuth('bob', 'bobbob')
+        request.META.update(auth(request.META, response))
+        response = self.view(request, pk=self.xform.pk,
+                             metadata=self.metadata.pk, format='png')
+        self.validate_openrosa_head_response(response)
+
     def test_retrieve_xform_media(self):
         self._load_metadata(self.xform)
         self.view = XFormListApi.as_view({
@@ -335,6 +372,7 @@ class TestXFormListApi(TestAbstractViewSet):
         request = self.factory.head('/')
         response = self.view(request, pk=self.xform.pk,
                              metadata=self.metadata.pk, format='png')
+        self.assertEqual(response.status_code, 401)
         auth = DigestAuth('bob', 'bobbob')
         request = self.factory.get('/')
         request.META.update(auth(request.META, response))
