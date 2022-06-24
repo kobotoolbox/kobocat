@@ -61,6 +61,7 @@ def pre_delete_attachment(instance, **kwargs):
         logging.error('Failed to delete attachment: ' + str(e), exc_info=True)
 
 
+@receiver(post_save, sender=Attachment)
 def update_user_profile_attachment_storage_bytes(instance, created, **kwargs):
     """
     Update the attachment_storage_bytes field in the UserProfile model
@@ -78,6 +79,7 @@ def update_user_profile_attachment_storage_bytes(instance, created, **kwargs):
     )
 
 
+@receiver(post_save, sender=Attachment)
 def update_xform_attachment_storage_bytes(instance, created, **kwargs):
     """
     Update the attachment_storage_bytes field in the XForm model when

@@ -578,13 +578,14 @@ def save_attachments(
             continue
         f.seek(0)
         # This is a new attachment; save it!
-        new_attachment = Attachment.objects.create(
+        new_attachment = Attachment(
             instance=instance, media_file=f, mimetype=f.content_type
         )
         if defer_counting:
             # Only set the attribute if requested, i.e. don't bother ever
             # setting it to `False`
             new_attachment.defer_counting = True
+        new_attachment.save()
         new_attachments.append(new_attachment)
 
     return new_attachments
