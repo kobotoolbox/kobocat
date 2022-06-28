@@ -1,16 +1,19 @@
 from django.core.cache import caches
 from django_digest.utils import get_setting
+from redis.exceptions import LockError
 
-
-DIGEST_NONCE_CACHE_NAME = get_setting('DIGEST_NONCE_CACHE_NAME', 'default')
-NONCE_TIMEOUT = get_setting('DIGEST_NONCE_TIMEOUT_IN_SECONDS', 5 * 60)
 NONCE_NO_COUNT = ''  # Needs to be something other than None to determine not set vs set to null
 
 
 class RedisCacheNonceStorage():
+    _blocking_timeout = 30
+
     def _get_cache(self):
         # Dynamic fetching of cache is necessary to work with override_settings
-        return caches[DIGEST_NONCE_CACHE_NAME]
+        return caches[get_setting('DIGEST_NONCE_CACHE_NAME', 'default')]
+
+    def _get_timeout(self):
+        return get_setting('DIGEST_NONCE_TIMEOUT_IN_SECONDS', 5 * 60)
 
     def _generate_cache_key(self, user, nonce):
         return f'user_nonce_{user}_{nonce}'
@@ -28,19 +31,23 @@ class RedisCacheNonceStorage():
             existing = cache.get(cache_key)
             if existing is None:
                 return False
-            cache.set(cache_key, NONCE_NO_COUNT, NONCE_TIMEOUT)
+            cache.set(cache_key, NONCE_NO_COUNT, self._get_timeout())
         else:
-            with cache.lock(
-                f'user_nonce_lock_{user}_{nonce}',
-                timeout=NONCE_TIMEOUT,
-                blocking_timeout=30
-            ):
-                existing = cache.get(cache_key)
-                if existing is None:
-                    return False
-                if nonce_count <= existing:
-                    return False
-                cache.set(cache_key, nonce_count, NONCE_TIMEOUT)
+            try:
+                with cache.lock(
+                    f'user_nonce_lock_{user}_{nonce}',
+                    timeout=self._get_timeout(),
+                    blocking_timeout=self._blocking_timeout
+                ):
+                    existing = cache.get(cache_key)
+                    if existing is None:
+                        return False
+                    if nonce_count <= existing:
+                        return False
+                    cache.set(cache_key, nonce_count, self._get_timeout())
+            except LockError:
+                cache.delete(cache_key)
+                return False
         return True
 
     def store_nonce(self, user, nonce, nonce_count):
@@ -51,4 +58,4 @@ class RedisCacheNonceStorage():
             nonce_count = NONCE_NO_COUNT
         cache = self._get_cache()
         cache_key = self._generate_cache_key(user, nonce)
-        return cache.set(cache_key, nonce_count, NONCE_TIMEOUT)
+        return cache.set(cache_key, nonce_count, self._get_timeout())
