@@ -392,8 +392,10 @@ SESSION_REDIS = {
 }
 
 CACHES = {
-    # Set CACHE_URL to override. Only redis is supported.
-    'default': env.cache(default='redis://redis_cache:6380/3'),
+    # DO NOT MERGE
+    'default': env.cache_url(
+        'REDIS_SESSION_URL', default='redis://redis_cache:6380/2'
+    )
 }
 
 DIGEST_NONCE_BACKEND = "onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage"
