@@ -1,5 +1,6 @@
 from django.core.cache import caches
 from django.test import TestCase
+
 from .cache import RedisCacheNonceStorage
 
 
@@ -30,12 +31,13 @@ class TestCacheNonceStorage(TestCase):
         self.assertFalse(self.storage.update_existing_nonce(self.test_user, 'testnonce', 2))
         self.assertTrue(self.storage.update_existing_nonce(self.test_user, 'testnonce', 3))
     
-    def xtest_nonce_lock(self):
+    def test_nonce_lock(self):
         """
-        Prove the lock halts execution, intended to be manually run
+        Lock timeout should be considered False and delete the nonce
         """
         nonce = 'testnonce'
+        self.storage._blocking_timeout = 0.1
         self.storage.store_nonce(self.test_user, nonce, 1)
         with self.cache.lock(f'user_nonce_lock_{self.test_user}_{nonce}'):
-            self.storage.update_existing_nonce(self.test_user, nonce, 2)
-        self.assertTrue()
+            self.assertFalse(self.storage.update_existing_nonce(self.test_user, nonce, 2))
+        self.assertFalse(self.cache.get(self.storage._generate_cache_key(self.test_user, nonce)))
