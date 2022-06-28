@@ -1,11 +1,6 @@
 # coding: utf-8
-import csv
 import datetime
 import os
-import shutil
-import tempfile
-import unittest
-import zipfile
 
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
