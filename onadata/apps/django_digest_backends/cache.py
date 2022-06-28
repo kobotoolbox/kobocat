@@ -19,7 +19,7 @@ class RedisCacheNonceStorage():
         """
         Check and update nonce record. If no record exists or has an invalid count,
         return False. Create a lock to prevent a concurrent replay attack where
-        two requests are send immediately and either may finish first.
+        two requests are sent immediately and either may finish first.
         """
         cache = self._get_cache()
         cache_key = self._generate_cache_key(user, nonce)
