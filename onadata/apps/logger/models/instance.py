@@ -19,7 +19,10 @@ from django.utils.encoding import smart_text
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
-from onadata.apps.logger.exceptions import FormInactiveError
+from onadata.apps.logger.exceptions import (
+    FormInactiveError,
+    TemporarilyUnavailableError,
+)
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
@@ -227,13 +230,21 @@ class Instance(models.Model):
         """
         return self.xform
 
-    def _check_active(self, force):
+    def check_active(self, force):
         """Check that form is active and raise exception if not.
 
         :param force: Ignore restrictions on saving.
         """
-        if not force and self.xform and not self.xform.downloadable:
+        if force:
+            return
+        if self.xform and not self.xform.downloadable:
             raise FormInactiveError()
+        try:
+            profile = self.xform.user.profile
+        except self.xform.user.profile.RelatedObjectDoesNotExist:
+            return
+        if profile.metadata.get('submissions_suspended', False):
+            raise TemporarilyUnavailableError()
 
     def _set_geom(self):
         xform = self.xform
@@ -419,7 +430,7 @@ class Instance(models.Model):
     def save(self, *args, **kwargs):
         force = kwargs.pop("force", False)
 
-        self._check_active(force)
+        self.check_active(force)
 
         self._set_geom()
         self._set_json()

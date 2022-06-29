@@ -8,3 +8,7 @@ class DuplicateUUIDError(Exception):
 
 class FormInactiveError(Exception):
     pass
+
+
+class TemporarilyUnavailableError(Exception):
+    pass

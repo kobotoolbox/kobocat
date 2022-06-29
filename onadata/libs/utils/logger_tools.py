@@ -35,7 +35,11 @@ from xml.dom import Node
 from wsgiref.util import FileWrapper
 
 from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
-from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
+from onadata.apps.logger.exceptions import (
+    DuplicateUUIDError,
+    FormInactiveError,
+    TemporarilyUnavailableError,
+)
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
@@ -170,6 +174,7 @@ def create_instance(
         existing_instance = None
 
     if existing_instance:
+        existing_instance.check_active(force=False)
         # ensure we have saved the extra attachments
         any_new_attachment = save_attachments(existing_instance, media_files)
         if not any_new_attachment:
@@ -520,6 +525,8 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
         )
     except FormInactiveError:
         error = OpenRosaResponseNotAllowed(t("Form is not active"))
+    except TemporarilyUnavailableError:
+        error = OpenRosaTemporarilyUnavailable(t("Temporarily unavailable"))
     except XForm.DoesNotExist:
         error = OpenRosaResponseNotFound(
             t("Form does not exist on this account")
@@ -800,6 +807,10 @@ class OpenRosaResponseNotAllowed(OpenRosaResponse):
 
 class OpenRosaResponseForbidden(OpenRosaResponse):
     status_code = 403
+
+
+class OpenRosaTemporarilyUnavailable(OpenRosaResponse):
+    status_code = 503
 
 
 class UnauthenticatedEditAttempt(Exception):
