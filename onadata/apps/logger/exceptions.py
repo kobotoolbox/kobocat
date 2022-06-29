@@ -7,5 +7,4 @@ class DuplicateUUIDError(Exception):
 
 
 class FormInactiveError(Exception):
-    def __str__(self):
-        return t("Form is inactive")
+    pass
