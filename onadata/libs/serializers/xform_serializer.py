@@ -76,10 +76,10 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
         # want to ensure `num_of_submissions` and `attachment_storage_bytes`
         # exist in the data and are integers
         if not data.get('num_of_submissions'):
-            data['num_of_submissions'] = data.get('num_of_submissions', 0)
+            data['num_of_submissions'] = 0
 
         if not data.get('attachment_storage_bytes'):
-            data['attachment_storage_bytes'] = data.get('attachment_storage_bytes', 0)
+            data['attachment_storage_bytes'] = 0
         return data
 
     def get_xform_permissions(self, obj):
