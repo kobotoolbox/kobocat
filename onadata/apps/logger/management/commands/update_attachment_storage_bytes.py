@@ -21,30 +21,33 @@ class Command(BaseCommand):
         'the storage file per xform and user profile'
     )
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--max',
-            '-m',
-            type=int,
-            help='PK of latest attachment included in the total',
-            required=True,
-        )
-
     def handle(self, *args, **kwargs):
-        max_pk = kwargs['max']
         self.verbosity = kwargs['verbosity']
 
-        # get the max attachments and xforms
-        attachments = Attachment.objects.filter(pk__lte=max_pk)
-        xforms = (
-            XForm.objects.all()
-            .values('pk', 'user_id', 'user__username')
-            .order_by('user_id')
-        )
         # Dictionary which contains the total of bytes for each user. Useful
         # to avoid another aggregate query on attachments to calculate users
         # global usage.
         total_per_user = defaultdict(int)
+
+        # Release any locks on the users' profile from getting submissions
+        UserProfile.objects.exclude(
+            metadata__attachments_counting_status='complete'
+        ).update(
+            metadata=ReplaceValues(
+                'metadata',
+                updates={'submissions_suspended': False},
+            ),
+        )
+
+        # Get only xforms whose users' storage counters have not been updated yet.
+        up_queryset = UserProfile.objects.values_list('user_id', flat=True).filter(
+            metadata__attachments_counting_status='complete'
+        )
+        xforms = (
+            XForm.objects.exclude(user_id__in=up_queryset)
+            .values('pk', 'user_id', 'user__username')
+            .order_by('user_id')
+        )
 
         last_xform = None
         for xform in xforms:
@@ -54,18 +57,7 @@ class Command(BaseCommand):
                 (
                     user_profile,
                     created,
-                ) = UserProfile.objects.get_or_create(
-                    user_id=xform['user_id']
-                )
-
-                # if flag is set to false, no need to go further
-                if user_profile.metadata.get('submissions_suspended') is False:
-                    if self.verbosity > 1:
-                        self.stdout.write(
-                            f"Profile for user {xform['user__username']} "
-                            f"#{xform['user_id']} has already been updated"
-                        )
-                    continue
+                ) = UserProfile.objects.get_or_create(user_id=xform['user_id'])
 
                 # Set the flag to true if it was never set.
                 if not user_profile.metadata.get('submissions_suspended'):
@@ -73,21 +65,7 @@ class Command(BaseCommand):
                     # new submissions from coming in while the
                     # `attachment_storage_bytes` is being calculated.
                     user_profile.metadata['submissions_suspended'] = True
-                    # We use this temporary list to keep track of which forms
-                    # have been calculated in case the command is disrupted.
-                    user_profile.metadata['xforms_in_progress'] = []
-                    # Only update metadata to avoid overwriting other fields
-                    # (such as "num_of_submissions") if another concurrent query
-                    # runs on this particular row.
-                    # We do not need to lock the row because `metadata` is not
-                    # exposed in the API (anymore) and cannot be changed.
                     user_profile.save(update_fields=['metadata'])
-                    if self.verbosity > 2:
-                        self.stdout.write(
-                            f"Metadata for user {xform['user__username']} "
-                            f"#{xform['user_id']}"
-                        )
-                        self.stdout.write(json.dumps(user_profile.metadata))
 
                 # if `last_xform` is not none, it means that the `user_id` is
                 # different from the previous one in the loop so the user
@@ -101,40 +79,20 @@ class Command(BaseCommand):
             if self.verbosity >= 1:
                 self.stdout.write(
                     f"Calculating attachments for xform_id #{xform['pk']}"
-                    f"/ user {xform['user__username']}"
+                    f" (user {xform['user__username']})"
                 )
             # aggregate total media file size for all media per xform
-            form_attachments = attachments.filter(
+            form_attachments = Attachment.objects.filter(
                 instance__xform_id=xform['pk']
             ).aggregate(total=Sum('media_file_size'))
 
             if form_attachments['total']:
 
-                if xform['pk'] not in user_profile.metadata['xforms_in_progress']:
-                    with transaction.atomic():
-                        XForm.objects.select_for_update().filter(
-                            pk=xform['pk']
-                        ).update(
-                            attachment_storage_bytes=F(
-                                'attachment_storage_bytes'
-                            )
-                            + form_attachments['total']
-                        )
-                    # Ensure we have an updated list of xform ids already
-                    # updated before updating `xforms_in_progress` property
-                    user_profile.refresh_from_db()
-                    xform_ids = user_profile.metadata['xforms_in_progress']
-                    xform_ids.append(xform['pk'])
-                    # A bit of paranoia here because, as said above, `metadata` is
-                    # not exposed publicly, but let's only update
-                    # `xforms_in_progress` property in `metadata` JSONBField
-                    UserProfile.objects.filter(
-                       user_id=xform['user_id']
+                with transaction.atomic():
+                    XForm.objects.select_for_update().filter(
+                        pk=xform['pk']
                     ).update(
-                       metadata=ReplaceValues(
-                           'metadata',
-                           updates={'xforms_in_progress': xform_ids},
-                       ),
+                        attachment_storage_bytes=form_attachments['total']
                     )
 
                 total_per_user[xform['user_id']] += form_attachments['total']
@@ -154,25 +112,23 @@ class Command(BaseCommand):
     def update_user_profile(self, xform: Dict, total: int):
         user_id = xform['user_id']
         username = xform['user__username']
-        # write out user_id progress
+
         if self.verbosity >= 1:
             self.stdout.write(
                 f'Updating attachment storage total ({total} bytes) to '
                 f'{username}’s profile'
             )
 
+        # Update user's profile (and lock the related row)
         with transaction.atomic():
             updates = {
                 'submissions_suspended': False,
-                # cleaning up fields that are useless outside this one time
-                # use management command
-                'xforms_in_progress': [],
+                'attachments_counting_status': 'complete',
             }
-
             UserProfile.objects.select_for_update().filter(
                 user_id=user_id
             ).update(
-                attachment_storage_bytes=F('attachment_storage_bytes') + total,
+                attachment_storage_bytes=total,
                 metadata=ReplaceValues(
                     'metadata',
                     updates=updates,
