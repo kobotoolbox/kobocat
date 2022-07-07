@@ -37,7 +37,7 @@ def fix_root_node_names(**kwargs):
 # #### END ISSUE 242 FIX ######
 
 
-@shared_task
+@shared_task(soft_time_limit=3600, time_limit=3630)
 def generate_stats_zip(output_filename):
     # Limit to last month and this month
     now = datetime.datetime.now()
