@@ -45,11 +45,9 @@ class Command(BaseCommand):
 
         last_xform = None
         for xform in xforms:
-            # we don't need to lock the row because it's not exposed in the
-            # API and cannot be changed
 
             if not last_xform or (last_xform['user_id'] != xform['user_id']):
-                # retrieve or create user's profile
+                # Retrieve or create user's profile.
                 (
                     user_profile,
                     created,
@@ -66,18 +64,20 @@ class Command(BaseCommand):
                         )
                     continue
 
-                # Set the flag to true if it was never set
+                # Set the flag to true if it was never set.
                 if not user_profile.metadata.get('submissions_suspended'):
-                    # we are using the flag `submissions_suspended` to prevent
+                    # We are using the flag `submissions_suspended` to prevent
                     # new submissions from coming in while the
-                    # `attachment_storage_bytes` is being calculated
+                    # `attachment_storage_bytes` is being calculated.
                     user_profile.metadata['submissions_suspended'] = True
-                    # we use this temporary list to keep track of which forms
-                    # have been calculated in case the command is disrupted
+                    # We use this temporary list to keep track of which forms
+                    # have been calculated in case the command is disrupted.
                     user_profile.metadata['xforms_in_progress'] = []
                     # Only update metadata to avoid overwriting other fields
                     # (such as "num_of_submissions") if another concurrent query
                     # runs on this particular row.
+                    # We do not need to lock the row because `metadata` is not
+                    # exposed in the API (anymore) and cannot be changed.
                     user_profile.save(update_fields=['metadata'])
                     if self.verbosity > 2:
                         self.stdout.write(
