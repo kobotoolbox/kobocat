@@ -41,7 +41,10 @@ class Command(BaseCommand):
             .values('pk', 'user_id', 'user__username')
             .order_by('user_id')
         )
-        max_per_user = defaultdict(int)
+        # Dictionary which contains the total of bytes for each user. Useful
+        # to avoid another aggregate query on attachments to calculate users
+        # global usage.
+        total_per_user = defaultdict(int)
 
         last_xform = None
         for xform in xforms:
@@ -91,7 +94,7 @@ class Command(BaseCommand):
                 # profile must be updated
                 if last_xform:
                     self.update_user_profile(
-                        last_xform, max_per_user[last_xform['user_id']]
+                        last_xform, total_per_user[last_xform['user_id']]
                     )
 
             # write out xform progress
@@ -134,7 +137,7 @@ class Command(BaseCommand):
                        ),
                     )
 
-                max_per_user[xform['user_id']] += form_attachments['total']
+                total_per_user[xform['user_id']] += form_attachments['total']
 
             last_xform = xform
 
@@ -142,7 +145,7 @@ class Command(BaseCommand):
         # because the last user profile will not be up-to-date otherwise
         if last_xform:
             self.update_user_profile(
-                last_xform, max_per_user[last_xform['user_id']]
+                last_xform, total_per_user[last_xform['user_id']]
             )
 
         if self.verbosity >= 1:
