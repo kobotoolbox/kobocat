@@ -13,6 +13,7 @@
 Django>=2.2,<2.3
 django-csp
 django-environ
+django-redis
 django-storages[azure,boto3]
 django-templated-email
 dpath
