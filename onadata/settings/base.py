@@ -705,6 +705,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=6),
         'options': {'queue': 'kobocat_queue'}
     },
+    'delete-daily-xform-submissions-counter': {
+        'task': 'onadata.apps.logger.tasks.delete_daily_counters',
+        'schedule': timedelta(hours=0, minutes=0),
+        'options': {'queue': 'kobocat_queue'}
+    }
 }
 
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"

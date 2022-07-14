@@ -1,0 +1,21 @@
+# coding: utf-8
+import datetime
+
+from django.contrib.auth.models import User
+from django.db import models
+
+from onadata.apps.logger.models.xform import XForm
+
+
+class DailyXFormSubmissionCounter(models.Model):
+    date = models.DateField()
+    xform = models.ForeignKey(XForm, related_name='xforms', on_delete=models.CASCADE)
+    counter = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = (('date', 'xform'),)
+
+    def save(self, *args, **kwargs):
+        if not self.date:
+            self.date = datetime.date.today()
+        super().save(*args, **kwargs)
