@@ -577,6 +577,7 @@ NA_REP = 'n/a'
 if env.bool("ENABLE_CSP", False):
     MIDDLEWARE.append('csp.middleware.CSPMiddleware')
 CSP_DEFAULT_SRC = env.list('CSP_EXTRA_DEFAULT_SRC', str, []) + ["'self'"]
+CSP_CONNECT_SRC = CSP_DEFAULT_SRC
 CSP_SCRIPT_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
 CSP_STYLE_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
 CSP_IMG_SRC = CSP_DEFAULT_SRC + ['data:']
