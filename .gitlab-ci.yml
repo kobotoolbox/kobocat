@@ -1,6 +1,9 @@
 stages:
   - build_test
   - deploy
+  
+include:
+  - template: SAST.gitlab-ci.yml
 
 build:
   stage: build_test
