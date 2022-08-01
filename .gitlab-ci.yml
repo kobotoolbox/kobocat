@@ -1,5 +1,6 @@
 stages:
   - build_test
+  - test
   - deploy
   
 include:
