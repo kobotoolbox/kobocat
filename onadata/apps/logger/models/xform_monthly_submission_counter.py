@@ -24,11 +24,3 @@ class MonthlyXFormSubmissionCounter(models.Model):
         indexes = [
             models.Index(fields=('year', 'month', 'user')),
         ]
-
-    def save(self, *args, **kwargs):
-        today = datetime.date.today()
-        if not self.year:
-            self.year = today.year
-        if not self.month:
-            self.month = today.month
-        super().save(*args, **kwargs)

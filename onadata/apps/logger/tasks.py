@@ -8,27 +8,21 @@ from io import StringIO
 
 from celery import shared_task
 from dateutil import relativedelta
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.storage import get_storage_class
 from django.core.management import call_command
+from django.utils import timezone
 
 from onadata.celery import app
 from .models.xform_daily_submission_counter import DailyXFormSubmissionCounter
-from .models.submission_counter import SubmissionCounter
 from .models import Instance, XForm
 
 
 @app.task()
-def create_monthly_counters():
-    user_ids = User.objects.values_list('pk', flat=True)
-    for user_id in user_ids:
-        SubmissionCounter.objects.create(user_id=user_id)
-
-
-@app.task()
 def delete_daily_counters():
-    today = datetime.datetime.today()
-    delta = timedelta(days=31)
+    today = timezone.now().date()
+    delta = timedelta(days=settings.DAILY_COUNTERS_MAX_DAYS)
     rel_date = today - delta
     xform_daily_counters = DailyXFormSubmissionCounter.objects.filter(
         date__lte=rel_date

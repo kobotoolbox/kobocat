@@ -1,5 +1,4 @@
 # coding: utf-8
-from datetime import date
 from hashlib import sha256
 
 try:
@@ -28,7 +27,6 @@ from onadata.apps.logger.models.xform_daily_submission_counter import \
     DailyXFormSubmissionCounter
 from onadata.apps.logger.models.xform_monthly_submission_counter import \
     MonthlyXFormSubmissionCounter
-from onadata.apps.logger.models.submission_counter import SubmissionCounter
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
@@ -121,34 +119,6 @@ def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     f.update(time_of_last_submission=None)
 
 
-def update_user_submissions_counter(instance, created, **kwargs):
-    if not created:
-        return
-    if getattr(instance, 'defer_counting', False):
-        return
-
-    # Querying the database this way because it's faster than querying
-    # the instance model for the data
-    user_id = XForm.objects.values_list('user_id', flat=True).get(
-        pk=instance.xform_id
-    )
-    date_created = instance.date_created
-    first_day_of_month = date(
-        year=date_created.year, month=date_created.month, day=1
-    )
-
-    queryset = SubmissionCounter.objects.filter(
-        user_id=user_id, timestamp=first_day_of_month
-    )
-    if not queryset.exists():
-        SubmissionCounter.objects.create(
-            user_id=user_id,
-            timestamp=first_day_of_month,
-        )
-
-    queryset.update(count=F('count') + 1)
-
-
 def update_xform_daily_counter(instance, created, **kwargs):
     if not created:
         return
@@ -156,7 +126,7 @@ def update_xform_daily_counter(instance, created, **kwargs):
         return
 
     # get the date submitted
-    date_created = instance.date_created
+    date_created = instance.date_created.date()
 
     # make sure the counter exists
     DailyXFormSubmissionCounter.objects.get_or_create(
@@ -178,16 +148,16 @@ def update_xform_monthly_counter(instance, created, **kwargs):
         return
 
     # get the user_id for the xform the instance was submitted for
-    user_id = XForm.objects.values_list('user_id').get(
+    xform = XForm.objects.only('user_id').get(
         pk=instance.xform_id
     )
 
     # get the date the instance was created
-    date_created = instance.date_created
+    date_created = instance.date_created.date()
 
     # make sure the counter exists
     MonthlyXFormSubmissionCounter.objects.get_or_create(
-        user_id=user_id[0],
+        user_id=xform.user_id,
         xform=instance.xform,
         year=date_created.year,
         month=date_created.month,
@@ -508,9 +478,6 @@ post_save.connect(update_xform_submission_count, sender=Instance,
 
 post_delete.connect(nullify_exports_time_of_last_submission, sender=Instance,
                     dispatch_uid='nullify_exports_time_of_last_submission')
-
-post_save.connect(update_user_submissions_counter, sender=Instance,
-                  dispatch_uid='update_user_submissions_counter')
 
 post_save.connect(update_xform_daily_counter, sender=Instance,
                   dispatch_uid='update_xform_daily_counter')

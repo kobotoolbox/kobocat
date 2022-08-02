@@ -14,8 +14,3 @@ class DailyXFormSubmissionCounter(models.Model):
 
     class Meta:
         unique_together = (('date', 'xform'),)
-
-    def save(self, *args, **kwargs):
-        if not self.date:
-            self.date = datetime.date.today()
-        super().save(*args, **kwargs)

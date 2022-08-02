@@ -662,6 +662,9 @@ MFA_SUPPORTED_AUTH_CLASSES = [
     'onadata.libs.authentication.TokenAuthentication',
 ]
 
+# Set the maximum number of days daily counters can be kept for
+DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 31)
+
 ################################
 # Celery settings              #
 ################################
