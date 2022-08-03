@@ -4,8 +4,8 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from onadata.apps.logger.models.xform_daily_submission_counter import DailyXFormSubmissionCounter
-from onadata.apps.logger.models.xform_monthly_submission_counter import MonthlyXFormSubmissionCounter
+from onadata.apps.logger.models.daily_xform_submission_counter import DailyXFormSubmissionCounter
+from onadata.apps.logger.models.monthly_xform_submission_counter import MonthlyXFormSubmissionCounter
 from onadata.apps.logger.tasks import delete_daily_counters
 from onadata.apps.main.tests.test_base import TestBase
 

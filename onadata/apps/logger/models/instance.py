@@ -23,10 +23,12 @@ from onadata.apps.logger.exceptions import FormInactiveError
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.models.xform_daily_submission_counter import \
-    DailyXFormSubmissionCounter
-from onadata.apps.logger.models.xform_monthly_submission_counter import \
-    MonthlyXFormSubmissionCounter
+from onadata.apps.logger.models.daily_xform_submission_counter import (
+    DailyXFormSubmissionCounter,
+)
+from onadata.apps.logger.models.monthly_xform_submission_counter import (
+    MonthlyXFormSubmissionCounter,
+)
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
@@ -148,7 +150,7 @@ def update_xform_monthly_counter(instance, created, **kwargs):
         return
 
     # get the user_id for the xform the instance was submitted for
-    xform = XForm.objects.only('user_id').get(
+    xform = XForm.objects.only('pk', 'user_id').get(
         pk=instance.xform_id
     )
 

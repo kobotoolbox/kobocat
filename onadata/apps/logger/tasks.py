@@ -15,7 +15,7 @@ from django.core.management import call_command
 from django.utils import timezone
 
 from onadata.celery import app
-from .models.xform_daily_submission_counter import DailyXFormSubmissionCounter
+from .models.daily_xform_submission_counter import DailyXFormSubmissionCounter
 from .models import Instance, XForm
 
 
