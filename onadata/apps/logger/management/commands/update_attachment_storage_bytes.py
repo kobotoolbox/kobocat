@@ -60,6 +60,10 @@ class Command(BaseCommand):
                     created,
                 ) = UserProfile.objects.get_or_create(user_id=xform['user_id'])
 
+                # Some old profiles don't have metadata
+                if user_profile.metadata is None:
+                    user_profile.metadata = {}
+
                 # Set the flag to true if it was never set.
                 if not user_profile.metadata.get('submissions_suspended'):
                     # We are using the flag `submissions_suspended` to prevent
