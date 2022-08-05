@@ -316,11 +316,9 @@ if env.str('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-if os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False') == 'True':
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-if os.environ.get('SECURE_HSTS_PRELOAD', 'False') == 'True':
-    SECURE_HSTS_PRELOAD = True
-SECURE_HSTS_SECONDS = os.environ.get('SECURE_HSTS_SECONDS', 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', False)
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', 0)
 
 # Limit sessions to 1 week (the default is 2 weeks)
 SESSION_COOKIE_AGE = 604800
@@ -352,8 +350,12 @@ DEBUG = env.bool('DJANGO_DEBUG', True)
 
 # Database (i.e. PostgreSQL)
 DATABASES = {
-    'default': env.db(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
+    'default': env.db_url(
+        'KC_DATABASE_URL' if 'KC_DATABASE_URL' in os.environ else 'DATABASE_URL',
+        default='sqlite:///%s/db.sqlite3' % BASE_DIR
+    ),
 }
+
 # Replacement for TransactionMiddleware
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
@@ -370,6 +372,9 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
     DEFAULT_FILE_STORAGE = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
+    if DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
+        # Force usage of custom S3 tellable Storage
+        DEFAULT_FILE_STORAGE = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
 
 EMAIL_BACKEND = env.str(
     'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'
@@ -390,6 +395,13 @@ SESSION_REDIS = {
     'prefix': env.str('REDIS_SESSION_PREFIX', 'session'),
     'socket_timeout': env.int('REDIS_SESSION_SOCKET_TIMEOUT', 1),
 }
+
+CACHES = {
+    # Set CACHE_URL to override. Only redis is supported.
+    'default': env.cache(default='redis://redis_cache:6380/3'),
+}
+
+DIGEST_NONCE_BACKEND = 'onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage'
 
 ###################################
 # Django Rest Framework settings  #
@@ -537,6 +549,13 @@ AWS_QUERYSTRING_EXPIRE = env.int("KOBOCAT_AWS_QUERYSTRING_EXPIRE", 3600)
 AWS_S3_USE_SSL = env.bool("KOBOCAT_AWS_S3_USE_SSL", True)
 AWS_S3_HOST = env.str("KOBOCAT_AWS_S3_HOST", "s3.amazonaws.com")
 
+if 'AZURE_ACCOUNT_NAME' in os.environ:
+    AZURE_ACCOUNT_NAME = env.str('AZURE_ACCOUNT_NAME')
+    AZURE_ACCOUNT_KEY = env.str('AZURE_ACCOUNT_KEY')
+    AZURE_CONTAINER = env.str('AZURE_CONTAINER')
+    AZURE_URL_EXPIRATION_SECS = env.int('AZURE_URL_EXPIRATION_SECS', None)
+    AZURE_OVERWRITE_FILES = True
+
 GOOGLE_ANALYTICS_PROPERTY_ID = env.str("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
 
@@ -551,6 +570,25 @@ BINARY_SELECT_MULTIPLES = False
 
 # Use 'n/a' for empty values by default on csv exports
 NA_REP = 'n/a'
+
+# Content Security Policy (CSP)
+# CSP should "just work" by allowing any possible configuration
+# however CSP_EXTRA_DEFAULT_SRC is provided to allow for custom additions
+if env.bool("ENABLE_CSP", False):
+    MIDDLEWARE.append('csp.middleware.CSPMiddleware')
+CSP_DEFAULT_SRC = env.list('CSP_EXTRA_DEFAULT_SRC', str, []) + ["'self'"]
+CSP_CONNECT_SRC = CSP_DEFAULT_SRC
+CSP_SCRIPT_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
+CSP_STYLE_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
+CSP_IMG_SRC = CSP_DEFAULT_SRC + ['data:']
+if GOOGLE_ANALYTICS_PROPERTY_ID:
+    google_domain = '*.google-analytics.com'
+    CSP_SCRIPT_SRC.append(google_domain)
+    CSP_CONNECT_SRC.append(google_domain)
+csp_report_uri = env.url('CSP_REPORT_URI', None)
+if csp_report_uri:  # Let environ validate uri, but set as string
+    CSP_REPORT_URI = csp_report_uri.geturl()
+CSP_REPORT_ONLY = env.bool("CSP_REPORT_ONLY", False)
 
 SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
@@ -741,11 +779,16 @@ if not (MONGO_DB_URL := env.str('MONGO_DB_URL', False)):
         MONGO_DB_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
     mongo_db_name = MONGO_DATABASE['NAME']
 else:
-    # Get collection name from the connection string, fallback on 'formhub' if
-    # it is empty or None
-    mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or 'formhub'
+    # Attempt to get collection name from the connection string
+    # fallback on MONGO_DB_NAME or 'formhub' if it is empty or None or unable to parse
+    try:
+        mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or env.str('MONGO_DB_NAME', 'formhub')
+    except ValueError:  # db_url is unable to parse replica set strings
+        mongo_db_name = env.str('MONGO_DB_NAME', 'formhub')
 
-mongo_client = MongoClient(MONGO_DB_URL, journal=True, tz_aware=True)
+mongo_client = MongoClient(
+    MONGO_DB_URL, connect=False, journal=True, tz_aware=True
+)
 MONGO_DB = mongo_client[mongo_db_name]
 
 # Timeout for Mongo, must be, at least, as long as Celery timeout.
@@ -755,8 +798,8 @@ MONGO_DB_MAX_TIME_MS = CELERY_TASK_TIME_LIMIT * 1000
 ################################
 # Sentry settings              #
 ################################
-
-if env.str('RAVEN_DSN', None):
+sentry_dsn = env.str('SENTRY_DSN', env.str('RAVEN_DSN', None))
+if sentry_dsn:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
@@ -768,11 +811,12 @@ if env.str('RAVEN_DSN', None):
         event_level=logging.ERROR  # Send errors as events
     )
     sentry_sdk.init(
-        dsn=env.str('RAVEN_DSN'),
+        dsn=sentry_dsn,
         integrations=[
             DjangoIntegration(),
             CeleryIntegration(),
             sentry_logging
         ],
+        traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', 0.05),
         send_default_pii=True
     )

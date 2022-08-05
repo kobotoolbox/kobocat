@@ -2,12 +2,12 @@
 import os
 import re
 
+import pytest
 from django.http import Http404
 from django_digest.test import DigestAuth
 from django_digest.test import Client as DigestClient
 from guardian.shortcuts import assign_perm
 from mock import patch
-from nose import SkipTest
 
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.models.user_profile import UserProfile
@@ -145,6 +145,7 @@ class TestFormSubmission(TestBase):
 
         self.assertEqual(self.response.status_code, 403)
 
+    @pytest.mark.skip(reason='Send authentication challenge when xform.require_auth is set')
     def test_submission_to_require_auth_with_perm(self):
         """
         test submission to a private form by non-owner is forbidden.
@@ -153,7 +154,6 @@ class TestFormSubmission(TestBase):
         This is non-trivial because we do not know the xform until we have
         parsed the XML.
         """
-        raise SkipTest
 
         view = XFormViewSet.as_view({
             'patch': 'partial_update'

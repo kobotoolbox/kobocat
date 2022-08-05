@@ -17,11 +17,12 @@ build:
 
 test:
   stage: build_test
-  image: python:3.8
+  image: python:3.10
   variables:
     DJANGO_SECRET_KEY: abcdef
     TEST_DATABASE_URL: postgis://kobo:kobo@postgres:5432/kobocat_test
-    REDIS_SESSION_URL: redis://localhost:6380/2
+    REDIS_SESSION_URL: redis://redis_cache:6379/2
+    CACHE_URL: redis://redis_cache:6379/3
     USE_POSTGRESQL: "True"
     POSTGRES_USER: kobo
     POSTGRES_PASSWORD: kobo

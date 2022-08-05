@@ -5,8 +5,11 @@ import sys
 import traceback
 from datetime import date, datetime
 from xml.parsers.expat import ExpatError
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
-import pytz
 from dict2xml import dict2xml
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -761,8 +764,7 @@ class BaseOpenRosaResponse(HttpResponse):
         super().__init__(*args, **kwargs)
 
         self[OPEN_ROSA_VERSION_HEADER] = OPEN_ROSA_VERSION
-        tz = pytz.timezone(settings.TIME_ZONE)
-        dt = datetime.now(tz).strftime('%a, %d %b %Y %H:%M:%S %Z')
+        dt = datetime.now(tz=ZoneInfo('UTC')).strftime('%a, %d %b %Y %H:%M:%S %Z')
         self['Date'] = dt
         self['X-OpenRosa-Accept-Content-Length'] = DEFAULT_CONTENT_LENGTH
         self['Content-Type'] = DEFAULT_CONTENT_TYPE
