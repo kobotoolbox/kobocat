@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='xform',
             name='attachment_storage_bytes',
-            field=models.PositiveIntegerField(default=0),
+            field=models.BigIntegerField(default=0),
         ),
     ]

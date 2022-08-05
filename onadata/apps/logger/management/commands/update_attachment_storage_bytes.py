@@ -7,9 +7,10 @@ from typing import Dict
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import Sum
 
 from onadata.apps.logger.models.attachment import Attachment
+from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs.utils.jsonbfield_helper import ReplaceValues
@@ -82,20 +83,56 @@ class Command(BaseCommand):
                     f" (user {xform['user__username']})"
                 )
             # aggregate total media file size for all media per xform
-            form_attachments = Attachment.objects.filter(
-                instance__xform_id=xform['pk']
-            ).aggregate(total=Sum('media_file_size'))
+            # We cannot get the sum of all attachments for on xform because
+            # we need to make two joins with Instance and XForm models.
+            # It is really slow on big databases. So, to avoid that, we make
+            # another extra query to get all the instance ids to pass it to
+            # Attachment queryset.
+            instance_ids = Instance.objects.values_list('pk', flat=True).filter(
+                xform_id=xform['pk']
+            )
 
-            if form_attachments['total']:
+            # It does not seem to have a real limit of number of parameters in
+            # "IN" clause in PostgreSQL but for safety, we use chunks to pass
+            # to `instance_id__in` just in case a form has a huge numbers
+            # of submissions.
+            # See https://stackoverflow.com/questions/1009706/postgresql-max-number-of-parameters-in-in-clause
+            instance_ids_count = len(instance_ids)
+            max_ids_per_query = 5000
+            chunks = [
+                instance_ids[x:x + max_ids_per_query]
+                for x in range(0, instance_ids_count, max_ids_per_query)
+            ]
+            form_attachments_total = 0
+            for idx, chunk in enumerate(chunks):
+                if self.verbosity > 1:
+                    self.stdout.write(
+                        f'\tCalculating total: {idx+1}/{len(chunks)} instance ID'
+                        f' chunks'
+                    )
+                form_attachments = Attachment.objects.filter(
+                    instance_id__in=chunk
+                ).aggregate(total=Sum('media_file_size'))
+                if form_attachments['total']:
+                    form_attachments_total += form_attachments['total']
 
+            if form_attachments_total:
                 with transaction.atomic():
+                    if self.verbosity >= 1:
+                        self.stdout.write(
+                            f'\tUpdating xform attachment storage to '
+                            f"{form_attachments_total} bytes"
+                        )
+
                     XForm.objects.select_for_update().filter(
                         pk=xform['pk']
                     ).update(
-                        attachment_storage_bytes=form_attachments['total']
+                        attachment_storage_bytes=form_attachments_total
                     )
 
-                total_per_user[xform['user_id']] += form_attachments['total']
+                total_per_user[xform['user_id']] += form_attachments_total
+            elif self.verbosity >= 1:
+                self.stdout.write('\tNo attachments found')
 
             last_xform = xform
 
@@ -115,7 +152,7 @@ class Command(BaseCommand):
 
         if self.verbosity >= 1:
             self.stdout.write(
-                f'Updating attachment storage total ({total} bytes) to '
+                f'Updating attachment storage total ({total} bytes) on '
                 f'{username}’s profile'
             )
 
