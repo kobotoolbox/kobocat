@@ -1,4 +1,5 @@
 # coding: utf-8
+import math
 from collections import defaultdict
 from datetime import timedelta
 
@@ -14,6 +15,8 @@ from onadata.apps.logger.models import (
     DailyXFormSubmissionCounter,
     MonthlyXFormSubmissionCounter,
 )
+from onadata.apps.main.models.user_profile import UserProfile
+from onadata.libs.utils.jsonbfield_helper import ReplaceValues
 
 
 class Command(BaseCommand):
@@ -28,11 +31,15 @@ class Command(BaseCommand):
             help="Number of records to process per query"
         )
 
+        week_default = math.ceil(settings.DAILY_COUNTERS_MAX_DAYS / 4)
         parser.add_argument(
             '--weeks',
             type=int,
-            default=int(settings.DAILY_COUNTERS_MAX_DAYS / 4),
-            help="Number of months taken into account to populate the counters"
+            default=week_default,
+            help=(
+                f"Number of months taken into account to populate the counters. "
+                f"Default is {week_default}"
+            ),
         )
 
     def handle(self, *args, **kwargs):
@@ -52,9 +59,25 @@ class Command(BaseCommand):
                 f'since {date_threshold.strftime("%Y-%m-%d UTC")}'
             )
 
+        # Release any locks on the users' profile from getting submissions
+        UserProfile.objects.exclude(
+            metadata__counters_updates_status='complete'
+        ).update(
+            metadata=ReplaceValues(
+                'metadata',
+                updates={'submissions_suspended': False},
+            ),
+        )
+
+        # Get only xforms whose users' storage counters have not been updated yet.
+        up_queryset = UserProfile.objects.values_list('user_id', flat=True).filter(
+            metadata__counters_updates_status='complete'
+        )
+
         for user in (
             User.objects.only('username')
             .exclude(pk=settings.ANONYMOUS_USER_ID)
+            .exclude(pk__in=up_queryset)
             .iterator(chunk_size=chunks)
         ):
             if verbosity >= 1:
@@ -63,7 +86,26 @@ class Command(BaseCommand):
             total_submissions = defaultdict(int)
             monthly_counters = []
 
+            # Retrieve or create user's profile.
+            (
+                user_profile,
+                created,
+            ) = UserProfile.objects.get_or_create(user_id=user.pk)
+
+            # Some old profiles don't have metadata
+            if user_profile.metadata is None:
+                user_profile.metadata = {}
+
+            # Set the flag to true if it was never set.
+            if not user_profile.metadata.get('submissions_suspended'):
+                # We are using the flag `submissions_suspended` to prevent
+                # new submissions from coming in while the
+                # counters are being calculated.
+                user_profile.metadata['submissions_suspended'] = True
+                user_profile.save(update_fields=['metadata'])
+
             with transaction.atomic():
+
                 # First delete only records covered by desired max days.
                 if verbosity >= 2:
                     self.stdout.write(f'\tDeleting old data...')
@@ -131,6 +173,20 @@ class Command(BaseCommand):
                     )
                 elif verbosity >= 2:
                     self.stdout.write(f'\tNo monthly counters data!')
+
+                # Update user's profile (and lock the related row)
+                updates = {
+                    'submissions_suspended': False,
+                    'counters_updates_status': 'complete',
+                }
+                UserProfile.objects.select_for_update().filter(
+                    user_id=user.pk
+                ).update(
+                    metadata=ReplaceValues(
+                        'metadata',
+                        updates=updates,
+                    ),
+                )
 
         if verbosity >= 1:
             self.stdout.write(f'Done!')
