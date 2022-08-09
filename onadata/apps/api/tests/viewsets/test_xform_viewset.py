@@ -383,6 +383,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             'uuid': '',
             'instances_with_geopoints': False,
             'num_of_submissions': 0,
+            'attachment_storage_bytes': 0,
             'has_kpi_hooks': False,
             'kpi_asset_uid': '',
         }

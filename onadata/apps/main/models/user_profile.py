@@ -6,7 +6,7 @@ from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy
 from guardian.conf import settings as guardian_settings
 from guardian.shortcuts import get_perms_for_model, assign_perm
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField
 from rest_framework.authtoken.models import Token
 
 from onadata.apps.logger.fields import LazyDefaultBooleanField
@@ -37,7 +37,8 @@ class UserProfile(models.Model):
     phonenumber = models.CharField(max_length=30, blank=True)
     created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     num_of_submissions = models.IntegerField(default=0)
-    metadata = JSONField(default={}, blank=True)
+    attachment_storage_bytes = models.BigIntegerField(default=0)
+    metadata = JSONField(default=dict, blank=True)
     is_mfa_active = LazyDefaultBooleanField(default=False)
 
     def __str__(self):
