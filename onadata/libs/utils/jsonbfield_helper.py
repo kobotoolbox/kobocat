@@ -10,7 +10,7 @@ class ReplaceValues(Func):
     Updates several properties at once of a JSONBField without overwriting the
     whole document.
     Avoids race conditions when document is saved in two different transactions
-    at the same time. (i.e.: `Asset._deployment['status']`)
+    at the same time.
     https://www.postgresql.org/docs/current/functions-json.html
 
     Notes from postgres docs:
