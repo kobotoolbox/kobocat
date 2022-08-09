@@ -577,6 +577,7 @@ NA_REP = 'n/a'
 if env.bool("ENABLE_CSP", False):
     MIDDLEWARE.append('csp.middleware.CSPMiddleware')
 CSP_DEFAULT_SRC = env.list('CSP_EXTRA_DEFAULT_SRC', str, []) + ["'self'"]
+CSP_CONNECT_SRC = CSP_DEFAULT_SRC
 CSP_SCRIPT_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
 CSP_STYLE_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
 CSP_IMG_SRC = CSP_DEFAULT_SRC + ['data:']
@@ -790,10 +791,12 @@ else:
     # fallback on MONGO_DB_NAME or 'formhub' if it is empty or None or unable to parse
     try:
         mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or env.str('MONGO_DB_NAME', 'formhub')
-    except ValueError: # db_url is unable to parse replica set strings
+    except ValueError:  # db_url is unable to parse replica set strings
         mongo_db_name = env.str('MONGO_DB_NAME', 'formhub')
 
-mongo_client = MongoClient(MONGO_DB_URL, journal=True, tz_aware=True)
+mongo_client = MongoClient(
+    MONGO_DB_URL, connect=False, journal=True, tz_aware=True
+)
 MONGO_DB = mongo_client[mongo_db_name]
 
 # Timeout for Mongo, must be, at least, as long as Celery timeout.
