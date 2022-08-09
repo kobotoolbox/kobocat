@@ -1,6 +1,5 @@
 # coding: utf-8
 import json
-import logging
 
 from bson import json_util
 from dateutil import parser
@@ -9,6 +8,7 @@ from django.db import models
 from django.db.models.signals import pre_delete
 from django.utils.six import string_types
 from django.utils.translation import gettext as t
+from pymongo.errors import PyMongoError
 
 from onadata.celery import app
 from onadata.apps.api.mongo_helper import MongoHelper
@@ -58,11 +58,9 @@ def update_mongo_instance(record):
     # https://api.mongodb.com/python/current/api/pymongo/collection.html#pymongo.collection.Collection.replace_one
     try:
         xform_instances.replace_one({'_id': record['_id']}, record, upsert=True)
-        return True
-    except Exception as e:
-        logging.getLogger().error("update_mongo_instance - {}".format(str(e)), exc_info=True)
-        logging.getLogger().warning('Submission could not be saved to Mongo.', exc_info=True)
-    return False
+    except PyMongoError as e:
+        raise Exception('Submission could not be saved to Mongo') from e
+    return True
 
 
 class ParsedInstance(models.Model):
