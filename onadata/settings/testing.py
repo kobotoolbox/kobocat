@@ -67,7 +67,8 @@ ENKETO_API_TOKEN = os.urandom(50).hex()
 # MongoDB settings             #
 ################################
 
-MONGO_CONNECTION_URL = 'mongodb://fakehost/formhub_test'
-MONGO_CONNECTION = MockMongoClient(
-    MONGO_CONNECTION_URL, journal=True, tz_aware=True)
-MONGO_DB = MONGO_CONNECTION['formhub_test']
+MONGO_DB_URL = 'mongodb://fakehost/formhub_test'
+mongo_client = MockMongoClient(
+    MONGO_DB_URL, connect=False, joural=True, tz_aware=True
+)
+MONGO_DB = mongo_client['formhub_test']

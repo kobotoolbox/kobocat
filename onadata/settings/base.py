@@ -350,8 +350,12 @@ DEBUG = env.bool('DJANGO_DEBUG', True)
 
 # Database (i.e. PostgreSQL)
 DATABASES = {
-    'default': env.db(default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
+    'default': env.db_url(
+        'KC_DATABASE_URL' if 'KC_DATABASE_URL' in os.environ else 'DATABASE_URL',
+        default='sqlite:///%s/db.sqlite3' % BASE_DIR
+    ),
 }
+
 # Replacement for TransactionMiddleware
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
@@ -391,6 +395,13 @@ SESSION_REDIS = {
     'prefix': env.str('REDIS_SESSION_PREFIX', 'session'),
     'socket_timeout': env.int('REDIS_SESSION_SOCKET_TIMEOUT', 1),
 }
+
+CACHES = {
+    # Set CACHE_URL to override. Only redis is supported.
+    'default': env.cache(default='redis://redis_cache:6380/3'),
+}
+
+DIGEST_NONCE_BACKEND = 'onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage'
 
 ###################################
 # Django Rest Framework settings  #
@@ -568,6 +579,7 @@ NA_REP = 'n/a'
 if env.bool("ENABLE_CSP", False):
     MIDDLEWARE.append('csp.middleware.CSPMiddleware')
 CSP_DEFAULT_SRC = env.list('CSP_EXTRA_DEFAULT_SRC', str, []) + ["'self'"]
+CSP_CONNECT_SRC = CSP_DEFAULT_SRC
 CSP_SCRIPT_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
 CSP_STYLE_SRC = CSP_DEFAULT_SRC + ["'unsafe-inline'"]
 CSP_IMG_SRC = CSP_DEFAULT_SRC + ['data:']
@@ -769,11 +781,16 @@ if not (MONGO_DB_URL := env.str('MONGO_DB_URL', False)):
         MONGO_DB_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
     mongo_db_name = MONGO_DATABASE['NAME']
 else:
-    # Get collection name from the connection string, fallback on 'formhub' if
-    # it is empty or None
-    mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or 'formhub'
+    # Attempt to get collection name from the connection string
+    # fallback on MONGO_DB_NAME or 'formhub' if it is empty or None or unable to parse
+    try:
+        mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or env.str('MONGO_DB_NAME', 'formhub')
+    except ValueError:  # db_url is unable to parse replica set strings
+        mongo_db_name = env.str('MONGO_DB_NAME', 'formhub')
 
-mongo_client = MongoClient(MONGO_DB_URL, journal=True, tz_aware=True)
+mongo_client = MongoClient(
+    MONGO_DB_URL, connect=False, journal=True, tz_aware=True
+)
 MONGO_DB = mongo_client[mongo_db_name]
 
 # Timeout for Mongo, must be, at least, as long as Celery timeout.
