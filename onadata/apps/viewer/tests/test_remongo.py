@@ -4,7 +4,6 @@ import os
 from django.conf import settings
 from django.core.management import call_command
 from django_digest.test import DigestAuth
-from django.utils.six import string_types
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance

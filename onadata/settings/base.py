@@ -67,7 +67,7 @@ USE_TZ = True
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
-SITE_ID = env.str('DJANGO_SITE_ID', '1')
+SITE_ID = env.int('DJANGO_SITE_ID', 1)
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -441,6 +441,8 @@ REST_FRAMEWORK = {
     'VIEW_NAME_FUNCTION': 'onadata.apps.api.tools.get_view_name',
     'VIEW_DESCRIPTION_FUNCTION': 'onadata.apps.api.tools.get_view_description',
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 ################################
 # KoBoCAT settings             #

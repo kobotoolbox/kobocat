@@ -2,7 +2,7 @@
 import io
 
 from django.utils.xmlutils import SimplerXMLGenerator
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from rest_framework.negotiation import DefaultContentNegotiation
 from rest_framework.renderers import BaseRenderer
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -117,7 +117,7 @@ class XFormListRenderer(BaseRenderer):
             pass
 
         else:
-            xml.characters(smart_text(data))
+            xml.characters(smart_str(data))
 
 
 class XFormManifestRenderer(XFormListRenderer):

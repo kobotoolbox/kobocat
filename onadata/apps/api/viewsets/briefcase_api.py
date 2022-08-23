@@ -7,7 +7,6 @@ from django.core.validators import ValidationError
 from django.contrib.auth.models import User
 from django.http import Http404
 from django.utils.translation import gettext as t
-from django.utils import six
 from rest_framework import exceptions
 from rest_framework import mixins
 from rest_framework import status
@@ -36,7 +35,7 @@ from onadata.libs.utils.logger_tools import publish_form, publish_xml_form, \
 
 
 def _extract_uuid(text):
-    if isinstance(text, six.string_types):
+    if isinstance(text, str):
         form_id_parts = text.split('/')
 
         if form_id_parts.__len__() < 2:
@@ -52,7 +51,7 @@ def _extract_uuid(text):
 
 
 def _extract_id_string(formId):
-    if isinstance(formId, six.string_types):
+    if isinstance(formId, str):
         return formId[0:formId.find('[')]
 
     return formId

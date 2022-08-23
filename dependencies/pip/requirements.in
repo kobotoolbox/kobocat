@@ -10,7 +10,7 @@
 -e git+https://github.com/kobotoolbox/ssrf-protect@9b97d3f0fd8f737a38dd7a6b64efeffc03ab3cdd#egg=ssrf_protect
 
 # Regular PyPI packages
-Django>=2.2,<2.3
+Django>=3.2,<3.3
 django-csp
 django-environ
 django-redis
@@ -20,11 +20,11 @@ dpath
 gdata-python3
 modilabs-python-utils
 Pillow
-psycopg2>=2.8,<2.9
+psycopg2
 pymongo==3.12.3
 lxml
 pyxform==1.9.0
-django-reversion<3.0.2
+django-reversion
 xlwt
 openpyxl
 celery
@@ -79,6 +79,9 @@ sentry-sdk
 
 # mimetype detection
 Werkzeug<=2.0.3
+
+# WSGI server
+uWSGI
 
 # Python 3.8 support
 backports.zoneinfo; python_version < '3.9'
