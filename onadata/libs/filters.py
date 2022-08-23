@@ -1,6 +1,5 @@
 # coding: utf-8
 from django.shortcuts import get_object_or_404
-from django.utils import six
 from rest_framework import filters
 from rest_framework_guardian import filters as guardian_filters
 from rest_framework.exceptions import ParseError
@@ -70,7 +69,7 @@ class TagFilter(filters.BaseFilterBackend):
         # filter by tags if available.
         tags = request.query_params.get('tags', None)
 
-        if tags and isinstance(tags, six.string_types):
+        if tags and isinstance(tags, str):
             tags = tags.split(',')
             return queryset.filter(tags__name__in=tags)
 

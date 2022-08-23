@@ -1,8 +1,6 @@
 # coding: utf-8
 import os
 
-from django.utils.six import string_types
-
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
@@ -114,7 +112,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         request = self.factory.get('/', data, **self.extra)
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, string_types))
+        self.assertTrue(isinstance(response.data, str))
         self.assertEqual(response.data, self.attachment.secure_url())
 
         data['filename'] = 10000000
@@ -139,7 +137,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         request = self.factory.get('/', data, **self.extra)
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, string_types))
+        self.assertTrue(isinstance(response.data, str))
         self.assertEqual(response.data, self.attachment.secure_url())
 
     def test_attachment_storage_bytes_create_instance_defer_counting(self):
