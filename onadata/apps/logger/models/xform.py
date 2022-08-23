@@ -80,6 +80,7 @@ class XForm(BaseModel):
     uuid_bind_location = 4
     instances_with_geopoints = models.BooleanField(default=False)
     num_of_submissions = models.IntegerField(default=0)
+    attachment_storage_bytes = models.PositiveIntegerField(default=0)
 
     tags = TaggableManager()
 
