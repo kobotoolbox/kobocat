@@ -1,9 +1,7 @@
-#!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 fileencoding=utf-8
-# coding: utf-8
+from __future__ import annotations
+
 import json
 from collections import defaultdict
-from typing import Dict
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -18,8 +16,8 @@ from onadata.libs.utils.jsonbfield_helper import ReplaceValues
 
 class Command(BaseCommand):
     help = (
-        'Retroactively add the total of '
-        'the storage file per xform and user profile'
+        'Retroactively calculate the total attachment file storage '
+        'per xform and user profile'
     )
 
     def handle(self, *args, **kwargs):
@@ -40,10 +38,11 @@ class Command(BaseCommand):
             ),
         )
 
-        # Get only xforms whose users' storage counters have not been updated yet.
+        # Get all profiles already updated to exclude their forms from the list
         up_queryset = UserProfile.objects.values_list('user_id', flat=True).filter(
             metadata__attachments_counting_status='complete'
         )
+        # Get only xforms whose users' storage counters have not been updated yet
         xforms = (
             XForm.objects.exclude(user_id__in=up_queryset)
             .values('pk', 'user_id', 'user__username')
@@ -87,54 +86,25 @@ class Command(BaseCommand):
                     f" (user {xform['user__username']})"
                 )
             # aggregate total media file size for all media per xform
-            # We cannot get the sum of all attachments for on xform because
-            # we need to make two joins with Instance and XForm models.
-            # It is really slow on big databases. So, to avoid that, we make
-            # another extra query to get all the instance ids to pass it to
-            # Attachment queryset.
-            instance_ids = Instance.objects.values_list('pk', flat=True).filter(
-                xform_id=xform['pk']
-            )
+            form_attachments = Attachment.objects.filter(
+                instance__xform_id=xform['pk']
+            ).aggregate(total=Sum('media_file_size'))
 
-            # It does not seem to have a real limit of number of parameters in
-            # "IN" clause in PostgreSQL but for safety, we use chunks to pass
-            # to `instance_id__in` just in case a form has a huge numbers
-            # of submissions.
-            # See https://stackoverflow.com/questions/1009706/postgresql-max-number-of-parameters-in-in-clause
-            instance_ids_count = len(instance_ids)
-            max_ids_per_query = 5000
-            chunks = [
-                instance_ids[x:x + max_ids_per_query]
-                for x in range(0, instance_ids_count, max_ids_per_query)
-            ]
-            form_attachments_total = 0
-            for idx, chunk in enumerate(chunks):
-                if self.verbosity > 1:
-                    self.stdout.write(
-                        f'\tCalculating total: {idx+1}/{len(chunks)} instance ID'
-                        f' chunks'
-                    )
-                form_attachments = Attachment.objects.filter(
-                    instance_id__in=chunk
-                ).aggregate(total=Sum('media_file_size'))
-                if form_attachments['total']:
-                    form_attachments_total += form_attachments['total']
-
-            if form_attachments_total:
+            if form_attachments['total']:
                 with transaction.atomic():
                     if self.verbosity >= 1:
                         self.stdout.write(
                             f'\tUpdating xform attachment storage to '
-                            f"{form_attachments_total} bytes"
+                            f"{form_attachments['total']} bytes"
                         )
 
-                    XForm.objects.select_for_update().filter(
+                    XForm.objects.filter(
                         pk=xform['pk']
                     ).update(
-                        attachment_storage_bytes=form_attachments_total
+                        attachment_storage_bytes=form_attachments['total']
                     )
 
-                total_per_user[xform['user_id']] += form_attachments_total
+                total_per_user[xform['user_id']] += form_attachments['total']
             elif self.verbosity >= 1:
                 self.stdout.write('\tNo attachments found')
 
@@ -150,7 +120,7 @@ class Command(BaseCommand):
         if self.verbosity >= 1:
             self.stdout.write('Done!')
 
-    def update_user_profile(self, xform: Dict, total: int):
+    def update_user_profile(self, xform: dict, total: int):
         user_id = xform['user_id']
         username = xform['user__username']
 
@@ -166,7 +136,7 @@ class Command(BaseCommand):
                 'submissions_suspended': False,
                 'attachments_counting_status': 'complete',
             }
-            UserProfile.objects.select_for_update().filter(
+            UserProfile.objects.filter(
                 user_id=user_id
             ).update(
                 attachment_storage_bytes=total,
