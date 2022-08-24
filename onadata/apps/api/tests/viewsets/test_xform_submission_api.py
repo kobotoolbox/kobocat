@@ -361,3 +361,27 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         response = self.view(request)
         self.assertContains(response, 'No submission key provided.',
                             status_code=400)
+
+    def test_submission_blocking_flag(self):
+        # Set 'submissions_suspended' True in the profile metadata to test if
+        # submission do fail with the flag set
+        self.xform.user.profile.metadata['submissions_suspended'] = True
+        self.xform.user.profile.save()
+        s = self.surveys[0]
+        media_file = "1335783522563.jpg"
+        path = os.path.join(self.main_directory, 'fixtures',
+                            'transportation', 'instances', s, media_file)
+        with open(path, 'rb') as f:
+            f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
+                                     os.path.getsize(path), None)
+            submission_path = os.path.join(
+                self.main_directory, 'fixtures',
+                'transportation', 'instances', s, s + '.xml')
+            with open(submission_path) as sf:
+                data = {'xml_submission_file': sf, 'media_file': f}
+                request = self.factory.post(
+                    '/%s/submission' % self.user.username, data)
+                request.user = AnonymousUser()
+                response = self.view(request, username=self.user.username)
+                # check to make sure the `submission_suspended` flag stops the submission
+                self.assertEquals(response.status_code, 503)
