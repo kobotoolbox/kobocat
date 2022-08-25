@@ -8,13 +8,13 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logger', '0022_misc_model_options'),
+        ('logger', '0023_alter_parsedinstance_id'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='xform',
             name='attachment_storage_bytes',
-            field=models.PositiveIntegerField(default=0),
+            field=models.BigIntegerField(default=0),
         ),
     ]
