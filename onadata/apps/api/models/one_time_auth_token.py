@@ -44,8 +44,9 @@ class OneTimeAuthToken(models.Model):
             return None
 
         user = request.user
-        # Anonymous cannot have a one time authentication token
-        if user.is_anonymous:
+        # Anonymous cannot have a one time authentication token and
+        # super user does not need it at all.
+        if user.is_anonymous or user.is_superuser:
             return None
 
         token_attrs = {

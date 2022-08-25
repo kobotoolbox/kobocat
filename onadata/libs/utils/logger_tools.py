@@ -35,6 +35,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.encoding import DjangoUnicodeDecodeError, smart_str
 from django.utils.translation import gettext as t
+from kobo_service_account.models import ServiceAccountUser
+from kobo_service_account.utils import get_real_user
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
@@ -695,7 +697,9 @@ def _get_instance(
         instance.save()
     else:
         submitted_by = (
-            request.user if request and request.user.is_authenticated else None
+            get_real_user(request)
+            if request and request.user.is_authenticated
+            else None
         )
         # new submission
         # Avoid `Instance.objects.create()` so that we can set a Python-only
@@ -717,8 +721,14 @@ def _get_instance(
 def _has_edit_xform_permission(
     request: 'rest_framework.request.Request', xform: XForm, instance: Instance
 ) -> bool:
-    if isinstance(xform, XForm) and isinstance(request.user, User):
-        if request.user.has_perm('logger.change_xform', xform):
+    if (
+        isinstance(xform, XForm)
+        and isinstance(request.user, (User, ServiceAccountUser))
+    ):
+        if (
+            request.user.is_superuser
+            or request.user.has_perm('logger.change_xform', xform)
+        ):
             return True
 
         # The referrer string contains the UUID of the submission that is

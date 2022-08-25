@@ -10,7 +10,6 @@ import environ
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
-
 env = environ.Env()
 
 
@@ -427,6 +426,7 @@ REST_FRAMEWORK = {
         # Session if it comes first (which bypass BasicAuthentication and MFA validation)
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'kobo_service_account.authentication.ServiceAccountAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         # Keep JSONRenderer at the top "in order to send JSON responses to
@@ -664,6 +664,13 @@ SUPPORT_BRIEFCASE_SUBMISSION_DATE = (
 MFA_SUPPORTED_AUTH_CLASSES = [
     'onadata.libs.authentication.TokenAuthentication',
 ]
+
+SERVICE_ACCOUNT = {
+    'BACKEND': env.cache_url(
+        'SERVICE_ACCOUNT_BACKEND_URL', default='redis://redis_cache:6380/2'
+    ),
+    'WHITELISTED_HOSTS': env.list('SERVICE_ACCOUNT_WHITELISTED_HOSTS', default=[]),
+}
 
 ################################
 # Celery settings              #
