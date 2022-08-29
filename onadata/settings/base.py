@@ -485,7 +485,9 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'read': 'Read scope',
         'write': 'Write scope',
-        'groups': 'Access to your groups'}
+        'groups': 'Access to your groups'
+    },
+    'PKCE_REQUIRED' : False,
 }
 
 # All registration should be done through KPI, so Django Registration should
