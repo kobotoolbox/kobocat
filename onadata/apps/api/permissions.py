@@ -11,7 +11,6 @@ from onadata.libs.constants import (
     CAN_VALIDATE_XFORM,
     CAN_VIEW_XFORM,
 )
-from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.models import XForm
 
 
@@ -119,12 +118,6 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
 
     def has_object_permission(self, request, view, obj):
         user = request.user
-        is_granted_once = OneTimeAuthToken.grant_access(request)
-        # If a one-time authentication request token has been detected,
-        # we return its validity.
-        # Otherwise, the permissions validation keeps going as normal
-        if is_granted_once is not None:
-            return is_granted_once
 
         # Grant access if user is owner or super user
         if user.is_superuser or user == obj.user:
@@ -178,10 +171,6 @@ class EnketoSubmissionEditPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         user = request.user
         required_perms = [f'logger.{CAN_CHANGE_XFORM}']
-        is_granted_once = OneTimeAuthToken.grant_access(request)
-
-        if is_granted_once is not None:
-            return is_granted_once
 
         # Grant access if user is owner or super user
         if user.is_superuser or user == obj.user:
@@ -198,10 +187,6 @@ class EnketoSubmissionViewPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         user = request.user
         required_perms = [f'logger.{CAN_VIEW_XFORM}']
-        is_granted_once = OneTimeAuthToken.grant_access(request)
-
-        if is_granted_once is not None:
-            return is_granted_once
 
         # Grant access if user is owner or super user
         if user.is_superuser or user == obj.user:

@@ -43,7 +43,6 @@ from pyxform.xform2json import create_survey_element_from_xml
 from xml.dom import Node
 from wsgiref.util import FileWrapper
 
-from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.logger.models.attachment import (
@@ -117,11 +116,11 @@ def check_submission_permissions(
 
 
 def check_edit_submission_permissions(
-    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
+    request: 'rest_framework.request.Request', xform: XForm
 ):
     if request.user.is_anonymous:
         raise UnauthenticatedEditAttempt
-    if not _has_edit_xform_permission(request, xform, instance):
+    if not _has_edit_xform_permission(request, xform):
         raise PermissionDenied(t(
             'Forbidden attempt to edit a submission. To make a new submission, '
             'Remove `deprecatedID` from the submission XML and try again.'
@@ -688,7 +687,7 @@ def _get_instance(
     if instances:
         # edits
         instance = instances[0]
-        check_edit_submission_permissions(request, xform, instance)
+        check_edit_submission_permissions(request, xform)
         InstanceHistory.objects.create(
             xml=instance.xml, xform_instance=instance, uuid=old_uuid)
         instance.xml = xml
@@ -719,29 +718,13 @@ def _get_instance(
 
 
 def _has_edit_xform_permission(
-    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
+    request: 'rest_framework.request.Request', xform: XForm
 ) -> bool:
-    if (
-        isinstance(xform, XForm)
-        and isinstance(request.user, (User, ServiceAccountUser))
-    ):
-        if (
-            request.user.is_superuser
-            or request.user.has_perm('logger.change_xform', xform)
-        ):
+    if isinstance(xform, XForm):
+        if request.user.is_superuser:
             return True
 
-        # The referrer string contains the UUID of the submission that is
-        # allowed to be edited. Pass the instance being edited to verify that
-        # it matches that UUID
-        is_granted_once = OneTimeAuthToken.grant_access(
-            request, use_referrer=True, instance=instance
-        )
-        # If a one-time authentication request token has been detected,
-        # we return its validity.
-        # Otherwise, the permissions validation keeps going as normal
-        if is_granted_once is not None:
-            return is_granted_once
+        return request.user.has_perm('logger.change_xform', xform)
 
     return False
 
