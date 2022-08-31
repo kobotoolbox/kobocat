@@ -1,6 +1,9 @@
 # File for use with `pip-compile`; see https://github.com/nvie/pip-tools
 # https://github.com/bndr/pipreqs is a handy utility, too.
 
+# service-account
+-e git+https://github.com/kobotoolbox/kobo-service-account.git@a930fa001fc062b076d5e4ee12fe2743f1a76b47#egg=kobo-service-account
+
 # More up-to-date version of django-digest than PyPI seems to have.
 # Also, python-digest is an unlisted dependency thereof.
 -e git+https://github.com/dimagi/python-digest@5c94bb74516b977b60180ee832765c0695ff2b56#egg=python_digest
