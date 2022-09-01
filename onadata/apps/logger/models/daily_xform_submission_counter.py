@@ -9,7 +9,9 @@ from onadata.apps.logger.models.xform import XForm
 
 class DailyXFormSubmissionCounter(models.Model):
     date = models.DateField()
-    xform = models.ForeignKey(XForm, related_name='xforms', on_delete=models.CASCADE)
+    xform = models.ForeignKey(
+        XForm, related_name='daily_counters', on_delete=models.CASCADE
+    )
     counter = models.IntegerField(default=0)
 
     class Meta:
