@@ -2,10 +2,13 @@
 import os
 
 import simplejson as json
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django_digest.test import DigestAuth
 from guardian.shortcuts import assign_perm
+from kobo_service_account.utils import get_request_headers
+from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
@@ -361,3 +364,41 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         response = self.view(request)
         self.assertContains(response, 'No submission key provided.',
                             status_code=400)
+
+    def test_post_submission_with_service_account(self):
+        """
+        Simulate KPI duplicating/editing feature. It's like resubmitting an
+        existing submission with a different UUID (and a deprecatedID when editing).
+
+        This test does not need to resubmit an existing submission with a
+        different UUID, but just to post a new submission with service account
+        authentication headers. User still needs 'report_xform' permission anyway
+        """
+        path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            '..',
+            'fixtures',
+            'transport_submission.json')
+        with open(path, 'rb') as f:
+            data = json.loads(f.read())
+            # Try to submit with service account user on behalf of bob
+            service_account_meta = self.get_meta_from_headers(
+                get_request_headers('bob')
+            )
+            # Test server does not provide `host` header
+            service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+            request = self.factory.post(
+                '/submission', data, format='json', **service_account_meta
+            )
+            response = self.view(request)
+            self.assertContains(response, 'Successful submission',
+                                status_code=status.HTTP_201_CREATED)
+            self.assertTrue(response.has_header('X-OpenRosa-Version'))
+            self.assertTrue(
+                response.has_header('X-OpenRosa-Accept-Content-Length')
+            )
+            self.assertTrue(response.has_header('Date'))
+            self.assertEqual(response['Content-Type'], 'application/json')
+            self.assertEqual(
+                response['Location'], 'http://testserver/submission'
+            )

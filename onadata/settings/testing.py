@@ -35,7 +35,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 ################################
 
 TESTING_MODE = True
-TEST_HTTP_HOST = 'testserver.com'
+TEST_HTTP_HOST = 'testserver'
 TEST_USERNAME = 'bob'
 # Tests can be run locally or with GitHub Actions. Locally, we usually use
 # SQLite while GitHub Actions is set to use PostgreSQL.
@@ -49,6 +49,9 @@ if not USE_POSTGRESQL:
     DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
     SPATIALITE_LIBRARY_PATH = os.environ.get('SPATIALITE_LIBRARY_PATH',
                                              'mod_spatialite')
+
+SERVICE_ACCOUNT['WHITELISTED_HOSTS'] = ['testserver']
+SERVICE_ACCOUNT['NAMESPACE'] = 'kobo-service-account-test'
 
 ################################
 # Celery settings              #

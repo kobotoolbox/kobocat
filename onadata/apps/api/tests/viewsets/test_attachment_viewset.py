@@ -1,10 +1,13 @@
 # coding: utf-8
 import os
 
+import pytest
+from django.conf import settings
+from kobo_service_account.utils import get_request_headers
+
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
-from onadata.apps.logger.models import XForm
 from onadata.apps.main.models import UserProfile
 
 
@@ -21,7 +24,23 @@ class TestAttachmentViewSet(TestAbstractViewSet):
 
         self.publish_xls_form()
 
-    def test_retrieve_view(self):
+        alice_profile_data = {
+            'username': 'alice',
+            'email': 'alice@kobotoolbox.org',
+            'password1': 'alice',
+            'password2': 'alice',
+            'name': 'Alice',
+            'city': 'AliceTown',
+            'country': 'CA',
+            'organization': 'Alice Inc.',
+            'home_page': 'alice.com',
+            'twitter': 'alicetwitter'
+        }
+
+        alice_profile = self._create_user_profile(alice_profile_data)
+        self.alice = alice_profile.user
+
+    def _retrieve_view(self, auth_headers):
         self._submit_transport_instance_w_attachment()
 
         pk = self.attachment.pk
@@ -38,7 +57,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
             'mimetype': self.attachment.mimetype,
             'filename': self.attachment.media_file.name
         }
-        request = self.factory.get('/', **self.extra)
+        request = self.factory.get('/', **auth_headers)
         response = self.retrieve_view(request, pk=pk)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(isinstance(response.data, dict))
@@ -48,10 +67,27 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         # file download
         filename = data['filename']
         ext = filename[filename.rindex('.') + 1:]
-        request = self.factory.get('/', **self.extra)
+        request = self.factory.get('/', **auth_headers)
         response = self.retrieve_view(request, pk=pk, format=ext)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content_type, 'image/jpeg')
+
+    def test_retrieve_view(self):
+        self._retrieve_view(self.extra)
+
+    def test_retrieve_view_with_service_account(self):
+        extra = {'HTTP_AUTHORIZATION': f'Token {self.alice.auth_token}'}
+        # Alice cannot view bob's attachment and should receive a 404.
+        # The first assertion is `response.status_code == 200`, thus it should
+        # raise an error
+        with pytest.raises(AssertionError) as e:
+            self._retrieve_view(extra)
+
+        # Try the same request with service account user on behalf of alice
+        extra = self.get_meta_from_headers(get_request_headers(self.alice.username))
+        # Test server does not provide `host` header
+        extra['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        self._retrieve_view(extra)
 
     def test_list_view(self):
         self._submit_transport_instance_w_attachment()

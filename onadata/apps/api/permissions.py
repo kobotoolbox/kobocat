@@ -219,6 +219,9 @@ class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
 
     def has_permission(self, request, view):
 
+        if request.user and request.user.is_superuser:
+            return True
+
         allowed_anonymous_action = ['retrieve']
 
         try:
@@ -241,6 +244,9 @@ class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
         )
 
     def has_object_permission(self, request, view, obj):
+
+        if request.user and request.user.is_superuser:
+            return True
 
         # Grant access to publicly shared xforms.
         if (
@@ -266,8 +272,18 @@ class AttachmentObjectPermissions(DjangoObjectPermissions):
         self.perms_map['HEAD'] = ['%(app_label)s.view_xform']
         return super().__init__(*args, **kwargs)
 
+    def has_permission(self, request, view):
+
+        if request.user and request.user.is_superuser:
+            return True
+
+        return super().has_permission(request, view)
+
     def has_object_permission(self, request, view, obj):
         view.model = XForm
+
+        if request.user and request.user.is_superuser:
+            return True
 
         return super().has_object_permission(
             request, view, obj.instance.xform)

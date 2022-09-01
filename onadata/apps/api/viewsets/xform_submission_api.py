@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
-
+from kobo_service_account.utils import get_real_user
 from rest_framework import permissions
 from rest_framework import status
 from rest_framework import viewsets
@@ -18,6 +18,7 @@ from rest_framework.authentication import (
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
+
 from onadata.apps.logger.models import Instance
 from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs import filters
@@ -167,6 +168,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
         ]
 
     def create(self, request, *args, **kwargs):
+
         username = self.kwargs.get('username')
         if self.request.user.is_anonymous:
             if username is None:
@@ -180,7 +182,7 @@ Here is some example JSON, it would replace `[the JSON]` above:
                     raise NotAuthenticated
         elif not username:
             # get the username from the user if not set
-            username = (request.user and request.user.username)
+            username = request.user and get_real_user(request).username
 
         if request.method.upper() == 'HEAD':
             return Response(status=status.HTTP_204_NO_CONTENT,

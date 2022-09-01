@@ -128,7 +128,7 @@ def _get_user(username):
 
 
 def _get_owner(request):
-    owner = request.data.get('owner') or request.user
+    owner = request.data.get('owner') or get_real_user(request)
 
     if isinstance(owner, str):
         owner = _get_user(owner)

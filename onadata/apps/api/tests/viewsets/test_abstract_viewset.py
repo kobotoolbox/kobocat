@@ -1,10 +1,7 @@
 # coding: utf-8
 import os
-import re
-from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import (
     AnonymousUser,
     Permission,
@@ -17,13 +14,14 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
-from onadata.apps.logger.models import Instance, XForm, Attachment
+from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.main import tests as main_tests
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
+from onadata.libs.tests.mixins.request_mixin import RequestMixin
 
 
-class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
+class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
                'transport_2011-07-25_19-06-01',

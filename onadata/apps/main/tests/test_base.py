@@ -17,10 +17,11 @@ from rest_framework.test import APIRequestFactory
 from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.main.models import UserProfile
 from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
+from onadata.libs.tests.mixins.request_mixin import RequestMixin
 from onadata.libs.utils.string import base64_encodestring
 
 
-class TestBase(MakeSubmissionMixin, TestCase):
+class TestBase(RequestMixin, MakeSubmissionMixin, TestCase):
 
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
