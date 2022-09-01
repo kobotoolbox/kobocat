@@ -7,7 +7,6 @@ import dateutil.parser
 import six
 from django.utils.encoding import smart_str
 from django.utils.translation import gettext as t
-from django.utils.six import text_type
 from xml.dom import minidom, Node
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
@@ -205,7 +204,7 @@ def _flatten_dict(d, prefix):
                     # hack: removing [1] index to be consistent across
                     # surveys that have a single repitition of the
                     # loop versus mutliple.
-                    item_prefix[-1] += "[%s]" % text_type(i + 1)
+                    item_prefix[-1] += "[%s]" % str(i + 1)
                 if type(item) == dict:
                     for pair in _flatten_dict(item, item_prefix):
                         yield pair

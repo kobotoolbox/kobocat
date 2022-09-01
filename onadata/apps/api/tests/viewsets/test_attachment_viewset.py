@@ -1,11 +1,11 @@
 # coding: utf-8
-from os import path
-
-from django.utils.six import string_types
+import os
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
+from onadata.apps.logger.models import XForm
+from onadata.apps.main.models import UserProfile
 
 
 class TestAttachmentViewSet(TestAbstractViewSet):
@@ -112,7 +112,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         request = self.factory.get('/', data, **self.extra)
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, string_types))
+        self.assertTrue(isinstance(response.data, str))
         self.assertEqual(response.data, self.attachment.secure_url())
 
         data['filename'] = 10000000
@@ -130,12 +130,77 @@ class TestAttachmentViewSet(TestAbstractViewSet):
             media_file="1335783522564.JPG")
 
         filename = self.attachment.media_file.name
-        file_base, file_extension = path.splitext(filename)
+        file_base, file_extension = os.path.splitext(filename)
         data = {
             'filename': file_base + file_extension.upper()
         }
         request = self.factory.get('/', data, **self.extra)
         response = self.retrieve_view(request, pk=self.attachment.pk)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(isinstance(response.data, string_types))
+        self.assertTrue(isinstance(response.data, str))
         self.assertEqual(response.data, self.attachment.secure_url())
+
+    def test_attachment_storage_bytes_create_instance_defer_counting(self):
+        self._submit_transport_instance_w_attachment()
+        media_file_size = self.attachment.media_file_size
+
+        self.xform.refresh_from_db()
+        self.assertEqual(self.xform.attachment_storage_bytes, media_file_size)
+
+        profile = UserProfile.objects.get(user=self.xform.user)
+        self.assertEqual(profile.attachment_storage_bytes, media_file_size)
+
+    def test_attachment_storage_bytes_delete_signal(self):
+        self.test_attachment_storage_bytes_create_instance_defer_counting()
+        self.attachment.delete()
+        self.xform.refresh_from_db()
+        self.assertEqual(self.xform.attachment_storage_bytes, 0)
+        profile = UserProfile.objects.get(user=self.xform.user)
+        self.assertEqual(profile.attachment_storage_bytes, 0)
+
+    def test_attachment_storage_bytes_create_instance_signal(self):
+        """
+        Creating a new submission first and then adding an attachment by
+        submitting the same XML alongside that attachment uses the signal
+        logic instead of the `defer_counting` performance-optimization logic.
+
+        This method copies some code from
+        `_submit_transport_instance_w_attachment()`
+        """
+        survey_datetime = self.surveys[0]
+        xml_path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            survey_datetime,
+            f'{survey_datetime}.xml',
+        )
+        media_file_path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            survey_datetime,
+            '1335783522563.jpg'
+        )
+        xform = self.xform
+        user_profile = UserProfile.objects.get(user=xform.user)
+        # First, submit the XML with no attachments
+        self._make_submission(xml_path)
+        self.assertEqual(self.xform.instances.count(), 1)
+        submission_uuid = self.xform.instances.first().uuid
+        self.xform.refresh_from_db()
+        self.assertEqual(xform.attachment_storage_bytes, 0)
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.attachment_storage_bytes, 0)
+        # Submit the same XML again, but this time include the attachment
+        with open(media_file_path, 'rb') as media_file:
+            self._make_submission(xml_path, media_file=media_file)
+        self.assertEqual(self.xform.instances.count(), 1)
+        self.assertEqual(self.xform.instances.first().uuid, submission_uuid)
+        media_file_size = os.path.getsize(media_file_path)
+        self.xform.refresh_from_db()
+        self.assertEqual(xform.attachment_storage_bytes, media_file_size)
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.attachment_storage_bytes, media_file_size)

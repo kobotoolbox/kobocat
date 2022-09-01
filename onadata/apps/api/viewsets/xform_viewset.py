@@ -6,9 +6,8 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files.storage import get_storage_class
-from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from django.utils import six
 from django.utils.translation import gettext as t
 from rest_framework import exceptions
 from rest_framework import status
@@ -74,7 +73,7 @@ def _set_start_end_params(request, query):
     # check for start and end params
     if 'start' in request.GET or 'end' in request.GET:
         query = json.loads(query) \
-            if isinstance(query, six.string_types) else query
+            if isinstance(query, str) else query
         query[SUBMISSION_TIME] = {}
 
         try:
@@ -130,7 +129,7 @@ def _get_user(username):
 def _get_owner(request):
     owner = request.data.get('owner') or request.user
 
-    if isinstance(owner, six.string_types):
+    if isinstance(owner, str):
         owner = _get_user(owner)
 
         if owner is None:

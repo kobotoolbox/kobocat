@@ -10,7 +10,7 @@ from django.core.files.base import File, ContentFile
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.utils.text import slugify
 from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
@@ -699,12 +699,20 @@ def generate_attachments_zip_export(
 
 
 def generate_kml_export(
-        export_type, extension, username, id_string, export_id=None,
-        filter_query=None):
+    export_type,
+    extension,
+    username,
+    id_string,
+    export_id=None,
+    filter_query=None,  # Not used, ToDo removed it?
+):
     user = User.objects.get(username=username)
     xform = XForm.objects.get(user__username=username, id_string=id_string)
-    response = render_to_response(
-        'survey.kml', {'data': kml_export_data(id_string, user)})
+    response = render(
+        request=None,
+        template_name='survey.kml',
+        context={'data': kml_export_data(id_string, user)},
+    )
 
     basename = "%s_%s" % (id_string,
                           datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
@@ -728,7 +736,7 @@ def generate_kml_export(
     dir_name, basename = os.path.split(export_filename)
 
     # get or create export object
-    if(export_id):
+    if export_id:
         export = Export.objects.get(id=export_id)
     else:
         export = Export.objects.create(xform=xform, export_type=export_type)

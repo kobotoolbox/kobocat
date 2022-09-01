@@ -10,12 +10,12 @@ import reversion
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
-from django.db import transaction
+from django.db import models as django_models, transaction
 from django.db.models import F
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
@@ -203,6 +203,7 @@ class Instance(models.Model):
     XML_HASH_LENGTH = 64
     DEFAULT_XML_HASH = None
 
+    id = django_models.BigAutoField(primary_key=True)
     json = JSONField(default={}, null=False)
     xml = models.TextField()
     xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,
@@ -431,11 +432,11 @@ class Instance(models.Model):
         """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param string_types input_string: The string to be hashed.
+        :param str input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
         """
-        input_string = smart_text(input_string)
+        input_string = smart_str(input_string)
         return sha256(input_string.encode()).hexdigest()
 
     @property

@@ -4,7 +4,6 @@ from collections import OrderedDict
 from itertools import chain
 
 from django.conf import settings
-from django.utils.six import string_types
 from pandas.core.frame import DataFrame
 
 # an immediate fix to an error with the installation of pandas v0.15
@@ -193,7 +192,7 @@ class AbstractDataFrameBuilder:
     def _split_gps_fields(cls, record, gps_fields):
         updated_gps_fields = {}
         for key, value in record.items():
-            if key in gps_fields and isinstance(value, string_types):
+            if key in gps_fields and isinstance(value, str):
                 gps_xpaths = DataDictionary.get_additional_geopoint_xpaths(key)
                 gps_parts = dict([(xpath, None) for xpath in gps_xpaths])
                 # hack, check if its a list and grab the object within that
@@ -487,7 +486,7 @@ class XLSDataFrameBuilder(AbstractDataFrameBuilder):
         xpath = None
         if isinstance(column, SurveyElement):
             xpath = column.get_abbreviated_xpath()
-        elif isinstance(column, string_types):
+        elif isinstance(column, str):
             xpath = column
         assert(xpath)
         # make sure column is not already in list
