@@ -665,6 +665,9 @@ MFA_SUPPORTED_AUTH_CLASSES = [
     'onadata.libs.authentication.TokenAuthentication',
 ]
 
+# Set the maximum number of days daily counters can be kept for
+DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 31)
+
 ################################
 # Celery settings              #
 ################################
@@ -708,6 +711,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=6),
         'options': {'queue': 'kobocat_queue'}
     },
+    'delete-daily-xform-submissions-counter': {
+        'task': 'onadata.apps.logger.tasks.delete_daily_counters',
+        'schedule': timedelta(hours=0, minutes=0),
+        'options': {'queue': 'kobocat_queue'}
+    }
 }
 
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
