@@ -7,9 +7,9 @@ from datetime import timedelta
 from urllib.parse import quote_plus
 
 import environ
+from celery.schedules import crontab
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
-
 
 env = environ.Env()
 
@@ -713,7 +713,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'delete-daily-xform-submissions-counter': {
         'task': 'onadata.apps.logger.tasks.delete_daily_counters',
-        'schedule': timedelta(hours=0, minutes=0),
+        'schedule': crontab(hour=0, minute=0),
         'options': {'queue': 'kobocat_queue'}
     }
 }
