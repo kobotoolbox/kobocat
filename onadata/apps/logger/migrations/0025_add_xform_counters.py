@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logger', '0023_add_xform_attachment_storage_bytes'),
+        ('logger', '0024_add_xform_attachment_storage_bytes'),
     ]
 
     operations = [

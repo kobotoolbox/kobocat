@@ -6,7 +6,6 @@ from django.db.models import Q
 from django.db.models.signals import pre_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.utils import six
 from django.utils.translation import gettext as t
 
 from rest_framework import status
@@ -500,7 +499,7 @@ Delete a specific submission in a form
         pk = self.kwargs.get(self.lookup_field)
         tags = self.request.query_params.get('tags', None)
 
-        if tags and isinstance(tags, six.string_types):
+        if tags and isinstance(tags, str):
             tags = tags.split(',')
             qs = qs.filter(tags__name__in=tags).distinct()
 

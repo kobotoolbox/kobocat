@@ -1,6 +1,5 @@
 # coding: utf-8
 import base64
-from django.utils.six import string_types
 
 
 def base64_encodestring(obj):
@@ -16,4 +15,4 @@ def base64_decodestring(obj):
 
 def str2bool(v):
     return v.lower() in (
-        'yes', 'true', 't', '1') if isinstance(v, string_types) else v
+        'yes', 'true', 't', '1') if isinstance(v, str) else v

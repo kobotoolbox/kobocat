@@ -11,7 +11,7 @@ from django.core.files.storage import get_storage_class
 from django.urls import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 from django.utils.translation import gettext_lazy as t
 from guardian.shortcuts import (
@@ -136,7 +136,7 @@ class XForm(BaseModel):
         self.id_string = matches[0]
 
     def _set_title(self):
-        self.xml = smart_text(self.xml)
+        self.xml = smart_str(self.xml)
         text = re.sub(r'\s+', ' ', self.xml)
         matches = title_pattern.findall(text)
         title_xml = matches[0][:XFORM_TITLE_LENGTH]

@@ -5,8 +5,7 @@ from xml.dom import Node
 
 from django.db import models
 from django.db.models.signals import post_save
-from django.utils.encoding import smart_text
-from django.utils.six import text_type
+from django.utils.encoding import smart_str
 from guardian.shortcuts import assign_perm, get_perms_for_model
 from pyxform import SurveyElementBuilder
 from pyxform.builder import create_survey_from_xls
@@ -132,13 +131,13 @@ class DataDictionary(XForm):
             calculate_node.setAttribute("calculate", "'%s'" % self.uuid)
             model_node.appendChild(calculate_node)
 
-        self.xml = smart_text(doc.toprettyxml(indent="  ", encoding='utf-8'))
+        self.xml = smart_str(doc.toprettyxml(indent="  ", encoding='utf-8'))
         # hack
         # http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-\
         # and-silly-whitespace/
         text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
         output_re = re.compile(r'\n.*(<output.*>)\n(  )*')
-        pretty_xml = text_re.sub(r'>\g<1></', smart_text(self.xml))
+        pretty_xml = text_re.sub(r'>\g<1></', smart_str(self.xml))
         inline_output = output_re.sub(r'\g<1>', pretty_xml)
         inline_output = re.compile(r'<label>\s*\n*\s*\n*\s*</label>').sub(
             '<label></label>', inline_output)
@@ -213,7 +212,7 @@ class DataDictionary(XForm):
         """
         names = {}
         for elem in self.get_survey_elements():
-            names[MongoHelper.encode(text_type(elem.get_abbreviated_xpath()))] = \
+            names[MongoHelper.encode(str(elem.get_abbreviated_xpath()))] = \
                 elem.get_abbreviated_xpath()
         return names
 
@@ -248,7 +247,7 @@ class DataDictionary(XForm):
             return []
         if result is None:
             result = []
-        path = '/'.join([prefix, text_type(survey_element.name)])
+        path = '/'.join([prefix, str(survey_element.name)])
         if survey_element.children is not None:
             # add xpaths to result for each child
             indices = [''] if type(survey_element) != RepeatingSection else \
