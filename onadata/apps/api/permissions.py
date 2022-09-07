@@ -1,4 +1,5 @@
 # coding: utf-8
+from kobo_service_account.models import ServiceAccountUser
 from rest_framework.permissions import (
     DjangoObjectPermissions,
     IsAuthenticated,
@@ -114,6 +115,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             and view.action in allowed_anonymous_actions
         ):
             return True
+
         return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
@@ -158,7 +160,23 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         except KeyError:
             pass
         else:
+            # Only service account is allowed to bulk delete submissions.
+            # Even KoBoCAT super users are not allowed
+            if (
+                view.action == 'bulk_delete'
+                and not isinstance(user, ServiceAccountUser)
+            ):
+                return False
+
             return user.has_perms(required_perms, obj)
+
+        # Only service account is allowed to delete submissions.
+        # Even KoBoCAT super users are not allowed
+        if (
+            view.action == 'destroy'
+            and not isinstance(user, ServiceAccountUser)
+        ):
+            return False
 
         return super().has_object_permission(request, view, obj)
 
