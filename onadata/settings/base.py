@@ -7,6 +7,7 @@ from datetime import timedelta
 from urllib.parse import quote_plus
 
 import environ
+from celery.schedules import crontab
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
@@ -665,12 +666,16 @@ MFA_SUPPORTED_AUTH_CLASSES = [
     'onadata.libs.authentication.TokenAuthentication',
 ]
 
+# Set the maximum number of days daily counters can be kept for
+DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 31)
+
 SERVICE_ACCOUNT = {
     'BACKEND': env.cache_url(
         'SERVICE_ACCOUNT_BACKEND_URL', default='redis://redis_cache:6380/2'
     ),
     'WHITELISTED_HOSTS': env.list('SERVICE_ACCOUNT_WHITELISTED_HOSTS', default=[]),
 }
+
 
 ################################
 # Celery settings              #
@@ -715,6 +720,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(hours=6),
         'options': {'queue': 'kobocat_queue'}
     },
+    'delete-daily-xform-submissions-counter': {
+        'task': 'onadata.apps.logger.tasks.delete_daily_counters',
+        'schedule': crontab(hour=0, minute=0),
+        'options': {'queue': 'kobocat_queue'}
+    }
 }
 
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"

@@ -51,8 +51,9 @@ from onadata.apps.logger.models.attachment import (
 from onadata.apps.logger.models.instance import (
     InstanceHistory,
     get_id_string_from_xml_str,
+    update_xform_daily_counter,
+    update_xform_monthly_counter,
     update_xform_submission_count,
-    update_user_submissions_counter,
 )
 from onadata.apps.logger.models.xform import XLSFormError
 from onadata.apps.logger.xform_instance_parser import (
@@ -647,8 +648,10 @@ def save_submission(
     if getattr(instance, 'defer_counting', False):
         # Remove the Python-only attribute
         del instance.defer_counting
+        update_xform_daily_counter(instance=instance, created=True)
+        update_xform_monthly_counter(instance=instance, created=True)
         update_xform_submission_count(instance=instance, created=True)
-        update_user_submissions_counter(instance=instance, created=True)
+    
     # Update the storage totals for new attachments as well, which were
     # deferred for the same performance reasons
     for new_attachment in new_attachments:
