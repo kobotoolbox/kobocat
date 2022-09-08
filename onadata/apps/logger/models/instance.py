@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
 from django.db import models as django_models, transaction
-from django.db.models import F
+from django.db.models import Case, F, When
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
@@ -99,7 +99,7 @@ def update_xform_submission_count(instance, created, **kwargs):
         )
 
 
-def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
+def nullify_exports_time_of_last_submission(instance, **kwargs):
     """
     Formerly, "deleting" a submission would set a flag on the `Instance`,
     causing the `date_modified` attribute to be set to the current timestamp.
@@ -110,11 +110,16 @@ def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     `time_of_last_submission` attribute.
     """
     # Avoid circular import
+    if isinstance(instance, Instance):
+        xform = instance.xform
+    else:
+        xform = instance
+
     try:
-        export_model = instance.xform.export_set.model
+        export_model = xform.export_set.model
     except XForm.DoesNotExist:
         return
-    f = instance.xform.export_set.filter(
+    f = xform.export_set.filter(
         # Match the statuses considered by `Export.exports_outdated()`
         internal_status__in=[export_model.SUCCESSFUL, export_model.PENDING],
     )
@@ -173,29 +178,40 @@ def update_xform_monthly_counter(instance, created, **kwargs):
     ).update(counter=F('counter') + 1)
 
 
-def update_xform_submission_count_delete(sender, instance, **kwargs):
-    try:
-        xform = XForm.objects.select_for_update().get(pk=instance.xform.pk)
-    except XForm.DoesNotExist:
-        pass
+def update_xform_submission_count_delete(instance, **kwargs):
+
+    value = kwargs.pop('value', 1)
+
+    if isinstance(instance, Instance):
+        xform_id = instance.xform_id
     else:
-        xform.num_of_submissions -= 1
-        if xform.num_of_submissions < 0:
-            xform.num_of_submissions = 0
-        # Update `date_modified` to detect outdated exports
-        # with deleted instances
-        xform.save(update_fields=['num_of_submissions', 'date_modified'])
-        profile_qs = User.profile.get_queryset()
-        try:
-            profile = profile_qs.select_for_update()\
-                .get(pk=xform.user.profile.pk)
-        except profile_qs.model.DoesNotExist:
-            pass
-        else:
-            profile.num_of_submissions -= 1
-            if profile.num_of_submissions < 0:
-                profile.num_of_submissions = 0
-            profile.save(update_fields=['num_of_submissions'])
+        xform_id = instance.pk
+
+    with transaction.atomic():
+        xform = XForm.objects.only('user_id').get(pk=xform_id)
+        # Like `update_xform_submission_count()`, update with `F` expression
+        # instead of `select_for_update` to avoid locks, and `save()` which
+        # loads not required fields for these updates.
+        XForm.objects.filter(pk=xform_id).update(
+            num_of_submissions=Case(
+                When(
+                    num_of_submissions__gte=value,
+                    then=F('num_of_submissions') - value,
+                ),
+                default=0,
+            )
+        )
+        # Hack to avoid circular imports
+        UserProfile = User.profile.related.related_model
+        UserProfile.objects.filter(user_id=xform.user_id).update(
+            num_of_submissions=Case(
+                When(
+                    num_of_submissions__gte=value,
+                    then=F('num_of_submissions') - value,
+                ),
+                default=0,
+            )
+        )
 
 
 @reversion.register

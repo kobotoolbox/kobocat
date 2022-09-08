@@ -651,7 +651,7 @@ def save_submission(
         update_xform_daily_counter(instance=instance, created=True)
         update_xform_monthly_counter(instance=instance, created=True)
         update_xform_submission_count(instance=instance, created=True)
-    
+
     # Update the storage totals for new attachments as well, which were
     # deferred for the same performance reasons
     for new_attachment in new_attachments:
