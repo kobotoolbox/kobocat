@@ -668,7 +668,7 @@ MFA_SUPPORTED_AUTH_CLASSES = [
 ################################
 
 CELERY_BROKER_URL = os.environ.get(
-    'KOBOCAT_BROKER_URL', 'redis://localhost:6389/2')
+    'KOBOCAT_BROKER_URL', 'redis://localhost:6379/2')
 
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
