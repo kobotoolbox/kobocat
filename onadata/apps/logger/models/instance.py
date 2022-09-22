@@ -109,16 +109,16 @@ def nullify_exports_time_of_last_submission(instance, **kwargs):
     makes every `Export` for a form appear stale by nulling out its
     `time_of_last_submission` attribute.
     """
-    # Avoid circular import
     if isinstance(instance, Instance):
-        xform = instance.xform
+        try:
+            xform = instance.xform
+        except XForm.DoesNotExist:  # In case of XForm.delete()
+            return
     else:
         xform = instance
 
-    try:
-        export_model = xform.export_set.model
-    except XForm.DoesNotExist:
-        return
+    # Avoid circular import
+    export_model = xform.export_set.model
     f = xform.export_set.filter(
         # Match the statuses considered by `Export.exports_outdated()`
         internal_status__in=[export_model.SUCCESSFUL, export_model.PENDING],
@@ -184,11 +184,15 @@ def update_xform_submission_count_delete(instance, **kwargs):
 
     if isinstance(instance, Instance):
         xform_id = instance.xform_id
+        try:
+            xform = XForm.objects.only('user_id').get(pk=xform_id)
+        except XForm.DoesNotExist:  # In case of XForm.delete()
+            return
     else:
         xform_id = instance.pk
+        xform = instance
 
     with transaction.atomic():
-        xform = XForm.objects.only('user_id').get(pk=xform_id)
         # Like `update_xform_submission_count()`, update with `F` expression
         # instead of `select_for_update` to avoid locks, and `save()` which
         # loads not required fields for these updates.
