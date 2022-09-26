@@ -6,6 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django_digest.test import DigestAuth
 from guardian.shortcuts import assign_perm
+from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
@@ -14,6 +15,7 @@ from onadata.apps.logger.models import Attachment
 from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS
 )
+from onadata.libs.utils.logger_tools import OpenRosaTemporarilyUnavailable
 
 
 class TestXFormSubmissionApi(TestAbstractViewSet):
@@ -361,3 +363,51 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         response = self.view(request)
         self.assertContains(response, 'No submission key provided.',
                             status_code=400)
+
+    def test_submission_blocking_flag(self):
+        # Set 'submissions_suspended' True in the profile metadata to test if
+        # submission do fail with the flag set
+        self.xform.user.profile.metadata['submissions_suspended'] = True
+        self.xform.user.profile.save()
+        s = self.surveys[0]
+        username = self.user.username
+        media_file = '1335783522563.jpg'
+        path = os.path.join(self.main_directory, 'fixtures',
+                            'transportation', 'instances', s, media_file)
+
+        with open(path, 'rb') as f:
+            f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
+                                     os.path.getsize(path), None)
+            submission_path = os.path.join(
+                self.main_directory, 'fixtures',
+                'transportation', 'instances', s, s + '.xml')
+            with open(submission_path) as sf:
+                data = {'xml_submission_file': sf, 'media_file': f}
+                request = self.factory.post(
+                    f'/{username}/submission', data
+                )
+                request.user = AnonymousUser()
+                response = self.view(request, username=username)
+
+                # check to make sure the `submission_suspended` flag stops the submission
+                self.assertEqual(
+                    response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+                self.assertTrue(
+                    isinstance(response, OpenRosaTemporarilyUnavailable)
+                )
+
+                # Files have been read during previous request, bring back
+                # their pointer position to zero to submit again.
+                sf.seek(0)
+                f.seek(0)
+
+                # check that users can submit data again when flag is removed
+                self.xform.user.profile.metadata['submissions_suspended'] = False
+                self.xform.user.profile.save()
+
+                request = self.factory.post(
+                    f'/{username}/submission', data
+                )
+                response = self.view(request, username=username)
+                self.assertEqual(response.status_code, status.HTTP_201_CREATED)

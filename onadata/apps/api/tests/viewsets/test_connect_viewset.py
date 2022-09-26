@@ -35,7 +35,6 @@ class TestConnectViewSet(TestAbstractViewSet):
             'require_auth': False,
             'api_token': self.user.auth_token.key,
             'temp_token': self.client.session.session_key,
-            'metadata': {},
         }
 
     def test_get_profile(self):
