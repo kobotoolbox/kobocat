@@ -181,6 +181,11 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         self.assertEqual(response.data, self.attachment.secure_url())
 
     def test_attachment_storage_bytes_create_instance_defer_counting(self):
+        """
+        The normal submission mechanism invokes "defer_counting" to trigger the
+        counters calculation at the end of the transaction only, to avoid a
+        bottleneck when data is saved.
+        """
         self._submit_transport_instance_w_attachment()
         media_file_size = self.attachment.media_file_size
 
