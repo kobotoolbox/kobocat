@@ -671,7 +671,7 @@ DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 31)
 
 SERVICE_ACCOUNT = {
     'BACKEND': env.cache_url(
-        'SERVICE_ACCOUNT_BACKEND_URL', default='redis://redis_cache:6380/2'
+        'SERVICE_ACCOUNT_BACKEND_URL', default='redis://redis_cache:6380/6'
     ),
     'WHITELISTED_HOSTS': env.list('SERVICE_ACCOUNT_WHITELISTED_HOSTS', default=[]),
 }
