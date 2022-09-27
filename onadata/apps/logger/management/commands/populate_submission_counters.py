@@ -60,9 +60,7 @@ class Command(BaseCommand):
             )
 
         # Release any locks on the users' profile from getting submissions
-        UserProfile.objects.exclude(
-            metadata__counters_updates_status='complete'
-        ).update(
+        UserProfile.objects.all().update(
             metadata=ReplaceValues(
                 'metadata',
                 updates={'submissions_suspended': False},
@@ -70,14 +68,14 @@ class Command(BaseCommand):
         )
 
         # Get only xforms whose users' storage counters have not been updated yet.
-        up_queryset = UserProfile.objects.values_list('user_id', flat=True).filter(
+        subquery = UserProfile.objects.values_list('user_id', flat=True).filter(
             metadata__counters_updates_status='complete'
         )
 
         for user in (
             User.objects.only('username')
             .exclude(pk=settings.ANONYMOUS_USER_ID)
-            .exclude(pk__in=up_queryset)
+            .exclude(pk__in=subquery)
             .iterator(chunk_size=chunks)
         ):
             if verbosity >= 1:
