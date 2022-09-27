@@ -102,7 +102,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
     def has_permission(self, request, view):
         lookup_field = view.lookup_field
         lookup = view.kwargs.get(lookup_field)
-        # Allow anonymous users to access access shared data
+        # Allow anonymous users to access shared data
         allowed_anonymous_actions = ['retrieve']
         if lookup:
             # We need to grant access to anonymous on list endpoint too when
@@ -119,7 +119,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # Grant access if user is owner or super user
+        # Grant access if user is the owner or a superuser
         if user.is_superuser or user == obj.user:
             return True
 

@@ -64,6 +64,7 @@ class TestDataViewSet(TestBase):
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
 
+        # Access the list endpoint as Bob.
         request = self.factory.get('/', **self.extra)
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -71,7 +72,8 @@ class TestDataViewSet(TestBase):
         data = _data_list(formid)
         self.assertEqual(response.data, data)
 
-        # redo the request since it's been consumed
+        # Access the data endpoint as Bob; reinitialize `request` since it has
+        # already been consumed within the previous block
         request = self.factory.get('/', **self.extra)
         response = view(request, pk=formid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -95,6 +97,7 @@ class TestDataViewSet(TestBase):
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
 
+        # Access the list endpoint as Bob.
         request = self.factory.get('/', **self.extra)
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -102,7 +105,8 @@ class TestDataViewSet(TestBase):
         data = _data_list(formid)
         self.assertEqual(response.data, data)
 
-        # redo the request since it's been consumed
+        # Access the data endpoint as Bob; reinitialize `request` since it has
+        # already been consumed within the previous block
         request = self.factory.get('/', **self.extra)
         response = view(request, pk=formid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -696,7 +700,7 @@ class TestDataViewSet(TestBase):
         formid = self.xform.pk
         submission_ids = list(self.xform.instances.values_list(
             'pk', flat=True
-        ).all()[:2])
+        ).all().order_by('pk')[:2])
         data = {
             'submission_ids': submission_ids,
             'validation_status.uid': 'validation_status_on_hold'
@@ -727,7 +731,7 @@ class TestDataViewSet(TestBase):
         formid = self.xform.pk
         submission_ids = list(self.xform.instances.values_list(
             'pk', flat=True
-        ).all()[:2])
+        ).all().order_by('pk')[:2])
         data = {
             'submission_ids': submission_ids,
             'validation_status.uid': 'validation_status_on_hold'
