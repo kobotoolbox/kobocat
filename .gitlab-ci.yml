@@ -2,7 +2,7 @@ stages:
   - build_test
   - test
   - deploy
-  
+
 include:
   - template: SAST.gitlab-ci.yml
 
@@ -31,6 +31,7 @@ test:
     POSTGRES_USER: kobo
     POSTGRES_PASSWORD: kobo
     POSTGRES_DB: kobocat_test
+    SERVICE_ACCOUNT_BACKEND_URL: redis://redis_cache:6379/4
   services:
     - name: postgis/postgis:14-3.2
       alias: postgres

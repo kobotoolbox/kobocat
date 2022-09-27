@@ -427,6 +427,7 @@ REST_FRAMEWORK = {
         # Session if it comes first (which bypass BasicAuthentication and MFA validation)
         'onadata.libs.authentication.HttpsOnlyBasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'kobo_service_account.authentication.ServiceAccountAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         # Keep JSONRenderer at the top "in order to send JSON responses to
@@ -667,6 +668,14 @@ MFA_SUPPORTED_AUTH_CLASSES = [
 
 # Set the maximum number of days daily counters can be kept for
 DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 31)
+
+SERVICE_ACCOUNT = {
+    'BACKEND': env.cache_url(
+        'SERVICE_ACCOUNT_BACKEND_URL', default='redis://redis_cache:6380/6'
+    ),
+    'WHITELISTED_HOSTS': env.list('SERVICE_ACCOUNT_WHITELISTED_HOSTS', default=[]),
+}
+
 
 ################################
 # Celery settings              #

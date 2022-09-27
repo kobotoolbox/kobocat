@@ -7,7 +7,7 @@ from django.db.models.signals import pre_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
-
+from kobo_service_account.utils import get_real_user
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -424,8 +424,10 @@ Delete a specific submission in a form
             })
 
         # Create new validation_status object
+        real_user = get_real_user(request)
         new_validation_status = get_validation_status(
-            new_validation_status_uid, xform, request.user.username)
+            new_validation_status_uid, xform, real_user.username
+        )
 
         postgres_query, mongo_query = self.__build_db_queries(xform,
                                                               request.data)
