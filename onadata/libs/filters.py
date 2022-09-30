@@ -25,17 +25,17 @@ class RowLevelObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
         narrow down the queryset to what the user is allowed to see.
         """
 
-        # Queryset cannot be narrowed down for anonymous and super users because
+        # Queryset cannot be narrowed down for anonymous and superusers because
         # they do not have object level permissions (actually a superuser could
         # have object level permissions but `ServiceAccountUser` does not).
-        # The queryset will return a larger subset of data even objects they
-        # are not allowed to see (or modify).
-        # It is required to allow:
+        # Thus, we return queryset immediately even if it is a larger subset and
+        # some of its objects are not allowed to accessed by `request.user`.
+        # We need to avoid `guardian` filter to allow:
         # - anonymous user to see public data
         # - ServiceAccountUser to take actions on all objects on behalf of the
         #   real user who is making the call to the API.
         # The permissions validation is handled by the permission classes and
-        # should deny access to forbidden data
+        # should deny access to forbidden data.
         if request.user.is_anonymous or request.user.is_superuser:
             return queryset
 

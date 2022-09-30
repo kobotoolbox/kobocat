@@ -513,26 +513,39 @@ class TestDataViewSet(TestBase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         count = self.xform.instances.all().count()
         self.assertEqual(before_count - 1, count)
+
+    def test_cannot_delete_submission_as_granted_user_but_not_service_account(self):
+        self._make_submissions()
+        before_count = self.xform.instances.all().count()
+        view = DataViewSet.as_view({'delete': 'destroy'})
+        request = self.factory.delete('/', **self.extra)
+        formid = self.xform.pk
+
         self._create_user_and_login(username='alice', password='alice')
         # Allow Alice to delete submissions.
         assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
         assign_perm(CAN_CHANGE_XFORM, self.user, self.xform)
-        self.extra = {
-            'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token}
+        self.extra = {'HTTP_AUTHORIZATION': f'Token {self.user.auth_token}'}
         request = self.factory.delete('/', **self.extra)
         dataid = self.xform.instances.all().order_by('id')[0].pk
         response = view(request, pk=formid, dataid=dataid)
 
         # Alice cannot delete submissions with `CAN_CHANGE_XFORM`
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertContains(
+            response,
+            'This is not supported by the legacy API anymore',
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
-        # Now, she should be able to
+        # Even with correct permissions, Alice should not be able to delete
         remove_perm(CAN_CHANGE_XFORM, self.user, self.xform)
         assign_perm(CAN_DELETE_DATA_XFORM, self.user, self.xform)
         response = view(request, pk=formid, dataid=dataid)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        count = self.xform.instances.all().count()
-        self.assertEqual(before_count - 2, count)
+        self.assertContains(
+            response,
+            'This is not supported by the legacy API anymore',
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     def test_delete_submission_with_service_account(self):
         self._make_submissions()
@@ -551,7 +564,7 @@ class TestDataViewSet(TestBase):
         response = view(request, pk=formid, dataid=dataid)
 
         # Alice cannot delete submissions without `CAN_DELETE_DATA_XFORM`
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         # Try the same request with service account user on behalf of alice
         service_account_meta = self.get_meta_from_headers(
@@ -566,7 +579,30 @@ class TestDataViewSet(TestBase):
         count = self.xform.instances.all().count()
         self.assertEqual(before_count - 1, count)
 
-    def test_bulk_delete_submissions(self):
+    def test_bulk_delete_submissions_as_granted_user_but_not_service_account(self):
+        self._make_submissions()
+        view = DataViewSet.as_view({'delete': 'bulk_delete'})
+        formid = self.xform.pk
+        submission_ids = self.xform.instances.values_list(
+            'pk', flat=True
+        ).all()[:2]
+        data = {'submission_ids': list(submission_ids)}
+        self._create_user_and_login(username='alice', password='alice')
+        assign_perm(CAN_VIEW_XFORM, self.user, self.xform)
+        assign_perm(CAN_DELETE_DATA_XFORM, self.user, self.xform)
+        self.extra = {'HTTP_AUTHORIZATION': f'Token  {self.user.auth_token}'}
+        request = self.factory.delete(
+            '/', data=data, format='json', **self.extra,
+        )
+        response = view(request, pk=formid)
+        # Even with correct permissions, Alice is not allowed to delete submissions
+        self.assertContains(
+            response,
+            'This is not supported by the legacy API anymore',
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+    def test_cannot_bulk_delete_submissions(self):
         self._make_submissions()
         before_count = self.xform.instances.all().count()
         view = DataViewSet.as_view({'delete': 'bulk_delete'})
@@ -606,7 +642,7 @@ class TestDataViewSet(TestBase):
         response = view(request, pk=formid)
 
         # Alice cannot delete submissions without `CAN_DELETE_DATA_XFORM`
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         # Try the same request with service account user on behalf of alice
         service_account_meta = self.get_meta_from_headers(

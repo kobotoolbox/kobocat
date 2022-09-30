@@ -1,8 +1,9 @@
 # coding: utf-8
+from kobo_service_account.models import ServiceAccountUser
 from rest_framework.permissions import (
     DjangoObjectPermissions,
     IsAuthenticated,
-    SAFE_METHODS
+    SAFE_METHODS,
 )
 
 from onadata.libs.constants import (
@@ -12,6 +13,7 @@ from onadata.libs.constants import (
     CAN_VIEW_XFORM,
 )
 from onadata.apps.logger.models import XForm
+from onadata.apps.api.exceptions import LegacyAPIException
 
 
 class ViewDjangoObjectPermissions(DjangoObjectPermissions):
@@ -114,6 +116,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             and view.action in allowed_anonymous_actions
         ):
             return True
+
         return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
@@ -158,7 +161,24 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         except KeyError:
             pass
         else:
+            # Only service account is allowed to bulk delete submissions.
+            # Even KoBoCAT superusers are not allowed
+            if (
+                view.action == 'bulk_delete'
+                and not isinstance(user, ServiceAccountUser)
+            ):
+                # return False
+                raise LegacyAPIException
+
             return user.has_perms(required_perms, obj)
+
+        # Only service account is allowed to delete submissions.
+        # Even KoBoCAT superusers are not allowed
+        if (
+            view.action == 'destroy'
+            and not isinstance(user, ServiceAccountUser)
+        ):
+            raise LegacyAPIException
 
         return super().has_object_permission(request, view, obj)
 
