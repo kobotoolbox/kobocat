@@ -1,4 +1,5 @@
 # coding: utf-8
+import logging
 import json
 from typing import Union
 
@@ -419,9 +420,10 @@ Delete a specific submission in a form
         try:
             deleted_records_count = results[identifier]
         except KeyError:
-            return Response({
-                'detail': t('Submissions not found')
-            }, status.HTTP_404_NOT_FOUND)
+            # PostgreSQL did not delete any Instance objects. Keep going in case
+            # they are still present in MongoDB.
+            logging.warning('Instance objects cannot be found')
+            deleted_records_count = 0
 
         ParsedInstance.bulk_delete(mongo_query)
 
