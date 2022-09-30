@@ -206,7 +206,7 @@ def update_xform_submission_count_delete(instance, **kwargs):
             )
         )
         # Hack to avoid circular imports
-        UserProfile = User.profile.related.related_model
+        UserProfile = User.profile.related.related_model  # noqa
         UserProfile.objects.filter(user_id=xform.user_id).update(
             num_of_submissions=Case(
                 When(
