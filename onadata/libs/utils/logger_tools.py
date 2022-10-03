@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import annotations
+
 import os
 import re
 import sys
@@ -19,7 +20,6 @@ except ImportError:
 
 from dict2xml import dict2xml
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
@@ -42,7 +42,11 @@ from pyxform.xform2json import create_survey_element_from_xml
 from xml.dom import Node
 from wsgiref.util import FileWrapper
 
-from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
+from onadata.apps.logger.exceptions import (
+    DuplicateUUIDError,
+    FormInactiveError,
+    TemporarilyUnavailableError,
+)
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
@@ -178,6 +182,7 @@ def create_instance(
         existing_instance = None
 
     if existing_instance:
+        existing_instance.check_active(force=False)
         # ensure we have saved the extra attachments
         new_attachments = save_attachments(existing_instance, media_files)
         if not new_attachments:
@@ -250,7 +255,7 @@ def get_xform_from_submission(xml, username, uuid=None):
         raise InstanceInvalidUserError()
 
     if uuid:
-        # try find the form by its uuid which is the ideal condition
+        # try to find the form by its uuid which is the ideal condition
         try:
             xform = XForm.objects.get(uuid=uuid)
         except XForm.DoesNotExist:
@@ -528,6 +533,8 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
         )
     except FormInactiveError:
         error = OpenRosaResponseNotAllowed(t("Form is not active"))
+    except TemporarilyUnavailableError:
+        error = OpenRosaTemporarilyUnavailable(t("Temporarily unavailable"))
     except XForm.DoesNotExist:
         error = OpenRosaResponseNotFound(
             t("Form does not exist on this account")
@@ -830,6 +837,10 @@ class OpenRosaResponseNotAllowed(OpenRosaResponse):
 
 class OpenRosaResponseForbidden(OpenRosaResponse):
     status_code = 403
+
+
+class OpenRosaTemporarilyUnavailable(OpenRosaResponse):
+    status_code = 503
 
 
 class UnauthenticatedEditAttempt(Exception):

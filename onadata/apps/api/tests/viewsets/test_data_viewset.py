@@ -64,6 +64,7 @@ class TestDataViewSet(TestBase):
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
 
+        # Access the list endpoint as Bob.
         request = self.factory.get('/', **self.extra)
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -71,7 +72,8 @@ class TestDataViewSet(TestBase):
         data = _data_list(formid)
         self.assertEqual(response.data, data)
 
-        # redo the request since it's been consumed
+        # Access the data endpoint as Bob; reinitialize `request` since it has
+        # already been consumed within the previous block
         request = self.factory.get('/', **self.extra)
         response = view(request, pk=formid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -95,6 +97,7 @@ class TestDataViewSet(TestBase):
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
 
+        # Access the list endpoint as Bob.
         request = self.factory.get('/', **self.extra)
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -102,7 +105,8 @@ class TestDataViewSet(TestBase):
         data = _data_list(formid)
         self.assertEqual(response.data, data)
 
-        # redo the request since it's been consumed
+        # Access the data endpoint as Bob; reinitialize `request` since it has
+        # already been consumed within the previous block
         request = self.factory.get('/', **self.extra)
         response = view(request, pk=formid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -527,13 +531,21 @@ class TestDataViewSet(TestBase):
         response = view(request, pk=formid, dataid=dataid)
 
         # Alice cannot delete submissions with `CAN_CHANGE_XFORM`
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertContains(
+            response,
+            'This is not supported by the legacy API anymore',
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
         # Even with correct permissions, Alice should not be able to delete
         remove_perm(CAN_CHANGE_XFORM, self.user, self.xform)
         assign_perm(CAN_DELETE_DATA_XFORM, self.user, self.xform)
         response = view(request, pk=formid, dataid=dataid)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertContains(
+            response,
+            'This is not supported by the legacy API anymore',
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     def test_delete_submission_with_service_account(self):
         self._make_submissions()
@@ -552,7 +564,7 @@ class TestDataViewSet(TestBase):
         response = view(request, pk=formid, dataid=dataid)
 
         # Alice cannot delete submissions without `CAN_DELETE_DATA_XFORM`
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         # Try the same request with service account user on behalf of alice
         service_account_meta = self.get_meta_from_headers(
@@ -584,7 +596,11 @@ class TestDataViewSet(TestBase):
         )
         response = view(request, pk=formid)
         # Even with correct permissions, Alice is not allowed to delete submissions
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertContains(
+            response,
+            'This is not supported by the legacy API anymore',
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     def test_cannot_bulk_delete_submissions(self):
         self._make_submissions()
@@ -626,7 +642,7 @@ class TestDataViewSet(TestBase):
         response = view(request, pk=formid)
 
         # Alice cannot delete submissions without `CAN_DELETE_DATA_XFORM`
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
         # Try the same request with service account user on behalf of alice
         service_account_meta = self.get_meta_from_headers(
@@ -720,7 +736,7 @@ class TestDataViewSet(TestBase):
         formid = self.xform.pk
         submission_ids = list(self.xform.instances.values_list(
             'pk', flat=True
-        ).all()[:2])
+        ).all().order_by('pk')[:2])
         data = {
             'submission_ids': submission_ids,
             'validation_status.uid': 'validation_status_on_hold'
@@ -751,7 +767,7 @@ class TestDataViewSet(TestBase):
         formid = self.xform.pk
         submission_ids = list(self.xform.instances.values_list(
             'pk', flat=True
-        ).all()[:2])
+        ).all().order_by('pk')[:2])
         data = {
             'submission_ids': submission_ids,
             'validation_status.uid': 'validation_status_on_hold'

@@ -4,6 +4,7 @@ import os
 import pytest
 from django.conf import settings
 from kobo_service_account.utils import get_request_headers
+from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
@@ -80,7 +81,10 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         # Alice cannot view bob's attachment and should receive a 404.
         # The first assertion is `response.status_code == 200`, thus it should
         # raise an error
-        with pytest.raises(AssertionError) as e:
+        assertion_pattern = (
+            f'{status.HTTP_404_NOT_FOUND} != {status.HTTP_200_OK}'
+        )
+        with pytest.raises(AssertionError, match=assertion_pattern) as e:
             self._retrieve_view(extra)
 
         # Try the same request with service account user on behalf of alice
@@ -177,6 +181,11 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         self.assertEqual(response.data, self.attachment.secure_url())
 
     def test_attachment_storage_bytes_create_instance_defer_counting(self):
+        """
+        The normal submission mechanism invokes "defer_counting" to trigger the
+        counters calculation at the end of the transaction only, to avoid a
+        bottleneck when data is saved.
+        """
         self._submit_transport_instance_w_attachment()
         media_file_size = self.attachment.media_file_size
 

@@ -3,7 +3,7 @@ from kobo_service_account.models import ServiceAccountUser
 from rest_framework.permissions import (
     DjangoObjectPermissions,
     IsAuthenticated,
-    SAFE_METHODS
+    SAFE_METHODS,
 )
 
 from onadata.libs.constants import (
@@ -13,6 +13,7 @@ from onadata.libs.constants import (
     CAN_VIEW_XFORM,
 )
 from onadata.apps.logger.models import XForm
+from onadata.apps.api.exceptions import LegacyAPIException
 
 
 class ViewDjangoObjectPermissions(DjangoObjectPermissions):
@@ -103,7 +104,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
     def has_permission(self, request, view):
         lookup_field = view.lookup_field
         lookup = view.kwargs.get(lookup_field)
-        # Allow anonymous users to access access shared data
+        # Allow anonymous users to access shared data
         allowed_anonymous_actions = ['retrieve']
         if lookup:
             # We need to grant access to anonymous on list endpoint too when
@@ -121,7 +122,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        # Grant access if user is owner or super user
+        # Grant access if user is the owner or a superuser
         if user.is_superuser or user == obj.user:
             return True
 
@@ -161,22 +162,23 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             pass
         else:
             # Only service account is allowed to bulk delete submissions.
-            # Even KoBoCAT super users are not allowed
+            # Even KoBoCAT superusers are not allowed
             if (
                 view.action == 'bulk_delete'
                 and not isinstance(user, ServiceAccountUser)
             ):
-                return False
+                # return False
+                raise LegacyAPIException
 
             return user.has_perms(required_perms, obj)
 
         # Only service account is allowed to delete submissions.
-        # Even KoBoCAT super users are not allowed
+        # Even KoBoCAT superusers are not allowed
         if (
             view.action == 'destroy'
             and not isinstance(user, ServiceAccountUser)
         ):
-            return False
+            raise LegacyAPIException
 
         return super().has_object_permission(request, view, obj)
 

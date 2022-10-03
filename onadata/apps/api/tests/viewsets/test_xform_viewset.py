@@ -279,7 +279,6 @@ class TestXFormViewSet(TestAbstractViewSet):
             'transportation.xls',
         )
 
-        # Try the same request with service account user on behalf of alice
         service_account_meta = self.get_meta_from_headers(
             get_request_headers(self.user.username)  # bob
         )
@@ -288,6 +287,14 @@ class TestXFormViewSet(TestAbstractViewSet):
 
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
+
+            # First try without header to validate it does not work
+            request = self.factory.post('/', data=post_data)
+            response = view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+            # Retry
+            xls_file.seek(0)
             request = self.factory.post('/', data=post_data, **service_account_meta)
             response = view(request)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -406,7 +413,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = view(request, pk=self.xform.id)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.xform.reload()
+        self.xform.refresh_from_db()
         self.assertTrue(self.xform.downloadable)
         self.assertTrue(self.xform.shared)
         self.assertEqual(self.xform.description, description)
