@@ -6,6 +6,7 @@ from io import StringIO
 from django.conf import settings
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
+from kobo_service_account.utils import get_request_headers
 from rest_framework import status
 from xml.dom import minidom, Node
 
@@ -248,6 +249,60 @@ class TestXFormViewSet(TestAbstractViewSet):
                              response.data)
             self.assertTrue(xform.user.pk == self.user.pk)
 
+    def test_publish_xlsform_with_service_account(self):
+        """
+        This tests is quite the same as `test_publish_xlsform()`. The only
+        difference is the authentication headers used to make the call to API.
+        This one user service account authentication headers, but ensures
+        that the owner is still 'bob'.
+        """
+        view = XFormViewSet.as_view({
+            'post': 'create'
+        })
+        data = {
+            'owner': 'bob',
+            'public': False,
+            'public_data': False,
+            'description': 'transportation_2011_07_25',
+            'downloadable': True,
+            'encrypted': False,
+            'id_string': 'transportation_2011_07_25',
+            'title': 'transportation_2011_07_25'
+        }
+        path = os.path.join(
+            settings.ONADATA_DIR,
+            'apps',
+            'main',
+            'tests',
+            'fixtures',
+            'transportation',
+            'transportation.xls',
+        )
+
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.user.username)  # bob
+        )
+        # Test server does not provide `host` header
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+
+        with open(path, 'rb') as xls_file:
+            post_data = {'xls_file': xls_file}
+
+            # First try without header to validate it does not work
+            request = self.factory.post('/', data=post_data)
+            response = view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+            # Retry
+            xls_file.seek(0)
+            request = self.factory.post('/', data=post_data, **service_account_meta)
+            response = view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            xform = self.user.xforms.get(uuid=response.data.get('uuid'))
+            data.update({'url': f'http://testserver/api/v1/forms/{xform.pk}'})
+            self.assertEqual(dict(response.data, **data), response.data)
+            self.assertTrue(xform.user.pk == self.user.pk)
+
     def test_publish_invalid_xls_form(self):
         view = XFormViewSet.as_view({
             'post': 'create'
@@ -298,6 +353,67 @@ class TestXFormViewSet(TestAbstractViewSet):
         response = view(request, pk=self.xform.id)
 
         self.xform.reload()
+        self.assertTrue(self.xform.downloadable)
+        self.assertTrue(self.xform.shared)
+        self.assertEqual(self.xform.description, description)
+        self.assertEqual(response.data['public'], True)
+        self.assertEqual(response.data['description'], description)
+        self.assertEqual(response.data['title'], title)
+        matches = re.findall(r"<h:title>([^<]+)</h:title>", self.xform.xml)
+        self.assertTrue(len(matches) > 0)
+        self.assertEqual(matches[0], title)
+
+    def test_partial_update_with_service_account(self):
+        """
+        The main goal of this test is to validate that KPI redeployment works
+        with ServiceAccountUser. Redeployment uses the same endpoint (i.e.
+        PATCH XForm)
+        """
+        self.publish_xls_form()
+        view = XFormViewSet.as_view({
+            'patch': 'partial_update'
+        })
+        title = 'مرحب'
+        description = 'DESCRIPTION'
+        data = {
+            'public': True,
+            'description': description,
+            'title': title,
+            'downloadable': True,
+        }
+        self.assertFalse(self.xform.shared)
+
+        alice_profile_data = {
+            'username': 'alice',
+            'email': 'alice@kobotoolbox.org',
+            'password1': 'alice',
+            'password2': 'alice',
+            'name': 'Alice',
+            'city': 'AliceTown',
+            'country': 'CA',
+            'organization': 'Alice Inc.',
+            'home_page': 'alice.com',
+            'twitter': 'alicetwitter'
+        }
+        alice_profile = self._create_user_profile(alice_profile_data)
+        self.alice = alice_profile.user
+
+        alice_meta = {'HTTP_AUTHORIZATION': f'Token {self.alice.auth_token}'}
+        request = self.factory.patch('/', data=data, **alice_meta)
+        response = view(request, pk=self.xform.id)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Try the same request with service account user on behalf of alice
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.alice.username)
+        )
+        # Test server does not provide `host` header
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        request = self.factory.patch('/', data=data, **service_account_meta)
+        response = view(request, pk=self.xform.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.xform.refresh_from_db()
         self.assertTrue(self.xform.downloadable)
         self.assertTrue(self.xform.shared)
         self.assertEqual(self.xform.description, description)

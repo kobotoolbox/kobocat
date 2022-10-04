@@ -9,6 +9,7 @@ from django.core.files.storage import get_storage_class
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
+from kobo_service_account.utils import get_real_user
 from rest_framework import exceptions
 from rest_framework import status
 from rest_framework.decorators import action
@@ -127,7 +128,7 @@ def _get_user(username):
 
 
 def _get_owner(request):
-    owner = request.data.get('owner') or request.user
+    owner = request.data.get('owner') or get_real_user(request)
 
     if isinstance(owner, str):
         owner = _get_user(owner)
@@ -645,7 +646,7 @@ data (instance/submission per row)
             # Behave like `onadata.apps.main.views.update_xform`: only allow
             # the update to proceed if the user is the owner
             owner = existing_xform.user
-            if request.user.pk != owner.pk:
+            if not get_real_user(request) == owner:
                 raise exceptions.PermissionDenied(
                     detail=t("Only a form's owner can overwrite its contents"))
             survey = utils.publish_xlsform(request, owner, existing_xform)

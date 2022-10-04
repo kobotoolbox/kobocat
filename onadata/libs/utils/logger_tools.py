@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import annotations
+
 import os
 import re
 import sys
@@ -19,7 +20,6 @@ except ImportError:
 
 from dict2xml import dict2xml
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
@@ -35,13 +35,13 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.encoding import DjangoUnicodeDecodeError, smart_str
 from django.utils.translation import gettext as t
+from kobo_service_account.utils import get_real_user
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
 from xml.dom import Node
 from wsgiref.util import FileWrapper
 
-from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.exceptions import (
     DuplicateUUIDError,
     FormInactiveError,
@@ -120,11 +120,11 @@ def check_submission_permissions(
 
 
 def check_edit_submission_permissions(
-    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
+    request: 'rest_framework.request.Request', xform: XForm
 ):
     if request.user.is_anonymous:
         raise UnauthenticatedEditAttempt
-    if not _has_edit_xform_permission(request, xform, instance):
+    if not _has_edit_xform_permission(request, xform):
         raise PermissionDenied(t(
             'Forbidden attempt to edit a submission. To make a new submission, '
             'Remove `deprecatedID` from the submission XML and try again.'
@@ -255,7 +255,7 @@ def get_xform_from_submission(xml, username, uuid=None):
         raise InstanceInvalidUserError()
 
     if uuid:
-        # try find the form by its uuid which is the ideal condition
+        # try to find the form by its uuid which is the ideal condition
         try:
             xform = XForm.objects.get(uuid=uuid)
         except XForm.DoesNotExist:
@@ -696,7 +696,7 @@ def _get_instance(
     if instances:
         # edits
         instance = instances[0]
-        check_edit_submission_permissions(request, xform, instance)
+        check_edit_submission_permissions(request, xform)
         InstanceHistory.objects.create(
             xml=instance.xml, xform_instance=instance, uuid=old_uuid)
         instance.xml = xml
@@ -705,7 +705,9 @@ def _get_instance(
         instance.save()
     else:
         submitted_by = (
-            request.user if request and request.user.is_authenticated else None
+            get_real_user(request)
+            if request and request.user.is_authenticated
+            else None
         )
         # new submission
         # Avoid `Instance.objects.create()` so that we can set a Python-only
@@ -725,23 +727,13 @@ def _get_instance(
 
 
 def _has_edit_xform_permission(
-    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
+    request: 'rest_framework.request.Request', xform: XForm
 ) -> bool:
-    if isinstance(xform, XForm) and isinstance(request.user, User):
-        if request.user.has_perm('logger.change_xform', xform):
+    if isinstance(xform, XForm):
+        if request.user.is_superuser:
             return True
 
-        # The referrer string contains the UUID of the submission that is
-        # allowed to be edited. Pass the instance being edited to verify that
-        # it matches that UUID
-        is_granted_once = OneTimeAuthToken.grant_access(
-            request, use_referrer=True, instance=instance
-        )
-        # If a one-time authentication request token has been detected,
-        # we return its validity.
-        # Otherwise, the permissions validation keeps going as normal
-        if is_granted_once is not None:
-            return is_granted_once
+        return request.user.has_perm('logger.change_xform', xform)
 
     return False
 
