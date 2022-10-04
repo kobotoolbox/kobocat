@@ -77,7 +77,7 @@ def submission_time():
     return timezone.now()
 
 
-def update_xform_submission_count(instance, created, **kwargs):
+def update_xform_submission_count(sender, instance, created, **kwargs):
     if not created:
         return
     # `defer_counting` is a Python-only attribute
@@ -102,7 +102,7 @@ def update_xform_submission_count(instance, created, **kwargs):
         )
 
 
-def nullify_exports_time_of_last_submission(instance, **kwargs):
+def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     """
     Formerly, "deleting" a submission would set a flag on the `Instance`,
     causing the `date_modified` attribute to be set to the current timestamp.
@@ -129,7 +129,7 @@ def nullify_exports_time_of_last_submission(instance, **kwargs):
     f.update(time_of_last_submission=None)
 
 
-def update_xform_daily_counter(instance, created, **kwargs):
+def update_xform_daily_counter(sender, instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
@@ -151,7 +151,7 @@ def update_xform_daily_counter(instance, created, **kwargs):
     ).update(counter=F('counter') + 1)
 
 
-def update_xform_monthly_counter(instance, created, **kwargs):
+def update_xform_monthly_counter(sender, instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
@@ -181,7 +181,7 @@ def update_xform_monthly_counter(instance, created, **kwargs):
     ).update(counter=F('counter') + 1)
 
 
-def update_xform_submission_count_delete(instance, **kwargs):
+def update_xform_submission_count_delete(sender, instance, **kwargs):
 
     value = kwargs.pop('value', 1)
 

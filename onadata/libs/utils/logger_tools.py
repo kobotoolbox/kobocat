@@ -655,9 +655,15 @@ def save_submission(
     if getattr(instance, 'defer_counting', False):
         # Remove the Python-only attribute
         del instance.defer_counting
-        update_xform_daily_counter(instance=instance, created=True)
-        update_xform_monthly_counter(instance=instance, created=True)
-        update_xform_submission_count(instance=instance, created=True)
+        update_xform_daily_counter(
+            sender=Instance, instance=instance, created=True
+        )
+        update_xform_monthly_counter(
+            sender=Instance, instance=instance, created=True
+        )
+        update_xform_submission_count(
+            sender=Instance, instance=instance, created=True
+        )
 
     # Update the storage totals for new attachments as well, which were
     # deferred for the same performance reasons
