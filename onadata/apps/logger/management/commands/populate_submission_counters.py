@@ -31,24 +31,24 @@ class Command(BaseCommand):
             help="Number of records to process per query"
         )
 
-        week_default = math.ceil(settings.DAILY_COUNTERS_MAX_DAYS / 4)
+        days_default = settings.DAILY_COUNTERS_MAX_DAYS
         parser.add_argument(
-            '--weeks',
+            '--days',
             type=int,
-            default=week_default,
+            default=days_default,
             help=(
-                f"Number of months taken into account to populate the counters. "
-                f"Default is {week_default}"
+                f"Number of days taken into account to populate the counters. "
+                f"Default is {days_default}"
             ),
         )
 
     def handle(self, *args, **kwargs):
         chunks = kwargs['chunks']
-        weeks = kwargs['weeks']
+        days = kwargs['days']
         verbosity = kwargs['verbosity']
 
         today = timezone.now().date()
-        delta = timedelta(weeks=weeks)
+        delta = timedelta(days=days)
         date_threshold = today - delta
         # We want to take the first day of the month to get accurate count for
         # monthly counters
@@ -67,7 +67,7 @@ class Command(BaseCommand):
             ),
         )
 
-        # Get only xforms whose users' storage counters have not been updated yet.
+        # Get profiles whose users' submission counters have not been updated yet.
         subquery = UserProfile.objects.values_list('user_id', flat=True).filter(
             metadata__counters_updates_status='complete'
         )
@@ -94,7 +94,7 @@ class Command(BaseCommand):
             if user_profile.metadata is None:
                 user_profile.metadata = {}
 
-            # Set the flag to true if it was never set.
+            # Set the flag `submissions_suspended` to true if it is not already.
             if not user_profile.metadata.get('submissions_suspended'):
                 # We are using the flag `submissions_suspended` to prevent
                 # new submissions from coming in while the
@@ -177,7 +177,7 @@ class Command(BaseCommand):
                     'submissions_suspended': False,
                     'counters_updates_status': 'complete',
                 }
-                UserProfile.objects.select_for_update().filter(
+                UserProfile.objects.filter(
                     user_id=user.pk
                 ).update(
                     metadata=ReplaceValues(
