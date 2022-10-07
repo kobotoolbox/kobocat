@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
 from django.db import models as django_models, transaction
-from django.db.models import F
+from django.db.models import Case, F, When
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
@@ -77,7 +77,7 @@ def submission_time():
     return timezone.now()
 
 
-def update_xform_submission_count(instance, created, **kwargs):
+def update_xform_submission_count(sender, instance, created, **kwargs):
     if not created:
         return
     # `defer_counting` is a Python-only attribute
@@ -112,19 +112,24 @@ def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     makes every `Export` for a form appear stale by nulling out its
     `time_of_last_submission` attribute.
     """
+    if isinstance(instance, Instance):
+        try:
+            xform = instance.xform
+        except XForm.DoesNotExist:  # In case of XForm.delete()
+            return
+    else:
+        xform = instance
+
     # Avoid circular import
-    try:
-        export_model = instance.xform.export_set.model
-    except XForm.DoesNotExist:
-        return
-    f = instance.xform.export_set.filter(
+    export_model = xform.export_set.model
+    f = xform.export_set.filter(
         # Match the statuses considered by `Export.exports_outdated()`
         internal_status__in=[export_model.SUCCESSFUL, export_model.PENDING],
     )
     f.update(time_of_last_submission=None)
 
 
-def update_xform_daily_counter(instance, created, **kwargs):
+def update_xform_daily_counter(sender, instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
@@ -146,7 +151,7 @@ def update_xform_daily_counter(instance, created, **kwargs):
     ).update(counter=F('counter') + 1)
 
 
-def update_xform_monthly_counter(instance, created, **kwargs):
+def update_xform_monthly_counter(sender, instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
@@ -177,28 +182,43 @@ def update_xform_monthly_counter(instance, created, **kwargs):
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
-    try:
-        xform = XForm.objects.select_for_update().get(pk=instance.xform.pk)
-    except XForm.DoesNotExist:
-        pass
-    else:
-        xform.num_of_submissions -= 1
-        if xform.num_of_submissions < 0:
-            xform.num_of_submissions = 0
-        # Update `date_modified` to detect outdated exports
-        # with deleted instances
-        xform.save(update_fields=['num_of_submissions', 'date_modified'])
-        profile_qs = User.profile.get_queryset()
+
+    value = kwargs.pop('value', 1)
+
+    if isinstance(instance, Instance):
+        xform_id = instance.xform_id
         try:
-            profile = profile_qs.select_for_update()\
-                .get(pk=xform.user.profile.pk)
-        except profile_qs.model.DoesNotExist:
-            pass
-        else:
-            profile.num_of_submissions -= 1
-            if profile.num_of_submissions < 0:
-                profile.num_of_submissions = 0
-            profile.save(update_fields=['num_of_submissions'])
+            xform = XForm.objects.only('user_id').get(pk=xform_id)
+        except XForm.DoesNotExist:  # In case of XForm.delete()
+            return
+    else:
+        xform_id = instance.pk
+        xform = instance
+
+    with transaction.atomic():
+        # Like `update_xform_submission_count()`, update with `F` expression
+        # instead of `select_for_update` to avoid locks, and `save()` which
+        # loads not required fields for these updates.
+        XForm.objects.filter(pk=xform_id).update(
+            num_of_submissions=Case(
+                When(
+                    num_of_submissions__gte=value,
+                    then=F('num_of_submissions') - value,
+                ),
+                default=0,
+            )
+        )
+        # Hack to avoid circular imports
+        UserProfile = User.profile.related.related_model  # noqa
+        UserProfile.objects.filter(user_id=xform.user_id).update(
+            num_of_submissions=Case(
+                When(
+                    num_of_submissions__gte=value,
+                    then=F('num_of_submissions') - value,
+                ),
+                default=0,
+            )
+        )
 
 
 @reversion.register

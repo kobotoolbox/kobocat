@@ -1,9 +1,10 @@
 # coding: utf-8
+import logging
 import json
 from typing import Union
 
 from django.db.models import Q
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, post_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
@@ -22,9 +23,16 @@ from onadata.apps.api.tools import add_tags_to_instance, \
     add_validation_status_to_instance, get_validation_status, \
     remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.models.instance import Instance
+from onadata.apps.logger.models.instance import (
+    Instance,
+    nullify_exports_time_of_last_submission,
+    update_xform_submission_count_delete,
+)
 from onadata.apps.main.models import UserProfile
-from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, ParsedInstance
+from onadata.apps.viewer.models.parsed_instance import (
+    _remove_from_mongo,
+    ParsedInstance,
+)
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
@@ -395,17 +403,50 @@ Delete a specific submission in a form
         xform = self.get_object()
         postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
-        # Disconnect redundant parsed instance pre_delete signal
+        # Disconnect signals to speed-up bulk deletion
         pre_delete.disconnect(_remove_from_mongo, sender=ParsedInstance)
+        post_delete.disconnect(
+            nullify_exports_time_of_last_submission, sender=Instance,
+            dispatch_uid='nullify_exports_time_of_last_submission',
+        )
+        post_delete.disconnect(
+            update_xform_submission_count_delete, sender=Instance,
+            dispatch_uid='update_xform_submission_count_delete',
+        )
 
-        # Delete Postgres & Mongo
-        all_count, results = Instance.objects.filter(**postgres_query).delete()
-        identifier = f'{Instance._meta.app_label}.Instance'
-        deleted_records_count = results[identifier]
-        ParsedInstance.bulk_delete(mongo_query)
+        try:
+            # Delete Postgres & Mongo
+            all_count, results = Instance.objects.filter(**postgres_query).delete()
+            identifier = f'{Instance._meta.app_label}.Instance'
+            try:
+                deleted_records_count = results[identifier]
+            except KeyError:
+                # PostgreSQL did not delete any Instance objects. Keep going in case
+                # they are still present in MongoDB.
+                logging.warning('Instance objects cannot be found')
+                deleted_records_count = 0
 
-        # Pre_delete signal needs to be re-enabled for parsed instance
-        pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+            ParsedInstance.bulk_delete(mongo_query)
+
+            # Update xform like signals would do if it was as single object deletion
+            nullify_exports_time_of_last_submission(sender=Instance, instance=xform)
+            update_xform_submission_count_delete(
+                sender=Instance,
+                instance=xform, value=deleted_records_count
+            )
+        finally:
+            # Pre_delete signal needs to be re-enabled for parsed instance
+            pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+            post_delete.connect(
+                nullify_exports_time_of_last_submission,
+                sender=Instance,
+                dispatch_uid='nullify_exports_time_of_last_submission',
+            )
+            post_delete.connect(
+                update_xform_submission_count_delete,
+                sender=Instance,
+                dispatch_uid='update_xform_submission_count_delete',
+            )
 
         return Response({
             'detail': t('{} submissions have been deleted').format(
