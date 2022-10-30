@@ -2,8 +2,10 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.utils import timezone
 
+from onadata.apps.logger.models import XForm
 from onadata.apps.logger.models.daily_xform_submission_counter import DailyXFormSubmissionCounter
 from onadata.apps.logger.models.monthly_xform_submission_counter import MonthlyXFormSubmissionCounter
 from onadata.apps.logger.tasks import delete_daily_counters
@@ -76,3 +78,29 @@ class TestXFormSubmissionCounters(TestBase):
         delete_daily_counters()
         daily_counters = DailyXFormSubmissionCounter.objects.count()
         self.assertEqual(daily_counters, 0)
+
+    def test_deleted_xform_counters_are_merged(self):
+        """
+        Test that the monthly counter with `xform = NULL` contains the sum of
+        counters for all xforms deleted within the current month
+        """
+        today = timezone.now().date()
+        criteria = dict(
+            year=today.year,
+            month=today.month,
+            user=User.objects.get(username='bob'),
+            xform=None,
+        )
+        assert not MonthlyXFormSubmissionCounter.objects.filter(
+            **criteria
+        ).exists()
+        self._publish_transportation_form_and_submit_instance()
+        XForm.objects.filter(user__username='bob').first().delete()
+        assert (
+            MonthlyXFormSubmissionCounter.objects.get(**criteria).counter == 1
+        )
+        self._publish_transportation_form_and_submit_instance()
+        XForm.objects.filter(user__username='bob').first().delete()
+        assert (
+            MonthlyXFormSubmissionCounter.objects.get(**criteria).counter == 2
+        )
