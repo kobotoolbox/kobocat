@@ -7,6 +7,7 @@ from datetime import datetime, date, time, timedelta
 from bson import json_util
 from django.conf import settings
 from django.core.files.base import File, ContentFile
+from django.core.files.storage import FileSystemStorage
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.storage import get_storage_class
 from django.contrib.auth.models import User
@@ -675,18 +676,18 @@ def generate_attachments_zip_export(
         export_type,
         filename)
 
-    export_filename = get_storage_class()().save(file_path, ContentFile(b''))
+    absolute_filename = _get_absolute_filename(file_path)
 
-    with get_storage_class()().open(export_filename, 'wb') as destination_file:
+    with get_storage_class()().open(absolute_filename, 'wb') as destination_file:
         create_attachments_zipfile(
             attachments,
             output_file=destination_file,
         )
 
-    dir_name, basename = os.path.split(export_filename)
+    dir_name, basename = os.path.split(absolute_filename)
 
     # get or create export object
-    if(export_id):
+    if export_id:
         export = Export.objects.get(id=export_id)
     else:
         export = Export.objects.create(xform=xform, export_type=export_type)
@@ -763,3 +764,53 @@ def kml_export_data(id_string, user):
                 })
 
     return data_for_template
+
+
+def _get_absolute_filename(filename: str) -> str:
+    """
+    Get absolute filename related to storage root.
+    """
+
+    storage_class = get_storage_class()()
+    filename = storage_class.generate_filename(filename)
+
+    # We cannot call `self.result.save()` before reopening the file
+    # in write mode (i.e. open(filename, 'wb')). because it does not work
+    # with AzureStorage.
+    # Unfortunately, `self.result.save()` does few things that we need to
+    # reimplement here:
+    # - Create parent folders (if they do not exist) for local storage
+    # - Get a unique filename if filename already exists on storage
+
+    # Copied from `FileSystemStorage._save()` 😢
+    if isinstance(storage_class, FileSystemStorage):
+        full_path = storage_class.path(filename)
+
+        # Create any intermediate directories that do not exist.
+        directory = os.path.dirname(full_path)
+        if not os.path.exists(directory):
+            try:
+                if storage_class.directory_permissions_mode is not None:
+                    # os.makedirs applies the global umask, so we reset it,
+                    # for consistency with file_permissions_mode behavior.
+                    old_umask = os.umask(0)
+                    try:
+                        os.makedirs(
+                            directory, storage_class.directory_permissions_mode
+                        )
+                    finally:
+                        os.umask(old_umask)
+                else:
+                    os.makedirs(directory)
+            except FileExistsError:
+                # There's a race between os.path.exists() and os.makedirs().
+                # If os.makedirs() fails with FileExistsError, the directory
+                # was created concurrently.
+                pass
+        if not os.path.isdir(directory):
+            raise IOError("%s exists and is not a directory." % directory)
+
+        # Store filenames with forward slashes, even on Windows.
+        filename = filename.replace('\\', '/')
+
+    return storage_class.get_available_name(filename)
