@@ -488,7 +488,9 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'read': 'Read scope',
         'write': 'Write scope',
-        'groups': 'Access to your groups'}
+        'groups': 'Access to your groups'
+    },
+    'PKCE_REQUIRED' : False,
 }
 
 # All registration should be done through KPI, so Django Registration should
@@ -557,7 +559,6 @@ if 'AZURE_ACCOUNT_NAME' in os.environ:
     AZURE_ACCOUNT_KEY = env.str('AZURE_ACCOUNT_KEY')
     AZURE_CONTAINER = env.str('AZURE_CONTAINER')
     AZURE_URL_EXPIRATION_SECS = env.int('AZURE_URL_EXPIRATION_SECS', None)
-    AZURE_OVERWRITE_FILES = True
 
 GOOGLE_ANALYTICS_PROPERTY_ID = env.str("GOOGLE_ANALYTICS_TOKEN", False)
 GOOGLE_ANALYTICS_DOMAIN = "auto"
@@ -682,7 +683,7 @@ SERVICE_ACCOUNT = {
 ################################
 
 CELERY_BROKER_URL = os.environ.get(
-    'KOBOCAT_BROKER_URL', 'redis://localhost:6389/2')
+    'KOBOCAT_BROKER_URL', 'redis://localhost:6379/2')
 
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
@@ -690,7 +691,7 @@ CELERY_TASK_ALWAYS_EAGER = env.bool('SKIP_CELERY', False)
 
 # Celery defaults to having as many workers as there are cores. To avoid
 # excessive resource consumption, don't spawn more than 6 workers by default
-# even if there more than 6 cores.
+# even if there are more than 6 cores.
 CELERY_WORKER_MAX_CONCURRENCY = int(os.environ.get('CELERYD_MAX_CONCURRENCY', 6))
 if multiprocessing.cpu_count() > CELERY_WORKER_MAX_CONCURRENCY:
     CELERY_WORKER_CONCURRENCY = CELERY_WORKER_MAX_CONCURRENCY

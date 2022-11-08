@@ -56,10 +56,11 @@ def report_exception(subject, info, exc_info=None):
         info += "".join(traceback.format_exception(*exc_info))
 
     if settings.DEBUG:
-        print(subject)
-        print(info)
+        print(subject, flush=True)
+        print(info, flush=True)
     else:
         mail_admins(subject=subject, message=info)
+        logging.error(info, exc_info=exc_info)
 
 
 def django_file(path, field_name, content_type):
