@@ -68,7 +68,6 @@ class ParsedInstance(models.Model):
     DEFAULT_LIMIT = 30000
     DEFAULT_BATCHSIZE = 1000
 
-    id = models.BigAutoField(primary_key=True)
     instance = models.OneToOneField(Instance, related_name="parsed_instance", on_delete=models.CASCADE)
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)

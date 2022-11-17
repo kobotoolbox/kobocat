@@ -226,7 +226,6 @@ class Instance(models.Model):
     XML_HASH_LENGTH = 64
     DEFAULT_XML_HASH = None
 
-    id = django_models.BigAutoField(primary_key=True)
     json = JSONField(default={}, null=False)
     xml = models.TextField()
     xml_hash = models.CharField(max_length=XML_HASH_LENGTH, db_index=True, null=True,

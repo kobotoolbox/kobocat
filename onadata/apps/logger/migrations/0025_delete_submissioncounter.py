@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0025_add_xform_counters'),
+        ('logger', '0024_add_xform_counters'),
     ]
 
     operations = [
