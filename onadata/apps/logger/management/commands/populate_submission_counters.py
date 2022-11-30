@@ -1,5 +1,4 @@
 # coding: utf-8
-import math
 from collections import defaultdict
 from datetime import timedelta
 
@@ -81,9 +80,6 @@ class Command(BaseCommand):
             if verbosity >= 1:
                 self.stdout.write(f'Processing user {user.username}...')
 
-            total_submissions = defaultdict(int)
-            monthly_counters = []
-
             # Retrieve or create user's profile.
             (
                 user_profile,
@@ -124,7 +120,11 @@ class Command(BaseCommand):
                 ).filter(user_id=user.pk, date__gte=date_threshold).delete()
 
                 for xf in user.xforms.only('pk').iterator(chunk_size=chunks):
+
                     daily_counters = []
+                    monthly_counters = []
+                    total_submissions = defaultdict(int)
+
                     for values in (
                         xf.instances.filter(
                             date_created__date__gte=date_threshold
@@ -153,24 +153,24 @@ class Command(BaseCommand):
                     elif verbosity >= 2:
                         self.stdout.write(f'\tNo daily counters data...')
 
-                for key, total in total_submissions.items():
-                    year, month = key.split('-')
-                    monthly_counters.append(MonthlyXFormSubmissionCounter(
-                        year=year,
-                        month=month,
-                        xform_id=xf.pk,
-                        user_id=user.pk,
-                        counter=total,
-                    ))
+                    for key, total in total_submissions.items():
+                        year, month = key.split('-')
+                        monthly_counters.append(MonthlyXFormSubmissionCounter(
+                            year=year,
+                            month=month,
+                            xform_id=xf.pk,
+                            user_id=user.pk,
+                            counter=total,
+                        ))
 
-                if monthly_counters:
-                    if verbosity >= 2:
-                        self.stdout.write(f'\tInserting monthly counters data...')
-                    MonthlyXFormSubmissionCounter.objects.bulk_create(
-                        monthly_counters, batch_size=chunks
-                    )
-                elif verbosity >= 2:
-                    self.stdout.write(f'\tNo monthly counters data!')
+                    if monthly_counters:
+                        if verbosity >= 2:
+                            self.stdout.write(f'\tInserting monthly counters data...')
+                        MonthlyXFormSubmissionCounter.objects.bulk_create(
+                            monthly_counters, batch_size=chunks
+                        )
+                    elif verbosity >= 2:
+                        self.stdout.write(f'\tNo monthly counters data!')
 
                 # Update user's profile (and lock the related row)
                 updates = {
