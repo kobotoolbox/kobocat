@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import get_storage_class
 from django.urls import reverse
 from django.db import models
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_delete
 from django.utils.encoding import smart_str
 
 from django.utils.translation import gettext_lazy as t
@@ -21,6 +21,9 @@ from guardian.shortcuts import (
 from taggit.managers import TaggableManager
 
 from onadata.apps.logger.fields import LazyDefaultBooleanField
+from onadata.apps.logger.models.monthly_xform_submission_counter import (
+    MonthlyXFormSubmissionCounter,
+)
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.constants import (
@@ -300,3 +303,14 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
 
 post_save.connect(set_object_permissions, sender=XForm,
                   dispatch_uid='xform_object_permissions')
+
+
+# signals are fired during cascade deletion (i.e. deletion initiated by the
+# removal of a related object), whereas the `delete()` model method is not
+# called. We need call this signal before cascade deletion. Otherwise,
+# MonthlySubmissionCounter objects will be deleted before the signal is fired.
+pre_delete.connect(
+    MonthlyXFormSubmissionCounter.update_catch_all_counter_on_delete,
+    sender=XForm,
+    dispatch_uid='update_catch_all_monthly_xform_submission_counter',
+)

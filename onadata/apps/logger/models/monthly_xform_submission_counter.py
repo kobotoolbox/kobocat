@@ -30,29 +30,21 @@ class MonthlyXFormSubmissionCounter(models.Model):
 
     @classmethod
     def update_catch_all_counter_on_delete(cls, sender, instance, **kwargs):
-        if instance.counter < 1:
-            return
-
-        criteria = dict(
-            year=instance.year,
-            month=instance.month,
-            user=instance.user,
-            xform=None,
-        )
-        # make sure an instance exists with `xform = NULL`
-        cls.objects.get_or_create(**criteria)
-        # add the count for the project being deleted to the null-xform
-        # instance, atomically!
-        cls.objects.filter(**criteria).update(
-            counter=F('counter') + instance.counter
+        monthly_counters = cls.objects.filter(
+            xform_id=instance.pk, counter__gte=1
         )
 
-
-# signals are fired during cascade deletion (i.e. deletion initiated by the
-# removal of a related object), whereas the `delete()` model method is not
-# called
-post_delete.connect(
-    MonthlyXFormSubmissionCounter.update_catch_all_counter_on_delete,
-    sender=MonthlyXFormSubmissionCounter,
-    dispatch_uid='update_catch_all_monthly_xform_submission_counter',
-)
+        for monthly_counter in monthly_counters:
+            criteria = dict(
+                year=monthly_counter.year,
+                month=monthly_counter.month,
+                user=monthly_counter.user,
+                xform=None,
+            )
+            # make sure an instance exists with `xform = NULL`
+            cls.objects.get_or_create(**criteria)
+            # add the count for the project being deleted to the null-xform
+            # instance, atomically!
+            cls.objects.filter(**criteria).update(
+                counter=F('counter') + monthly_counter.counter
+            )
