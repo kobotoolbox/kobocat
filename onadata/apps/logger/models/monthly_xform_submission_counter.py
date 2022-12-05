@@ -1,10 +1,8 @@
 # coding: utf-8
-import datetime
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import F, Q
 from django.db.models.constraints import UniqueConstraint
-from django.db.models.signals import post_delete
 
 
 class MonthlyXFormSubmissionCounter(models.Model):
