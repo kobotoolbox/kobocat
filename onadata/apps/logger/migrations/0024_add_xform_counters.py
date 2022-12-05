@@ -13,10 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='submissioncounter',
-            unique_together={('user', 'timestamp')},
-        ),
         migrations.CreateModel(
             name='MonthlyXFormSubmissionCounter',
             fields=[
