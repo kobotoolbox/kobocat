@@ -78,9 +78,17 @@ class DataDictionary(XForm):
         doc = clean_and_parse_xml(self.xml)
         model_nodes = doc.getElementsByTagName("model")
         if len(model_nodes) != 1:
-            raise Exception("xml contains multiple model nodes")
-
-        model_node = model_nodes[0]
+            node_counts = 0
+            for node in model_nodes:
+                if hasattr(node, 'firstChild') and hasattr(node.firstChild, 'nodeName'):
+                    if node.firstChild.nodeName == 'instance':
+                        if node_counts != 0:
+                            raise Exception("xml contains multiple model nodes")
+                        else:
+                            model_node = node
+                            node_counts += 1
+        else:
+            model_node = model_nodes[0]
         instance_nodes = [node for node in model_node.childNodes if
                           node.nodeType == Node.ELEMENT_NODE and
                           node.tagName.lower() == "instance" and
