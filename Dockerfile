@@ -4,11 +4,9 @@ ENV VIRTUAL_ENV=/opt/venv \
     KOBOCAT_SRC_DIR=/srv/src/kobocat \
     TMP_DIR=/srv/tmp
 
-# Install `pip` packages
-RUN python3 -m venv "$VIRTUAL_ENV"
+RUN python -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install  --quiet pip==22.0.4 && \
-    pip install  --quiet pip-tools
+RUN pip install --quiet pip-tools==6.\*
 COPY ./dependencies/pip/requirements.txt "${TMP_DIR}/pip_dependencies.txt"
 RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null
 
@@ -103,7 +101,6 @@ RUN chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_SRC_DIR}/emails/ && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_LOGS_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${TMP_DIR} && \
-    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${VIRTUAL_ENV} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${BACKUPS_DIR}
 
 WORKDIR "${KOBOCAT_SRC_DIR}"
