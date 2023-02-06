@@ -1,7 +1,10 @@
 # coding: utf-8
+from __future__ import annotations
+
 import logging
 import re
 import sys
+from typing import Union
 
 import dateutil.parser
 import six
@@ -40,7 +43,9 @@ class InstanceMultipleNodeError(Exception):
     pass
 
 
-def get_meta_from_xml(xml_str, meta_name):
+def get_meta_node_from_xml(
+    xml_str: str, meta_name: str
+) -> Union[None, tuple[str, minidom.Document]]:
     xml = clean_and_parse_xml(xml_str)
     children = xml.childNodes
     # children ideally contains a single element
@@ -65,8 +70,13 @@ def get_meta_from_xml(xml_str, meta_name):
         return None
 
     uuid_tag = uuid_tags[0]
-    return uuid_tag.firstChild.nodeValue.strip() if uuid_tag.firstChild\
-        else None
+    return uuid_tag, xml
+
+
+def get_meta_from_xml(xml_str: str, meta_name: str) -> str:
+    if node_and_root := get_meta_node_from_xml(xml_str, meta_name):
+        node, _ = node_and_root
+        return node.firstChild.nodeValue.strip() if node.firstChild else None
 
 
 def get_uuid_from_xml(xml):
@@ -118,11 +128,24 @@ def get_deprecated_uuid_from_xml(xml):
     return None
 
 
-def clean_and_parse_xml(xml_string):
+def clean_and_parse_xml(xml_string: str) -> minidom.Document:
     clean_xml_str = xml_string.strip()
     clean_xml_str = re.sub(r">\s+<", "><", smart_str(clean_xml_str))
     xml_obj = minidom.parseString(clean_xml_str)
     return xml_obj
+
+
+def set_meta(xml_str: str, meta_name: str, new_value: str) -> str:
+
+    if not (node_and_root := get_meta_node_from_xml(xml_str, meta_name)):
+        raise ValueError(f"{meta_name} node not found.")
+
+    node, root = node_and_root
+
+    if node.firstChild:
+        node.firstChild.nodeValue = new_value
+
+    return root.toxml()
 
 
 def _xml_node_to_dict(node, repeats=[]):
