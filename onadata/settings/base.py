@@ -321,7 +321,7 @@ SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', False)
 SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', 0)
 
 # Limit sessions to 1 week (the default is 2 weeks)
-SESSION_COOKIE_AGE = 604800
+SESSION_COOKIE_AGE = env.int('DJANGO_SESSION_COOKIE_AGE', 604800)
 
 # The maximum size in bytes that a request body may be before a SuspiciousOperation (RequestDataTooBig) is raised  # noqa
 # This variable is available only in Django 1.10+. Only there for next upgrade
