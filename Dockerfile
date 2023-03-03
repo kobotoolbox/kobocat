@@ -47,6 +47,9 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
     mkdir -p ${KOBOCAT_SRC_DIR}/emails && \
     mkdir -p ${INIT_PATH}
 
+# DO NOT remove packages like `less` and `procps` without approval from
+# jnm (or the current on-call sysadmin). Thanks.
+
 RUN apt-get -qq update && \
     apt-get -qq -y install \
         cron \
@@ -61,6 +64,7 @@ RUN apt-get -qq update && \
         locales \
         openjdk-11-jre \
         postgresql-client \
+        procps \
         rsync \
         runit-init \
         vim-tiny \
