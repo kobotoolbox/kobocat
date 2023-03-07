@@ -49,6 +49,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             'has_start_time',
             'shared',
             'shared_data',
+            'pending_delete',
         )
 
     @check_obj
