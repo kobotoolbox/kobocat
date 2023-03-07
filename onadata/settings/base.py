@@ -120,7 +120,7 @@ STATICFILES_FINDERS = [
 
 MIDDLEWARE = [
     'onadata.koboform.redirect_middleware.ConditionalRedirects',
-    'reversion.middleware.RevisionMiddleware',
+    'onadata.apps.main.middleware.RevisionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -490,7 +490,7 @@ OAUTH2_PROVIDER = {
         'write': 'Write scope',
         'groups': 'Access to your groups'
     },
-    'PKCE_REQUIRED' : False,
+    'PKCE_REQUIRED': False,
 }
 
 # All registration should be done through KPI, so Django Registration should
@@ -517,11 +517,6 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = (
     'http://kc.kobo.local',
 )
-
-# ToDo Remove when `kobokitten-remove-ui-CUD-actions-unicode` is merged
-GOOGLE_STEP2_URI = 'http://ona.io/gwelcome'
-GOOGLE_CLIENT_ID = '617113120802.onadata.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET = '9reM29qpGFPyI8TBuB54Z4fk'
 
 THUMB_CONF = {
     'large': {'size': 1280, 'suffix': '-large'},
@@ -675,6 +670,10 @@ SERVICE_ACCOUNT = {
         'SERVICE_ACCOUNT_BACKEND_URL', default='redis://redis_cache:6380/6'
     ),
     'WHITELISTED_HOSTS': env.list('SERVICE_ACCOUNT_WHITELISTED_HOSTS', default=[]),
+}
+
+REVERSION_MIDDLEWARE_SKIPPED_URL_PATTERNS = {
+    r'/api/v1/users/(.*)': ['DELETE']
 }
 
 

@@ -705,7 +705,7 @@ data (instance/submission per row)
             # `onadata.apps.logger.models.xform.set_object_permissions()`.
             # For safety and clarity, this endpoint now explicitly denies
             # access to all non-owners.
-            raise PermissionDenied
+            raise exceptions.PermissionDenied
         resp = submit_csv(request, xform, request.FILES.get('csv_file'))
         return Response(
             data=resp,

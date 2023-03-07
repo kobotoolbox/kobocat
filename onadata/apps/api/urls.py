@@ -15,6 +15,7 @@ from onadata.apps.api.viewsets.note_viewset import NoteViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
+from onadata.apps.api.viewsets.user import UserViewSet
 
 
 class MultiLookupRouter(routers.DefaultRouter):
@@ -381,6 +382,8 @@ class MultiLookupRouterWithPatchList(MultiLookupRouter):
 
 
 router = MultiLookupRouter(trailing_slash=False)
+
+router.register(r'users', UserViewSet)
 router.register(r'user', ConnectViewSet)
 router.register(r'forms', XFormViewSet)
 router.register(r'notes', NoteViewSet, basename='notes')
