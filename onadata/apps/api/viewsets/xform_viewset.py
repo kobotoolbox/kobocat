@@ -9,6 +9,7 @@ from django.core.files.storage import get_storage_class
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
+from kobo_service_account.models import ServiceAccountUser
 from kobo_service_account.utils import get_real_user
 from rest_framework import exceptions
 from rest_framework import status
@@ -637,6 +638,14 @@ data (instance/submission per row)
                 data = {"enketo_url": url}
 
         return Response(data, http_status)
+
+    def get_queryset(self):
+        if isinstance(self.request.user, ServiceAccountUser):
+            # We need to get all xforms (even soft-deleted ones) to
+            # system-account user to let it delete xform
+            # when it is already soft-deleted.
+            self.queryset = XForm.all_objects.all()
+        return super().get_queryset()
 
     def update(self, request, pk, *args, **kwargs):
         if 'xls_file' in request.FILES:
