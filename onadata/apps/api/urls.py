@@ -1,5 +1,6 @@
 # coding: utf-8
 from django.urls import re_path
+from django.urls.exceptions import NoReverseMatch
 from rest_framework import routers
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -302,8 +303,15 @@ Example using curl:
             def get(self, request, format=None):
                 ret = {}
                 for key, url_name in api_root_dict.items():
-                    ret[key] = reverse(
-                        url_name, request=request, format=format)
+                    try:
+                        ret[key] = reverse(
+                            url_name, request=request, format=format
+                        )
+                    except NoReverseMatch:
+                        # Can happen if list endpoint does not exist but
+                        # detail does. E.g. `/api/v1/users/` is not registered
+                        # but `/api/v1/users/<username>` is.
+                        continue
                 return Response(ret)
 
         return OnaApi.as_view()
