@@ -676,6 +676,9 @@ REVERSION_MIDDLEWARE_SKIPPED_URL_PATTERNS = {
     r'/api/v1/users/(.*)': ['DELETE']
 }
 
+# run heavy migration scripts by default
+# NOTE: this should be set to False for major deployments. This can take a long time
+SKIP_HEAVY_MIGRATIONS = env.bool('SKIP_HEAVY_MIGRATIONS', False)
 
 ################################
 # Celery settings              #
