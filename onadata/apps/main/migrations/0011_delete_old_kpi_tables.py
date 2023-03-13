@@ -11,22 +11,22 @@ KPI_TABLES = [
     'kpi_assetfile',
     'kpi_assetversion',
     'kpi_assetuserpartialpermission',
+    'hook_hooklog',
+    'hook_hook',
     'kpi_asset',
     'kpi_asset_old',
+    'kpi_usercollectionsubscription',
     'kpi_collection',
     'kpi_importtask',
     'kpi_authorizedapplication',
     'kpi_taguid',
     'kpi_onetimeauthenticationkey',
-    'kpi_usercollectionsubscription',
     'kpi_exporttask',
     'hub_sitewidemessage',
     'hub_configurationfile',
     'hub_extrauserdetail',
     'hub_perusersetting',
     'hub_formbuilderpreference',
-    'hook_hooklog',
-    'hook_hook',
     'external_integrations_corsmodel',
     'help_inappmessageuserinteractions',
     'help_inappmessagefile',
@@ -34,9 +34,9 @@ KPI_TABLES = [
 ]
 
 DEPRECATED_TABLES = [
+    'djcelery_periodictask',
     'djcelery_crontabschedule',
     'djcelery_intervalschedule',
-    'djcelery_periodictask',
     'djcelery_periodictasks',
     'djcelery_taskstate',
     'djcelery_workerstate',
@@ -71,7 +71,7 @@ def get_operations():
     if settings.SKIP_HEAVY_MIGRATIONS:
         return []
 
-    tables = KPI_TABLES + DEPRECATED_TABLES
+    tables = DEPRECATED_TABLES + KPI_TABLES
     print(
         """
         This might take a while. If it is too slow, you may want to re-run the
@@ -82,10 +82,7 @@ def get_operations():
     for table in tables:
         operations.append(
             migrations.RunSQL(
-                sql=(
-                    delete_if_exists(table)
-                    + f'DROP TABLE IF EXISTS {table};'
-                ),
+                sql=delete_if_exists(table),
                 reverse_sql=migrations.RunSQL.noop,
             )
         )
