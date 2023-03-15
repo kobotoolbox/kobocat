@@ -58,8 +58,9 @@ def get_operations():
     tables = DEPRECATED_TABLES + KPI_TABLES
     print(
         """
-        This might take a while. If it is too slow, you may want to re-run the
-        migration with SKIP_HEAVY_MIGRATIONS=True.
+        This migration might take a while. If it is too slow, you may want to 
+        re-run migrations with SKIP_HEAVY_MIGRATIONS=True and apply this one 
+        manually from the django shell.
         """
     )
     operations = []
