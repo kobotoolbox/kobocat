@@ -2,13 +2,14 @@
 import os
 import re
 from io import StringIO
+from xml.dom import Node
 
 from django.conf import settings
 from django.urls import reverse
+from defusedxml import minidom
 from guardian.shortcuts import assign_perm
 from kobo_service_account.utils import get_request_headers
 from rest_framework import status
-from xml.dom import minidom, Node
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
