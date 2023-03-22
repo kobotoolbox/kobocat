@@ -80,7 +80,7 @@
         <td>
             {% if not export.is_pending %}
                 {% if export.is_successful %}
-                    <a href="{% url "export_download" username xform.id_string export.export_type export.filename %}">{{ export.filename }}</a>
+                    <a href="{% url "export_download" username xform.id_string export.export_type export.filename %}" target="_blank">{{ export.filename }}</a>
                 {% else %}
                     Failed
                 {% endif %}
