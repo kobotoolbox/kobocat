@@ -1,7 +1,7 @@
 # coding: utf-8
 import pytest
+from django.conf import settings
 from django.urls.exceptions import NoReverseMatch
-from django.test import RequestFactory
 from rest_framework import status
 from rest_framework.reverse import reverse
 
@@ -44,7 +44,6 @@ class TestUserViewSet(TestAbstractViewSet):
         self.alice = alice_profile.user
         self.admin = admin_profile.user
         self.bob = bob_profile.user
-        self.factory = RequestFactory()
 
     def test_no_access_to_users_list(self):
         # anonymous user
@@ -93,17 +92,21 @@ class TestUserViewSet(TestAbstractViewSet):
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_service_account_cannot_access_user_detail(self):
+        self.client.logout()
         url = reverse('user-detail', args=(self.alice.username,))
         service_account_meta = self.get_meta_from_headers(
             get_request_headers(self.alice.username)
         )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
         response = self.client.get(url, **service_account_meta)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_service_account_can_delete_user(self):
+        self.client.logout()
         url = reverse('user-detail', args=(self.alice.username,))
         service_account_meta = self.get_meta_from_headers(
             get_request_headers(self.alice.username)
         )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
         response = self.client.delete(url, **service_account_meta)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
