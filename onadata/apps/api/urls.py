@@ -13,10 +13,10 @@ from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
 from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
+from onadata.apps.api.viewsets.user import UserViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
-from onadata.apps.api.viewsets.user import UserViewSet
 
 
 class MultiLookupRouter(routers.DefaultRouter):
