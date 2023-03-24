@@ -810,3 +810,17 @@ class TestDataViewSet(TestBase):
             self.assertEqual(
                 submission['_validation_status']['by_whom'], self.user.username  # alice
             )
+
+    def test_cannot_access_data_of_pending_delete_xform(self):
+        # Ensure bob is able to see their data
+        self.test_data()
+
+        # Flag bob's xform as pending delete
+        self.xform.pending_delete = True
+        self.xform.save(update_fields=['pending_delete'])
+
+        # Ensure XForm data is not accessible anymore
+        request = self.factory.get('/', **self.extra)
+        view = DataViewSet.as_view({'get': 'list'})
+        response = view(request, pk=self.xform.pk)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
