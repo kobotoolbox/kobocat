@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='xform',
             name='pending_delete',
-            field=onadata.apps.logger.fields.LazyDefaultBooleanField(default=False),
+            field=models.BooleanField(default=False),
         )
     ]

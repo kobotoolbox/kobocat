@@ -99,7 +99,7 @@ class XForm(BaseModel):
 
     has_kpi_hooks = LazyDefaultBooleanField(default=False)
     kpi_asset_uid = models.CharField(max_length=32, null=True)
-    pending_delete = LazyDefaultBooleanField(default=False)
+    pending_delete = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'logger'
