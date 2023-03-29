@@ -5,7 +5,7 @@ import sys
 
 from django.conf import settings
 
-from onadata.libs.utils.storage import rmdir, user_storage_exists, default_storage
+from onadata.libs.utils.storage import rmdir, default_storage
 
 TEST_USERNAMES = [
     'alice',
