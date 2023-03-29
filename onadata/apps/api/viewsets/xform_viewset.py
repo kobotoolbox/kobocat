@@ -724,11 +724,13 @@ data (instance/submission per row)
     def perform_destroy(self, instance):
         username = instance.user.username
         xform_uuid = instance.uuid
+        xform_id_string = instance.id_string
 
         instance.delete()
         # Clean up storage
         default_storage.delete(str(instance.xls))
         rmdir(f'{username}/form-media/{xform_uuid}')
+        rmdir(f'{username}/exports/{xform_id_string}')
         # Attachments should have been already deleted. Let's remove the parent
         # folder entirely anyway in case orphans are still present.
         rmdir(f'{username}/attachments/{xform_uuid}')
