@@ -12,7 +12,7 @@ from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import XForm
-from onadata.libs.utils.storage import delete_user_storage
+from onadata.libs.utils.storage import rmdir
 
 
 NUM_INSTANCES = 4
@@ -449,4 +449,4 @@ class TestBriefcaseAPI(TestAbstractViewSet):
 
     def tearDown(self):
         if self.user:
-            delete_user_storage(self.user.username)
+            rmdir(self.user.username)

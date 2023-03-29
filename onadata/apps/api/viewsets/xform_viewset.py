@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
@@ -37,6 +37,7 @@ from onadata.libs.utils.export_tools import generate_export, \
 from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.string import str2bool
+from onadata.libs.utils.storage import rmdir
 from onadata.libs.utils.viewer_tools import _get_form_url
 from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
 
@@ -147,7 +148,6 @@ def response_for_format(form, format=None):
         formatted_data = form.xml
     elif format == 'xls':
         file_path = form.xls.name
-        default_storage = get_storage_class()()
         if file_path != '' and default_storage.exists(file_path):
             formatted_data = form.xls
         else:
@@ -720,3 +720,15 @@ data (instance/submission per row)
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
             status.HTTP_400_BAD_REQUEST)
+
+    def perform_destroy(self, instance):
+        username = instance.user.username
+        xform_uuid = instance.uuid
+
+        instance.delete()
+        # Clean up storage
+        default_storage.delete(str(instance.xls))
+        rmdir(f'{username}/form-media/{xform_uuid}')
+        # Attachments should have been already deleted. Let's remove the parent
+        # folder entirely anyway in case orphans are still present.
+        rmdir(f'{username}/attachments/{xform_uuid}')

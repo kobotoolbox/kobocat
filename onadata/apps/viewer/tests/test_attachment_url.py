@@ -7,7 +7,7 @@ from django_digest.test import Client as DigestClient
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Attachment
 from onadata.apps.viewer.views import attachment_url
-from onadata.libs.utils.storage import delete_user_storage
+from onadata.libs.utils.storage import rmdir
 
 
 class TestAttachmentUrl(TestBase):
@@ -51,4 +51,4 @@ class TestAttachmentUrl(TestBase):
 
     def tearDown(self):
         if self.user:
-            delete_user_storage(self.user.username)
+            rmdir(self.user.username)
