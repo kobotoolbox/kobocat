@@ -53,8 +53,9 @@ class XFormWithoutPendingDeletedManager(models.Manager):
 
 
 class XFormAllManager(models.Manager):
+
     def get_queryset(self):
-        return super(models.Manager, self).get_queryset()
+        pass
 
 
 class XForm(BaseModel):
