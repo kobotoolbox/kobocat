@@ -50,5 +50,5 @@ class TestAttachmentUrl(TestBase):
         self.assertEqual(attachment.mimetype, 'image/jpeg')
 
     def tearDown(self):
-        if self.user:
+        if self.user and self.user.username:
             rmdir(self.user.username)

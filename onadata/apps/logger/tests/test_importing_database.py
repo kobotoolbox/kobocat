@@ -39,7 +39,7 @@ class TestImportingDatabase(TestBase):
     def tearDown(self):
         # delete everything we imported
         Instance.objects.all().delete()
-        if self.user:
+        if self.user and self.user.username:
             rmdir(self.user.username)
 
     def test_importing_b1_and_b2(self):

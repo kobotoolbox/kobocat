@@ -15,4 +15,5 @@ class UserViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
     def perform_destroy(self, instance):
         username = instance.username
         instance.delete()
-        rmdir(f'{username}')
+        if username:
+            rmdir(f'{username}')

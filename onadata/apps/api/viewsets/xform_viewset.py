@@ -729,8 +729,11 @@ data (instance/submission per row)
         instance.delete()
         # Clean up storage
         default_storage.delete(str(instance.xls))
-        rmdir(f'{username}/form-media/{xform_uuid}')
-        rmdir(f'{username}/exports/{xform_id_string}')
-        # Attachments should have been already deleted. Let's remove the parent
-        # folder entirely anyway in case orphans are still present.
-        rmdir(f'{username}/attachments/{xform_uuid}')
+        if xform_uuid:
+            rmdir(f'{username}/form-media/{xform_uuid}')
+            # Attachments should have been already deleted. Let's remove the parent
+            # folder entirely anyway in case orphans are still present.
+            rmdir(f'{username}/attachments/{xform_uuid}')
+
+        if xform_id_string:
+            rmdir(f'{username}/exports/{xform_id_string}')

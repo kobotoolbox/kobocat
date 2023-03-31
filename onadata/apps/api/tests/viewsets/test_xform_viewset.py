@@ -66,7 +66,8 @@ class TestXFormViewSet(TestAbstractViewSet):
 
     def test_form_list_with_pending_delete_xform(self):
         """
-        Test that bob (or anyone else) has access to bob's pending delete XForm
+        Test that bob (or anyone else) does not have access to bob's pending
+        delete XForm.
         """
         self.publish_xls_form()
 

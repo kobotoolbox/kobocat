@@ -445,8 +445,6 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             self.assertContains(response, instanceId, status_code=201)
             self.assertEqual(Instance.objects.count(), count + 1)
 
-
-
     def tearDown(self):
-        if self.user:
+        if self.user and self.user.username:
             rmdir(self.user.username)
