@@ -8,7 +8,7 @@ from django.db.models.constraints import UniqueConstraint
 class MonthlyXFormSubmissionCounter(models.Model):
     year = models.IntegerField()
     month = models.IntegerField()
-    user = models.ForeignKey(User, related_name='users', on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, related_name='users', on_delete=models.CASCADE)
     # `xform = NULL` (one per user per month) is used as a catch-all for
     # deleted projects
     xform = models.ForeignKey('logger.XForm', null=True, on_delete=models.CASCADE)

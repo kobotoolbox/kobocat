@@ -19,7 +19,7 @@ from onadata.apps.main.models import MetaData
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.main.views import profile, download_media_data
 from onadata.libs.utils.briefcase_client import BriefcaseClient
-from onadata.libs.utils.storage import delete_user_storage
+from onadata.libs.utils.storage import rmdir
 
 storage = get_storage_class()()
 
@@ -203,4 +203,4 @@ class TestBriefcaseClient(TestBase):
     def tearDown(self):
         # remove media files
         for username in ['bob', 'deno']:
-            delete_user_storage(username)
+            rmdir(username)

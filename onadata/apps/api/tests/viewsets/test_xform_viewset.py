@@ -64,6 +64,26 @@ class TestXFormViewSet(TestAbstractViewSet):
         # should be empty
         self.assertEqual(response.data, [])
 
+    def test_form_list_with_pending_delete_xform(self):
+        """
+        Test that bob (or anyone else) does not have access to bob's pending
+        delete XForm.
+        """
+        self.publish_xls_form()
+
+        request = self.factory.get('/', **self.extra)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, [self.form_data])
+
+        self.xform.pending_delete = True
+        self.xform.save(update_fields=['pending_delete'])
+
+        request = self.factory.get('/', **self.extra)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, [])
+
     def test_form_list_filter_by_user(self):
         # publish bob's form
         self.publish_xls_form()

@@ -68,7 +68,6 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             headers=self.get_openrosa_headers(), status=status.HTTP_204_NO_CONTENT
         )
 
-
     def get_renderers(self):
         if self.action and self.action == 'manifest':
             return [XFormManifestRenderer()]

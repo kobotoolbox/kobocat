@@ -47,6 +47,15 @@ def upload_to(instance, filename):
         os.path.split(filename)[1])
 
 
+class XFormWithoutPendingDeletedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(pending_delete=True)
+
+
+class XFormAllManager(models.Manager):
+    pass
+
+
 class XForm(BaseModel):
     CLONED_SUFFIX = '_cloned'
     MAX_ID_LENGTH = 100
@@ -89,6 +98,7 @@ class XForm(BaseModel):
 
     has_kpi_hooks = LazyDefaultBooleanField(default=False)
     kpi_asset_uid = models.CharField(max_length=32, null=True)
+    pending_delete = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'logger'
@@ -102,6 +112,9 @@ class XForm(BaseModel):
             (CAN_VALIDATE_XFORM, t('Can validate submissions')),
             (CAN_DELETE_DATA_XFORM, t('Can delete submissions')),
         )
+
+    objects = XFormWithoutPendingDeletedManager()
+    all_objects = XFormAllManager()
 
     def file_name(self):
         return self.id_string + ".xml"

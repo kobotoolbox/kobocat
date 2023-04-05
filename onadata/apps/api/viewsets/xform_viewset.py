@@ -5,10 +5,11 @@ from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
+from kobo_service_account.models import ServiceAccountUser
 from kobo_service_account.utils import get_real_user
 from rest_framework import exceptions
 from rest_framework import status
@@ -36,6 +37,7 @@ from onadata.libs.utils.export_tools import generate_export, \
 from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.string import str2bool
+from onadata.libs.utils.storage import rmdir
 from onadata.libs.utils.viewer_tools import _get_form_url
 from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
 
@@ -146,7 +148,6 @@ def response_for_format(form, format=None):
         formatted_data = form.xml
     elif format == 'xls':
         file_path = form.xls.name
-        default_storage = get_storage_class()()
         if file_path != '' and default_storage.exists(file_path):
             formatted_data = form.xls
         else:
@@ -638,6 +639,14 @@ data (instance/submission per row)
 
         return Response(data, http_status)
 
+    def get_queryset(self):
+        if isinstance(self.request.user, ServiceAccountUser):
+            # We need to get all xforms (even soft-deleted ones) to
+            # system-account user to let it delete xform
+            # when it is already soft-deleted.
+            self.queryset = XForm.all_objects.all()
+        return super().get_queryset()
+
     def update(self, request, pk, *args, **kwargs):
         if 'xls_file' in request.FILES:
             # A new XLSForm has been uploaded and will replace the existing
@@ -705,9 +714,26 @@ data (instance/submission per row)
             # `onadata.apps.logger.models.xform.set_object_permissions()`.
             # For safety and clarity, this endpoint now explicitly denies
             # access to all non-owners.
-            raise PermissionDenied
+            raise exceptions.PermissionDenied
         resp = submit_csv(request, xform, request.FILES.get('csv_file'))
         return Response(
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
             status.HTTP_400_BAD_REQUEST)
+
+    def perform_destroy(self, instance):
+        username = instance.user.username
+        xform_uuid = instance.uuid
+        xform_id_string = instance.id_string
+
+        instance.delete()
+        # Clean up storage
+        default_storage.delete(str(instance.xls))
+        if xform_uuid:
+            rmdir(f'{username}/form-media/{xform_uuid}')
+            # Attachments should have been already deleted. Let's remove the parent
+            # folder entirely anyway in case orphans are still present.
+            rmdir(f'{username}/attachments/{xform_uuid}')
+
+        if xform_id_string:
+            rmdir(f'{username}/exports/{xform_id_string}')

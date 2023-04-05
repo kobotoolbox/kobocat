@@ -12,7 +12,7 @@ from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import XForm
-from onadata.libs.utils.storage import delete_user_storage
+from onadata.libs.utils.storage import rmdir
 
 
 NUM_INSTANCES = 4
@@ -445,8 +445,6 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             self.assertContains(response, instanceId, status_code=201)
             self.assertEqual(Instance.objects.count(), count + 1)
 
-
-
     def tearDown(self):
-        if self.user:
-            delete_user_storage(self.user.username)
+        if self.user and self.user.username:
+            rmdir(self.user.username)

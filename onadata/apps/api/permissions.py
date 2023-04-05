@@ -1,6 +1,8 @@
 # coding: utf-8
+from django.http import Http404
 from kobo_service_account.models import ServiceAccountUser
 from rest_framework.permissions import (
+    BasePermission,
     DjangoObjectPermissions,
     IsAuthenticated,
     SAFE_METHODS,
@@ -350,6 +352,22 @@ class ConnectViewsetPermissions(IsAuthenticated):
             return True
 
         return super().has_permission(request, view)
+
+
+class UserDeletePermission(BasePermission):
+
+    perms_map = {}
+
+    def has_permission(self, request, view):
+        if not isinstance(request.user, ServiceAccountUser):
+            # Do not reveal user's existence
+            raise Http404
+
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        # Always return True because it must pass `has_permission()` first
+        return True
 
 
 __permissions__ = [DjangoObjectPermissions, IsAuthenticated]

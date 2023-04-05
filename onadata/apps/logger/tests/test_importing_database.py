@@ -9,7 +9,7 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.views import bulksubmission
-from onadata.libs.utils.storage import delete_user_storage
+from onadata.libs.utils.storage import rmdir
 
 CUR_PATH = os.path.abspath(__file__)
 CUR_DIR = os.path.dirname(CUR_PATH)
@@ -39,8 +39,8 @@ class TestImportingDatabase(TestBase):
     def tearDown(self):
         # delete everything we imported
         Instance.objects.all().delete()
-        if self.user:
-            delete_user_storage(self.user.username)
+        if self.user and self.user.username:
+            rmdir(self.user.username)
 
     def test_importing_b1_and_b2(self):
         """

@@ -8,6 +8,7 @@ from django.db.models.signals import pre_delete, post_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as t
+from kobo_service_account.models import ServiceAccountUser
 from kobo_service_account.utils import get_real_user
 from rest_framework import status
 from rest_framework.decorators import action
@@ -395,6 +396,14 @@ Delete a specific submission in a form
     lookup_fields = ('pk', 'dataid')
     extra_lookup_fields = None
     queryset = XForm.objects.all()
+
+    def get_queryset(self):
+        if isinstance(self.request.user, ServiceAccountUser):
+            # We need to get all xforms (even soft-deleted ones) to
+            # system-account user to let it delete data
+            # when the xform is already soft-deleted.
+            self.queryset = XForm.all_objects.all()
+        return super().get_queryset()
 
     def bulk_delete(self, request, *args, **kwargs):
         """

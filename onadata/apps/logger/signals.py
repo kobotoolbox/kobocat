@@ -21,6 +21,9 @@ def delete_attachment_subtract_user_profile_storage_bytes(instance, **kwargs):
     """
     attachment = instance
     file_size = attachment.media_file_size
+    if not file_size:
+        return
+
     queryset = UserProfile.objects.filter(
         user_id=attachment.instance.xform.user_id
     )
@@ -37,6 +40,9 @@ def delete_attachment_subtract_xform_storage_bytes(instance, **kwargs):
     """
     attachment = instance
     file_size = attachment.media_file_size
+    if not file_size:
+        return
+
     xform_id = instance.instance.xform.pk
     queryset = XForm.objects.filter(pk=xform_id)
     queryset.update(
@@ -73,6 +79,9 @@ def update_user_profile_attachment_storage_bytes(instance, created, **kwargs):
     if getattr(attachment, 'defer_counting', False):
         return
     file_size = attachment.media_file_size
+    if not file_size:
+        return
+
     queryset = UserProfile.objects.filter(user_id=attachment.instance.xform.user_id)
     queryset.update(
         attachment_storage_bytes=F('attachment_storage_bytes') + file_size
@@ -91,6 +100,10 @@ def update_xform_attachment_storage_bytes(instance, created, **kwargs):
     if getattr(attachment, 'defer_counting', False):
         return
     file_size = attachment.media_file_size
+
+    if not file_size:
+        return
+
     xform_id = attachment.instance.xform_id
     queryset = XForm.objects.filter(pk=xform_id)
     queryset.update(

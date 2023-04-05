@@ -5,7 +5,7 @@ import sys
 
 from django.conf import settings
 
-from onadata.libs.utils.storage import delete_user_storage, user_storage_exists
+from onadata.libs.utils.storage import rmdir, default_storage
 
 TEST_USERNAMES = [
     'alice',
@@ -45,7 +45,7 @@ def setup(request):
         toggle_capturing(capture_manager, stop=True)
 
     for username in TEST_USERNAMES:
-        if user_storage_exists(username):
+        if default_storage.exists(username):
             response = stderr_prompt(
                 '\n\n'
                 'WARNING - DATA LOSS! A storage directory already exists for '
@@ -90,4 +90,4 @@ def _tear_down():
 
     print("Removing users' storage...")
     for username in TEST_USERNAMES:
-        delete_user_storage(username)
+        rmdir(username)
