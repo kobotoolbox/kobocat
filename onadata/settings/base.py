@@ -96,13 +96,12 @@ STATIC_URL = '/static/'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/login_redirect/'
 
+os.environ['KOBOCAT_ROOT_URI_PREFIX'] = 'kckc'
 
 if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
-    KOBOCAT_ROOT_URI_PREFIX = '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
-    MEDIA_URL = KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
-    STATIC_URL = KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
-    LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
-    LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
+    KOBOCAT_ROOT_URI_PREFIX = os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
+else:
+    KOBOCAT_ROOT_URI_PREFIX = ''
 
 MEDIA_ROOT = os.path.join(PROJECT_ROOT, MEDIA_URL.lstrip('/'))
 

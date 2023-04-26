@@ -60,7 +60,7 @@ from onadata.apps.logger.views import (
 
 admin.autodiscover()
 
-urlpatterns = [
+unwrapped_urlpatterns = [
     # change Language
     re_path(r'^i18n/', include('django.conf.urls.i18n')),
     re_path('^api/v1/', include(router.urls)),
@@ -218,3 +218,10 @@ urlpatterns = [
     re_path(r"^(?P<username>[^/]+)/superuser_stats/(?P<base_filename>[^/]+)$",
             retrieve_superuser_stats),
 ]
+
+if settings.KOBOCAT_ROOT_URI_PREFIX:
+    urlpatterns = [
+        path(settings.KOBOCAT_ROOT_URI_PREFIX, include(unwrapped_urlpatterns)),
+    ]
+else:
+    urlpatterns = unwrapped_urlpatterns
