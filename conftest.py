@@ -1,9 +1,11 @@
 # coding: utf-8
 import os
-import pytest
 import sys
 
+import fakeredis
+import pytest
 from django.conf import settings
+from mock import patch
 
 from onadata.libs.utils.storage import rmdir, default_storage
 
@@ -76,6 +78,22 @@ def setup(request):
         toggle_capturing(capture_manager, stop=False)
 
     request.addfinalizer(_tear_down)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def default_session_fixture(request):
+    """
+    Globally patch redis_client with fake redis
+    """
+    with patch(
+        'kobo_service_account.models.ServiceAccountUser.redis_client',
+        fakeredis.FakeStrictRedis(),
+    ):
+        with patch(
+            'onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage._get_cache',
+            fakeredis.FakeStrictRedis,
+        ):
+            yield
 
 
 def _tear_down():

@@ -12,35 +12,8 @@ from django.utils.encoding import smart_str
 from django.utils.translation import gettext as t
 from xml.dom import minidom, Node
 
+from onadata.apps.logger.exceptions import InstanceEmptyError
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
-
-
-class XLSFormError(Exception):
-    pass
-
-
-class DuplicateInstance(Exception):
-    def __str__(self):
-        return t("Duplicate Instance")
-
-
-class InstanceInvalidUserError(Exception):
-    def __str__(self):
-        return t("Could not determine the user.")
-
-
-class InstanceParseError(Exception):
-    def __str__(self):
-        return t("The instance could not be parsed.")
-
-
-class InstanceEmptyError(InstanceParseError):
-    def __str__(self):
-        return t("Empty instance")
-
-
-class InstanceMultipleNodeError(Exception):
-    pass
 
 
 def get_meta_node_from_xml(
@@ -138,7 +111,7 @@ def clean_and_parse_xml(xml_string: str) -> minidom.Document:
 def set_meta(xml_str: str, meta_name: str, new_value: str) -> str:
 
     if not (node_and_root := get_meta_node_from_xml(xml_str, meta_name)):
-        raise ValueError(f"{meta_name} node not found.")
+        raise ValueError(f'{meta_name} node not found')
 
     node, root = node_and_root
 

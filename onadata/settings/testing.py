@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 
+from fakeredis import FakeConnection, FakeStrictRedis
 from mongomock import MongoClient as MockMongoClient
 
 from .base import *
@@ -24,6 +25,9 @@ LOGGING['loggers']['django.db.backends'] = {
 SECRET_KEY = os.urandom(50).hex()
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+CACHES['default']['OPTIONS'] = {
+  'connection_class': FakeConnection
+}
 
 ###################################
 # Django Rest Framework settings  #
@@ -52,6 +56,8 @@ if not USE_POSTGRESQL:
 
 SERVICE_ACCOUNT['WHITELISTED_HOSTS'] = ['testserver']
 SERVICE_ACCOUNT['NAMESPACE'] = 'kobo-service-account-test'
+
+REDIS_LOCK_CLIENT = FakeStrictRedis()
 
 ################################
 # Celery settings              #

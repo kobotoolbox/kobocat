@@ -10,3 +10,4 @@ pytest-env
 mongomock
 mock
 httmock
+fakeredis[lua]
