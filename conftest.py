@@ -83,7 +83,7 @@ def setup(request):
 @pytest.fixture(scope='session', autouse=True)
 def default_session_fixture(request):
     """
-    Globally patch redis_client with fake redis
+    Globally patch redis_client with fakeredis
     """
     with patch(
         'kobo_service_account.models.ServiceAccountUser.redis_client',

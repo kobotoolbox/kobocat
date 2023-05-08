@@ -1,0 +1,19 @@
+[
+    {
+        "fields": {
+            "date_joined": "2015-02-12T19:52:14.406Z",
+            "email": "bob@columbia.edu",
+            "first_name": "bob",
+            "groups": [],
+            "is_active": true,
+            "is_staff": false,
+            "is_superuser": false,
+            "last_login": "2015-02-12T19:52:14.406Z",
+            "last_name": "bob",
+            "password": "pbkdf2_sha256$260000$jSfi1lb5FclOUV9ZodfCdP$Up19DmjLFtBh0VREyow/oduVkwEoqQftljfwq6b9vIo=",
+            "username": "bob"
+        },
+        "model": "auth.user",
+        "pk": 2
+    }
+]

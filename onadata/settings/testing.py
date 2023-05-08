@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
 
-from fakeredis import FakeConnection, FakeStrictRedis
+from fakeredis import FakeConnection, FakeStrictRedis, FakeServer
 from mongomock import MongoClient as MockMongoClient
 
 from .base import *
@@ -57,7 +57,10 @@ if not USE_POSTGRESQL:
 SERVICE_ACCOUNT['WHITELISTED_HOSTS'] = ['testserver']
 SERVICE_ACCOUNT['NAMESPACE'] = 'kobo-service-account-test'
 
-REDIS_LOCK_CLIENT = FakeStrictRedis()
+server = FakeServer()
+REDIS_LOCK_CLIENT = FakeStrictRedis(server=server)
+
+GIT_LAB = os.getenv('GIT_LAB', False)
 
 ################################
 # Celery settings              #

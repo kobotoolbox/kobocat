@@ -681,7 +681,10 @@ REVERSION_MIDDLEWARE_SKIPPED_URL_PATTERNS = {
 # NOTE: this should be set to False for major deployments. This can take a long time
 SKIP_HEAVY_MIGRATIONS = env.bool('SKIP_HEAVY_MIGRATIONS', False)
 
-redis_lock_url = env.cache_url('REDIS_LOCK_URL', default=redis_session_url)
+redis_lock_url = env.cache_url(
+    'REDIS_LOCK_URL',
+    default=os.getenv('REDIS_SESSION_URL', 'redis://redis_cache:6380/2'),
+)
 REDIS_LOCK_CLIENT = redis.Redis.from_url(redis_lock_url['LOCATION'])
 
 ################################
