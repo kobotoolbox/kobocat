@@ -108,6 +108,10 @@ def check_submission_permissions(
     :returns: None.
     :raises: PermissionDenied based on the above criteria.
     """
+    if xform.shared:
+        # Anonymous submissions are allowed!
+        return
+
     profile = UserProfile.objects.get_or_create(user=xform.user)[0]
     if (
         request

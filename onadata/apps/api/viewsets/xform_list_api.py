@@ -93,11 +93,11 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(user=profile.user)
             if profile.require_auth:
                 # The specified has user ticked "Require authentication to see
-                # forms and submit data"; reject anonymous requests
+                # forms and submit data"; only allow anonymous users to see
+                # specifically-shared forms
+                # TODO: Treat `profile.require_auth` as always True
                 if self.request.user.is_anonymous:
-                    # raises a permission denied exception, forces
-                    # authentication
-                    self.permission_denied(self.request)
+                    queryset = queryset.filter(shared=True)
                 else:
                     # Someone has logged in, but they are not necessarily
                     # allowed to access the forms belonging to the specified
