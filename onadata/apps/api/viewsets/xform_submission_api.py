@@ -20,7 +20,6 @@ from rest_framework.response import Response
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 
 from onadata.apps.logger.models import Instance
-from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs import filters
 from onadata.libs.authentication import DigestAuthentication
 from onadata.libs.mixins.openrosa_headers_mixin import OpenRosaHeadersMixin
@@ -177,9 +176,6 @@ Here is some example JSON, it would replace `[the JSON]` above:
                 raise NotAuthenticated
             else:
                 user = get_object_or_404(User, username=username.lower())
-                profile, created = UserProfile.objects.get_or_create(user=user)
-                if profile.require_auth:
-                    raise NotAuthenticated
         elif not username:
             # get the username from the user if not set
             username = request.user and get_real_user(request).username
