@@ -21,6 +21,7 @@ from django.shortcuts import render
 from django.utils.http import urlquote
 from django.utils.translation import gettext as t
 from django.views.decorators.http import require_POST
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.settings import api_settings
 
 from onadata.apps.logger.models import XForm, Attachment
@@ -38,8 +39,11 @@ from onadata.libs.utils.image_tools import image_url
 from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name, \
     disposition_ext_and_date
-from onadata.libs.utils.user_auth import has_permission, \
-    helper_auth_helper
+from onadata.libs.utils.user_auth import (
+    HttpResponseNotAuthorized,
+    has_permission,
+    helper_auth_helper,
+)
 from onadata.libs.utils.viewer_tools import export_def_from_filename
 
 media_file_logger = logging.getLogger('media_files')
@@ -407,7 +411,16 @@ def attachment_url(request, size='medium'):
             # classes before giving up
             drf_request = rest_framework.request.Request(request)
             for auth_class in api_settings.DEFAULT_AUTHENTICATION_CLASSES:
-                auth_tuple = auth_class().authenticate(drf_request)
+                try:
+                    # `authenticate()` will:
+                    #   * return `None` if no applicable authentication attempt
+                    #     was found in the request
+                    #   * raise `AuthenticationFailed` if an attempt _was_
+                    #     found but it failed
+                    #   * return a tuple if authentication succeded
+                    auth_tuple = auth_class().authenticate(drf_request)
+                except AuthenticationFailed:
+                    return HttpResponseNotAuthorized()
                 if auth_tuple is not None:
                     # Is it kosher to modify `request`? Let's do it anyway
                     # since that's what `has_permission()` requires...
