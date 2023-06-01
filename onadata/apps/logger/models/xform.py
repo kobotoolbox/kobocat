@@ -3,13 +3,16 @@ import json
 import os
 import re
 from xml.sax import saxutils
+from xml.dom import Node
 
+from defusedxml import minidom
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import get_storage_class
 from django.urls import reverse
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.utils.encoding import smart_str
 
@@ -20,6 +23,7 @@ from guardian.shortcuts import (
 )
 from taggit.managers import TaggableManager
 
+from onadata.apps.form_disclaimer.models import FormDisclaimer
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.monthly_xform_submission_counter import (
     MonthlyXFormSubmissionCounter,
@@ -115,6 +119,84 @@ class XForm(BaseModel):
 
     objects = XFormWithoutPendingDeletedManager()
     all_objects = XFormAllManager()
+
+    @property
+    def xml_with_disclaimer(self):
+        disclaimers = (
+            FormDisclaimer.objects.values('language_code', 'message', 'default')
+            .filter(Q(xform__isnull=True) | Q(xform=self))
+            .order_by('-xform')
+        )
+
+        print('disclaimers', disclaimers, flush=True)
+
+        if not disclaimers:
+            return self.xml
+
+        disclaimers_dict = {}
+        default_language_code = None
+        for d in disclaimers:
+            disclaimers_dict[d['language_code']] = d['message']
+            if d['default']:
+                default_language_code = d['language_code']
+
+        root = minidom.parseString(self.xml)
+        translated = '<itext>' in self.xml
+
+        if translated:
+            translation_nodes = []
+            languages = []
+            for n in root.getElementsByTagName('itext')[0].childNodes:
+                if n.nodeType == Node.ELEMENT_NODE and n.tagName == 'translation':
+                    languages.append(n.getAttribute('lang'))
+                    translation_nodes.append(n)
+                    disclaimer_translation = root.createElement('text')
+                    disclaimer_translation.setAttribute('id', f'/{self.id_string}/_{self.id_string}__disclaimer:label')
+                    value = root.createElement('value')
+                    language = n.getAttribute('lang').lower().strip()
+                    if m := re.match(r'[^\(]*\(([a-z]{2,})\)', language):
+                        language_code = m.groups()[0]
+                    else:
+                        language_code = default_language_code
+                    value.appendChild(
+                        root.createTextNode(disclaimers_dict.get(language_code, default_language_code))
+                    )
+                    disclaimer_translation.appendChild(value)
+                    n.appendChild(disclaimer_translation)
+
+        model_node = [
+            n
+            for n in root.getElementsByTagName('h:head')[0].childNodes
+            if n.nodeType == Node.ELEMENT_NODE and n.tagName == 'model'
+        ][0]
+
+        bind_node = root.createElement('bind')
+        bind_node.setAttribute('nodeset', f'/{self.id_string}/_{self.id_string}__disclaimer')
+        bind_node.setAttribute('readonly', 'true()')
+        bind_node.setAttribute('required', 'false()')
+        bind_node.setAttribute('type', 'string')
+        bind_node.setAttribute('relevant', 'false()')
+        model_node.appendChild(bind_node)
+
+        instance_node = model_node.getElementsByTagName('instance')[0].getElementsByTagName(self.id_string)[0]
+        instance_node.appendChild(root.createElement(f'_{self.id_string}__disclaimer'))
+
+        body_node = root.getElementsByTagName('h:body')[0]
+        disclaimer_input = root.createElement('input')
+        disclaimer_input_label = root.createElement('label')
+        disclaimer_input.setAttribute('appearance', 'kobo-disclaimer')
+        disclaimer_input.setAttribute('ref', f'/{self.id_string}/_{self.id_string}__disclaimer')
+        if translated:
+            disclaimer_input_label.setAttribute('ref', f"jr:itext('/{self.id_string}/_{self.id_string}__disclaimer:label')")
+        else:
+            disclaimer_input_label.appendChild(
+                root.createTextNode(disclaimers_dict[default_language_code])
+            )
+
+        disclaimer_input.appendChild(disclaimer_input_label)
+        body_node.appendChild(disclaimer_input)
+
+        return root.toxml(encoding='utf-8').decode()
 
     def file_name(self):
         return self.id_string + ".xml"
@@ -241,6 +323,10 @@ class XForm(BaseModel):
     @property
     def md5_hash(self):
         return get_hash(self.xml)
+
+    @property
+    def md5_hash_with_disclaimer(self):
+        return get_hash(self.xml_with_disclaimer)
 
     @property
     def can_be_replaced(self):
