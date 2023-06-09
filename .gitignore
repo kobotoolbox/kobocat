@@ -59,3 +59,6 @@ Vagrantfile
 ansible
 
 /src
+
+# sublime text files
+*sublime-*
