@@ -1,11 +1,18 @@
 # coding: utf-8
+import multiprocessing
 import os
 import uuid
+from collections import defaultdict
+from functools import partial
 
+import pytest
+import requests
 import simplejson as json
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.test.testcases import LiveServerTestCase
+from django.urls import reverse
 from django_digest.test import DigestAuth
 from guardian.shortcuts import assign_perm
 from kobo_service_account.utils import get_request_headers
@@ -15,6 +22,7 @@ from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
     TestAbstractViewSet
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Attachment
+from onadata.apps.main import tests as main_tests
 from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS
 )
@@ -441,6 +449,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             self.assertEqual(
                 response['Location'], 'http://testserver/submission'
             )
+
     def test_submission_blocking_flag(self):
         # Set 'submissions_suspended' True in the profile metadata to test if
         # submission do fail with the flag set
@@ -488,3 +497,103 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 )
                 response = self.view(request, username=username)
                 self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class ConcurrentSubmissionTestCase(LiveServerTestCase):
+    """
+    Inherit from LiveServerTestCase to be able to test concurrent requests
+    to submission endpoint in different transactions (and different processes).
+    Otherwise, DB is populated only on the first request but still empty on
+    subsequent ones.
+    """
+
+    fixtures = ['onadata/apps/api/tests/fixtures/users']
+
+    def publish_xls_form(self):
+
+        path = os.path.join(
+            settings.ONADATA_DIR,
+            'apps',
+            'main',
+            'tests',
+            'fixtures',
+            'transportation',
+            'transportation.xls',
+        )
+
+        xform_list_url = reverse('xform-list')
+        self.client.login(username='bob', password='bob')
+        with open(path, 'rb') as xls_file:
+            post_data = {'xls_file': xls_file}
+            response = self.client.post(xform_list_url, data=post_data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.skipif(
+        settings.GIT_LAB, reason='GitLab does not seem to support multi-processes'
+    )
+    def test_post_concurrent_same_submissions(self):
+
+        DUPLICATE_SUBMISSIONS_COUNT = 2  # noqa
+
+        self.publish_xls_form()
+        username = 'bob'
+        survey = 'transport_2011-07-25_19-05-49'
+        results = defaultdict(int)
+
+        with multiprocessing.Pool() as pool:
+            for result in pool.map(
+                partial(
+                    submit_data,
+                    live_server_url=self.live_server_url,
+                    survey_=survey,
+                    username_=username,
+                ),
+                range(DUPLICATE_SUBMISSIONS_COUNT),
+            ):
+                results[result] += 1
+
+        assert results[status.HTTP_201_CREATED] == 1
+        assert results[status.HTTP_409_CONFLICT] == DUPLICATE_SUBMISSIONS_COUNT - 1
+
+
+def submit_data(identifier, survey_, username_, live_server_url):
+    """
+    Submit data to live server.
+
+    It has to be outside `ConcurrentSubmissionTestCase` class to be pickled by
+    `multiprocessing.Pool().map()`.
+    """
+    media_file = '1335783522563.jpg'
+    main_directory = os.path.dirname(main_tests.__file__)
+    path = os.path.join(
+        main_directory,
+        'fixtures',
+        'transportation',
+        'instances',
+        survey_,
+        media_file,
+    )
+    with open(path, 'rb') as f:
+        f = InMemoryUploadedFile(
+            f,
+            'media_file',
+            media_file,
+            'image/jpg',
+            os.path.getsize(path),
+            None,
+        )
+        submission_path = os.path.join(
+            main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            survey_,
+            f'{survey_}.xml',
+        )
+        with open(submission_path) as sf:
+            files = {'xml_submission_file': sf, 'media_file': f}
+            response = requests.post(
+               f'{live_server_url}/{username_}/submission', files=files
+            )
+            return response.status_code

@@ -1,18 +1,13 @@
 # coding: utf-8
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import sys
 import traceback
 from datetime import date, datetime
 from xml.parsers.expat import ExpatError
-
-from onadata.apps.logger.signals import (
-    update_user_profile_attachment_storage_bytes,
-    update_xform_attachment_storage_bytes,
-)
-
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
@@ -23,7 +18,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
-from django.db import IntegrityError, transaction
+from django.db import connection, IntegrityError, transaction
 from django.db.models import Q
 from django.http import (
     HttpResponse,
@@ -43,6 +38,7 @@ from xml.dom import Node
 from wsgiref.util import FileWrapper
 
 from onadata.apps.logger.exceptions import (
+    ConflictingXMLHashInstanceError,
     DuplicateUUIDError,
     FormInactiveError,
     TemporarilyUnavailableError,
@@ -59,12 +55,18 @@ from onadata.apps.logger.models.instance import (
     update_xform_monthly_counter,
     update_xform_submission_count,
 )
-from onadata.apps.logger.models.xform import XLSFormError
-from onadata.apps.logger.xform_instance_parser import (
+from onadata.apps.logger.exceptions import XLSFormError
+from onadata.apps.logger.signals import (
+    update_user_profile_attachment_storage_bytes,
+    update_xform_attachment_storage_bytes,
+)
+from onadata.apps.logger.exceptions import (
     InstanceEmptyError,
     InstanceInvalidUserError,
     InstanceMultipleNodeError,
-    DuplicateInstance,
+    DuplicateInstanceError,
+)
+from onadata.apps.logger.xform_instance_parser import (
     clean_and_parse_xml,
     get_uuid_from_xml,
     get_deprecated_uuid_from_xml,
@@ -131,7 +133,6 @@ def check_edit_submission_permissions(
         ))
 
 
-@transaction.atomic  # paranoia; redundant since `ATOMIC_REQUESTS` set to `True`
 def create_instance(
     username: str,
     xml_file: str,
@@ -158,43 +159,47 @@ def create_instance(
     # get new and deprecated uuid's
     new_uuid = get_uuid_from_xml(xml)
 
-    # Dorey's rule from 2012 (commit 890a67aa):
-    #   Ignore submission as a duplicate IFF
-    #    * a submission's XForm collects start time
-    #    * the submitted XML is an exact match with one that
-    #      has already been submitted for that user.
-    # The start-time requirement protected submissions with identical responses
-    # from being rejected as duplicates *before* KoBoCAT had the concept of
-    # submission UUIDs. Nowadays, OpenRosa requires clients to send a UUID (in
-    # `<instanceID>`) within every submission; if the incoming XML has a UUID
-    # and still exactly matches an existing submission, it's certainly a
-    # duplicate (https://docs.opendatakit.org/openrosa-metadata/#fields).
-    if xform.has_start_time or new_uuid is not None:
-        # XML matches are identified by identical content hash OR, when a
-        # content hash is not present, by string comparison of the full
-        # content, which is slow! Use the management command
-        # `populate_xml_hashes_for_instances` to hash existing submissions
-        existing_instance = Instance.objects.filter(
-            Q(xml_hash=xml_hash) | Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
-            xform__user=xform.user,
-        ).first()
-    else:
-        existing_instance = None
+    with get_instance_lock(xml_hash) as lock_acquired:
+        if not lock_acquired:
+            raise ConflictingXMLHashInstanceError()
 
-    if existing_instance:
-        existing_instance.check_active(force=False)
-        # ensure we have saved the extra attachments
-        new_attachments = save_attachments(existing_instance, media_files)
-        if not new_attachments:
-            raise DuplicateInstance()
+        # Dorey's rule from 2012 (commit 890a67aa):
+        #   Ignore submission as a duplicate IFF
+        #    * a submission's XForm collects start time
+        #    * the submitted XML is an exact match with one that
+        #      has already been submitted for that user.
+        # The start-time requirement protected submissions with identical responses
+        # from being rejected as duplicates *before* KoBoCAT had the concept of
+        # submission UUIDs. Nowadays, OpenRosa requires clients to send a UUID (in
+        # `<instanceID>`) within every submission; if the incoming XML has a UUID
+        # and still exactly matches an existing submission, it's certainly a
+        # duplicate (https://docs.opendatakit.org/openrosa-metadata/#fields).
+        if xform.has_start_time or new_uuid is not None:
+            # XML matches are identified by identical content hash OR, when a
+            # content hash is not present, by string comparison of the full
+            # content, which is slow! Use the management command
+            # `populate_xml_hashes_for_instances` to hash existing submissions
+            existing_instance = Instance.objects.filter(
+                Q(xml_hash=xml_hash) | Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
+                xform__user=xform.user,
+            ).first()
         else:
-            # Update Mongo via the related ParsedInstance
-            existing_instance.parsed_instance.save(asynchronous=False)
-            return existing_instance
-    else:
-        instance = save_submission(request, xform, xml, media_files, new_uuid,
-                                   status, date_created_override)
-        return instance
+            existing_instance = None
+
+        if existing_instance:
+            existing_instance.check_active(force=False)
+            # ensure we have saved the extra attachments
+            new_attachments = save_attachments(existing_instance, media_files)
+            if not new_attachments:
+                raise DuplicateInstanceError()
+            else:
+                # Update Mongo via the related ParsedInstance
+                existing_instance.parsed_instance.save(asynchronous=False)
+                return existing_instance
+        else:
+            instance = save_submission(request, xform, xml, media_files, new_uuid,
+                                       status, date_created_override)
+            return instance
 
 
 def disposition_ext_and_date(name, extension, show_date=True):
@@ -211,6 +216,32 @@ def dict2xform(jsform, form_id):
     xml_tail = "\n</%(form_id)s>" % dd
 
     return xml_head + dict2xml(jsform) + xml_tail
+
+
+@contextlib.contextmanager
+def get_instance_lock(xml_hash: str) -> bool:
+    int_lock = int(xml_hash, 16) & 0xfffffffffffffff
+    is_postgresql = connection.vendor == 'postgresql'
+    acquired = False
+
+    with transaction.atomic():
+        try:
+            if is_postgresql:
+                cur = connection.cursor()
+                cur.execute('SELECT pg_try_advisory_lock(%s::bigint);', (int_lock,))
+                acquired = cur.fetchone()[0]
+            else:
+                prefix = os.getenv('KOBOCAT_REDIS_LOCK_PREFIX', 'kc-lock')
+                key_ = f'{prefix}:{int_lock}'
+                redis_lock = settings.REDIS_LOCK_CLIENT.lock(key_, timeout=60)
+                acquired = redis_lock.acquire(blocking=False)
+            yield acquired
+        finally:
+            if is_postgresql:
+                cur.execute('SELECT pg_advisory_unlock(%s::bigint);', (int_lock,))
+                cur.close()
+            elif acquired:
+                redis_lock.release()
 
 
 def get_instance_or_404(**criteria):
@@ -541,8 +572,13 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
         )
     except ExpatError as e:
         error = OpenRosaResponseBadRequest(t("Improperly formatted XML."))
-    except DuplicateInstance:
-        response = OpenRosaResponse(t("Duplicate submission"))
+    except ConflictingXMLHashInstanceError:
+        response = OpenRosaResponse(t('Conflict with already existing instance'))
+        response.status_code = 409
+        response['Location'] = request.build_absolute_uri(request.path)
+        error = response
+    except DuplicateInstanceError:
+        response = OpenRosaResponse(t('Duplicate instance'))
         response.status_code = 202
         response['Location'] = request.build_absolute_uri(request.path)
         error = response

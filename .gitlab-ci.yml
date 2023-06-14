@@ -32,6 +32,7 @@ test:
     POSTGRES_PASSWORD: kobo
     POSTGRES_DB: kobocat_test
     SERVICE_ACCOUNT_BACKEND_URL: redis://redis_cache:6379/4
+    GIT_LAB: "True"
   services:
     - name: postgis/postgis:14-3.2
       alias: postgres
@@ -40,7 +41,7 @@ test:
   script:
     - apt-get update && apt-get install -y ghostscript gdal-bin libproj-dev gettext openjdk-11-jre
     - pip install -r dependencies/pip/dev_requirements.txt
-    - pytest -vv -rf
+    - pytest -vv -rf --disable-warnings
 
 deploy-beta:
   stage: deploy

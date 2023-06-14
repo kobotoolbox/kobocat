@@ -5,7 +5,7 @@ from redis.exceptions import LockError
 NONCE_NO_COUNT = ''  # Needs to be something other than None to determine not set vs set to null
 
 
-class RedisCacheNonceStorage():
+class RedisCacheNonceStorage:
     _blocking_timeout = 30
 
     def _get_cache(self):

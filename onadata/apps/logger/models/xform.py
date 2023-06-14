@@ -24,7 +24,7 @@ from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.monthly_xform_submission_counter import (
     MonthlyXFormSubmissionCounter,
 )
-from onadata.apps.logger.xform_instance_parser import XLSFormError
+from onadata.apps.logger.exceptions import XLSFormError
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
