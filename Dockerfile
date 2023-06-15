@@ -62,7 +62,7 @@ RUN apt-get -qq update && \
         libproj-dev \
         libsqlite3-mod-spatialite \
         locales \
-        openjdk-11-jre \
+        openjdk-17-jre \
         postgresql-client \
         procps \
         rsync \
