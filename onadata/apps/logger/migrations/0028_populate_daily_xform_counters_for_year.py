@@ -26,17 +26,17 @@ def populate_daily_counts_for_year(apps, schema_editor):
             Until you do, total usage counts from /api/v2/service_usage and /api/v2/asset_usage will be incorrect
             """
         )
-        call_command('populate_submission_counters', force=True)
+        call_command('populate_submission_counters', force=True, skip_monthly=True)
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('kpi', '0027_on_delete_cascade_monthlyxformsubmissioncounter'),
+        ('logger', '0027_on_delete_cascade_monthlyxformsubmissioncounter'),
     ]
 
-    # allow this command to be run backwards
-
+    # We don't do anything when migrating in reverse
+    # Just set DAILY_COUNTER_MAX_DAYS back to 31 and counters will be auto-deleted
     operations = [
         migrations.RunPython(
             populate_daily_counts_for_year,
