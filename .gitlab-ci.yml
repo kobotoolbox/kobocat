@@ -38,18 +38,18 @@ test:
     - name: redis:6.2
       alias: redis_cache
   script:
-    - apt-get update && apt-get install -y ghostscript gdal-bin libproj-dev gettext openjdk-11-jre
+    - apt-get update && apt-get install -y ghostscript gdal-bin libproj-dev gettext openjdk-17-jre
     - pip install -r dependencies/pip/dev_requirements.txt
     - pytest -vv -rf
 
 deploy-beta:
   stage: deploy
   image:
-    name: alpine/helm:3.7.2
+    name: alpine/helm:3.12.0
     entrypoint: [""]
   script:
     - helm repo add kobo https://gitlab.com/api/v4/projects/32216873/packages/helm/stable
-    - helm -n beta upgrade kobo-beta kobo/kobo --atomic --set-string kobocat.image.tag=${CI_COMMIT_SHORT_SHA} --reuse-values
+    - helm -n kobo-dev upgrade beta kobo/kobo --atomic --set-string kobocat.image.tag=${CI_COMMIT_SHORT_SHA} --reuse-values
   environment:
     name: beta
     url: https://kc.beta.kobotoolbox.org
