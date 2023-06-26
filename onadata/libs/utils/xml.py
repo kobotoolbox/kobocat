@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from typing import Optional, Union
 from xml.dom import Node
@@ -145,7 +147,7 @@ class XMLFormWithDisclaimer:
         disclaimers = (
             FormDisclaimer.objects.values('language_code', 'message', 'default')
             .filter(Q(xform__isnull=True) | Q(xform=xform))
-            .order_by('-message')
+            .order_by('-xform_id', 'language_code')
         )
 
         if not disclaimers:
