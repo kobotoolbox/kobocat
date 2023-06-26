@@ -51,6 +51,7 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
 # jnm (or the current on-call sysadmin). Thanks.
 
 RUN apt-get -qq update && \
+    apt-get -qq -y install openjdk-17-jre && \
     apt-get -qq -y install \
         cron \
         gdal-bin \
@@ -62,7 +63,6 @@ RUN apt-get -qq update && \
         libproj-dev \
         libsqlite3-mod-spatialite \
         locales \
-        openjdk-17-jre \
         postgresql-client \
         procps \
         rsync \
