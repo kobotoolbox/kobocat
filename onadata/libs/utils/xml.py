@@ -145,9 +145,11 @@ class XMLFormWithDisclaimer:
         # Order by '-message' to ensure that default is overridden later if
         # an override exists for the same language. See `_get_translations()`
         disclaimers = (
-            FormDisclaimer.objects.values('language_code', 'message', 'default')
+            FormDisclaimer.objects.values(
+                'language_code', 'message', 'default', 'hidden'
+            )
             .filter(Q(xform__isnull=True) | Q(xform=xform))
-            .order_by('-xform_id', 'language_code')
+            .order_by('-hidden', '-xform_id', 'language_code')
         )
 
         if not disclaimers:
@@ -162,6 +164,11 @@ class XMLFormWithDisclaimer:
         Detect whether the form is translated and return its value plus a dictionary
         of all available messages and the default language code.
         """
+
+        # Do not go further is disclaimer must be hidden
+        if disclaimers[0]['hidden']:
+            return
+
         translated = '<itext>' in self._object.xml
         disclaimers_dict = {}
         default_language_code = None

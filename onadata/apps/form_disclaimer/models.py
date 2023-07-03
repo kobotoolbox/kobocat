@@ -5,7 +5,7 @@ from django.db.models.constraints import UniqueConstraint
 
 class FormDisclaimer(models.Model):
 
-    language_code = models.CharField(max_length=5, db_index=True)
+    language_code = models.CharField(max_length=5, null=True, db_index=True)
     xform = models.ForeignKey(
         'logger.xform',
         related_name='disclaimers',
@@ -14,6 +14,7 @@ class FormDisclaimer(models.Model):
     )
     message = models.TextField(default='')
     default = models.BooleanField(default=False)
+    hidden = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
@@ -25,5 +26,10 @@ class FormDisclaimer(models.Model):
                 fields=['language_code'],
                 condition=Q(xform=None),
                 name='uniq_disclaimer_without_xform',
+            ),
+            UniqueConstraint(
+                fields=['xform', 'hidden'],
+                condition=Q(hidden=True),
+                name='uniq_hidden_disclaimer_per_xform',
             ),
         ]
