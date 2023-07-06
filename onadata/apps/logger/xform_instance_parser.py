@@ -126,7 +126,8 @@ def clean_and_parse_xml(xml_string):
     return xml_obj
 
 
-def _xml_node_to_dict(node: 'xml.dom.minidom.Document', repeats=[]):
+def _xml_node_to_dict(node, repeats=[]):
+    assert isinstance(node, Node)
     if len(node.childNodes) == 0:
         # there's no data for this leaf node
         return None
