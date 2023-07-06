@@ -2,7 +2,7 @@
 import json
 import os
 import re
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape as xml_escape
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -162,7 +162,7 @@ class XForm(BaseModel):
 
         if self.title and title_xml != self.title:
             title_xml = self.title[:XFORM_TITLE_LENGTH]
-            title_xml = escape(title_xml)
+            title_xml = xml_escape(title_xml)
             self.xml = title_pattern.sub(
                 "<h:title>%s</h:title>" % title_xml, self.xml)
 
