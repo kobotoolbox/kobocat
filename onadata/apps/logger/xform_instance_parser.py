@@ -2,12 +2,13 @@
 import logging
 import re
 import sys
+from xml.dom import Node
 
 import dateutil.parser
 import six
+from defusedxml import minidom
 from django.utils.encoding import smart_str
 from django.utils.translation import gettext as t
-from xml.dom import minidom, Node
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
 
@@ -126,7 +127,7 @@ def clean_and_parse_xml(xml_string):
 
 
 def _xml_node_to_dict(node, repeats=[]):
-    assert isinstance(node, minidom.Node)
+    assert isinstance(node, Node)
     if len(node.childNodes) == 0:
         # there's no data for this leaf node
         return None
