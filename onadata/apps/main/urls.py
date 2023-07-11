@@ -36,13 +36,6 @@ from onadata.apps.logger.views import (
     download_jsonform,
 )
 
-# Statistics for superusers. The username is irrelevant, but leave it as
-# the first part of the path to avoid collisions
-from onadata.apps.logger.views import (
-    superuser_stats,
-    retrieve_superuser_stats
-)
-
 admin.autodiscover()
 
 urlpatterns = [
@@ -166,11 +159,4 @@ urlpatterns = [
             name="download_jsonform"),
     re_path(r'^favicon\.ico',
             RedirectView.as_view(url='/static/images/favicon.ico')),
-
-    # Statistics for superusers. The username is irrelevant, but leave it as
-    # the first part of the path to avoid collisions
-    re_path(r"^(?P<username>[^/]+)/superuser_stats/$",
-            superuser_stats),
-    re_path(r"^(?P<username>[^/]+)/superuser_stats/(?P<base_filename>[^/]+)$",
-            retrieve_superuser_stats),
 ]
