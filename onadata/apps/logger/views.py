@@ -8,11 +8,12 @@ from datetime import datetime, date
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
+    HttpResponseNotFound,
     HttpResponseRedirect,
     StreamingHttpResponse,
     Http404,
@@ -185,7 +186,6 @@ def download_xlsform(request, username, id_string):
         return HttpResponseForbidden('Not shared.')
 
     file_path = xform.xls.name
-    default_storage = get_storage_class()()
 
     if file_path != '' and default_storage.exists(file_path):
         audit = {
@@ -220,12 +220,9 @@ def download_xlsform(request, username, id_string):
         return response
 
     else:
-        messages.add_message(request, messages.WARNING,
-                             t('No XLS file for your form '
-                               '<strong>%(id)s</strong>')
-                             % {'id': id_string})
-
-        return HttpResponseRedirect("/%s" % username)
+        return HttpResponseNotFound(
+            t('No XLS file for your form %(id)s') % {'id': id_string}
+        )
 
 
 def download_jsonform(request, username, id_string):
@@ -282,7 +279,6 @@ def retrieve_superuser_stats(request, username, base_filename):
         'superuser_stats',
         base_filename
     )
-    default_storage = get_storage_class()()
     if not default_storage.exists(filename):
         raise Http404
     with default_storage.open(filename) as f:

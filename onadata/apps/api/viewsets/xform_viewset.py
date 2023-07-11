@@ -25,21 +25,22 @@ from onadata.apps.viewer.models.export import Export
 from onadata.libs import filters
 from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
-    AnonymousUserPublicFormsMixin)
+    AnonymousUserPublicFormsMixin
+)
 from onadata.libs.mixins.labels_mixin import LabelsMixin
 from onadata.libs.renderers import renderers
 from onadata.libs.serializers.xform_serializer import XFormSerializer
 from onadata.libs.utils import log
 from onadata.libs.utils.common_tags import SUBMISSION_TIME
 from onadata.libs.utils.csv_import import submit_csv
-from onadata.libs.utils.export_tools import generate_export, \
-    should_create_new_export
+from onadata.libs.utils.export_tools import (
+    generate_export,
+    should_create_new_export,
+)
 from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
-from onadata.libs.utils.string import str2bool
 from onadata.libs.utils.storage import rmdir
-from onadata.libs.utils.viewer_tools import _get_form_url
-from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
+from onadata.libs.utils.string import str2bool
 
 EXPORT_EXT = {
     'xls': Export.XLS_EXPORT,
@@ -619,25 +620,6 @@ data (instance/submission per row)
                             headers=headers)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['GET'])
-    def enketo(self, request, **kwargs):
-        self.object = self.get_object()
-        form_url = _get_form_url(self.object.user.username)
-
-        data = {'message': t("Enketo not properly configured.")}
-        http_status = status.HTTP_400_BAD_REQUEST
-
-        try:
-            url = enketo_url(form_url, self.object.id_string)
-        except EnketoError:
-            pass
-        else:
-            if url:
-                http_status = status.HTTP_200_OK
-                data = {"enketo_url": url}
-
-        return Response(data, http_status)
 
     def get_queryset(self):
         if isinstance(self.request.user, ServiceAccountUser):

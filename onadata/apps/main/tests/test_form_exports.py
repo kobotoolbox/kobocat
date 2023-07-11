@@ -2,7 +2,6 @@
 import os
 import time
 import csv
-import tempfile
 from io import BytesIO
 
 from django.urls import reverse

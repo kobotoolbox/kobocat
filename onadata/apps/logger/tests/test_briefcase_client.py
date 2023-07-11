@@ -1,11 +1,11 @@
 # coding: utf-8
 import os.path
-from io import StringIO, BytesIO
+from io import BytesIO
 from urllib.parse import urljoin
 
 import requests
 from django.contrib.auth import authenticate
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage as storage
 from django.core.files.uploadedfile import UploadedFile
 from django.urls import reverse
 from django.test import RequestFactory
@@ -17,11 +17,9 @@ from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import download_xform
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.tests.test_base import TestBase
-from onadata.apps.main.views import profile, download_media_data
+from onadata.apps.main.views import download_media_data
 from onadata.libs.utils.briefcase_client import BriefcaseClient
 from onadata.libs.utils.storage import rmdir
-
-storage = get_storage_class()()
 
 
 def formList(*args, **kwargs):  # noqa
@@ -114,7 +112,7 @@ class TestBriefcaseClient(TestBase):
         self.assertEqual(MetaData.objects.count(), count + 1)
         url = urljoin(
             self.base_url,
-            reverse(profile, kwargs={'username': self.user.username})
+            reverse('user_profile', kwargs={'username': self.user.username})
         )
         self._logout()
         self._create_user_and_login('deno', 'deno')
