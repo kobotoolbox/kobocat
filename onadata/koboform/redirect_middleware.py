@@ -21,7 +21,7 @@ REDIRECT_IF_NOT_LOGGED_IN = [
 
 class ConditionalRedirects(MiddlewareMixin):
 
-    def process_view(self, request, view, args, kwargs):
+    def process_view(self, request, view, view_args, view_kwargs):
         view_name = view.__name__
         if request.user.is_anonymous:
             helper_auth_helper(request)
@@ -41,4 +41,4 @@ class ConditionalRedirects(MiddlewareMixin):
         if not is_logged_in and (view_name in REDIRECT_IF_NOT_LOGGED_IN):
             return HttpResponseRedirect(login_url)
 
-        pass
+        return
