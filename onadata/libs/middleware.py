@@ -10,22 +10,18 @@ from kobo_service_account.models import ServiceAccountUser
 
 from onadata.libs.http import JsonResponseForbidden, XMLResponseForbidden
 
-
+# Define views (and viewsets) below.
+# Viewset actions must specify (as a list) for each method.
+# Legacy Django views do not need a list of actions, it can be empty.
+# E.g. : Allow exports
+#   > 'export_list': { 'GET': [] }
+#   > 'create_export': { 'POST': [] }
 ALLOWED_VIEWS_WITH_WEAK_PASSWORD = {
     'XFormListApi': {
-        'actions': {
-            'GET': ['manifest', 'media', 'list',  'retrieve'],
-        }
+        'GET': ['manifest', 'media', 'list',  'retrieve'],
     },
     'XFormSubmissionApi': {
-        'actions': {
-            'POST': ['create'],
-        }
-    },
-    'RedirectView': {
-        'view_initkwargs': [
-            '/static/images/favicon.ico'
-        ]
+       'POST': ['create'],
     },
 }
 
@@ -73,37 +69,20 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
         # Reset boolean for each processed view
         self._allowed_view = True
 
-        if hasattr(view, 'actions'):
-            # Allow HEAD requests all the time
-            if request.method == 'HEAD':
-                return
+        if request.method == 'HEAD':
+            return
 
-            try:
-                allowed_actions = ALLOWED_VIEWS_WITH_WEAK_PASSWORD[view_name][
-                    'actions'
-                ][request.method]
-            except KeyError:
-                self._allowed_view = False
-                return
-
-            view_action = view.actions[request.method.lower()]
-            if view_action not in allowed_actions:
-                self._allowed_view = False
-                return
-
-        if hasattr(view, 'view_initkwargs'):
-            try:
-                allowed_urls = ALLOWED_VIEWS_WITH_WEAK_PASSWORD[view_name][
-                    'view_initkwargs'
-                ]
-            except KeyError:
-                self._allowed_view = False
-                return
-
-            url = view.view_initkwargs['url']
-            if url not in allowed_urls:
-                self._allowed_view = False
-                return
+        try:
+            allowed_actions = ALLOWED_VIEWS_WITH_WEAK_PASSWORD[view_name][
+                request.method
+            ]
+        except KeyError:
+            self._allowed_view = False
+        else:
+            if hasattr(view, 'actions'):
+                view_action = view.actions[request.method.lower()]
+                if view_action not in allowed_actions:
+                    self._allowed_view = False
 
         return
 
