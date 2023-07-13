@@ -43,7 +43,7 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if not request.user.is_authenticated:
-            return
+            return response
 
         try:
             profile = request.user.profile
@@ -52,7 +52,7 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
             return self._render_response(response)
 
         if profile.validated_password:
-            return
+            return response
 
         if not self._allowed_view:
             return self._render_response(response)
