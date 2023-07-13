@@ -6,6 +6,7 @@ from django.http import HttpResponseForbidden
 from django.template.loader import get_template
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import gettext as t
+from kobo_service_account.models import ServiceAccountUser
 
 from onadata.libs.http import JsonResponseForbidden, XMLResponseForbidden
 
@@ -26,12 +27,6 @@ ALLOWED_VIEWS_WITH_WEAK_PASSWORD = {
             '/static/images/favicon.ico'
         ]
     },
-    # Allow media files
-    'MetaDataViewSet': {
-        'actions': {
-            'GET': ['retrieve', 'list']
-        }
-    },
 }
 
 
@@ -39,17 +34,21 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
 
     def __init__(self, get_response):
         super().__init__(get_response)
-        self._allowed_view = True
+        self._allowed_view = None
 
     def process_response(self, request, response):
         if not request.user.is_authenticated:
+            return response
+
+        if isinstance(request.user, ServiceAccountUser):
             return response
 
         try:
             profile = request.user.profile
         except get_user_model().profile.RelatedObjectDoesNotExist:
             # Consider user's password as weak
-            return self._render_response(response)
+            if not self._allowed_view:
+                return self._render_response(response)
 
         if profile.validated_password:
             return response
@@ -70,6 +69,9 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
         anonymous if user is authenticated with something else than the session.
         """
         view_name = view.__name__
+
+        # Reset boolean for each processed view
+        self._allowed_view = True
 
         if hasattr(view, 'actions'):
             # Allow HEAD requests all the time
