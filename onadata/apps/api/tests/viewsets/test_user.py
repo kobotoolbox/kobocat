@@ -235,6 +235,21 @@ class TestUserViewSet(TestAbstractViewSet):
         response = self.client.get(reverse('userprofile-list'), **headers)
         assert response.status_code == status_code
 
+        # exports (old views). Test only csv.
+        # /<username>/exports/<xform_id_string>/<export_type>/
+        response = self.client.get(
+            reverse(
+                'export_list',
+                kwargs={
+                    'username': 'bob',
+                    'id_string': self.xform.id_string,
+                    'export_type': 'csv',
+                },
+            ),
+            **headers,
+        )
+        assert response.status_code == status_code
+
         #########################################################
         # OpenRosa endpoints. Should be granted no matter what. #
         #########################################################
