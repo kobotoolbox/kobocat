@@ -6,10 +6,10 @@ from datetime import datetime, date, time, timedelta
 
 from bson import json_util
 from django.conf import settings
-from django.core.files.base import File, ContentFile
+from django.core.files.base import File
 from django.core.files.storage import FileSystemStorage
 from django.core.files.temp import NamedTemporaryFile
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.utils.text import slugify
@@ -523,16 +523,18 @@ class ExportBuilder:
 
         wb.save(filename=path)
 
-    def to_flat_csv_export(
-            self, path, data, username, id_string, filter_query):
+    def to_flat_csv_export(self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
-
-        from onadata.apps.viewer.pandas_mongo_bridge import\
-            CSVDataFrameBuilder
+        from onadata.apps.viewer.pandas_mongo_bridge import CSVDataFrameBuilder
 
         csv_builder = CSVDataFrameBuilder(
-            username, id_string, filter_query, self.GROUP_DELIMITER,
-            self.SPLIT_SELECT_MULTIPLES, self.BINARY_SELECT_MULTIPLES)
+            username,
+            id_string,
+            filter_query,
+            self.GROUP_DELIMITER,
+            self.SPLIT_SELECT_MULTIPLES,
+            self.BINARY_SELECT_MULTIPLES,
+        )
         csv_builder.export_to(path)
 
 
@@ -570,7 +572,6 @@ def generate_export(export_type, extension, username, id_string,
 
     # get the export function by export type
     func = getattr(export_builder, export_type_func_map[export_type])
-
     func.__call__(
         temp_file.name, records, username, id_string, filter_query)
 
@@ -591,10 +592,9 @@ def generate_export(export_type, extension, username, id_string,
         filename)
 
     # TODO: if s3 storage, make private - how will we protect local storage??
-    storage = get_storage_class()()
     # seek to the beginning as required by storage classes
     temp_file.seek(0)
-    export_filename = storage.save(
+    export_filename = default_storage.save(
         file_path,
         File(temp_file, file_path))
     temp_file.close()
@@ -609,7 +609,7 @@ def generate_export(export_type, extension, username, id_string,
     export.filedir = dir_name
     export.filename = basename
     export.internal_status = Export.SUCCESSFUL
-    # dont persist exports that have a filter
+    # do not persist exports that have a filter
     if filter_query is None:
         export.save()
     return export

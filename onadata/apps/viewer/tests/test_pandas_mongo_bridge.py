@@ -174,43 +174,6 @@ class TestPandasMongoBridge(TestBase):
         self.assertEqual(sorted(expected_default_columns),
                          sorted(default_columns))
 
-    def test_xlsx_output_when_data_exceeds_limits(self):
-        self._publish_xls_fixture_set_xform("xlsx_output")
-        self._submit_fixture_instance("xlsx_output", "01")
-        xls_builder = XLSDataFrameBuilder(username=self.user.username,
-                                          id_string=self.xform.id_string)
-        self.assertEqual(xls_builder.exceeds_xls_limits, True)
-        # test that the view returns an xlsx file instead
-        url = reverse('xls_export', kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string
-        })
-        self.response = self.client.get(url)
-        self.assertEqual(self.response.status_code, 200)
-        self.assertEqual(self.response["content-type"],
-                         'application/vnd.openxmlformats')
-
-    def test_xlsx_export_for_repeats(self):
-        """
-        Make sure exports run fine when the xlsx file has multiple sheets
-        """
-        self._publish_xls_fixture_set_xform("new_repeats")
-        self._submit_fixture_instance("new_repeats", "01")
-        XLSDataFrameBuilder(username=self.user.username,
-                            id_string=self.xform.id_string)
-        # test that the view returns an xlsx file instead
-        url = reverse('xls_export', kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string
-        })
-        params = {
-            'xlsx': 'true'  # force xlsx
-        }
-        self.response = self.client.get(url, params)
-        self.assertEqual(self.response.status_code, 200)
-        self.assertEqual(self.response["content-type"],
-                         'application/vnd.openxmlformats')
-
     def test_csv_dataframe_export_to(self):
         self._publish_nested_repeats_form()
         self._submit_fixture_instance(

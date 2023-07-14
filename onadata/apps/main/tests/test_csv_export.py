@@ -18,10 +18,6 @@ class TestExport(TestBase):
             self.this_directory, 'fixtures', 'csv_export')
         self._submission_time = parse_datetime('2013-02-18 15:54:01Z')
 
-    def test_csv_export_url(self):
-        """TODO: test data csv export"""
-        pass
-
     def test_csv_export_output(self):
         path = os.path.join(self.fixture_dir, 'tutorial_w_repeats.xls')
         self._publish_xls_file_and_set_xform(path)

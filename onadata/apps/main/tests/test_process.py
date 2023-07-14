@@ -52,16 +52,6 @@ class TestProcess(TestBase):
     def tearDown(self):
         super().tearDown()
 
-    @unittest.skip('Fails under Django 1.6')
-    def test_process(self, username=None, password=None):
-        self._publish_xls_file()
-        self._check_formList()
-        self._download_xform()
-        self._make_submissions()
-        self._update_dynamic_data()
-        self._check_csv_export()
-        self._check_delete()
-
     def _update_dynamic_data(self):
         """
         Update stuff like submission time so we can compare within out fixtures
@@ -358,41 +348,6 @@ class TestProcess(TestBase):
                 else:
                     l.append(("transport/" + k, v))
             self.assertEqual(d, dict(l))
-
-    def test_xls_export_content(self):
-        self._publish_xls_file()
-        self._make_submissions()
-        self._update_dynamic_data()
-        self._check_xls_export()
-
-    def _check_xls_export(self):
-        xls_export_url = reverse(
-            'xls_export', kwargs={'username': self.user.username,
-                                  'id_string': self.xform.id_string})
-        response = self.client.get(xls_export_url)
-        expected_xls = load_workbook(os.path.join(
-            self.this_directory, 'fixtures', 'transportation',
-            'transportation_export.xlsx'))
-        content = self._get_response_content(response)
-        actual_xls = load_workbook(BytesIO(content))
-        actual_sheet = actual_xls[actual_xls.sheetnames[0]]
-        expected_sheet = expected_xls[expected_xls.sheetnames[0]]
-
-        # check headers
-        self.assertEqual([cell.value for cell in actual_sheet[1]],
-                        [cell.value for cell in expected_sheet[1]])
-
-        # check cell data
-        self.assertEqual(actual_sheet.max_column, expected_sheet.max_column)
-        self.assertEqual(actual_sheet.max_row, expected_sheet.max_row)
-        for i in range(2, actual_sheet.max_row):
-            actual_row = [cell.value for cell in actual_sheet[i]]
-            expected_row = [cell.value for cell in expected_sheet[i]]
-
-            # remove _id from result set, varies depending on the database
-            del actual_row[22]
-            del expected_row[22]
-            self.assertEqual(actual_row, expected_row)
 
     def _check_delete(self):
         self.assertEqual(self.user.xforms.count(), 1)

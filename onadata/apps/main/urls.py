@@ -20,13 +20,11 @@ from onadata.apps.main.views import (
 # exporting stuff
 from onadata.apps.viewer.views import (
     attachment_url,
-    data_export,
     create_export,
     delete_export,
     export_progress,
     export_list,
     export_download,
-    kml_export
 )
 from onadata.apps.logger.views import (
     bulksubmission,
@@ -94,14 +92,6 @@ urlpatterns = [
             name='upload'),
 
     # exporting stuff
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.csv$",
-            data_export, name='csv_export',
-            kwargs={'export_type': 'csv'}),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.xls",
-            data_export, name='xls_export',
-            kwargs={'export_type': 'xls'}),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
-            kml_export),
     re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
             r"/new$", create_export, name='create_export'),
     re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"

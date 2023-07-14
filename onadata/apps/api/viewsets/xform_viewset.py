@@ -41,6 +41,7 @@ from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.storage import rmdir
 from onadata.libs.utils.string import str2bool
+from onadata.libs.utils.viewer_tools import format_date_for_mongo
 
 EXPORT_EXT = {
     'xls': Export.XLS_EXPORT,
@@ -71,8 +72,6 @@ def _get_extension_from_export_type(export_type):
 
 
 def _set_start_end_params(request, query):
-    format_date_for_mongo = lambda x, datetime: datetime.strptime(
-        x, '%y_%m_%d_%H_%M_%S').strftime('%Y-%m-%dT%H:%M:%S')
 
     # check for start and end params
     if 'start' in request.GET or 'end' in request.GET:

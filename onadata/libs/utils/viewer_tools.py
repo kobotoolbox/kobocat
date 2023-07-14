@@ -4,6 +4,7 @@ import logging
 import traceback
 import requests
 import zipfile
+from datetime import datetime
 
 from tempfile import NamedTemporaryFile
 
@@ -23,6 +24,12 @@ class MyError(Exception):
 
 class EnketoError(Exception):
     pass
+
+
+def format_date_for_mongo(x):
+    return datetime.strptime(x, '%y_%m_%d_%H_%M_%S').strftime(
+        '%Y-%m-%dT%H:%M:%S'
+    )
 
 
 def get_path(path, suffix):
