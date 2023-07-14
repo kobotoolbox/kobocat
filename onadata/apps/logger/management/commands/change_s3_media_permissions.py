@@ -4,7 +4,7 @@
 import sys
 
 from django.core.management.base import BaseCommand, CommandError
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 
 
 class Command(BaseCommand):

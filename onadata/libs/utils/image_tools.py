@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 
 import requests
 from django.conf import settings
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from PIL import Image
 
@@ -39,7 +39,6 @@ def _save_thumbnails(image, original_path, size, suffix):
     # Thumbnail format will be set by original file extension.
     # Use same format to keep transparency of GIF/PNG
     nm = NamedTemporaryFile(suffix='.%s' % image.format)
-    default_storage = get_storage_class()()
     try:
         # Ensure conversion to float in operations
         image.thumbnail(get_dimensions(image.size, float(size)), Image.ANTIALIAS)
@@ -67,7 +66,6 @@ def _save_thumbnails(image, original_path, size, suffix):
 
 
 def resize(filename):
-    default_storage = get_storage_class()()
     is_local = default_storage.__class__.__name__ == 'FileSystemStorage'
     image = None
     original_path = None
@@ -101,7 +99,6 @@ def image_url(attachment, suffix):
     if suffix == 'original':
         return url
     else:
-        default_storage = get_storage_class()()
         if suffix in settings.THUMB_CONF:
             size = settings.THUMB_CONF[suffix]['suffix']
             filename = attachment.media_file.name

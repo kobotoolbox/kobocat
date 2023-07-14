@@ -4,7 +4,7 @@ import os
 import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.http import HttpResponseForbidden
 from django.http import HttpResponseNotFound
@@ -28,13 +28,13 @@ def download_media_data(request, username, id_string, data_id):
         id_string__exact=id_string)
     owner = xform.user
     data = get_object_or_404(MetaData, id=data_id)
-    dfs = get_storage_class()()
+
     if request.GET.get('del', False):
         if username == request.user.username:
             try:
                 # ensure filename is not an empty string
                 if data.data_file.name != '':
-                    dfs.delete(data.data_file.name)
+                    default_storage.delete(data.data_file.name)
 
                 data.delete()
                 audit = {
@@ -72,7 +72,7 @@ def download_media_data(request, username, id_string, data_id):
         file_path = data.data_file.name
         filename, extension = os.path.splitext(file_path.split('/')[-1])
         extension = extension.strip('.')
-        if dfs.exists(file_path):
+        if default_storage.exists(file_path):
             audit = {
                 'xform': xform.id_string
             }

@@ -5,7 +5,7 @@ import csv
 from io import BytesIO
 
 from django.urls import reverse
-from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.core.files.storage import default_storage, FileSystemStorage
 from django.utils import timezone
 from openpyxl import load_workbook
 
@@ -52,7 +52,6 @@ class TestFormExports(TestBase):
             'filename': export.filename
         })
         response = self.anon.get(url, **extra)
-        default_storage = get_storage_class()()
         if not isinstance(default_storage, FileSystemStorage):
             self.assertEqual(response.status_code, 302)
         else:

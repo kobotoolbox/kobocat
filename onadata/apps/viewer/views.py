@@ -8,13 +8,16 @@ import rest_framework.request
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.files.storage import FileSystemStorage
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage, FileSystemStorage
 from django.urls import reverse
 from django.db.models import Q
 from django.http import (
-    HttpResponseForbidden, HttpResponseRedirect, HttpResponseNotFound,
-    HttpResponseBadRequest, HttpResponse)
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+    HttpResponseNotFound,
+    HttpResponseBadRequest,
+    HttpResponse,
+)
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.utils.http import urlquote
@@ -181,17 +184,18 @@ def export_download(request, username, id_string, export_type, filename):
             'filename': export.filename,
             'id_string': xform.id_string,
         }, audit, request)
-    if request.GET.get('raw'):
-        id_string = None
 
-    default_storage = get_storage_class()()
     if not isinstance(default_storage, FileSystemStorage):
         return HttpResponseRedirect(default_storage.url(export.filepath))
 
     basename = os.path.splitext(export.filename)[0]
     response = response_with_mimetype_and_name(
-        mime_type, name=basename, extension=ext,
-        file_path=export.filepath, show_date=False)
+        mime_type,
+        name=basename,
+        extension=ext,
+        file_path=export.filepath,
+        show_date=False,
+    )
     return response
 
 
@@ -332,7 +336,6 @@ def attachment_url(request, size='medium'):
             # - When using S3 Storage, traffic is multiplied by 2.
             #    S3 -> Nginx -> User
             response = HttpResponse()
-            default_storage = get_storage_class()()
             if not isinstance(default_storage, FileSystemStorage):
                 # Double-encode the S3 URL to take advantage of NGINX's
                 # otherwise troublesome automatic decoding
