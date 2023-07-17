@@ -11,7 +11,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.http import (
     HttpResponse,
     HttpResponseNotFound,
@@ -195,7 +195,7 @@ def get_media_file_response(
         file_path = metadata.data_file.name
         filename, extension = os.path.splitext(file_path.split('/')[-1])
         extension = extension.strip('.')
-        dfs = get_storage_class()()
+        dfs = default_storage
 
         if dfs.exists(file_path):
             response = response_with_mimetype_and_name(

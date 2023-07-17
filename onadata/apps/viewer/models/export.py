@@ -2,7 +2,7 @@
 import os
 from tempfile import NamedTemporaryFile
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models.signals import post_delete
 from django.utils.translation import gettext as t
@@ -12,9 +12,8 @@ from onadata.apps.logger.models import XForm
 
 def export_delete_callback(sender, **kwargs):
     export = kwargs['instance']
-    storage = get_storage_class()()
-    if export.filepath and storage.exists(export.filepath):
-        storage.delete(export.filepath)
+    if export.filepath and default_storage.exists(export.filepath):
+        default_storage.delete(export.filepath)
 
 
 class Export(models.Model):
@@ -136,7 +135,6 @@ class Export(models.Model):
     @property
     def full_filepath(self):
         if self.filepath:
-            default_storage = get_storage_class()()
             try:
                 return default_storage.path(self.filepath)
             except NotImplementedError:

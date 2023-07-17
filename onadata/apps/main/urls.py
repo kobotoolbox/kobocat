@@ -12,21 +12,15 @@ from onadata.apps.api.urls import XFormListApi
 from onadata.apps.api.urls import XFormSubmissionApi
 from onadata.apps.api.urls import router, router_with_patch_list
 from onadata.apps.main.service_health import service_health
-from onadata.apps.main.views import (
-    # form specific
-    download_media_data,
-)
 
 # exporting stuff
 from onadata.apps.viewer.views import (
     attachment_url,
-    data_export,
     create_export,
     delete_export,
     export_progress,
     export_list,
     export_download,
-    kml_export
 )
 from onadata.apps.logger.views import (
     bulksubmission,
@@ -72,12 +66,6 @@ urlpatterns = [
         RedirectView.as_view(url=koboform.redirect_url('/')),
         name='user_profile',
     ),
-    # form specific
-    re_path(
-        r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/(?P<data_id>\d+)',
-        download_media_data,
-        name='download_media_data'
-    ),
 
     # briefcase api urls
     re_path(r"^(?P<username>\w+)/view/submissionList$",
@@ -94,14 +82,6 @@ urlpatterns = [
             name='upload'),
 
     # exporting stuff
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.csv$",
-            data_export, name='csv_export',
-            kwargs={'export_type': 'csv'}),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.xls",
-            data_export, name='xls_export',
-            kwargs={'export_type': 'xls'}),
-    re_path(r"^(?P<username>\w+)/forms/(?P<id_string>[^/]+)/data\.kml$",
-            kml_export),
     re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
             r"/new$", create_export, name='create_export'),
     re_path(r"^(?P<username>\w+)/exports/(?P<id_string>[^/]+)/(?P<export_type>\w+)"
