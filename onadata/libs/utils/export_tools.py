@@ -678,7 +678,7 @@ def generate_attachments_zip_export(
 
     absolute_filename = _get_absolute_filename(file_path)
 
-    with get_storage_class()().open(absolute_filename, 'wb') as destination_file:
+    with default_storage.open(absolute_filename, 'wb') as destination_file:
         create_attachments_zipfile(
             attachments,
             output_file=destination_file,
@@ -725,7 +725,7 @@ def generate_kml_export(
         export_type,
         filename)
 
-    storage = get_storage_class()()
+    storage = default_storage
     temp_file = NamedTemporaryFile(suffix=extension)
     temp_file.write(response.content)
     temp_file.seek(0)
@@ -751,9 +751,7 @@ def generate_kml_export(
 
 
 def kml_export_data(id_string, user):
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.data_dictionary import DataDictionary
-    dd = DataDictionary.objects.get(id_string=id_string, user=user)
+
     instances = Instance.objects.filter(
         xform__user=user,
         xform__id_string=id_string,
@@ -779,7 +777,7 @@ def _get_absolute_filename(filename: str) -> str:
     Get absolute filename related to storage root.
     """
 
-    storage_class = get_storage_class()()
+    storage_class = default_storage
     filename = storage_class.generate_filename(filename)
 
     # We cannot call `self.result.save()` before reopening the file

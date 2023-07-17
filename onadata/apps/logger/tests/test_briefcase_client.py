@@ -17,7 +17,6 @@ from onadata.apps.logger.models import Instance, XForm
 from onadata.apps.logger.views import download_xform
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.tests.test_base import TestBase
-from onadata.apps.main.views import download_media_data
 from onadata.libs.utils.briefcase_client import BriefcaseClient
 from onadata.libs.utils.storage import rmdir
 
@@ -33,6 +32,11 @@ def xformsManifest(*args, **kwargs):  # noqa
     view = XFormListApi.as_view({'get': 'manifest'})
     response = view(*args, **kwargs)
     response.render()
+    return response
+
+def xformsMedia(*args, **kwargs):  # noqa
+    view = XFormListApi.as_view({'get': 'media'})
+    response = view(*args, **kwargs)
     return response
 
 
@@ -60,10 +64,12 @@ def form_list_xml(url, request, **kwargs):
         res = download_xform(req, username='bob', id_string=id_string)
     elif url.path.find('xformsManifest') > -1:
         res = xformsManifest(req, username='bob', pk=xform_id)
-    elif url.path.find('formid-media') > -1:
-        data_id = url.path[url.path.rfind('/') + 1:]
-        res = download_media_data(
-            req, username='bob', id_string=id_string, data_id=data_id)
+    elif url.path.find('xformsMedia') > -1:
+        filename = url.path[url.path.rfind('/') + 1:]
+        metadata_id, _ = os.path.splitext(filename)
+        res = xformsMedia(
+            req, username='bob', pk=xform_id, metadata=metadata_id
+        )
         response._content = get_streaming_content(res)
     else:
         res = formList(req, username='bob')

@@ -12,10 +12,6 @@ from onadata.apps.api.urls import XFormListApi
 from onadata.apps.api.urls import XFormSubmissionApi
 from onadata.apps.api.urls import router, router_with_patch_list
 from onadata.apps.main.service_health import service_health
-from onadata.apps.main.views import (
-    # form specific
-    download_media_data,
-)
 
 # exporting stuff
 from onadata.apps.viewer.views import (
@@ -69,12 +65,6 @@ urlpatterns = [
         r'^(?P<username>[^/]+)/$',
         RedirectView.as_view(url=koboform.redirect_url('/')),
         name='user_profile',
-    ),
-    # form specific
-    re_path(
-        r'^(?P<username>[^/]+)/forms/(?P<id_string>[^/]+)/formid-media/(?P<data_id>\d+)',
-        download_media_data,
-        name='download_media_data'
     ),
 
     # briefcase api urls
