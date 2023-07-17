@@ -750,9 +750,7 @@ def generate_kml_export(
 
 
 def kml_export_data(id_string, user):
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.data_dictionary import DataDictionary
-    dd = DataDictionary.objects.get(id_string=id_string, user=user)
+
     instances = Instance.objects.filter(
         xform__user=user,
         xform__id_string=id_string,
@@ -779,7 +777,6 @@ def _get_absolute_filename(filename: str) -> str:
     """
 
     filename = default_storage.generate_filename(filename)
-
     # We cannot call `self.result.save()` before reopening the file
     # in write mode (i.e. open(filename, 'wb')). because it does not work
     # with AzureStorage.
