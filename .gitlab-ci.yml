@@ -38,7 +38,7 @@ test:
     - name: redis:6.2
       alias: redis_cache
   script:
-    - apt-get update && apt-get install -y ghostscript gdal-bin libproj-dev gettext openjdk-11-jre
+    - apt-get update && apt-get install -y ghostscript gdal-bin libproj-dev gettext openjdk-17-jre
     - pip install -r dependencies/pip/dev_requirements.txt
     - pytest -vv -rf
 
