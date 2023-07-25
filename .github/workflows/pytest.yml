@@ -39,7 +39,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install pip-tools
-      run: python -m pip install pip-tools==6.\*
+      run: python -m pip install pip-tools==7.\*
     - name: Update apt package lists
       run: sudo apt update
     - name: Update Debian package lists
