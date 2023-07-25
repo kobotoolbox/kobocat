@@ -23,7 +23,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.storage import get_storage_class
 from django.core.mail import mail_admins
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.db.models import Q
 from django.http import (
     HttpResponse,
@@ -131,7 +131,10 @@ def check_edit_submission_permissions(
         ))
 
 
-@transaction.atomic  # paranoia; redundant since `ATOMIC_REQUESTS` set to `True`
+# Due to the default `ATOMIC_REQUESTS` setting, database transactions will hide duplicate
+# submissions that arrive "at the same time": each transaction won't see the others
+# and duplicated identical forms will be saved to the db. This needs to be managed using
+# an advisory lock
 def create_instance(
     username: str,
     xml_file: str,
@@ -158,43 +161,57 @@ def create_instance(
     # get new and deprecated uuid's
     new_uuid = get_uuid_from_xml(xml)
 
-    # Dorey's rule from 2012 (commit 890a67aa):
-    #   Ignore submission as a duplicate IFF
-    #    * a submission's XForm collects start time
-    #    * the submitted XML is an exact match with one that
-    #      has already been submitted for that user.
-    # The start-time requirement protected submissions with identical responses
-    # from being rejected as duplicates *before* KoBoCAT had the concept of
-    # submission UUIDs. Nowadays, OpenRosa requires clients to send a UUID (in
-    # `<instanceID>`) within every submission; if the incoming XML has a UUID
-    # and still exactly matches an existing submission, it's certainly a
-    # duplicate (https://docs.opendatakit.org/openrosa-metadata/#fields).
-    if xform.has_start_time or new_uuid is not None:
-        # XML matches are identified by identical content hash OR, when a
-        # content hash is not present, by string comparison of the full
-        # content, which is slow! Use the management command
-        # `populate_xml_hashes_for_instances` to hash existing submissions
-        existing_instance = Instance.objects.filter(
-            Q(xml_hash=xml_hash) | Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
-            xform__user=xform.user,
-        ).first()
-    else:
-        existing_instance = None
+    # Use xml_hash as a lock and return DuplicateInstance if the lock is held
+    # by another task/process
+    # Begin transaction and use xact_lock to ensure the lock is released
+    with transaction.atomic():
+        with connection.cursor() as cur:
+                cur.execute("""SELECT pg_try_advisory_xact_lock(%s::bigint)""",
+                            [int(xml_hash, 16) & 0xfffffffffffffff])
+                lock_acquired = cur.fetchone() == (True,)
+                if not lock_acquired:
+                    report_exception("xml_hash lock taken",
+                                     "the same form is already being received")
+                    raise DuplicateInstance()
 
-    if existing_instance:
-        existing_instance.check_active(force=False)
-        # ensure we have saved the extra attachments
-        new_attachments = save_attachments(existing_instance, media_files)
-        if not new_attachments:
-            raise DuplicateInstance()
+        # Dorey's rule from 2012 (commit 890a67aa):
+        #   Ignore submission as a duplicate IFF
+        #    * a submission's XForm collects start time
+        #    * the submitted XML is an exact match with one that
+        #      has already been submitted for that user.
+        # The start-time requirement protected submissions with identical responses
+        # from being rejected as duplicates *before* KoBoCAT had the concept of
+        # submission UUIDs. Nowadays, OpenRosa requires clients to send a UUID (in
+        # `<instanceID>`) within every submission; if the incoming XML has a UUID
+        # and still exactly matches an existing submission, it's certainly a
+        # duplicate (https://docs.opendatakit.org/openrosa-metadata/#fields).
+        if xform.has_start_time or new_uuid is not None:
+            # XML matches are identified by identical content hash OR, when a
+            # content hash is not present, by string comparison of the full
+            # content, which is slow! Use the management command
+            # `populate_xml_hashes_for_instances` to hash existing submissions
+            existing_instance = Instance.objects.filter(
+                Q(xml_hash=xml_hash)
+                    | Q(xml_hash=Instance.DEFAULT_XML_HASH, xml=xml),
+                xform__user=xform.user,
+            ).first()
         else:
-            # Update Mongo via the related ParsedInstance
-            existing_instance.parsed_instance.save(asynchronous=False)
-            return existing_instance
-    else:
-        instance = save_submission(request, xform, xml, media_files, new_uuid,
-                                   status, date_created_override)
-        return instance
+            existing_instance = None
+
+        if existing_instance:
+            existing_instance.check_active(force=False)
+            # ensure we have saved the extra attachments
+            new_attachments = save_attachments(existing_instance, media_files)
+            if not new_attachments:
+                raise DuplicateInstance()
+            else:
+                # Update Mongo via the related ParsedInstance
+                existing_instance.parsed_instance.save(asynchronous=False)
+                return existing_instance
+        else:
+            instance = save_submission(request, xform, xml, media_files, new_uuid,
+                                       status, date_created_override)
+            return instance
 
 
 def disposition_ext_and_date(name, extension, show_date=True):
