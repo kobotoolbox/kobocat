@@ -6,7 +6,7 @@ ENV VIRTUAL_ENV=/opt/venv \
 
 RUN python -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install --quiet pip-tools==6.\*
+RUN pip install --quiet pip-tools==7.\*
 COPY ./dependencies/pip/requirements.txt "${TMP_DIR}/pip_dependencies.txt"
 RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null
 
@@ -51,6 +51,7 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
 # jnm (or the current on-call sysadmin). Thanks.
 
 RUN apt-get -qq update && \
+    apt-get -qq -y install openjdk-17-jre && \
     apt-get -qq -y install \
         cron \
         gdal-bin \
@@ -62,7 +63,6 @@ RUN apt-get -qq update && \
         libproj-dev \
         libsqlite3-mod-spatialite \
         locales \
-        openjdk-11-jre \
         postgresql-client \
         procps \
         rsync \
