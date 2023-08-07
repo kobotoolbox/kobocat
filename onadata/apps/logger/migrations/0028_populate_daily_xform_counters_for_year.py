@@ -33,6 +33,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('logger', '0027_on_delete_cascade_monthlyxformsubmissioncounter'),
+        ('main', '0010_userprofile_metadata_jsonfield'),
     ]
 
     # We don't do anything when migrating in reverse
