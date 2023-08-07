@@ -156,10 +156,10 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
         else:
             data = {
                 'detail': t(
-                    f'Your access is restricted. Please reclaim your access by '
-                    f'changing your password at '
-                    f'{settings.KOBOFORM_URL}/accounts/password/reset/.'
-                )
+                    'Your access is restricted. Please reclaim your access by '
+                    'changing your password at '
+                    '##koboform_url##/accounts/password/reset/.'
+                ).replace('##koboform_url##', settings.KOBOFORM_URL)
             }
             if format_ == 'json':
                 return JsonResponseForbidden(data)
