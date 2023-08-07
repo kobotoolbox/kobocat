@@ -79,7 +79,7 @@ class Command(BaseCommand):
 
         # Get profiles whose users' submission counters have not been updated yet.
         subquery = UserProfile.objects.values_list('user_id', flat=True).filter(
-            metadata__counters_updates_status='complete'
+            metadata__contains={'counters_updates_status': 'complete'}
         )
 
         for user in (
