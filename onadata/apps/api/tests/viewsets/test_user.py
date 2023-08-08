@@ -168,10 +168,14 @@ class TestUserViewSet(TestAbstractViewSet):
         The list of endpoints is not exhaustive but should cover the main ones.
         TODO: Support other methods
         """
-        status_code = status.HTTP_200_OK if access_granted else status.HTTP_403_FORBIDDEN
-        xform_id = self.xform.instances.all()[0].pk
-        instance_id = self.xform.instances.all()[0].pk
-        attachment_id = self.xform.instances.all()[0].attachments.all()[0].pk
+        status_code = (
+            status.HTTP_200_OK if access_granted else status.HTTP_403_FORBIDDEN
+        )
+        xform_id = self.xform.pk
+        instance_id = self.xform.instances.all().order_by('id')[0].pk
+        attachment_id = (
+            self.xform.instances.all()[0].attachments.all().order_by('id')[0].pk
+        )
 
         # /api/v1/forms
         response = self.client.get(reverse('xform-list'), **headers)
