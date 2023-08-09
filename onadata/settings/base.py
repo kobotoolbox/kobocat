@@ -663,7 +663,7 @@ MFA_SUPPORTED_AUTH_CLASSES = [
 ]
 
 # Set the maximum number of days daily counters can be kept for
-DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 31)
+DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 366)
 
 SERVICE_ACCOUNT = {
     'BACKEND': env.cache_url(

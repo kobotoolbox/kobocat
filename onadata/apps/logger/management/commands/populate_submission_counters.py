@@ -50,11 +50,19 @@ class Command(BaseCommand):
             help='Recalculate counters for every user. Default is False',
         )
 
+        parser.add_argument(
+            '--skip_monthly',
+            action='store_true',
+            default=False,
+            help='Skip updating monthly counters. Default is False',
+        )
+
     def handle(self, *args, **kwargs):
         days = kwargs['days']
         self._chunks = kwargs['chunks']
         self._force = kwargs['force']
         self._verbosity = kwargs['verbosity']
+        self._skip_monthly = kwargs['skip_monthly']
         today = timezone.now().date()
         delta = timedelta(days=days)
         date_threshold = today - delta
@@ -98,7 +106,8 @@ class Command(BaseCommand):
 
                     daily_counters, total_submissions = self.build_counters(xf)
                     self.add_daily_counters(daily_counters)
-                    self.add_monthly_counters(total_submissions, xf, user)
+                    if not self._skip_monthly:
+                        self.add_monthly_counters(total_submissions, xf, user)
 
                 self.update_user_profile(user)
 
