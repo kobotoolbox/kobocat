@@ -145,6 +145,8 @@ class XMLFormWithDisclaimer:
                 'language_code', 'message', 'default', 'hidden'
             )
             .filter(Q(xform__isnull=True) | Q(xform=xform))
+            # Hidden first, per-asset (non-null xform) first, then alphabetical
+            # by language code
             .order_by('-hidden', '-xform_id', 'language_code')
         )
 
@@ -161,7 +163,7 @@ class XMLFormWithDisclaimer:
         of all available messages and the default language code.
         """
 
-        # Do not go further is disclaimer must be hidden
+        # Do not go further if disclaimer must be hidden
         if disclaimers[0]['hidden']:
             return
 
