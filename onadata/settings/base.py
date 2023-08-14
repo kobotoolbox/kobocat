@@ -222,6 +222,7 @@ INSTALLED_APPS = [
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',
+    'onadata.apps.form_disclaimer.FormDisclaimerAppConfig',
 ]
 
 USE_THOUSAND_SEPARATOR = True
