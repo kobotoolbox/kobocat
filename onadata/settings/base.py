@@ -839,6 +839,6 @@ if sentry_dsn:
             CeleryIntegration(),
             sentry_logging
         ],
-        traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', 0.05),
+        traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', 0.01),
         send_default_pii=True
     )
