@@ -111,12 +111,8 @@ class XMLFormWithDisclaimer:
         Will add only translations that match form translations.
         """
 
-        translation_nodes = []
-        languages = []
         for n in self._root_node.getElementsByTagName('itext')[0].childNodes:
             if n.nodeType == Node.ELEMENT_NODE and n.tagName == 'translation':
-                languages.append(n.getAttribute('lang'))
-                translation_nodes.append(n)
                 disclaimer_translation = self._root_node.createElement('text')
                 disclaimer_translation.setAttribute(
                     'id',
