@@ -1,12 +1,9 @@
 # coding: utf-8
-import os
-import time
 import csv
 from io import BytesIO
 
 from django.urls import reverse
 from django.core.files.storage import default_storage, FileSystemStorage
-from django.utils import timezone
 from openpyxl import load_workbook
 
 from onadata.apps.viewer.models.export import Export
