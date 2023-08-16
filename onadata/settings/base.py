@@ -216,6 +216,7 @@ INSTALLED_APPS = [
     'pure_pagination',
     'django_celery_beat',
     'django_extensions',
+    'onadata.apps.form_disclaimer.FormDisclaimerAppConfig',
 ]
 
 USE_THOUSAND_SEPARATOR = True
@@ -657,7 +658,7 @@ MFA_SUPPORTED_AUTH_CLASSES = [
 ]
 
 # Set the maximum number of days daily counters can be kept for
-DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 31)
+DAILY_COUNTERS_MAX_DAYS = env.int('DAILY_COUNTERS_MAX_DAYS', 366)
 
 SERVICE_ACCOUNT = {
     'BACKEND': env.cache_url(
@@ -833,6 +834,6 @@ if sentry_dsn:
             CeleryIntegration(),
             sentry_logging
         ],
-        traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', 0.05),
+        traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', 0.01),
         send_default_pii=True
     )
