@@ -129,7 +129,7 @@ class XFormListSerializer(serializers.Serializer):
 
     @check_obj
     def get_hash(self, obj):
-        return "md5:%s" % obj.md5_hash
+        return f'md5:{obj.md5_hash_with_disclaimer}'
 
     @check_obj
     def get_url(self, obj):

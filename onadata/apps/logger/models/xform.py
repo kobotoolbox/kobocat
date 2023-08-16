@@ -13,7 +13,6 @@ from django.urls import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.utils.encoding import smart_str
-
 from django.utils.translation import gettext_lazy as t
 from guardian.shortcuts import (
     assign_perm,
@@ -33,6 +32,7 @@ from onadata.libs.constants import (
     CAN_DELETE_DATA_XFORM,
     CAN_TRANSFER_OWNERSHIP,
 )
+from onadata.libs.utils.xml import XMLFormWithDisclaimer
 from onadata.libs.models.base_model import BaseModel
 from onadata.libs.utils.hash import get_hash
 
@@ -244,6 +244,10 @@ class XForm(BaseModel):
         return get_hash(self.xml)
 
     @property
+    def md5_hash_with_disclaimer(self):
+        return get_hash(self.xml_with_disclaimer)
+
+    @property
     def can_be_replaced(self):
         if hasattr(self.submission_count, '__call__'):
             num_submissions = self.submission_count()
@@ -288,6 +292,10 @@ class XForm(BaseModel):
         return {
             "validation_statuses": default_validation_statuses
         }
+
+    @property
+    def xml_with_disclaimer(self):
+        return XMLFormWithDisclaimer(self).get_object().xml
 
 
 def update_profile_num_submissions(sender, instance, **kwargs):

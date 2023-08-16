@@ -128,8 +128,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         self.object = self.get_object()
-
-        return Response(self.object.xml, headers=self.get_openrosa_headers())
+        return Response(self.object.xml_with_disclaimer, headers=self.get_openrosa_headers())
 
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
