@@ -2,7 +2,6 @@
 import os
 
 from django.urls import reverse
-from django.core.files.storage import default_storage
 from django.test import override_settings
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory

@@ -6,7 +6,6 @@ from django.urls import reverse
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.viewer.models.export import Export
-from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.viewer.views import export_list
 
 
