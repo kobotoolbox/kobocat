@@ -103,7 +103,8 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
 
     def process_view(self, request, view, view_args, view_kwargs):
         """
-        Validate if view is among allowed one with unsafe password.
+        Validate if the view is among the ones allowed to be accessed with
+        an unsafe password.
         If it is not, set `self._allowed_view` to False to alter the
         response in `process_response()`.
 

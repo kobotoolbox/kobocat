@@ -1,8 +1,6 @@
 # coding: utf-8
 import os
 
-from django.db import transaction, IntegrityError
-
 from onadata.apps.logger.models import XForm
 from .test_base import TestBase
 
