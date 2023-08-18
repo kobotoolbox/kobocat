@@ -149,7 +149,6 @@ TEMPLATES = [
         ],
         'OPTIONS': {
             'context_processors': [
-                'onadata.koboform.context_processors.koboform_integration',
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
@@ -159,6 +158,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.messages.context_processors.messages',
                 'readonly.context_processors.readonly',
+                # Additional processors
+                'onadata.koboform.context_processors.koboform_integration',
                 'onadata.apps.main.context_processors.google_analytics',
                 'onadata.apps.main.context_processors.site_name',
                 'onadata.apps.main.context_processors.base_url'

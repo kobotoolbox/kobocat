@@ -4,8 +4,12 @@ from typing import Union
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.http import HttpResponseForbidden
-from django.http import HttpResponseNotAllowed
+from django.http import (
+    HttpResponseNotAllowed,
+    HttpResponseForbidden,
+    HttpRequest,
+    HttpResponse,
+)
 from django.middleware.locale import LocaleMiddleware
 from django.template import loader
 from django.template.loader import get_template
@@ -91,13 +95,13 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
         except get_user_model().profile.RelatedObjectDoesNotExist:
             # Consider user's password as weak
             if not self._allowed_view:
-                return self._render_response(response)
+                return self._render_response(request, response)
 
         if profile.validated_password:
             return response
 
         if not self._allowed_view:
-            return self._render_response(response)
+            return self._render_response(request, response)
 
         return response
 
@@ -135,7 +139,7 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
         return
 
     def _render_response(
-        self, response
+        self, request: HttpRequest, response: HttpResponse
     ) -> Union[
         HttpResponseForbidden, JsonResponseForbidden, XMLResponseForbidden
     ]:
@@ -153,7 +157,7 @@ class RestrictedAccessMiddleware(MiddlewareMixin):
             *_, format_ = content_type.split('/')
 
         if format_ not in ['xml', 'json']:
-            return HttpResponseForbidden(template.render())
+            return HttpResponseForbidden(template.render(request=request))
         else:
             data = {
                 'detail': t(
