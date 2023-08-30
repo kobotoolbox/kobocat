@@ -13,11 +13,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='userprofile',
-            name='password_date_changed',
-            field=models.DateTimeField(default=django.utils.timezone.now),
-        ),
-        migrations.AddField(
-            model_name='userprofile',
             name='validated_password',
             field=models.BooleanField(default=True),
         ),

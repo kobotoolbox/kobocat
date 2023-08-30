@@ -41,7 +41,6 @@ class UserProfile(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     is_mfa_active = LazyDefaultBooleanField(default=False)
     validated_password = models.BooleanField(default=True)
-    password_date_changed = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return '%s[%s]' % (self.name, self.user.username)
