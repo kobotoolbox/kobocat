@@ -92,17 +92,10 @@ STATIC_ROOT = os.path.join(ONADATA_DIR, 'static')
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
-# Login URLs
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/login_redirect/'
-
-
 if os.environ.get('KOBOCAT_ROOT_URI_PREFIX'):
     KOBOCAT_ROOT_URI_PREFIX = '/' + os.environ['KOBOCAT_ROOT_URI_PREFIX'].strip('/') + '/'
     MEDIA_URL = KOBOCAT_ROOT_URI_PREFIX + MEDIA_URL.lstrip('/')
     STATIC_URL = KOBOCAT_ROOT_URI_PREFIX + STATIC_URL.lstrip('/')
-    LOGIN_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_URL.lstrip('/')
-    LOGIN_REDIRECT_URL = KOBOCAT_ROOT_URI_PREFIX + LOGIN_REDIRECT_URL.lstrip('/')
 
 MEDIA_ROOT = os.path.join(PROJECT_ROOT, MEDIA_URL.lstrip('/'))
 
@@ -129,6 +122,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'onadata.libs.utils.middleware.RestrictedAccessMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'onadata.libs.utils.middleware.HTTPResponseNotAllowedMiddleware',
     'readonly.middleware.DatabaseReadOnlyMiddleware',
@@ -155,7 +149,6 @@ TEMPLATES = [
         ],
         'OPTIONS': {
             'context_processors': [
-                'onadata.koboform.context_processors.koboform_integration',
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
@@ -165,6 +158,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.messages.context_processors.messages',
                 'readonly.context_processors.readonly',
+                # Additional processors
+                'onadata.koboform.context_processors.koboform_integration',
                 'onadata.apps.main.context_processors.google_analytics',
                 'onadata.apps.main.context_processors.site_name',
                 'onadata.apps.main.context_processors.base_url'

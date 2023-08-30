@@ -188,7 +188,7 @@ class TestBase(RequestMixin, MakeSubmissionMixin, TestCase):
 
     def _get_response_content(self, response):
         contents = ''
-        if response.streaming:
+        if getattr(response, 'streaming', None):
             actual_content = BytesIO()
             for content in response.streaming_content:
                 actual_content.write(content)

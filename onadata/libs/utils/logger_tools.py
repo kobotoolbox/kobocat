@@ -7,21 +7,16 @@ import sys
 import traceback
 from datetime import date, datetime
 from xml.parsers.expat import ExpatError
-
-from onadata.apps.logger.signals import (
-    update_user_profile_attachment_storage_bytes,
-    update_xform_attachment_storage_bytes,
-)
-
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
     from backports.zoneinfo import ZoneInfo
 
+
 from dict2xml import dict2xml
 from django.conf import settings
 from django.core.exceptions import ValidationError, PermissionDenied
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.core.mail import mail_admins
 from django.db import IntegrityError, transaction
 from django.db.models import Q
@@ -60,6 +55,10 @@ from onadata.apps.logger.models.instance import (
     update_xform_submission_count,
 )
 from onadata.apps.logger.models.xform import XLSFormError
+from onadata.apps.logger.signals import (
+    update_user_profile_attachment_storage_bytes,
+    update_xform_attachment_storage_bytes,
+)
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
     InstanceInvalidUserError,
@@ -441,7 +440,16 @@ def publish_xls_form(xls_file, user, id_string=None):
         dd.save()
         return dd
     else:
-        return DataDictionary.objects.create(user=user, xls=xls_file)
+        # Creation needs to be wrapped in a transaction because of unit tests.
+        # It raises `TransactionManagementError` on IntegrityError in
+        # `RestrictedAccessMiddleware` when accessing `request.user.profile`.
+        # See https://stackoverflow.com/a/23326971
+        try:
+            with transaction.atomic():
+                dd = DataDictionary.objects.create(user=user, xls=xls_file)
+        except IntegrityError as e:
+            raise e
+        return dd
 
 
 def publish_xml_form(xml_file, user, id_string=None):
@@ -494,15 +502,12 @@ def response_with_mimetype_and_name(
     if file_path:
         try:
             if not use_local_filesystem:
-                default_storage = get_storage_class()()
                 wrapper = FileWrapper(default_storage.open(file_path))
-                response = StreamingHttpResponse(wrapper,
-                                                 content_type=mimetype)
+                response = StreamingHttpResponse(wrapper, content_type=mimetype)
                 response['Content-Length'] = default_storage.size(file_path)
             else:
                 wrapper = FileWrapper(open(file_path))
-                response = StreamingHttpResponse(wrapper,
-                                                 content_type=mimetype)
+                response = StreamingHttpResponse(wrapper, content_type=mimetype)
                 response['Content-Length'] = os.path.getsize(file_path)
         except IOError:
             response = HttpResponseNotFound(

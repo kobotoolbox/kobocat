@@ -6,10 +6,10 @@ from datetime import datetime, date, time, timedelta
 
 from bson import json_util
 from django.conf import settings
-from django.core.files.base import File, ContentFile
+from django.core.files.base import File
 from django.core.files.storage import FileSystemStorage
 from django.core.files.temp import NamedTemporaryFile
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.utils.text import slugify
@@ -523,16 +523,18 @@ class ExportBuilder:
 
         wb.save(filename=path)
 
-    def to_flat_csv_export(
-            self, path, data, username, id_string, filter_query):
+    def to_flat_csv_export(self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
-
-        from onadata.apps.viewer.pandas_mongo_bridge import\
-            CSVDataFrameBuilder
+        from onadata.apps.viewer.pandas_mongo_bridge import CSVDataFrameBuilder
 
         csv_builder = CSVDataFrameBuilder(
-            username, id_string, filter_query, self.GROUP_DELIMITER,
-            self.SPLIT_SELECT_MULTIPLES, self.BINARY_SELECT_MULTIPLES)
+            username,
+            id_string,
+            filter_query,
+            self.GROUP_DELIMITER,
+            self.SPLIT_SELECT_MULTIPLES,
+            self.BINARY_SELECT_MULTIPLES,
+        )
         csv_builder.export_to(path)
 
 
@@ -570,7 +572,6 @@ def generate_export(export_type, extension, username, id_string,
 
     # get the export function by export type
     func = getattr(export_builder, export_type_func_map[export_type])
-
     func.__call__(
         temp_file.name, records, username, id_string, filter_query)
 
@@ -591,10 +592,9 @@ def generate_export(export_type, extension, username, id_string,
         filename)
 
     # TODO: if s3 storage, make private - how will we protect local storage??
-    storage = get_storage_class()()
     # seek to the beginning as required by storage classes
     temp_file.seek(0)
-    export_filename = storage.save(
+    export_filename = default_storage.save(
         file_path,
         File(temp_file, file_path))
     temp_file.close()
@@ -609,7 +609,7 @@ def generate_export(export_type, extension, username, id_string,
     export.filedir = dir_name
     export.filename = basename
     export.internal_status = Export.SUCCESSFUL
-    # dont persist exports that have a filter
+    # do not persist exports that have a filter
     if filter_query is None:
         export.save()
     return export
@@ -678,7 +678,7 @@ def generate_attachments_zip_export(
 
     absolute_filename = _get_absolute_filename(file_path)
 
-    with get_storage_class()().open(absolute_filename, 'wb') as destination_file:
+    with default_storage.open(absolute_filename, 'wb') as destination_file:
         create_attachments_zipfile(
             attachments,
             output_file=destination_file,
@@ -725,11 +725,10 @@ def generate_kml_export(
         export_type,
         filename)
 
-    storage = get_storage_class()()
     temp_file = NamedTemporaryFile(suffix=extension)
     temp_file.write(response.content)
     temp_file.seek(0)
-    export_filename = storage.save(
+    export_filename = default_storage.save(
         file_path,
         File(temp_file, file_path))
     temp_file.close()
@@ -751,9 +750,7 @@ def generate_kml_export(
 
 
 def kml_export_data(id_string, user):
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.data_dictionary import DataDictionary
-    dd = DataDictionary.objects.get(id_string=id_string, user=user)
+
     instances = Instance.objects.filter(
         xform__user=user,
         xform__id_string=id_string,
@@ -779,9 +776,7 @@ def _get_absolute_filename(filename: str) -> str:
     Get absolute filename related to storage root.
     """
 
-    storage_class = get_storage_class()()
-    filename = storage_class.generate_filename(filename)
-
+    filename = default_storage.generate_filename(filename)
     # We cannot call `self.result.save()` before reopening the file
     # in write mode (i.e. open(filename, 'wb')). because it does not work
     # with AzureStorage.
@@ -791,20 +786,20 @@ def _get_absolute_filename(filename: str) -> str:
     # - Get a unique filename if filename already exists on storage
 
     # Copied from `FileSystemStorage._save()` 😢
-    if isinstance(storage_class, FileSystemStorage):
-        full_path = storage_class.path(filename)
+    if isinstance(default_storage, FileSystemStorage):
+        full_path = default_storage.path(filename)
 
         # Create any intermediate directories that do not exist.
         directory = os.path.dirname(full_path)
         if not os.path.exists(directory):
             try:
-                if storage_class.directory_permissions_mode is not None:
+                if default_storage.directory_permissions_mode is not None:
                     # os.makedirs applies the global umask, so we reset it,
                     # for consistency with file_permissions_mode behavior.
                     old_umask = os.umask(0)
                     try:
                         os.makedirs(
-                            directory, storage_class.directory_permissions_mode
+                            directory, default_storage.directory_permissions_mode
                         )
                     finally:
                         os.umask(old_umask)
@@ -821,4 +816,4 @@ def _get_absolute_filename(filename: str) -> str:
         # Store filenames with forward slashes, even on Windows.
         filename = filename.replace('\\', '/')
 
-    return storage_class.get_available_name(filename)
+    return default_storage.get_available_name(filename)

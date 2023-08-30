@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
+from django.utils import timezone
 from django.utils.translation import gettext_lazy
 from guardian.conf import settings as guardian_settings
 from guardian.shortcuts import get_perms_for_model, assign_perm
@@ -39,6 +40,7 @@ class UserProfile(models.Model):
     attachment_storage_bytes = models.BigIntegerField(default=0)
     metadata = models.JSONField(default=dict, blank=True)
     is_mfa_active = LazyDefaultBooleanField(default=False)
+    validated_password = models.BooleanField(default=True)
 
     def __str__(self):
         return '%s[%s]' % (self.name, self.user.username)

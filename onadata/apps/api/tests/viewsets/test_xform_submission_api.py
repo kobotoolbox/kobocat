@@ -441,6 +441,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
             self.assertEqual(
                 response['Location'], 'http://testserver/submission'
             )
+
     def test_submission_blocking_flag(self):
         # Set 'submissions_suspended' True in the profile metadata to test if
         # submission do fail with the flag set

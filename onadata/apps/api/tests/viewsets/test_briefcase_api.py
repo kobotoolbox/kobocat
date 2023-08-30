@@ -2,7 +2,6 @@
 import os
 
 from django.urls import reverse
-from django.core.files.storage import get_storage_class
 from django.test import override_settings
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
@@ -16,7 +15,6 @@ from onadata.libs.utils.storage import rmdir
 
 
 NUM_INSTANCES = 4
-storage = get_storage_class()()
 
 
 def ordered_instances(xform):

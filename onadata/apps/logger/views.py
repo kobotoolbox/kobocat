@@ -8,11 +8,12 @@ from datetime import datetime, date
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
+    HttpResponseNotFound,
     HttpResponseRedirect,
     StreamingHttpResponse,
     Http404,
@@ -185,7 +186,6 @@ def download_xlsform(request, username, id_string):
         return HttpResponseForbidden('Not shared.')
 
     file_path = xform.xls.name
-    default_storage = get_storage_class()()
 
     if file_path != '' and default_storage.exists(file_path):
         audit = {
@@ -220,12 +220,9 @@ def download_xlsform(request, username, id_string):
         return response
 
     else:
-        messages.add_message(request, messages.WARNING,
-                             t('No XLS file for your form '
-                               '<strong>%(id)s</strong>')
-                             % {'id': id_string})
-
-        return HttpResponseRedirect("/%s" % username)
+        return HttpResponseNotFound(
+            t('No XLS file for your form %(id)s') % {'id': id_string}
+        )
 
 
 def download_jsonform(request, username, id_string):
@@ -250,43 +247,3 @@ def download_jsonform(request, username, id_string):
         add_cors_headers(response)
         response.content = xform.json
     return response
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def superuser_stats(request, username):
-    base_filename = '{}_{}_{}.zip'.format(
-        re.sub('[^a-zA-Z0-9]', '-', request.get_host()),
-        date.today(),
-        datetime.now().microsecond
-    )
-    filename = os.path.join(
-        request.user.username,
-        'superuser_stats',
-        base_filename
-    )
-    generate_stats_zip.delay(filename)
-    template_ish = (
-        '<html><head><title>Hello, superuser.</title></head>'
-        '<body>Your report is being generated. Once finished, it will be '
-        'available at <a href="{0}">{0}</a>. If you receive a 404, please '
-        'refresh your browser periodically until your request succeeds.'
-        '</body></html>'
-    ).format(base_filename)
-    return HttpResponse(template_ish)
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def retrieve_superuser_stats(request, username, base_filename):
-    filename = os.path.join(
-        request.user.username,
-        'superuser_stats',
-        base_filename
-    )
-    default_storage = get_storage_class()()
-    if not default_storage.exists(filename):
-        raise Http404
-    with default_storage.open(filename) as f:
-        response = StreamingHttpResponse(f, content_type='application/zip')
-        response['Content-Disposition'] = 'attachment;filename="{}"'.format(
-            base_filename)
-        return response

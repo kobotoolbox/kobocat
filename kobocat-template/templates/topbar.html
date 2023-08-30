@@ -10,7 +10,6 @@
         <i class="fa fa-bars fa-lg fa-inverse"></i>
       </span>
     {% endif %}
-    <h1 class="header-bar__title"><a href="/"><span class="header-bar__title-text">{% trans "Projects" %}</span></a></h1>
   </div>
 </header>
 
@@ -18,23 +17,15 @@
 <section class="top-level-menu">
   <ul>
     <li class="top-level-menu__item">
-      <a href="{{ koboform_url }}">
+      <a href="{{ koboform_url }}#/forms">
         <i class="header-bar__page-icon fa fa-fw fa-file-text-o"></i>
-        {% trans "Forms" %}
+        {% trans "Projects" %}
       </a>
     </li>
     <li class="top-level-menu__item">
       <a href="{{ koboform_url }}#/library">
         <i class="header-bar__page-icon  fa  fa-fw  fa-folder"></i>
         {% trans "Question Library" %}
-      </a>
-    </li>
-
-    {% url "user_profile" user.username as is_username %}
-    <li class="top-level-menu__item {% if request.path == is_username %} is-active {% endif %}">
-      <a href="/">
-        <i class="header-bar__page-icon fa fa-fw fa-globe"></i>
-        {% trans "Projects" %}
       </a>
     </li>
 
