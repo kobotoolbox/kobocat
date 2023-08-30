@@ -201,7 +201,7 @@ class Command(BaseCommand):
         ) = UserProfile.objects.get_or_create(user_id=user.pk)
 
         # Some old profiles don't have metadata
-        if user_profile.metadata is None:
+        if user_profile.metadata is None or not isinstance(user_profile.metadata, dict):
             user_profile.metadata = {}
 
         # Set the flag `submissions_suspended` to true if it is not already.
