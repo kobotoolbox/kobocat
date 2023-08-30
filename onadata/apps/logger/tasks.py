@@ -10,7 +10,7 @@ from celery import shared_task
 from dateutil import relativedelta
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.core.management import call_command
 from django.utils import timezone
 
@@ -94,7 +94,6 @@ def generate_stats_zip(output_filename):
 
         return results
 
-    default_storage = get_storage_class()()
     with default_storage.open(output_filename, 'wb') as output_file:
         zip_file = zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED)
         for filename, report_settings in REPORTS.items():

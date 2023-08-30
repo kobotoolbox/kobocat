@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.utils.dateparse import parse_datetime
 
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
@@ -27,13 +27,13 @@ class TestExport(TestBase):
         # test csv
         export = generate_export(Export.CSV_EXPORT, 'csv', self.user.username,
                                  'tutorial_w_repeats')
-        storage = get_storage_class()()
-        self.assertTrue(storage.exists(export.filepath))
+
+        self.assertTrue(default_storage.exists(export.filepath))
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
         with open(os.path.join(
                 self.fixture_dir, 'tutorial_w_repeats.csv'), 'rb') as f1:
-            with storage.open(export.filepath) as f2:
+            with default_storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
                 self.assertEqual(actual_content, expected_content)
@@ -57,12 +57,12 @@ class TestExport(TestBase):
         # test csv
         export = generate_export(Export.CSV_EXPORT, 'csv', self.user.username,
                                  'double_repeat')
-        storage = get_storage_class()()
-        self.assertTrue(storage.exists(export.filepath))
+
+        self.assertTrue(default_storage.exists(export.filepath))
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
         with open(os.path.join(self.fixture_dir, 'export.csv'), 'rb') as f1:
-            with storage.open(export.filepath) as f2:
+            with default_storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
                 self.assertEqual(actual_content, expected_content)
@@ -78,14 +78,13 @@ class TestExport(TestBase):
         # test csv
         export = generate_export(Export.CSV_EXPORT, 'csv', self.user.username,
                                  'userone')
-        storage = get_storage_class()()
-        self.assertTrue(storage.exists(export.filepath))
+        self.assertTrue(default_storage.exists(export.filepath))
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
         with open(os.path.join(
                 os.path.dirname(__file__), 'fixtures', 'userone',
                 'userone_with_dot_name_fields.csv'), 'rb') as f1:
-            with storage.open(export.filepath) as f2:
+            with default_storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()
                 self.assertEqual(actual_content, expected_content)

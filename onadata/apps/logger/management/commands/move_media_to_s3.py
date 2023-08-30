@@ -3,7 +3,7 @@
 # coding: utf-8
 import sys
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 
 from onadata.apps.logger.models.attachment import Attachment
@@ -27,7 +27,6 @@ class Command(BaseCommand):
                   "requirements/s3.pip")
             sys.exit(1)
 
-        default_storage = get_storage_class()()
         if default_storage.__class__ != s3.__class__:
             print("You must first set your default storage to s3 in your "
                   "local_settings.py file.")

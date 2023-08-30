@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.conf import settings
 
@@ -32,8 +32,7 @@ class TestImportingDatabase(TestBase):
             xform_uuid=instance.xform.uuid,
             instance_uuid=instance.uuid
         )
-        storage = get_storage_class()()
-        _, images = storage.listdir(attachments_path)
+        _, images = default_storage.listdir(attachments_path)
         return len(images)
 
     def tearDown(self):

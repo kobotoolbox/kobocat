@@ -725,11 +725,10 @@ def generate_kml_export(
         export_type,
         filename)
 
-    storage = default_storage
     temp_file = NamedTemporaryFile(suffix=extension)
     temp_file.write(response.content)
     temp_file.seek(0)
-    export_filename = storage.save(
+    export_filename = default_storage.save(
         file_path,
         File(temp_file, file_path))
     temp_file.close()
@@ -777,9 +776,7 @@ def _get_absolute_filename(filename: str) -> str:
     Get absolute filename related to storage root.
     """
 
-    storage_class = default_storage
-    filename = storage_class.generate_filename(filename)
-
+    filename = default_storage.generate_filename(filename)
     # We cannot call `self.result.save()` before reopening the file
     # in write mode (i.e. open(filename, 'wb')). because it does not work
     # with AzureStorage.
@@ -789,20 +786,20 @@ def _get_absolute_filename(filename: str) -> str:
     # - Get a unique filename if filename already exists on storage
 
     # Copied from `FileSystemStorage._save()` 😢
-    if isinstance(storage_class, FileSystemStorage):
-        full_path = storage_class.path(filename)
+    if isinstance(default_storage, FileSystemStorage):
+        full_path = default_storage.path(filename)
 
         # Create any intermediate directories that do not exist.
         directory = os.path.dirname(full_path)
         if not os.path.exists(directory):
             try:
-                if storage_class.directory_permissions_mode is not None:
+                if default_storage.directory_permissions_mode is not None:
                     # os.makedirs applies the global umask, so we reset it,
                     # for consistency with file_permissions_mode behavior.
                     old_umask = os.umask(0)
                     try:
                         os.makedirs(
-                            directory, storage_class.directory_permissions_mode
+                            directory, default_storage.directory_permissions_mode
                         )
                     finally:
                         os.umask(old_umask)
@@ -819,4 +816,4 @@ def _get_absolute_filename(filename: str) -> str:
         # Store filenames with forward slashes, even on Windows.
         filename = filename.replace('\\', '/')
 
-    return storage_class.get_available_name(filename)
+    return default_storage.get_available_name(filename)

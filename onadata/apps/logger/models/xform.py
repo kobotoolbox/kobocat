@@ -2,12 +2,13 @@
 import json
 import os
 import re
+from io import BytesIO
 from xml.sax.saxutils import escape as xml_escape
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.db import models
 from django.db.models.signals import post_save, post_delete, pre_delete
@@ -265,7 +266,6 @@ class XForm(BaseModel):
         this should be used sparingly
         """
         file_path = self.xls.name
-        default_storage = get_storage_class()()
 
         if file_path != '' and default_storage.exists(file_path):
             with default_storage.open(file_path) as ff:

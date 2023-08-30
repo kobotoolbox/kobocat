@@ -4,7 +4,7 @@
 from django.contrib.auth.models import User
 
 from django.core.management.base import BaseCommand, CommandError
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.conf import settings
 
 from onadata.apps.logger.models.attachment import Attachment
@@ -53,7 +53,6 @@ class Command(BaseCommand):
 
         for att in queryset_iterator(attachments_qs):
             filename = att.media_file.name
-            default_storage = get_storage_class()()
             full_path = get_path(filename,
                                  settings.THUMB_CONF['small']['suffix'])
             if kwargs.get('force') is not None:

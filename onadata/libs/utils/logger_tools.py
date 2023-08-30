@@ -21,7 +21,7 @@ except ImportError:
 from dict2xml import dict2xml
 from django.conf import settings
 from django.core.exceptions import ValidationError, PermissionDenied
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.core.mail import mail_admins
 from django.db import IntegrityError, transaction
 from django.db.models import Q
@@ -494,15 +494,12 @@ def response_with_mimetype_and_name(
     if file_path:
         try:
             if not use_local_filesystem:
-                default_storage = get_storage_class()()
                 wrapper = FileWrapper(default_storage.open(file_path))
-                response = StreamingHttpResponse(wrapper,
-                                                 content_type=mimetype)
+                response = StreamingHttpResponse(wrapper, content_type=mimetype)
                 response['Content-Length'] = default_storage.size(file_path)
             else:
                 wrapper = FileWrapper(open(file_path))
-                response = StreamingHttpResponse(wrapper,
-                                                 content_type=mimetype)
+                response = StreamingHttpResponse(wrapper, content_type=mimetype)
                 response['Content-Length'] = os.path.getsize(file_path)
         except IOError:
             response = HttpResponseNotFound(
