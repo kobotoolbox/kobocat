@@ -69,8 +69,14 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
 
         if not path:
             path = os.path.join(
-                settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
-                "transportation", "transportation.xls")
+                settings.ONADATA_DIR,
+                'apps',
+                'main',
+                'tests',
+                'fixtures',
+                'transportation',
+                'transportation.xls',
+            )
 
         xform_list_url = reverse('xform-list')
 
@@ -85,7 +91,7 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
             # For test purposes we want to try to `POST` with current logged-in
             # user
             client = self.client
-            service_account_meta = {}
+            service_account_meta = self.extra
 
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}

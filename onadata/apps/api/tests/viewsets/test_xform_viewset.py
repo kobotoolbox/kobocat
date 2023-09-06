@@ -241,74 +241,12 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, [])
 
-    def test_publish_xlsform(self):
-        view = XFormViewSet.as_view({
-            'post': 'create'
-        })
-        data = {
-            'owner': 'bob',
-            'public': False,
-            'public_data': False,
-            'description': 'transportation_2011_07_25',
-            'downloadable': True,
-            'encrypted': False,
-            'id_string': 'transportation_2011_07_25',
-            'title': 'transportation_2011_07_25'
-        }
-        path = os.path.join(
-            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
-            "transportation", "transportation.xls")
-        with open(path, 'rb') as xls_file:
-            post_data = {'xls_file': xls_file}
-            request = self.factory.post('/', data=post_data, **self.extra)
-            response = view(request)
-            self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+    def test_cannot_publish_xlsform_with_user_account(self):
+        response = self.publish_xls_form(use_service_account=False, assert_=False)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_publish_xlsform_with_service_account(self):
-        """
-        This tests is quite the same as `test_publish_xlsform()`. The only
-        difference is the authentication headers used to make the call to API.
-        This one user service account authentication headers, but ensures
-        that the owner is still 'bob'.
-        """
-        data = {
-            'owner': 'bob',
-            'public': False,
-            'public_data': False,
-            'description': 'transportation_2011_07_25',
-            'downloadable': True,
-            'encrypted': False,
-            'id_string': 'transportation_2011_07_25',
-            'title': 'transportation_2011_07_25'
-        }
-        path = os.path.join(
-            settings.ONADATA_DIR,
-            'apps',
-            'main',
-            'tests',
-            'fixtures',
-            'transportation',
-            'transportation.xls',
-        )
-
-        client = Client()
-        xform_list_url = reverse('xform-list')
-        service_account_meta = self.get_meta_from_headers(
-            get_request_headers(self.user.username)
-        )
-        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
-
-        with open(path, 'rb') as xls_file:
-            post_data = {'xls_file': xls_file}
-            xls_file.seek(0)
-            response = client.post(
-                xform_list_url, data=post_data, **service_account_meta
-            )
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            xform = self.user.xforms.get(uuid=response.data.get('uuid'))
-            data.update({'url': f'http://testserver/api/v1/forms/{xform.pk}'})
-            self.assertEqual(dict(response.data, **data), response.data)
-            self.assertTrue(xform.user.pk == self.user.pk)
+        self.publish_xls_form(use_service_account=True, assert_=True)
 
     def test_publish_invalid_xls_form(self):
         path = os.path.join(
@@ -367,7 +305,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             )
             self.assertEqual(response.data.get('text'), error_msg)
 
-    def test_partial_update(self):
+    def test_cannot_partial_update_with_user_account(self):
         self.publish_xls_form()
         view = XFormViewSet.as_view({
             'patch': 'partial_update'
@@ -384,15 +322,7 @@ class TestXFormViewSet(TestAbstractViewSet):
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_partial_update_with_service_account(self):
-        """
-        The main goal of this test is to validate that KPI redeployment works
-        with ServiceAccountUser. Redeployment uses the same endpoint (i.e.
-        PATCH XForm)
-        """
         self.publish_xls_form()
-        view = XFormViewSet.as_view({
-            'patch': 'partial_update'
-        })
         title = 'مرحب'
         description = 'DESCRIPTION'
         data = {
@@ -514,6 +444,13 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.xform.reload()
         self.assertFalse(self.xform.shared)
         self.assertFalse(response.data['public'])
+
+    def test_cannot_form_delete_with_user_account(self):
+        self.publish_xls_form()
+        self.xform.save()
+        xform_detail_url = reverse('xform-detail', kwargs={'pk': self.xform.pk})
+        response = self.client.delete(xform_detail_url, **self.extra)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_form_delete(self):
         self.publish_xls_form()
