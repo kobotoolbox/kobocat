@@ -6,6 +6,7 @@ from xml.dom import Node
 
 from django.conf import settings
 from django.urls import reverse
+from django.test.client import Client
 from defusedxml import minidom
 from guardian.shortcuts import assign_perm
 from kobo_service_account.utils import get_request_headers
@@ -261,14 +262,7 @@ class TestXFormViewSet(TestAbstractViewSet):
             post_data = {'xls_file': xls_file}
             request = self.factory.post('/', data=post_data, **self.extra)
             response = view(request)
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            xform = self.user.xforms.get(uuid=response.data.get('uuid'))
-            data.update({
-                'url': f'http://testserver/api/v1/forms/{xform.pk}'
-            })
-            self.assertEqual(dict(response.data, **data),
-                             response.data)
-            self.assertTrue(xform.user.pk == self.user.pk)
+            self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_publish_xlsform_with_service_account(self):
         """
@@ -277,9 +271,6 @@ class TestXFormViewSet(TestAbstractViewSet):
         This one user service account authentication headers, but ensures
         that the owner is still 'bob'.
         """
-        view = XFormViewSet.as_view({
-            'post': 'create'
-        })
         data = {
             'owner': 'bob',
             'public': False,
@@ -300,24 +291,19 @@ class TestXFormViewSet(TestAbstractViewSet):
             'transportation.xls',
         )
 
+        client = Client()
+        xform_list_url = reverse('xform-list')
         service_account_meta = self.get_meta_from_headers(
-            get_request_headers(self.user.username)  # bob
+            get_request_headers(self.user.username)
         )
-        # Test server does not provide `host` header
         service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
 
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-
-            # First try without header to validate it does not work
-            request = self.factory.post('/', data=post_data)
-            response = view(request)
-            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-            # Retry
             xls_file.seek(0)
-            request = self.factory.post('/', data=post_data, **service_account_meta)
-            response = view(request)
+            response = client.post(
+                xform_list_url, data=post_data, **service_account_meta
+            )
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             xform = self.user.xforms.get(uuid=response.data.get('uuid'))
             data.update({'url': f'http://testserver/api/v1/forms/{xform.pk}'})
@@ -325,31 +311,54 @@ class TestXFormViewSet(TestAbstractViewSet):
             self.assertTrue(xform.user.pk == self.user.pk)
 
     def test_publish_invalid_xls_form(self):
-        view = XFormViewSet.as_view({
-            'post': 'create'
-        })
         path = os.path.join(
-            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
-            "transportation", "transportation.bad_id.xls")
+            settings.ONADATA_DIR,
+            'apps',
+            'main',
+            'tests',
+            'fixtures',
+            'transportation',
+            'transportation.bad_id.xls',
+        )
+
+        client = Client()
+        xform_list_url = reverse('xform-list')
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.user.username)
+        )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            request = self.factory.post('/', data=post_data, **self.extra)
-            response = view(request)
+            response = client.post(
+                xform_list_url, data=post_data, **service_account_meta
+            )
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             error_msg = '[row : 5] Question or group with no name.'
             self.assertEqual(response.data.get('text'), error_msg)
 
     def test_publish_invalid_xls_form_no_choices(self):
-        view = XFormViewSet.as_view({
-            'post': 'create'
-        })
         path = os.path.join(
-            settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
-            "transportation", "transportation.no_choices.xls")
+            settings.ONADATA_DIR,
+            'apps',
+            'main',
+            'tests',
+            'fixtures',
+            'transportation',
+            'transportation.no_choices.xls',
+        )
+        client = Client()
+        xform_list_url = reverse('xform-list')
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.user.username)
+        )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            request = self.factory.post('/', data=post_data, **self.extra)
-            response = view(request)
+            response = client.post(
+                xform_list_url, data=post_data, **service_account_meta
+            )
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             error_msg = (
                 "There should be a choices sheet in this xlsform. "
@@ -372,17 +381,7 @@ class TestXFormViewSet(TestAbstractViewSet):
 
         request = self.factory.patch('/', data=data, **self.extra)
         response = view(request, pk=self.xform.id)
-
-        self.xform.reload()
-        self.assertTrue(self.xform.downloadable)
-        self.assertTrue(self.xform.shared)
-        self.assertEqual(self.xform.description, description)
-        self.assertEqual(response.data['public'], True)
-        self.assertEqual(response.data['description'], description)
-        self.assertEqual(response.data['title'], title)
-        matches = re.findall(r"<h:title>([^<]+)</h:title>", self.xform.xml)
-        self.assertTrue(len(matches) > 0)
-        self.assertEqual(matches[0], title)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     def test_partial_update_with_service_account(self):
         """
@@ -419,21 +418,19 @@ class TestXFormViewSet(TestAbstractViewSet):
         alice_profile = self._create_user_profile(alice_profile_data)
         self.alice = alice_profile.user
 
-        alice_meta = {'HTTP_AUTHORIZATION': f'Token {self.alice.auth_token}'}
-        request = self.factory.patch('/', data=data, **alice_meta)
-        response = view(request, pk=self.xform.id)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-        # Try the same request with service account user on behalf of alice
+        client = Client()
+        xform_detail_url = reverse('xform-detail', kwargs={'pk': self.xform.id})
         service_account_meta = self.get_meta_from_headers(
             get_request_headers(self.alice.username)
         )
-        # Test server does not provide `host` header
         service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
-        request = self.factory.patch('/', data=data, **service_account_meta)
-        response = view(request, pk=self.xform.id)
+        response = client.patch(
+            xform_detail_url,
+            data=data,
+            content_type='application/json',
+            **service_account_meta
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
         self.xform.refresh_from_db()
         self.assertTrue(self.xform.downloadable)
         self.assertTrue(self.xform.shared)
@@ -450,15 +447,21 @@ class TestXFormViewSet(TestAbstractViewSet):
         self.publish_xls_form()
         self.xform.__setattr__(key, True)
         self.xform.save()
-        view = XFormViewSet.as_view({
-            'patch': 'partial_update'
-        })
         data = {'public': False}
 
         self.assertTrue(self.xform.__getattribute__(key))
-
-        request = self.factory.patch('/', data=data, **self.extra)
-        response = view(request, pk=self.xform.id)
+        client = Client()
+        xform_detail_url = reverse('xform-detail', kwargs={'pk': self.xform.id})
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.user.username)
+        )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        response = client.patch(
+            xform_detail_url,
+            data=data,
+            content_type='application/json',
+            **service_account_meta
+        )
         self.xform.refresh_from_db()
         self.assertFalse(self.xform.__getattribute__(key))
         self.assertFalse(response.data['public'])
@@ -466,19 +469,26 @@ class TestXFormViewSet(TestAbstractViewSet):
     def test_set_form_bad_value(self):
         key = 'shared'
         self.publish_xls_form()
-        view = XFormViewSet.as_view({
-            'patch': 'partial_update'
-        })
         data = {'public': 'String'}
 
-        request = self.factory.patch('/', data=data, **self.extra)
-        response = view(request, pk=self.xform.id)
-
+        xform_detail_url = reverse('xform-detail', kwargs={'pk': self.xform.id})
+        client = Client()
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.user.username)
+        )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        response = client.patch(
+            xform_detail_url,
+            data=data,
+            content_type='application/json',
+            **service_account_meta
+        )
         self.xform.reload()
         self.assertFalse(self.xform.__getattribute__(key))
-        self.assertEqual(response.data,
-                         {'shared':
-                              ["'String' value must be either True or False."]})
+        self.assertEqual(
+            response.data,
+            {'shared': ["'String' value must be either True or False."]},
+        )
 
     def test_set_form_bad_key(self):
         self.publish_xls_form()
@@ -488,9 +498,19 @@ class TestXFormViewSet(TestAbstractViewSet):
         })
         data = {'nonExistentField': False}
 
-        request = self.factory.patch('/', data=data, **self.extra)
-        response = view(request, pk=self.xform.id)
-
+        xform_detail_url = reverse('xform-detail', kwargs={'pk': self.xform.pk})
+        client = Client()
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.user.username)
+        )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        response = client.patch(
+            xform_detail_url,
+            data=data,
+            content_type='application/json',
+            **service_account_meta
+        )
+        assert response.status_code == status.HTTP_200_OK
         self.xform.reload()
         self.assertFalse(self.xform.shared)
         self.assertFalse(response.data['public'])
@@ -498,12 +518,13 @@ class TestXFormViewSet(TestAbstractViewSet):
     def test_form_delete(self):
         self.publish_xls_form()
         self.xform.save()
-        view = XFormViewSet.as_view({
-            'delete': 'destroy'
-        })
-        formid = self.xform.pk
-        request = self.factory.delete('/', **self.extra)
-        response = view(request, pk=formid)
+        xform_detail_url = reverse('xform-detail', kwargs={'pk': self.xform.pk})
+        client = Client()
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.user.username)
+        )
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        response = client.delete(xform_detail_url, **service_account_meta)
         self.assertEqual(response.data, None)
         self.assertEqual(response.status_code, 204)
         with self.assertRaises(XForm.DoesNotExist):

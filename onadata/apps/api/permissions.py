@@ -1,6 +1,7 @@
 # coding: utf-8
 from django.http import Http404
 from kobo_service_account.models import ServiceAccountUser
+from kobo_service_account.utils import get_real_user
 from rest_framework.permissions import (
     BasePermission,
     DjangoObjectPermissions,
@@ -79,9 +80,20 @@ class XFormPermissions(ObjectPermissionsWithViewRestricted):
 
     def has_permission(self, request, view):
         # Allow anonymous users to access shared data
-        if request.method in SAFE_METHODS and \
-                view.action and view.action == 'retrieve':
+        if (
+            request.method in SAFE_METHODS
+            and view.action
+            and view.action == 'retrieve'
+        ):
             return True
+
+        if (
+            request.method not in SAFE_METHODS
+            and view.action
+            and view.action in ['create', 'update', 'partial_update', 'destroy']
+            and not isinstance(request.user, ServiceAccountUser)
+        ):
+            raise LegacyAPIException
 
         return super().has_permission(request, view)
 

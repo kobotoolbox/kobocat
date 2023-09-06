@@ -8,8 +8,10 @@ from django.contrib.auth.models import (
     User
 )
 from django.test import TestCase
+from django.test.client import Client
 from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
+from kobo_service_account.utils import get_request_headers
 from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
@@ -50,7 +52,9 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
         self._add_permissions_to_user(AnonymousUser())
         self.maxDiff = None
 
-    def publish_xls_form(self, path=None, data=None, assert_=True):
+    def publish_xls_form(
+        self, path=None, data=None, assert_=True, use_service_account=True
+    ):
         if not data:
             data = {
                 'owner': self.user.username,
@@ -70,9 +74,24 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
 
         xform_list_url = reverse('xform-list')
 
+        if use_service_account:
+            # Only service account user is allowed to `POST` to XForm API
+            client = Client()
+            service_account_meta = self.get_meta_from_headers(
+                get_request_headers(self.user.username)
+            )
+            service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        else:
+            # For test purposes we want to try to `POST` with current logged-in
+            # user
+            client = self.client
+            service_account_meta = {}
+
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            response = self.client.post(xform_list_url, data=post_data)
+            response = client.post(
+                xform_list_url, data=post_data, **service_account_meta
+            )
 
         if not assert_:
             return response
