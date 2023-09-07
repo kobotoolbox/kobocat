@@ -18,6 +18,12 @@ please refer to
 As features are migrated, we will list them here along with the last
 release where each was present:
 
+  - It was announced on 14 June 2021 that the legacy KoboCAT user interface
+    would be preserved for "a few more months". After more than two years, we
+    have removed the user interface and related endpoints entirely in release
+    [2.023.37](https://github.com/kobotoolbox/kobocat/releases/tag/2.023.37).
+    All removed features should already be available in KPI. Please see
+    [REMOVALS.md](REMOVALS.md) for a complete list.
   - To ensure security and stability, many endpoints that were already
     available in KPI, long-unsupported, or underutilized have been removed in
     release
