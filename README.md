@@ -18,11 +18,14 @@ please refer to
 As features are migrated, we will list them here along with the last
 release where each was present:
 
-  - It was announced on 14 June 2021 that the legacy KoboCAT user interface
-    would be preserved for "a few more months". After more than two years, we
-    have removed the user interface and related endpoints entirely in release
+  - On 14 June 2021, the ability to upload forms directly to KoboCAT was
+    removed, and it was announced that the legacy KoboCAT user interface would
+    be preserved for "a few more months". After more than two years, we have
+    removed the user interface and related endpoints entirely in release
     [2.023.37](https://github.com/kobotoolbox/kobocat/releases/tag/2.023.37).
-    All removed features should already be available in KPI. Please see
+    **This includes the ability to upload XLSForms via the legacy KoboCAT API.**
+    Please use the KPI `v2` API for all form management. Other removed features
+    should already be available in KPI as well. Please see
     [REMOVALS.md](REMOVALS.md) for a complete list.
   - To ensure security and stability, many endpoints that were already
     available in KPI, long-unsupported, or underutilized have been removed in
