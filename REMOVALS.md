@@ -1,4 +1,67 @@
-# KoBoCAT endpoint removals as of release 2.021.22
+# KoboCAT endpoint removals as of release 2.023.37
+
+The entire KoboCAT user interface has been removed.
+The last release to contain a user interface or any of the endpoints listed below was [2.023.21](https://github.com/kobotoolbox/kpi/releases/tag/2.023.21).
+
+## Obsolete User Interface
+
+URL Pattern | View Class or Function | View Name
+-- | -- | --
+`/` | `onadata.apps.main.views.home`
+`/<username>/` | `onadata.apps.main.views.profile` | `user_profile`
+`/<username>/api-token` | `onadata.apps.main.views.api_token` | `api_token`
+
+## Obsolete KPI Integrations
+
+URL Pattern | View Class or Function | View Name
+-- | -- | --
+`/login_redirect/` | `onadata.apps.main.views.login_redirect`
+`/<str:username>/forms/<str:id_string>/map` | `onadata.apps.main.views.view_func` | `redirect_map_to_kpi`
+`/<str:username>/reports/<str:id_string>/digest.html` | `onadata.apps.main.views.view_func` | `redirect_analyze_data_to_kpi`
+`/<str:username>/reports/<str:id_string>/export.html` | `onadata.apps.main.views.view_func` | `redirect_view_data_in_table_to_kpi`
+
+## Obsolete Enketo Integration
+
+URL Pattern | View Class or Function | View Name
+-- | -- | --
+`/api/v1/forms/<pk>/enketo\.<format>/` | `onadata.apps.api.viewsets.xform_viewset.XFormViewSet` | `xform-enketo`
+`/api/v1/forms/<pk>/enketo` | `onadata.apps.api.viewsets.xform_viewset.XFormViewSet` | `xform-enketo`
+
+## Obsolete Form Management
+
+URL Pattern | View Class or Function | View Name
+-- | -- | --
+`/forms/<uuid>` | `onadata.apps.main.views.show` | `show_form`
+`/<username>/forms/<id_string>/api` | `onadata.apps.main.views.api` | `mongo_view_api`
+`/<username>/forms/<id_string>/data\.csv` | `onadata.apps.viewer.views.data_export` | `csv_export`
+`/<username>/forms/<id_string>/data\.kml` | `onadata.apps.viewer.views.kml_export`
+`/<username>/forms/<id_string>/data\.xls` | `onadata.apps.viewer.views.data_export` | `xls_export`
+`/<username>/forms/<id_string>/delete-doc/<data_id>` | `onadata.apps.main.views.delete_metadata` | `delete_metadata`
+`/<username>/forms/<id_string>/doc/<data_id>` | `onadata.apps.main.views.download_metadata` | `download_metadata`
+`/<username>/forms/<id_string>/edit` | `onadata.apps.main.views.edit` | `edit_form`
+`/<username>/forms/<id_string>/formid-media/<data_id>` | `onadata.apps.main.views.download_media_data` | `download_media_data`
+`/<username>/forms/<id_string>/form_settings` | `onadata.apps.main.views.show_form_settings` | `show_form_settings`
+`/<username>/forms/<id_string>` | `onadata.apps.main.views.show` | `show_form`
+`/<username>/forms/<id_string>/photos` | `onadata.apps.main.views.form_photos` | `form_photos`
+`/<username>/superuser_stats/<base_filename>` | `onadata.apps.logger.views.retrieve_superuser_stats`
+`/<username>/superuser_stats/` | `onadata.apps.logger.views.superuser_stats`
+
+## Obsolete Documentation
+
+URL Pattern | View Class or Function | View Name
+-- | -- | --
+`/admin/doc/bookmarklets/` | `django.contrib.admindocs.views.BookmarkletsView` | `django-admindocs-bookmarklets`
+`/admin/doc/` | `django.contrib.admindocs.views.BaseAdminDocsView` | `django-admindocs-docroot`
+`/admin/doc/filters/` | `django.contrib.admindocs.views.TemplateFilterIndexView` | `django-admindocs-filters`
+`/admin/doc/models/<app_label>\.<model_name>/` | `django.contrib.admindocs.views.ModelDetailView` | `django-admindocs-models-detail`
+`/admin/doc/models/` | `django.contrib.admindocs.views.ModelIndexView` | `django-admindocs-models-index`
+`/admin/doc/tags/` | `django.contrib.admindocs.views.TemplateTagIndexView` | `django-admindocs-tags`
+`/admin/doc/templates/<path:template>/` | `django.contrib.admindocs.views.TemplateDetailView` | `django-admindocs-templates`
+`/admin/doc/views/` | `django.contrib.admindocs.views.ViewIndexView` | `django-admindocs-views-index`
+`/admin/doc/views/<view>/` | `django.contrib.admindocs.views.ViewDetailView` | `django-admindocs-views-detail`
+`/api-docs/` | `django.views.generic.base.RedirectView`
+
+# KoboCAT endpoint removals as of release 2.021.22
 
 The last release to contain any of the endpoints listed below was [2.021.21](https://github.com/kobotoolbox/kpi/releases/tag/2.021.21).
 
@@ -85,7 +148,7 @@ URL Pattern | View Class or Function | Description | Available in KPI
 `/xls2xform/` | `onadata.apps.main.views.xls2xform` | Unused informational page | Yes (on kobotoolbox.org)
 
 
-# KoBoCAT endpoint removals as of release [2.020.40](https://github.com/kobotoolbox/kobocat/releases/tag/2.020.40)
+# KoboCAT endpoint removals as of release [2.020.40](https://github.com/kobotoolbox/kobocat/releases/tag/2.020.40)
 
 The last release to contain any of the endpoints listed below was https://github.com/kobotoolbox/kobocat/releases/tag/2.020.39.
 
