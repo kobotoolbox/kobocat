@@ -58,13 +58,6 @@ def get_operations():
         return []
 
     tables = DEPRECATED_TABLES + KPI_TABLES
-    print(
-        """
-        This migration might take a while. If it is too slow, you may want to 
-        re-run migrations with SKIP_HEAVY_MIGRATIONS=True and apply this one 
-        manually from the django shell.
-        """
-    )
     operations = []
 
     sql = """
@@ -105,10 +98,22 @@ def get_operations():
     return operations
 
 
+def print_migration_warning(apps, schema_editor):
+    if settings.TESTING_MODE or settings.SKIP_HEAVY_MIGRATIONS:
+        return
+    print(
+        """
+        This migration might take a while. If it is too slow, you may want to 
+        re-run migrations with SKIP_HEAVY_MIGRATIONS=True and apply this one 
+        manually from the django shell.
+        """
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
         ('main', '0010_userprofile_metadata_jsonfield'),
     ]
 
-    operations = get_operations()
+    operations = [migrations.RunPython(print_migration_warning), *get_operations()]
