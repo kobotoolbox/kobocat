@@ -21,6 +21,7 @@ from guardian.shortcuts import (
 from taggit.managers import TaggableManager
 
 from onadata.apps.logger.fields import LazyDefaultBooleanField
+from onadata.apps.logger.models.daily_xform_submission_counter import DailyXFormSubmissionCounter
 from onadata.apps.logger.models.monthly_xform_submission_counter import (
     MonthlyXFormSubmissionCounter,
 )
@@ -35,7 +36,6 @@ from onadata.libs.constants import (
 from onadata.libs.utils.xml import XMLFormWithDisclaimer
 from onadata.libs.models.base_model import BaseModel
 from onadata.libs.utils.hash import get_hash
-
 
 XFORM_TITLE_LENGTH = 255
 title_pattern = re.compile(r"<h:title>([^<]+)</h:title>")
@@ -334,4 +334,10 @@ pre_delete.connect(
     MonthlyXFormSubmissionCounter.update_catch_all_counter_on_delete,
     sender=XForm,
     dispatch_uid='update_catch_all_monthly_xform_submission_counter',
+)
+
+pre_delete.connect(
+    DailyXFormSubmissionCounter.update_catch_all_counter_on_delete,
+    sender=XForm,
+    dispatch_uid='update_catch_all_daily_xform_submission_counter',
 )
