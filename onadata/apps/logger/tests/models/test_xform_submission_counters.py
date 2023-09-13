@@ -108,7 +108,7 @@ class TestXFormSubmissionCounters(TestBase):
     def test_deleted_daily_xform_counters_are_merged(self):
         """
         Test that the daily counter with `xform = NULL` contains the sum of
-        counters for all xforms deleted within the current year
+        counters for all xforms deleted within the current day
         """
         today = timezone.now().date()
         criteria = dict(
