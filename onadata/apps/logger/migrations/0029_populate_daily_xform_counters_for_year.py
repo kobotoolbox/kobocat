@@ -31,7 +31,7 @@ def populate_daily_counts_for_year(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0027_on_delete_cascade_monthlyxformsubmissioncounter'),
+        ('logger', '0028_add_user_to_daily_submission_counters'),
         ('main', '0012_add_validate_password_flag_to_profile'),
     ]
 

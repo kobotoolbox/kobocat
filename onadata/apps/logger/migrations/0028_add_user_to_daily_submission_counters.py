@@ -15,11 +15,17 @@ def add_user_to_daily_submission_counter(apps, schema_editor):
     )
 
 
+def delete_null_xform_daily_counters(apps, schema_editor):
+    DailyXFormSubmissionCounter = apps.get_model("logger", "DailyXFormSubmissionCounter")
+    # to migrate backwards, we need to delete any null xform instances
+    DailyXFormSubmissionCounter.objects.filter(xform=None).delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logger', '0028_populate_daily_xform_counters_for_year'),
+        ('logger', '0027_on_delete_cascade_monthlyxformsubmissioncounter'),
     ]
 
     operations = [
@@ -37,6 +43,10 @@ class Migration(migrations.Migration):
             name='xform',
             field=models.ForeignKey(null=True, on_delete=deletion.CASCADE,
                                     related_name='daily_counters', to='logger.xform'),
+        ),
+        migrations.RunPython(
+            migrations.RunPython.noop,
+            delete_null_xform_daily_counters,
         ),
         migrations.AlterUniqueTogether(
             name='dailyxformsubmissioncounter',
