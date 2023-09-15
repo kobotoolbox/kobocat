@@ -1,22 +1,22 @@
 from django.conf import settings
 from django.db import migrations, models
-from django.db.models import Subquery, deletion
+from django.db.models import Subquery, deletion, OuterRef
 
 
 def add_user_to_daily_submission_counter(apps, schema_editor):
-    DailyXFormSubmissionCounter = apps.get_model("logger", "DailyXFormSubmissionCounter")
+    DailyXFormSubmissionCounter = apps.get_model('logger', 'DailyXFormSubmissionCounter')
     # delete any counters where xform and user are None, since we can't associate them with a user
     DailyXFormSubmissionCounter.objects.filter(xform=None, user=None).delete()
     # add the user to the counter, based on the xform user
     DailyXFormSubmissionCounter.objects.all().exclude(xform=None).update(
         user=Subquery(
-            DailyXFormSubmissionCounter.objects.all().exclude(xform=None).values('xform__user')[:1]
+            DailyXFormSubmissionCounter.objects.filter(pk=OuterRef('pk')).values('xform__user')[:1]
         ),
     )
 
 
 def delete_null_xform_daily_counters(apps, schema_editor):
-    DailyXFormSubmissionCounter = apps.get_model("logger", "DailyXFormSubmissionCounter")
+    DailyXFormSubmissionCounter = apps.get_model('logger', 'DailyXFormSubmissionCounter')
     # to migrate backwards, we need to delete any null xform instances
     DailyXFormSubmissionCounter.objects.filter(xform=None).delete()
 
