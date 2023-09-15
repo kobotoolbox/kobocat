@@ -142,6 +142,7 @@ def update_xform_daily_counter(sender, instance, created, **kwargs):
     DailyXFormSubmissionCounter.objects.get_or_create(
         date=date_created,
         xform=instance.xform,
+        user=instance.xform.user,
     )
 
     # update the count for the current submission

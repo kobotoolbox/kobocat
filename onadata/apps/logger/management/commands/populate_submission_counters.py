@@ -163,6 +163,7 @@ class Command(BaseCommand):
             submission_date = values['date_created__date']
             daily_counters.append(DailyXFormSubmissionCounter(
                 xform_id=xf.pk,
+                user=xf.user,
                 date=submission_date,
                 counter=values['num_of_submissions'],
             ))

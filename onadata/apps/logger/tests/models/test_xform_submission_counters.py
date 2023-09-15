@@ -47,7 +47,7 @@ class TestXFormSubmissionCounters(TestBase):
         self._publish_transportation_form_and_submit_instance()
 
         daily_counter = DailyXFormSubmissionCounter.objects.filter(
-            xform__user__username='bob'
+            user__username='bob'
         ).order_by('date').last()
         today = timezone.now().date()
         self.assertEqual(daily_counter.date, today)
@@ -65,7 +65,7 @@ class TestXFormSubmissionCounters(TestBase):
         """
         self._publish_transportation_form_and_submit_instance()
         counter = DailyXFormSubmissionCounter.objects.filter(
-            xform__user__username='bob'
+            user__username='bob'
         ).order_by('date').last()
         counter.date = counter.date - timedelta(
             days=settings.DAILY_COUNTERS_MAX_DAYS + 1
@@ -79,7 +79,7 @@ class TestXFormSubmissionCounters(TestBase):
         daily_counters = DailyXFormSubmissionCounter.objects.count()
         self.assertEqual(daily_counters, 0)
 
-    def test_deleted_xform_counters_are_merged(self):
+    def test_deleted_monthly_xform_counters_are_merged(self):
         """
         Test that the monthly counter with `xform = NULL` contains the sum of
         counters for all xforms deleted within the current month
@@ -103,4 +103,29 @@ class TestXFormSubmissionCounters(TestBase):
         XForm.objects.filter(user__username='bob').first().delete()
         assert (
             MonthlyXFormSubmissionCounter.objects.get(**criteria).counter == 2
+        )
+
+    def test_deleted_daily_xform_counters_are_merged(self):
+        """
+        Test that the daily counter with `xform = NULL` contains the sum of
+        counters for all xforms deleted within the current day
+        """
+        today = timezone.now().date()
+        criteria = dict(
+            date=today,
+            user=User.objects.get(username='bob'),
+            xform=None,
+        )
+        assert not DailyXFormSubmissionCounter.objects.filter(
+            **criteria
+        ).exists()
+        self._publish_transportation_form_and_submit_instance()
+        XForm.objects.filter(user__username='bob').first().delete()
+        assert (
+            DailyXFormSubmissionCounter.objects.get(**criteria).counter == 1
+        )
+        self._publish_transportation_form_and_submit_instance()
+        XForm.objects.filter(user__username='bob').first().delete()
+        assert (
+            DailyXFormSubmissionCounter.objects.get(**criteria).counter == 2
         )
