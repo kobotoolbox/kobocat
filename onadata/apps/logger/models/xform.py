@@ -67,7 +67,9 @@ class XForm(BaseModel):
     xml = models.TextField()
 
     user = models.ForeignKey(User, related_name='xforms', null=True, on_delete=models.CASCADE)
-    require_auth = models.BooleanField(default=False)
+    require_auth = models.BooleanField(
+        default=settings.REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT
+    )
     shared = models.BooleanField(default=False)
     shared_data = models.BooleanField(default=False)
     downloadable = models.BooleanField(default=True)
