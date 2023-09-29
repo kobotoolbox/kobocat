@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from django.core.management.base import BaseCommand
-from django.db.models import Sum, Q, OuterRef, Subquery
+from django.db.models import Sum, OuterRef, Subquery
 
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.xform import XForm
@@ -63,6 +63,16 @@ class Command(BaseCommand):
                 '`force` and `sync` options cannot be used together'
             )
             return
+
+        if self._sync and self._verbosity >= 1:
+            self.stdout.write(
+                '`sync` option has been enabled'
+            )
+
+        if self._force and self._verbosity >= 1:
+            self.stdout.write(
+                '`force` option has been enabled'
+            )
 
         if not skip_lock_release:
             self._release_locks()
