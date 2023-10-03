@@ -117,3 +117,8 @@ def generate_stats_zip(output_filename):
             csv_io.close()
 
         zip_file.close()
+
+
+@app.task()
+def sync_storage_counters():
+    call_command('update_attachment_storage_bytes', verbosity=3, sync=True)
