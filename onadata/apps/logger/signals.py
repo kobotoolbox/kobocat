@@ -49,12 +49,15 @@ def pre_delete_attachment(instance, **kwargs):
                 attachment_storage_bytes=F('attachment_storage_bytes') - file_size
             )
 
+    if not (media_file_name := str(attachment.media_file)):
+        return
+
     # Clean-up storage
     try:
         # We do not want to call `attachment.media_file.delete()` because it calls
         # `attachment.save()` behind the scene which would call again the `post_save`
         # signal below. Bonus: it avoids an extra query 😎.
-        default_storage.delete(str(attachment.media_file))
+        default_storage.delete(media_file_name)
     except Exception as e:
         logging.error('Failed to delete attachment: ' + str(e), exc_info=True)
 
