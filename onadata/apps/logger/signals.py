@@ -78,9 +78,9 @@ def post_save_attachment(instance, created, **kwargs):
     if not file_size:
         return
 
-    with transaction.atomic():
-        xform = attachment.instance.xform
+    xform = attachment.instance.xform
 
+    with transaction.atomic():
         UserProfile.objects.filter(user_id=xform.user_id).update(
             attachment_storage_bytes=F('attachment_storage_bytes') + file_size
         )
