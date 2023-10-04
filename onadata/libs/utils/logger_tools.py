@@ -55,10 +55,7 @@ from onadata.apps.logger.models.instance import (
     update_xform_submission_count,
 )
 from onadata.apps.logger.models.xform import XLSFormError
-from onadata.apps.logger.signals import (
-    update_user_profile_attachment_storage_bytes,
-    update_xform_attachment_storage_bytes,
-)
+from onadata.apps.logger.signals import post_save_attachment
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
     InstanceInvalidUserError,
@@ -676,12 +673,7 @@ def save_submission(
         if getattr(new_attachment, 'defer_counting', False):
             # Remove the Python-only attribute
             del new_attachment.defer_counting
-            update_user_profile_attachment_storage_bytes(
-                instance=new_attachment, created=True
-            )
-            update_xform_attachment_storage_bytes(
-                instance=new_attachment, created=True
-            )
+            post_save_attachment(new_attachment, created=True)
 
     return instance
 

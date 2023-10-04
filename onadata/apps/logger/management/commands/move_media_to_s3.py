@@ -3,7 +3,7 @@
 # coding: utf-8
 import sys
 
-from django.core.files.storage import default_storage
+from django.core.files.storage import default_storage, get_storage_class
 from django.core.management.base import BaseCommand
 
 from onadata.apps.logger.models.attachment import Attachment
