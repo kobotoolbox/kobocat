@@ -182,18 +182,20 @@ class Command(BaseCommand):
             xform__user_id=user.pk, date__gte=self._date_threshold
         ).delete()
 
+        if self._skip_monthly:
+            return
+
         # Because we don't have a real date field on `MonthlyXFormSubmissionCounter`
         # but we need to cast `year` and `month` as a date field to
         # compare it with `self._date_threshold`
-        if not self._skip_monthly:
-            MonthlyXFormSubmissionCounter.objects.annotate(
-                date=Cast(
-                    Concat(
-                        F('year'), Value('-'), F('month'), Value('-'), 1
-                    ),
-                    DateField(),
-                )
-            ).filter(user_id=user.pk, date__gte=self._date_threshold).delete()
+        MonthlyXFormSubmissionCounter.objects.annotate(
+            date=Cast(
+                Concat(
+                    F('year'), Value('-'), F('month'), Value('-'), 1
+                ),
+                DateField(),
+            )
+        ).filter(user_id=user.pk, date__gte=self._date_threshold).delete()
 
     def suspend_submissions_for_user(self, user: 'auth.User'):
         # Retrieve or create user's profile.
