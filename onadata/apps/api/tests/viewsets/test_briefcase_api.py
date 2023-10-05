@@ -2,7 +2,6 @@
 import os
 
 from django.urls import reverse
-from django.core.files.storage import get_storage_class
 from django.test import override_settings
 from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
@@ -12,11 +11,10 @@ from onadata.apps.api.viewsets.briefcase_api import BriefcaseApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import XForm
-from onadata.libs.utils.storage import delete_user_storage
+from onadata.libs.utils.storage import rmdir
 
 
 NUM_INSTANCES = 4
-storage = get_storage_class()()
 
 
 def ordered_instances(xform):
@@ -445,8 +443,6 @@ class TestBriefcaseAPI(TestAbstractViewSet):
             self.assertContains(response, instanceId, status_code=201)
             self.assertEqual(Instance.objects.count(), count + 1)
 
-
-
     def tearDown(self):
-        if self.user:
-            delete_user_storage(self.user.username)
+        if self.user and self.user.username:
+            rmdir(self.user.username)

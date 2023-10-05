@@ -1,40 +1,37 @@
 # File for use with `pip-compile`; see https://github.com/nvie/pip-tools
 # https://github.com/bndr/pipreqs is a handy utility, too.
 
+# service-account
+-e git+https://github.com/kobotoolbox/kobo-service-account.git@871762cdd099ed543d36f0a29bfbff1de4766a8b#egg=kobo-service-account
+
 # More up-to-date version of django-digest than PyPI seems to have.
 # Also, python-digest is an unlisted dependency thereof.
 -e git+https://github.com/dimagi/python-digest@5c94bb74516b977b60180ee832765c0695ff2b56#egg=python_digest
--e git+https://github.com/dimagi/django-digest@52ba7edeb326efd97d5670273bb6fa8b0539e501#egg=django_digest
-
-# spss
-https://bitbucket.org/fomcl/savreaderwriter/downloads/savReaderWriter-3.3.0.zip#egg=savreaderwriter
+-e git+https://github.com/dimagi/django-digest@419f7306443f9a800b07d832b2cc147941062d59#egg=django_digest
 
 # ssrf
--e git+https://github.com/kobotoolbox/ssrf-protect@755efe16694273ce66060a51e04f973dc034ca4e#egg=ssrf_protect
-
-# jnm's django storages
-# Necessary to use this fork until the resolution of
-# https://github.com/jschneier/django-storages/issues/566
--e git+https://github.com/jnm/django-storages@s3boto3_accurate_tell#egg=django_storages
+-e git+https://github.com/kobotoolbox/ssrf-protect@9b97d3f0fd8f737a38dd7a6b64efeffc03ab3cdd#egg=ssrf_protect
 
 # Regular PyPI packages
-pytz
-Django>=2,<3
-dj-database-url
+defusedxml
+Django>=3.2,<3.3
+django-csp
+django-environ
+django-redis
+django-storages[azure,boto3]
 django-templated-email
 dpath
 gdata-python3
 modilabs-python-utils
 Pillow
-psycopg2-binary
-pymongo
+psycopg2
+pymongo==3.12.3
 lxml
-pyxform==1.7.0
-django-reversion<3.0.2
-xlrd
+pyxform==1.9.0
+django-reversion
 xlwt
 openpyxl
-celery>=4.0,<5.0
+celery
 celery[redis]
 amqp
 # new export code relies on
@@ -64,8 +61,6 @@ django-taggit
 jsonfield
 django-db-readonly
 
-transifex-client
-
 # Shell Plus
 django-extensions
 
@@ -83,11 +78,14 @@ django-oauth-toolkit
 simplejson
 djangorestframework-guardian
 
-# Django Storage AWS
-boto3
-
 # Sentry
 sentry-sdk
 
 # mimetype detection
-Werkzeug
+Werkzeug<=2.0.3
+
+# WSGI server
+uWSGI
+
+# Python 3.8 support
+backports.zoneinfo; python_version < '3.9'

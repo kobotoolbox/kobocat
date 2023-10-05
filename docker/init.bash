@@ -13,6 +13,25 @@ if [[ -z $DATABASE_URL ]]; then
     exit 1
 fi
 
+# Handle Python dependencies BEFORE attempting any `manage.py` commands
+KOBOCAT_WEB_SERVER="${KOBOCAT_WEB_SERVER:-uWSGI}"
+if [[ "${KOBOCAT_WEB_SERVER,,}" == "uwsgi" ]]; then
+    # `diff` returns exit code 1 if it finds a difference between the files
+    if ! diff -q "${KOBOCAT_SRC_DIR}/dependencies/pip/requirements.txt" "${TMP_DIR}/pip_dependencies.txt"
+    then
+        echo "Syncing production pip dependencies..."
+        pip-sync dependencies/pip/requirements.txt 1>/dev/null
+        cp "dependencies/pip/requirements.txt" "${TMP_DIR}/pip_dependencies.txt"
+    fi
+else
+    if ! diff -q "${KOBOCAT_SRC_DIR}/dependencies/pip/dev_requirements.txt" "${TMP_DIR}/pip_dependencies.txt"
+    then
+        echo "Syncing development pip dependencies..."
+        pip-sync dependencies/pip/dev_requirements.txt 1>/dev/null
+        cp "dependencies/pip/dev_requirements.txt" "${TMP_DIR}/pip_dependencies.txt"
+    fi
+fi
+
 # Wait for databases to be up & running before going further
 /bin/bash "${INIT_PATH}/wait_for_mongo.bash"
 /bin/bash "${INIT_PATH}/wait_for_postgres.bash"

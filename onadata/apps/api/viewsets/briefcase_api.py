@@ -6,8 +6,7 @@ from django.core.files import File
 from django.core.validators import ValidationError
 from django.contrib.auth.models import User
 from django.http import Http404
-from django.utils.translation import ugettext as _
-from django.utils import six
+from django.utils.translation import gettext as t
 from rest_framework import exceptions
 from rest_framework import mixins
 from rest_framework import status
@@ -36,11 +35,11 @@ from onadata.libs.utils.logger_tools import publish_form, publish_xml_form, \
 
 
 def _extract_uuid(text):
-    if isinstance(text, six.string_types):
+    if isinstance(text, str):
         form_id_parts = text.split('/')
 
         if form_id_parts.__len__() < 2:
-            raise ValidationError(_("Invalid formId %s." % text))
+            raise ValidationError(t("Invalid formId %s." % text))
 
         text = form_id_parts[1]
         text = text[text.find("@key="):-1].replace("@key=", "")
@@ -52,7 +51,7 @@ def _extract_uuid(text):
 
 
 def _extract_id_string(formId):
-    if isinstance(formId, six.string_types):
+    if isinstance(formId, str):
         return formId[0:formId.find('[')]
 
     return formId
@@ -180,7 +179,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
             UserProfile.objects.get_or_create(user=form_user)[0]
         ):
             raise exceptions.PermissionDenied(
-                detail=_("User %(user)s has no permission to add xforms to "
+                detail=t("User %(user)s has no permission to add xforms to "
                          "account %(account)s" %
                          {'user': request.user.username,
                           'account': form_user.username}))
@@ -191,13 +190,13 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
             dd = publish_form(do_form_upload.publish)
 
             if isinstance(dd, XForm):
-                data['message'] = _(
+                data['message'] = t(
                     "%s successfully published." % dd.id_string)
             else:
                 data['message'] = dd['text']
                 response_status = status.HTTP_400_BAD_REQUEST
         else:
-            data['message'] = _("Missing xml file.")
+            data['message'] = t("Missing xml file.")
             response_status = status.HTTP_400_BAD_REQUEST
 
         return Response(data, status=response_status,

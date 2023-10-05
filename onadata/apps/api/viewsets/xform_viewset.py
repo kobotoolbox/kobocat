@@ -5,11 +5,12 @@ from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.files.storage import get_storage_class
-from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.core.files.storage import default_storage
+from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from django.utils import six
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
+from kobo_service_account.models import ServiceAccountUser
+from kobo_service_account.utils import get_real_user
 from rest_framework import exceptions
 from rest_framework import status
 from rest_framework.decorators import action
@@ -24,20 +25,23 @@ from onadata.apps.viewer.models.export import Export
 from onadata.libs import filters
 from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
-    AnonymousUserPublicFormsMixin)
+    AnonymousUserPublicFormsMixin
+)
 from onadata.libs.mixins.labels_mixin import LabelsMixin
 from onadata.libs.renderers import renderers
 from onadata.libs.serializers.xform_serializer import XFormSerializer
 from onadata.libs.utils import log
 from onadata.libs.utils.common_tags import SUBMISSION_TIME
 from onadata.libs.utils.csv_import import submit_csv
-from onadata.libs.utils.export_tools import generate_export, \
-    should_create_new_export
+from onadata.libs.utils.export_tools import (
+    generate_export,
+    should_create_new_export,
+)
 from onadata.libs.utils.export_tools import newset_export_for
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
+from onadata.libs.utils.storage import rmdir
 from onadata.libs.utils.string import str2bool
-from onadata.libs.utils.viewer_tools import _get_form_url
-from onadata.libs.utils.viewer_tools import enketo_url, EnketoError
+from onadata.libs.utils.viewer_tools import format_date_for_mongo
 
 EXPORT_EXT = {
     'xls': Export.XLS_EXPORT,
@@ -51,7 +55,7 @@ def _get_export_type(export_type):
         export_type = EXPORT_EXT[export_type]
     else:
         raise exceptions.ParseError(
-            _("'%(export_type)s' format not known or not implemented!" %
+            t("'%(export_type)s' format not known or not implemented!" %
               {'export_type': export_type})
         )
 
@@ -68,13 +72,11 @@ def _get_extension_from_export_type(export_type):
 
 
 def _set_start_end_params(request, query):
-    format_date_for_mongo = lambda x, datetime: datetime.strptime(
-        x, '%y_%m_%d_%H_%M_%S').strftime('%Y-%m-%dT%H:%M:%S')
 
     # check for start and end params
     if 'start' in request.GET or 'end' in request.GET:
         query = json.loads(query) \
-            if isinstance(query, six.string_types) else query
+            if isinstance(query, str) else query
         query[SUBMISSION_TIME] = {}
 
         try:
@@ -87,7 +89,7 @@ def _set_start_end_params(request, query):
                     request.GET['end'], datetime)
         except ValueError:
             raise exceptions.ParseError(
-                _("Dates must be in the format YY_MM_DD_hh_mm_ss")
+                t("Dates must be in the format YY_MM_DD_hh_mm_ss")
             )
         else:
             query = json.dumps(query)
@@ -110,13 +112,13 @@ def _generate_new_export(request, xform, query, export_type):
         }
         log.audit_log(
             log.Actions.EXPORT_CREATED, request.user, xform.user,
-            _("Created %(export_type)s export on '%(id_string)s'.") %
+            t("Created %(export_type)s export on '%(id_string)s'.") %
             {
                 'id_string': xform.id_string,
                 'export_type': export_type.upper()
             }, audit, request)
     except NoRecordsFoundError:
-        raise Http404(_("No records found to export"))
+        raise Http404(t("No records found to export"))
     else:
         return export
 
@@ -128,9 +130,9 @@ def _get_user(username):
 
 
 def _get_owner(request):
-    owner = request.data.get('owner') or request.user
+    owner = request.data.get('owner') or get_real_user(request)
 
-    if isinstance(owner, six.string_types):
+    if isinstance(owner, str):
         owner = _get_user(owner)
 
         if owner is None:
@@ -146,11 +148,10 @@ def response_for_format(form, format=None):
         formatted_data = form.xml
     elif format == 'xls':
         file_path = form.xls.name
-        default_storage = get_storage_class()()
         if file_path != '' and default_storage.exists(file_path):
             formatted_data = form.xls
         else:
-            raise Http404(_("No XLSForm found."))
+            raise Http404(t("No XLSForm found."))
     else:
         formatted_data = json.loads(form.json)
     return Response(formatted_data)
@@ -177,7 +178,7 @@ def log_export(request, xform, export_type):
     }
     log.audit_log(
         log.Actions.EXPORT_DOWNLOADED, request.user, xform.user,
-        _("Downloaded %(export_type)s export on '%(id_string)s'.") %
+        t("Downloaded %(export_type)s export on '%(id_string)s'.") %
         {
             'id_string': xform.id_string,
             'export_type': export_type.upper()
@@ -619,24 +620,13 @@ data (instance/submission per row)
 
         return Response(survey, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['GET'])
-    def enketo(self, request, **kwargs):
-        self.object = self.get_object()
-        form_url = _get_form_url(self.object.user.username)
-
-        data = {'message': _("Enketo not properly configured.")}
-        http_status = status.HTTP_400_BAD_REQUEST
-
-        try:
-            url = enketo_url(form_url, self.object.id_string)
-        except EnketoError:
-            pass
-        else:
-            if url:
-                http_status = status.HTTP_200_OK
-                data = {"enketo_url": url}
-
-        return Response(data, http_status)
+    def get_queryset(self):
+        if isinstance(self.request.user, ServiceAccountUser):
+            # We need to get all xforms (even soft-deleted ones) to
+            # system-account user to let it delete xform
+            # when it is already soft-deleted.
+            self.queryset = XForm.all_objects.all()
+        return super().get_queryset()
 
     def update(self, request, pk, *args, **kwargs):
         if 'xls_file' in request.FILES:
@@ -646,9 +636,9 @@ data (instance/submission per row)
             # Behave like `onadata.apps.main.views.update_xform`: only allow
             # the update to proceed if the user is the owner
             owner = existing_xform.user
-            if request.user.pk != owner.pk:
+            if not get_real_user(request) == owner:
                 raise exceptions.PermissionDenied(
-                    detail=_("Only a form's owner can overwrite its contents"))
+                    detail=t("Only a form's owner can overwrite its contents"))
             survey = utils.publish_xlsform(request, owner, existing_xform)
             if not isinstance(survey, XForm):
                 if isinstance(survey, dict) and 'text' in survey:
@@ -705,9 +695,26 @@ data (instance/submission per row)
             # `onadata.apps.logger.models.xform.set_object_permissions()`.
             # For safety and clarity, this endpoint now explicitly denies
             # access to all non-owners.
-            raise PermissionDenied
+            raise exceptions.PermissionDenied
         resp = submit_csv(request, xform, request.FILES.get('csv_file'))
         return Response(
             data=resp,
             status=status.HTTP_200_OK if resp.get('error') is None else
             status.HTTP_400_BAD_REQUEST)
+
+    def perform_destroy(self, instance):
+        username = instance.user.username
+        xform_uuid = instance.uuid
+        xform_id_string = instance.id_string
+
+        instance.delete()
+        # Clean up storage
+        default_storage.delete(str(instance.xls))
+        if xform_uuid:
+            rmdir(f'{username}/form-media/{xform_uuid}')
+            # Attachments should have been already deleted. Let's remove the parent
+            # folder entirely anyway in case orphans are still present.
+            rmdir(f'{username}/attachments/{xform_uuid}')
+
+        if xform_id_string:
+            rmdir(f'{username}/exports/{xform_id_string}')

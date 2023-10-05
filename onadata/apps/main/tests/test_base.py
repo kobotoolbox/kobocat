@@ -11,16 +11,18 @@ from django.test import TestCase
 from django.test.client import Client
 from django.utils import timezone
 from django_digest.test import Client as DigestClient
+from kobo_service_account.utils import get_request_headers
 from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.main.models import UserProfile
 from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
+from onadata.libs.tests.mixins.request_mixin import RequestMixin
 from onadata.libs.utils.string import base64_encodestring
 
 
-class TestBase(MakeSubmissionMixin, TestCase):
+class TestBase(RequestMixin, MakeSubmissionMixin, TestCase):
 
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
@@ -84,16 +86,33 @@ class TestBase(MakeSubmissionMixin, TestCase):
         self.client = self._login(username, password)
         self.anon = Client()
 
-    def _publish_xls_file(self, path):
+    def _publish_xls_file(self, path, use_service_account=True):
 
         xform_list_url = reverse('xform-list')
 
         if not path.startswith(f'/{self.user.username}/'):
             path = os.path.join(self.this_directory, path)
 
+        if use_service_account:
+            # Only service account user is allowed to `POST` to XForm API
+            client = Client()
+            service_account_meta = self.get_meta_from_headers(
+                get_request_headers(self.user.username)
+            )
+            service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        else:
+            # For test purposes we want to try to `POST` with current logged-in
+            # user
+            client = self.client
+            service_account_meta = {}
+
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            response = self.client.post(xform_list_url, data=post_data)
+            response = client.post(
+                xform_list_url,
+                data=post_data,
+                **service_account_meta,
+            )
             return response
 
     def _publish_xlsx_file(self):
@@ -117,8 +136,11 @@ class TestBase(MakeSubmissionMixin, TestCase):
 
     def _publish_transportation_form(self):
         xls_path = os.path.join(
-            self.this_directory, "fixtures",
-            "transportation", "transportation.xls")
+            self.this_directory,
+            "fixtures",
+            "transportation",
+            "transportation.xls",
+        )
         count = XForm.objects.count()
         TestBase._publish_xls_file(self, xls_path)
         self.assertEqual(XForm.objects.count(), count + 1)
@@ -187,7 +209,7 @@ class TestBase(MakeSubmissionMixin, TestCase):
 
     def _get_response_content(self, response):
         contents = ''
-        if response.streaming:
+        if getattr(response, 'streaming', None):
             actual_content = BytesIO()
             for content in response.streaming_content:
                 actual_content.write(content)

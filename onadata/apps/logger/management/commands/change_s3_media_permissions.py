@@ -5,29 +5,28 @@ import sys
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.files.storage import get_storage_class
-from django.utils.translation import ugettext as _, ugettext_lazy
 
 
 class Command(BaseCommand):
-    help = ugettext_lazy("Makes all s3 files private")
+    help = "Makes all s3 files private"
 
     def handle(self, *args, **kwargs):
         permissions = ('private', 'public-read', 'authenticated-read')
 
         if len(args) < 1:
-            raise CommandError(_("Missing permission argument"))
+            raise CommandError("Missing permission argument")
 
         permission = args[0]
 
         if permission not in permissions:
-            raise CommandError(_(
-                "Expected %s as permission") % ' or '.join(permissions))
+            raise CommandError(
+                "Expected %s as permission" % ' or '.join(permissions))
 
         try:
             s3 = get_storage_class('storages.backends.s3boto3.S3Boto3Storage')()
         except:
-            print(_("Missing necessary libraries. Try running: pip install "
-                    "-r requirements-s3.pip"))
+            print("Missing necessary libraries. Try running: pip install "
+                    "-r requirements-s3.pip")
             sys.exit(1)
         else:
             all_files = s3.bucket.list()

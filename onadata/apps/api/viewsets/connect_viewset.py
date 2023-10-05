@@ -1,4 +1,6 @@
 # coding: utf-8
+from kobo_service_account.models import ServiceAccountUser
+from kobo_service_account.utils import get_real_user
 from rest_framework import viewsets
 from rest_framework.response import Response
 
@@ -53,8 +55,14 @@ class ConnectViewSet(ObjectLookupMixin, viewsets.GenericViewSet):
                 # login(request, request.user)
                 session.set_expiry(DEFAULT_SESSION_EXPIRY_TIME)
 
+        user = (
+            get_real_user(request)
+            if isinstance(request.user, ServiceAccountUser)
+            else request.user
+        )
+
         serializer = UserProfileWithTokenSerializer(
-            instance=UserProfile.objects.get_or_create(user=request.user)[0],
-            context={"request": request})
+            instance=UserProfile.objects.get_or_create(user=user)[0],
+            context={'request': request})
 
         return Response(serializer.data)

@@ -1,7 +1,8 @@
 # coding: utf-8
 import os
 import re
-from xml.dom import minidom
+
+from defusedxml import minidom
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser,\

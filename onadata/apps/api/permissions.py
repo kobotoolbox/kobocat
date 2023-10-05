@@ -1,8 +1,12 @@
 # coding: utf-8
+from django.http import Http404
+from kobo_service_account.models import ServiceAccountUser
+from kobo_service_account.utils import get_real_user
 from rest_framework.permissions import (
+    BasePermission,
     DjangoObjectPermissions,
     IsAuthenticated,
-    SAFE_METHODS
+    SAFE_METHODS,
 )
 
 from onadata.libs.constants import (
@@ -11,8 +15,8 @@ from onadata.libs.constants import (
     CAN_VALIDATE_XFORM,
     CAN_VIEW_XFORM,
 )
-from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.models import XForm
+from onadata.apps.api.exceptions import LegacyAPIException
 
 
 class ViewDjangoObjectPermissions(DjangoObjectPermissions):
@@ -76,9 +80,20 @@ class XFormPermissions(ObjectPermissionsWithViewRestricted):
 
     def has_permission(self, request, view):
         # Allow anonymous users to access shared data
-        if request.method in SAFE_METHODS and \
-                view.action and view.action == 'retrieve':
+        if (
+            request.method in SAFE_METHODS
+            and view.action
+            and view.action == 'retrieve'
+        ):
             return True
+
+        if (
+            request.method not in SAFE_METHODS
+            and view.action
+            and view.action in ['create', 'update', 'partial_update', 'destroy']
+            and not isinstance(request.user, ServiceAccountUser)
+        ):
+            raise LegacyAPIException
 
         return super().has_permission(request, view)
 
@@ -103,7 +118,7 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
     def has_permission(self, request, view):
         lookup_field = view.lookup_field
         lookup = view.kwargs.get(lookup_field)
-        # Allow anonymous users to access access shared data
+        # Allow anonymous users to access shared data
         allowed_anonymous_actions = ['retrieve']
         if lookup:
             # We need to grant access to anonymous on list endpoint too when
@@ -115,18 +130,13 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
             and view.action in allowed_anonymous_actions
         ):
             return True
+
         return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
         user = request.user
-        is_granted_once = OneTimeAuthToken.grant_access(request)
-        # If a one-time authentication request token has been detected,
-        # we return its validity.
-        # Otherwise, the permissions validation keeps going as normal
-        if is_granted_once is not None:
-            return is_granted_once
 
-        # Grant access if user is owner or super user
+        # Grant access if user is the owner or a superuser
         if user.is_superuser or user == obj.user:
             return True
 
@@ -165,7 +175,24 @@ class XFormDataPermissions(ObjectPermissionsWithViewRestricted):
         except KeyError:
             pass
         else:
+            # Only service account is allowed to bulk delete submissions.
+            # Even KoBoCAT superusers are not allowed
+            if (
+                view.action == 'bulk_delete'
+                and not isinstance(user, ServiceAccountUser)
+            ):
+                # return False
+                raise LegacyAPIException
+
             return user.has_perms(required_perms, obj)
+
+        # Only service account is allowed to delete submissions.
+        # Even KoBoCAT superusers are not allowed
+        if (
+            view.action == 'destroy'
+            and not isinstance(user, ServiceAccountUser)
+        ):
+            raise LegacyAPIException
 
         return super().has_object_permission(request, view, obj)
 
@@ -178,10 +205,6 @@ class EnketoSubmissionEditPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         user = request.user
         required_perms = [f'logger.{CAN_CHANGE_XFORM}']
-        is_granted_once = OneTimeAuthToken.grant_access(request)
-
-        if is_granted_once is not None:
-            return is_granted_once
 
         # Grant access if user is owner or super user
         if user.is_superuser or user == obj.user:
@@ -198,10 +221,6 @@ class EnketoSubmissionViewPermissions(ObjectPermissionsWithViewRestricted):
     def has_object_permission(self, request, view, obj):
         user = request.user
         required_perms = [f'logger.{CAN_VIEW_XFORM}']
-        is_granted_once = OneTimeAuthToken.grant_access(request)
-
-        if is_granted_once is not None:
-            return is_granted_once
 
         # Grant access if user is owner or super user
         if user.is_superuser or user == obj.user:
@@ -234,6 +253,9 @@ class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
 
     def has_permission(self, request, view):
 
+        if request.user and request.user.is_superuser:
+            return True
+
         allowed_anonymous_action = ['retrieve']
 
         try:
@@ -256,6 +278,9 @@ class MetaDataObjectPermissions(ObjectPermissionsWithViewRestricted):
         )
 
     def has_object_permission(self, request, view, obj):
+
+        if request.user and request.user.is_superuser:
+            return True
 
         # Grant access to publicly shared xforms.
         if (
@@ -281,8 +306,18 @@ class AttachmentObjectPermissions(DjangoObjectPermissions):
         self.perms_map['HEAD'] = ['%(app_label)s.view_xform']
         return super().__init__(*args, **kwargs)
 
+    def has_permission(self, request, view):
+
+        if request.user and request.user.is_superuser:
+            return True
+
+        return super().has_permission(request, view)
+
     def has_object_permission(self, request, view, obj):
         view.model = XForm
+
+        if request.user and request.user.is_superuser:
+            return True
 
         return super().has_object_permission(
             request, view, obj.instance.xform)
@@ -329,6 +364,22 @@ class ConnectViewsetPermissions(IsAuthenticated):
             return True
 
         return super().has_permission(request, view)
+
+
+class UserDeletePermission(BasePermission):
+
+    perms_map = {}
+
+    def has_permission(self, request, view):
+        if not isinstance(request.user, ServiceAccountUser):
+            # Do not reveal user's existence
+            raise Http404
+
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        # Always return True because it must pass `has_permission()` first
+        return True
 
 
 __permissions__ = [DjangoObjectPermissions, IsAuthenticated]

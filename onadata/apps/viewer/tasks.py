@@ -1,14 +1,18 @@
 # coding: utf-8
 import logging
-import pytz
 import re
 import sys
-from celery import task, shared_task
 from datetime import datetime, timedelta
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
+
+from celery import shared_task
 from django.conf import settings
 from django.core.mail import mail_admins
-from requests import ConnectionError
 
+from onadata.celery import app
 from onadata.apps.viewer.models.export import Export
 from onadata.libs.exceptions import NoRecordsFoundError
 from onadata.libs.utils.export_tools import (
@@ -17,6 +21,7 @@ from onadata.libs.utils.export_tools import (
     generate_kml_export
 )
 from onadata.libs.utils.logger_tools import mongo_sync_status, report_exception
+
 
 def create_async_export(xform, export_type, query, force_xlsx, options=None):
     username = xform.user.username
@@ -74,7 +79,7 @@ def create_async_export(xform, export_type, query, force_xlsx, options=None):
     return None
 
 
-@task()
+@app.task()
 def create_xls_export(username, id_string, export_id, query=None,
                       force_xlsx=True, group_delimiter='/',
                       split_select_multiples=True,
@@ -114,7 +119,7 @@ def create_xls_export(username, id_string, export_id, query=None,
         return gen_export.id
 
 
-@task()
+@app.task()
 def create_csv_export(username, id_string, export_id, query=None,
                       group_delimiter='/', split_select_multiples=True,
                       binary_select_multiples=False):
@@ -149,7 +154,7 @@ def create_csv_export(username, id_string, export_id, query=None,
         return gen_export.id
 
 
-@task()
+@app.task()
 def create_kml_export(username, id_string, export_id, query=None):
     # we re-query the db instead of passing model objects according to
     # http://docs.celeryproject.org/en/latest/userguide/tasks.html#state
@@ -177,7 +182,7 @@ def create_kml_export(username, id_string, export_id, query=None):
         return gen_export.id
 
 
-@task()
+@app.task()
 def create_zip_export(username, id_string, export_id, query=None):
     export = Export.objects.get(id=export_id)
     try:
@@ -204,7 +209,7 @@ def create_zip_export(username, id_string, export_id, query=None):
         return gen_export.id
 
 
-@task()
+@app.task()
 def delete_export(export_id):
     try:
         export = Export.objects.get(id=export_id)
@@ -232,7 +237,7 @@ REMONGO_PATTERN = re.compile(r'Total # of records to remongo: -?[1-9]+',
                              re.IGNORECASE)
 
 
-@task()
+@app.task()
 def email_mongo_sync_status():
     """Check the status of records in the mysql db versus mongodb, and, if
     necessary, invoke the command to re-sync the two databases, sending an
@@ -262,7 +267,7 @@ def log_stuck_exports_and_mark_failed():
     max_export_run_time = getattr(settings, 'CELERY_TASK_TIME_LIMIT', 2100)
     # Allow a generous grace period
     max_allowed_export_age = timedelta(seconds=max_export_run_time * 4)
-    this_moment = datetime.now(tz=pytz.UTC)
+    this_moment = datetime.now(tz=ZoneInfo('UTC'))
     oldest_allowed_timestamp = this_moment - max_allowed_export_age
     stuck_exports = Export.objects.filter(
         internal_status=Export.PENDING,
@@ -282,5 +287,3 @@ def log_stuck_exports_and_mark_failed():
         # Export.save() is a busybody; bypass it with update()
         stuck_exports.filter(pk=stuck_export.pk).update(
             internal_status=Export.FAILED)
-
-        

@@ -5,13 +5,15 @@ import json
 import os
 import re
 import unittest
+from io import BytesIO
+from xml.dom import Node
 
+from defusedxml import minidom
 from django.urls import reverse
 from django.conf import settings
 from django_digest.test import Client as DigestClient
 from django.core.files.uploadedfile import UploadedFile
-from xlrd import open_workbook
-from xml.dom import minidom, Node
+from openpyxl import load_workbook
 
 from onadata.apps.main.models import MetaData
 from onadata.apps.logger.models import XForm
@@ -49,16 +51,6 @@ class TestProcess(TestBase):
 
     def tearDown(self):
         super().tearDown()
-
-    @unittest.skip('Fails under Django 1.6')
-    def test_process(self, username=None, password=None):
-        self._publish_xls_file()
-        self._check_formList()
-        self._download_xform()
-        self._make_submissions()
-        self._update_dynamic_data()
-        self._check_csv_export()
-        self._check_delete()
 
     def _update_dynamic_data(self):
         """
@@ -356,41 +348,6 @@ class TestProcess(TestBase):
                 else:
                     l.append(("transport/" + k, v))
             self.assertEqual(d, dict(l))
-
-    def test_xls_export_content(self):
-        self._publish_xls_file()
-        self._make_submissions()
-        self._update_dynamic_data()
-        self._check_xls_export()
-
-    def _check_xls_export(self):
-        xls_export_url = reverse(
-            'xls_export', kwargs={'username': self.user.username,
-                                  'id_string': self.xform.id_string})
-        response = self.client.get(xls_export_url)
-        expected_xls = open_workbook(os.path.join(
-            self.this_directory, "fixtures", "transportation",
-            "transportation_export.xls"))
-        content = self._get_response_content(response)
-        actual_xls = open_workbook(file_contents=content)
-        actual_sheet = actual_xls.sheet_by_index(0)
-        expected_sheet = expected_xls.sheet_by_index(0)
-
-        # check headers
-        self.assertEqual(actual_sheet.row_values(0),
-                         expected_sheet.row_values(0))
-
-        # check cell data
-        self.assertEqual(actual_sheet.ncols, expected_sheet.ncols)
-        self.assertEqual(actual_sheet.nrows, expected_sheet.nrows)
-        for i in range(1, actual_sheet.nrows):
-            actual_row = actual_sheet.row_values(i)
-            expected_row = expected_sheet.row_values(i)
-
-            # remove _id from result set, varies depending on the database
-            del actual_row[22]
-            del expected_row[22]
-            self.assertEqual(actual_row, expected_row)
 
     def _check_delete(self):
         self.assertEqual(self.user.xforms.count(), 1)

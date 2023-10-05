@@ -1,29 +1,29 @@
 # coding: utf-8
 import os
-import re
-from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import (
     AnonymousUser,
     Permission,
     User
 )
 from django.test import TestCase
+from django.test.client import Client
 from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
+from kobo_service_account.utils import get_request_headers
 from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
-from onadata.apps.logger.models import Instance, XForm, Attachment
+from onadata.apps.logger.models import XForm, Attachment
 from onadata.apps.main import tests as main_tests
 from onadata.apps.main.models import UserProfile, MetaData
 from onadata.libs.tests.mixins.make_submission_mixin import MakeSubmissionMixin
+from onadata.libs.tests.mixins.request_mixin import RequestMixin
 
 
-class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
+class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
     surveys = ['transport_2011-07-25_19-05-49',
                'transport_2011-07-25_19-05-36',
                'transport_2011-07-25_19-06-01',
@@ -52,7 +52,9 @@ class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
         self._add_permissions_to_user(AnonymousUser())
         self.maxDiff = None
 
-    def publish_xls_form(self, path=None, data=None, assert_=True):
+    def publish_xls_form(
+        self, path=None, data=None, assert_=True, use_service_account=True
+    ):
         if not data:
             data = {
                 'owner': self.user.username,
@@ -67,14 +69,35 @@ class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
 
         if not path:
             path = os.path.join(
-                settings.ONADATA_DIR, "apps", "main", "tests", "fixtures",
-                "transportation", "transportation.xls")
+                settings.ONADATA_DIR,
+                'apps',
+                'main',
+                'tests',
+                'fixtures',
+                'transportation',
+                'transportation.xls',
+            )
 
         xform_list_url = reverse('xform-list')
 
+        if use_service_account:
+            # Only service account user is allowed to `POST` to XForm API
+            client = Client()
+            service_account_meta = self.get_meta_from_headers(
+                get_request_headers(self.user.username)
+            )
+            service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+        else:
+            # For test purposes we want to try to `POST` with current logged-in
+            # user
+            client = self.client
+            service_account_meta = self.extra
+
         with open(path, 'rb') as xls_file:
             post_data = {'xls_file': xls_file}
-            response = self.client.post(xform_list_url, data=post_data)
+            response = client.post(
+                xform_list_url, data=post_data, **service_account_meta
+            )
 
         if not assert_:
             return response
@@ -105,6 +128,12 @@ class TestAbstractViewSet(MakeSubmissionMixin, TestCase):
             'user': 'http://testserver/api/v1/users/bob',
             'metadata': {},
         }
+
+    def validate_openrosa_head_response(self, response):
+        self.assertEqual(response.status_code, 204)
+        self.assertFalse(response.data)  # should be empty
+        self.assertIn('X-OpenRosa-Accept-Content-Length', response)
+        self.assertIn('X-OpenRosa-Version', response)
 
     def _add_permissions_to_user(self, user, save=True):
         """

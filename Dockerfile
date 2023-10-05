@@ -1,22 +1,16 @@
-FROM python:3.8 as build-python
+FROM python:3.10 as build-python
 
 ENV VIRTUAL_ENV=/opt/venv \
     KOBOCAT_SRC_DIR=/srv/src/kobocat \
     TMP_DIR=/srv/tmp
 
-# Copy KoBoCAT directory
-COPY . "${KOBOCAT_SRC_DIR}"
-
-# Install `pip` packages
-RUN python3 -m venv "$VIRTUAL_ENV"
+RUN python -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install  --quiet --upgrade pip && \
-    pip install  --quiet pip-tools
-COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
-RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null && \
-    rm -rf ~/.cache/pip
+RUN pip install --quiet pip-tools==7.\*
+COPY ./dependencies/pip/requirements.txt "${TMP_DIR}/pip_dependencies.txt"
+RUN pip-sync "${TMP_DIR}/pip_dependencies.txt" 1>/dev/null
 
-FROM python:3.8-slim
+FROM python:3.10-slim
 
 # Declare environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -53,7 +47,11 @@ RUN mkdir -p ${NGINX_STATIC_DIR} && \
     mkdir -p ${KOBOCAT_SRC_DIR}/emails && \
     mkdir -p ${INIT_PATH}
 
+# DO NOT remove packages like `less` and `procps` without approval from
+# jnm (or the current on-call sysadmin). Thanks.
+
 RUN apt-get -qq update && \
+    apt-get -qq -y install openjdk-17-jre && \
     apt-get -qq -y install \
         cron \
         gdal-bin \
@@ -61,11 +59,12 @@ RUN apt-get -qq update && \
         git \
         gosu \
         less \
+        libpq5 \
         libproj-dev \
         libsqlite3-mod-spatialite \
         locales \
-        openjdk-11-jre \
         postgresql-client \
+        procps \
         rsync \
         runit-init \
         vim-tiny \
@@ -82,8 +81,9 @@ RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 
 # Copy virtualenv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-COPY ./dependencies/pip/prod.txt "${TMP_DIR}/pip_dependencies.txt"
+COPY ./dependencies/pip/requirements.txt "${TMP_DIR}/pip_dependencies.txt"
 COPY --from=build-python "$VIRTUAL_ENV" "$VIRTUAL_ENV"
+COPY . "${KOBOCAT_SRC_DIR}"
 
 # Using `/etc/profile.d/` as a repository for non-hard-coded environment variable overrides.
 RUN echo "export PATH=${PATH}" >> /etc/profile && \
@@ -105,7 +105,6 @@ RUN chown -R ":${UWSGI_GROUP}" ${CELERY_PID_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_SRC_DIR}/emails/ && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${KOBOCAT_LOGS_DIR} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${TMP_DIR} && \
-    chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${VIRTUAL_ENV} && \
     chown -R "${UWSGI_USER}:${UWSGI_GROUP}" ${BACKUPS_DIR}
 
 WORKDIR "${KOBOCAT_SRC_DIR}"

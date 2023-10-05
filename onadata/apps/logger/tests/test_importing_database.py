@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
 
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.conf import settings
 
@@ -9,7 +9,7 @@ from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.views import bulksubmission
-from onadata.libs.utils.storage import delete_user_storage
+from onadata.libs.utils.storage import rmdir
 
 CUR_PATH = os.path.abspath(__file__)
 CUR_DIR = os.path.dirname(CUR_PATH)
@@ -32,15 +32,14 @@ class TestImportingDatabase(TestBase):
             xform_uuid=instance.xform.uuid,
             instance_uuid=instance.uuid
         )
-        storage = get_storage_class()()
-        _, images = storage.listdir(attachments_path)
+        _, images = default_storage.listdir(attachments_path)
         return len(images)
 
     def tearDown(self):
         # delete everything we imported
         Instance.objects.all().delete()
-        if self.user:
-            delete_user_storage(self.user.username)
+        if self.user and self.user.username:
+            rmdir(self.user.username)
 
     def test_importing_b1_and_b2(self):
         """

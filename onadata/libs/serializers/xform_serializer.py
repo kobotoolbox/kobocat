@@ -49,6 +49,7 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
             'has_start_time',
             'shared',
             'shared_data',
+            'pending_delete',
         )
 
     @check_obj
@@ -72,8 +73,14 @@ class XFormSerializer(serializers.HyperlinkedModelSerializer):
     @property
     def data(self):
         data = super().data
-        if 'num_of_submissions' in data and data['num_of_submissions'] is None:
+
+        # want to ensure `num_of_submissions` and `attachment_storage_bytes`
+        # exist in the data and are integers
+        if not data.get('num_of_submissions'):
             data['num_of_submissions'] = 0
+
+        if not data.get('attachment_storage_bytes'):
+            data['attachment_storage_bytes'] = 0
         return data
 
     def get_xform_permissions(self, obj):
@@ -122,7 +129,7 @@ class XFormListSerializer(serializers.Serializer):
 
     @check_obj
     def get_hash(self, obj):
-        return "md5:%s" % obj.md5_hash
+        return f'md5:{obj.md5_hash_with_disclaimer}'
 
     @check_obj
     def get_url(self, obj):

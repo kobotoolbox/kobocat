@@ -6,11 +6,12 @@ from datetime import datetime, date, time, timedelta
 
 from bson import json_util
 from django.conf import settings
-from django.core.files.base import File, ContentFile
+from django.core.files.base import File
+from django.core.files.storage import FileSystemStorage
 from django.core.files.temp import NamedTemporaryFile
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.contrib.auth.models import User
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.utils.text import slugify
 from openpyxl.utils.datetime import to_excel, time_to_days, timedelta_to_days
 from openpyxl.workbook import Workbook
@@ -522,16 +523,18 @@ class ExportBuilder:
 
         wb.save(filename=path)
 
-    def to_flat_csv_export(
-            self, path, data, username, id_string, filter_query):
+    def to_flat_csv_export(self, path, data, username, id_string, filter_query):
         # TODO resolve circular import
-
-        from onadata.apps.viewer.pandas_mongo_bridge import\
-            CSVDataFrameBuilder
+        from onadata.apps.viewer.pandas_mongo_bridge import CSVDataFrameBuilder
 
         csv_builder = CSVDataFrameBuilder(
-            username, id_string, filter_query, self.GROUP_DELIMITER,
-            self.SPLIT_SELECT_MULTIPLES, self.BINARY_SELECT_MULTIPLES)
+            username,
+            id_string,
+            filter_query,
+            self.GROUP_DELIMITER,
+            self.SPLIT_SELECT_MULTIPLES,
+            self.BINARY_SELECT_MULTIPLES,
+        )
         csv_builder.export_to(path)
 
 
@@ -569,7 +572,6 @@ def generate_export(export_type, extension, username, id_string,
 
     # get the export function by export type
     func = getattr(export_builder, export_type_func_map[export_type])
-
     func.__call__(
         temp_file.name, records, username, id_string, filter_query)
 
@@ -590,10 +592,9 @@ def generate_export(export_type, extension, username, id_string,
         filename)
 
     # TODO: if s3 storage, make private - how will we protect local storage??
-    storage = get_storage_class()()
     # seek to the beginning as required by storage classes
     temp_file.seek(0)
-    export_filename = storage.save(
+    export_filename = default_storage.save(
         file_path,
         File(temp_file, file_path))
     temp_file.close()
@@ -608,7 +609,7 @@ def generate_export(export_type, extension, username, id_string,
     export.filedir = dir_name
     export.filename = basename
     export.internal_status = Export.SUCCESSFUL
-    # dont persist exports that have a filter
+    # do not persist exports that have a filter
     if filter_query is None:
         export.save()
     return export
@@ -675,18 +676,18 @@ def generate_attachments_zip_export(
         export_type,
         filename)
 
-    export_filename = get_storage_class()().save(file_path, ContentFile(''))
+    absolute_filename = _get_absolute_filename(file_path)
 
-    with get_storage_class()().open(export_filename, 'wb') as destination_file:
+    with default_storage.open(absolute_filename, 'wb') as destination_file:
         create_attachments_zipfile(
             attachments,
             output_file=destination_file,
         )
 
-    dir_name, basename = os.path.split(export_filename)
+    dir_name, basename = os.path.split(absolute_filename)
 
     # get or create export object
-    if(export_id):
+    if export_id:
         export = Export.objects.get(id=export_id)
     else:
         export = Export.objects.create(xform=xform, export_type=export_type)
@@ -699,12 +700,20 @@ def generate_attachments_zip_export(
 
 
 def generate_kml_export(
-        export_type, extension, username, id_string, export_id=None,
-        filter_query=None):
+    export_type,
+    extension,
+    username,
+    id_string,
+    export_id=None,
+    filter_query=None,  # Not used, ToDo removed it?
+):
     user = User.objects.get(username=username)
     xform = XForm.objects.get(user__username=username, id_string=id_string)
-    response = render_to_response(
-        'survey.kml', {'data': kml_export_data(id_string, user)})
+    response = render(
+        request=None,
+        template_name='survey.kml',
+        context={'data': kml_export_data(id_string, user)},
+    )
 
     basename = "%s_%s" % (id_string,
                           datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
@@ -716,11 +725,10 @@ def generate_kml_export(
         export_type,
         filename)
 
-    storage = get_storage_class()()
     temp_file = NamedTemporaryFile(suffix=extension)
     temp_file.write(response.content)
     temp_file.seek(0)
-    export_filename = storage.save(
+    export_filename = default_storage.save(
         file_path,
         File(temp_file, file_path))
     temp_file.close()
@@ -728,7 +736,7 @@ def generate_kml_export(
     dir_name, basename = os.path.split(export_filename)
 
     # get or create export object
-    if(export_id):
+    if export_id:
         export = Export.objects.get(id=export_id)
     else:
         export = Export.objects.create(xform=xform, export_type=export_type)
@@ -742,9 +750,7 @@ def generate_kml_export(
 
 
 def kml_export_data(id_string, user):
-    # TODO resolve circular import
-    from onadata.apps.viewer.models.data_dictionary import DataDictionary
-    dd = DataDictionary.objects.get(id_string=id_string, user=user)
+
     instances = Instance.objects.filter(
         xform__user=user,
         xform__id_string=id_string,
@@ -763,3 +769,51 @@ def kml_export_data(id_string, user):
                 })
 
     return data_for_template
+
+
+def _get_absolute_filename(filename: str) -> str:
+    """
+    Get absolute filename related to storage root.
+    """
+
+    filename = default_storage.generate_filename(filename)
+    # We cannot call `self.result.save()` before reopening the file
+    # in write mode (i.e. open(filename, 'wb')). because it does not work
+    # with AzureStorage.
+    # Unfortunately, `self.result.save()` does few things that we need to
+    # reimplement here:
+    # - Create parent folders (if they do not exist) for local storage
+    # - Get a unique filename if filename already exists on storage
+
+    # Copied from `FileSystemStorage._save()` 😢
+    if isinstance(default_storage, FileSystemStorage):
+        full_path = default_storage.path(filename)
+
+        # Create any intermediate directories that do not exist.
+        directory = os.path.dirname(full_path)
+        if not os.path.exists(directory):
+            try:
+                if default_storage.directory_permissions_mode is not None:
+                    # os.makedirs applies the global umask, so we reset it,
+                    # for consistency with file_permissions_mode behavior.
+                    old_umask = os.umask(0)
+                    try:
+                        os.makedirs(
+                            directory, default_storage.directory_permissions_mode
+                        )
+                    finally:
+                        os.umask(old_umask)
+                else:
+                    os.makedirs(directory)
+            except FileExistsError:
+                # There's a race between os.path.exists() and os.makedirs().
+                # If os.makedirs() fails with FileExistsError, the directory
+                # was created concurrently.
+                pass
+        if not os.path.isdir(directory):
+            raise IOError("%s exists and is not a directory." % directory)
+
+        # Store filenames with forward slashes, even on Windows.
+        filename = filename.replace('\\', '/')
+
+    return default_storage.get_available_name(filename)

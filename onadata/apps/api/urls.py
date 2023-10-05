@@ -1,5 +1,6 @@
 # coding: utf-8
 from django.urls import re_path
+from django.urls.exceptions import NoReverseMatch
 from rest_framework import routers
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -12,6 +13,7 @@ from onadata.apps.api.viewsets.connect_viewset import ConnectViewSet
 from onadata.apps.api.viewsets.data_viewset import DataViewSet
 from onadata.apps.api.viewsets.metadata_viewset import MetaDataViewSet
 from onadata.apps.api.viewsets.note_viewset import NoteViewSet
+from onadata.apps.api.viewsets.user import UserViewSet
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
@@ -301,8 +303,15 @@ Example using curl:
             def get(self, request, format=None):
                 ret = {}
                 for key, url_name in api_root_dict.items():
-                    ret[key] = reverse(
-                        url_name, request=request, format=format)
+                    try:
+                        ret[key] = reverse(
+                            url_name, request=request, format=format
+                        )
+                    except NoReverseMatch:
+                        # Can happen if list endpoint does not exist but
+                        # detail does. E.g. `/api/v1/users/` is not registered
+                        # but `/api/v1/users/<username>` is.
+                        continue
                 return Response(ret)
 
         return OnaApi.as_view()
@@ -381,6 +390,8 @@ class MultiLookupRouterWithPatchList(MultiLookupRouter):
 
 
 router = MultiLookupRouter(trailing_slash=False)
+
+router.register(r'users', UserViewSet)
 router.register(r'user', ConnectViewSet)
 router.register(r'forms', XFormViewSet)
 router.register(r'notes', NoteViewSet, basename='notes')

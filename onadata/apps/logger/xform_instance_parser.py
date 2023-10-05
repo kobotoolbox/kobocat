@@ -2,13 +2,13 @@
 import logging
 import re
 import sys
-from xml.dom import minidom, Node
+from xml.dom import Node
 
 import dateutil.parser
 import six
+from defusedxml import minidom
 from django.utils.encoding import smart_str
-from django.utils.translation import ugettext as _
-from django.utils.six import text_type
+from django.utils.translation import gettext as t
 
 from onadata.libs.utils.common_tags import XFORM_ID_STRING
 
@@ -19,22 +19,22 @@ class XLSFormError(Exception):
 
 class DuplicateInstance(Exception):
     def __str__(self):
-        return _("Duplicate Instance")
+        return t("Duplicate Instance")
 
 
 class InstanceInvalidUserError(Exception):
     def __str__(self):
-        return _("Could not determine the user.")
+        return t("Could not determine the user.")
 
 
 class InstanceParseError(Exception):
     def __str__(self):
-        return _("The instance could not be parsed.")
+        return t("The instance could not be parsed.")
 
 
 class InstanceEmptyError(InstanceParseError):
     def __str__(self):
-        return _("Empty instance")
+        return t("Empty instance")
 
 
 class InstanceMultipleNodeError(Exception):
@@ -47,7 +47,7 @@ def get_meta_from_xml(xml_str, meta_name):
     # children ideally contains a single element
     # that is the parent of all survey elements
     if children.length == 0:
-        raise ValueError(_("XML string must have a survey element."))
+        raise ValueError(t("XML string must have a survey element."))
     survey_node = children[0]
     meta_tags = [n for n in survey_node.childNodes if
                  n.nodeType == Node.ELEMENT_NODE and
@@ -86,7 +86,7 @@ def get_uuid_from_xml(xml):
     # children ideally contains a single element
     # that is the parent of all survey elements
     if children.length == 0:
-        raise ValueError(_("XML string must have a survey element."))
+        raise ValueError(t("XML string must have a survey element."))
     survey_node = children[0]
     uuid = survey_node.getAttribute('instanceID')
     if uuid != '':
@@ -101,7 +101,7 @@ def get_submission_date_from_xml(xml):
     # children ideally contains a single element
     # that is the parent of all survey elements
     if children.length == 0:
-        raise ValueError(_("XML string must have a survey element."))
+        raise ValueError(t("XML string must have a survey element."))
     survey_node = children[0]
     submissionDate = survey_node.getAttribute('submissionDate')
     if submissionDate != '':
@@ -126,13 +126,15 @@ def clean_and_parse_xml(xml_string: str) -> minidom.Node:
     return xml_obj
 
 
-def _xml_node_to_dict(node: minidom.Node, repeats=[]) -> dict:
+def _xml_node_to_dict(node: minidom.Node, repeats: list = []) -> dict:
     assert isinstance(node, minidom.Node)
     if len(node.childNodes) == 0:
         # there's no data for this leaf node
         return None
-    elif len(node.childNodes) == 1 and \
-            node.childNodes[0].nodeType == node.TEXT_NODE:
+    elif (
+        len(node.childNodes) == 1
+        and node.childNodes[0].nodeType == node.TEXT_NODE
+    ):
         # there is data for this leaf node
         return {node.nodeName: node.childNodes[0].nodeValue}
     else:
@@ -205,7 +207,7 @@ def _flatten_dict(d, prefix):
                     # hack: removing [1] index to be consistent across
                     # surveys that have a single repitition of the
                     # loop versus mutliple.
-                    item_prefix[-1] += "[%s]" % text_type(i + 1)
+                    item_prefix[-1] += "[%s]" % str(i + 1)
                 if type(item) == dict:
                     for pair in _flatten_dict(item, item_prefix):
                         yield pair

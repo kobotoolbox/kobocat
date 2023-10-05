@@ -1,11 +1,9 @@
 # coding: utf-8
 from django.shortcuts import get_object_or_404
-from django.utils import six
 from rest_framework import filters
 from rest_framework_guardian import filters as guardian_filters
 from rest_framework.exceptions import ParseError
 
-from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
 from onadata.apps.logger.models import Instance, XForm
 
 
@@ -23,14 +21,22 @@ class AnonDjangoObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter)
 class RowLevelObjectPermissionFilter(guardian_filters.ObjectPermissionsFilter):
     def filter_queryset(self, request, queryset, view):
         """
-        Return queryset as-is if user is anonymous or headers contain
-        a one-time authentication request token (validation of the token is
-        delegated to the permission class)
+        Return queryset as-is if user is anonymous or super user. Otherwise,
+        narrow down the queryset to what the user is allowed to see.
         """
-        if (
-            request.user.is_anonymous
-            or OneTimeAuthToken.is_signed_request(request)[0]
-        ):
+
+        # Queryset cannot be narrowed down for anonymous and superusers because
+        # they do not have object level permissions (actually a superuser could
+        # have object level permissions but `ServiceAccountUser` does not).
+        # Thus, we return queryset immediately even if it is a larger subset and
+        # some of its objects are not allowed to accessed by `request.user`.
+        # We need to avoid `guardian` filter to allow:
+        # - anonymous user to see public data
+        # - ServiceAccountUser to take actions on all objects on behalf of the
+        #   real user who is making the call to the API.
+        # The permissions validation is handled by the permission classes and
+        # should deny access to forbidden data.
+        if request.user.is_anonymous or request.user.is_superuser:
             return queryset
 
         return super().filter_queryset(request, queryset, view)
@@ -70,7 +76,7 @@ class TagFilter(filters.BaseFilterBackend):
         # filter by tags if available.
         tags = request.query_params.get('tags', None)
 
-        if tags and isinstance(tags, six.string_types):
+        if tags and isinstance(tags, str):
             tags = tags.split(',')
             return queryset.filter(tags__name__in=tags)
 

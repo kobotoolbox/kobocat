@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.conf import settings
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as t
 from rest_framework import exceptions
 
 from onadata.apps.main.models.user_profile import UserProfile
@@ -25,7 +25,7 @@ class MFABlockerMixin:
                 pass
             else:
                 if is_mfa_active:
-                    raise exceptions.AuthenticationFailed(_(
+                    raise exceptions.AuthenticationFailed(t(
                         'Multi-factor authentication is enabled for this '
                         'account. ##authentication class## cannot be used.'
                     ).replace('##authentication class##', self.verbose_name))

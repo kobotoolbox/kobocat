@@ -2,18 +2,18 @@
 import json
 import os
 import re
-from xml.sax import saxutils
+from io import BytesIO
+from xml.sax.saxutils import escape as xml_escape
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.db import models
-from django.db.models.signals import post_save, post_delete
-from django.utils.encoding import smart_text
-
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.db.models.signals import post_save, post_delete, pre_delete
+from django.utils.encoding import smart_str
+from django.utils.translation import gettext_lazy as t
 from guardian.shortcuts import (
     assign_perm,
     get_perms_for_model
@@ -21,6 +21,10 @@ from guardian.shortcuts import (
 from taggit.managers import TaggableManager
 
 from onadata.apps.logger.fields import LazyDefaultBooleanField
+from onadata.apps.logger.models.daily_xform_submission_counter import DailyXFormSubmissionCounter
+from onadata.apps.logger.models.monthly_xform_submission_counter import (
+    MonthlyXFormSubmissionCounter,
+)
 from onadata.apps.logger.xform_instance_parser import XLSFormError
 from onadata.koboform.pyxform_utils import convert_csv_to_xls
 from onadata.libs.constants import (
@@ -29,9 +33,9 @@ from onadata.libs.constants import (
     CAN_DELETE_DATA_XFORM,
     CAN_TRANSFER_OWNERSHIP,
 )
+from onadata.libs.utils.xml import XMLFormWithDisclaimer
 from onadata.libs.models.base_model import BaseModel
 from onadata.libs.utils.hash import get_hash
-
 
 XFORM_TITLE_LENGTH = 255
 title_pattern = re.compile(r"<h:title>([^<]+)</h:title>")
@@ -42,6 +46,15 @@ def upload_to(instance, filename):
         instance.user.username,
         'xls',
         os.path.split(filename)[1])
+
+
+class XFormWithoutPendingDeletedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(pending_delete=True)
+
+
+class XFormAllManager(models.Manager):
+    pass
 
 
 class XForm(BaseModel):
@@ -62,7 +75,7 @@ class XForm(BaseModel):
 
     id_string = models.SlugField(
         editable=False,
-        verbose_name=ugettext_lazy("ID"),
+        verbose_name=t("ID"),
         max_length=MAX_ID_LENGTH
     )
     title = models.CharField(editable=False, max_length=XFORM_TITLE_LENGTH)
@@ -80,24 +93,29 @@ class XForm(BaseModel):
     uuid_bind_location = 4
     instances_with_geopoints = models.BooleanField(default=False)
     num_of_submissions = models.IntegerField(default=0)
+    attachment_storage_bytes = models.BigIntegerField(default=0)
 
     tags = TaggableManager()
 
     has_kpi_hooks = LazyDefaultBooleanField(default=False)
     kpi_asset_uid = models.CharField(max_length=32, null=True)
+    pending_delete = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'logger'
         unique_together = (("user", "id_string"),)
-        verbose_name = ugettext_lazy("XForm")
-        verbose_name_plural = ugettext_lazy("XForms")
+        verbose_name = t("XForm")
+        verbose_name_plural = t("XForms")
         ordering = ("id_string",)
         permissions = (
-            (CAN_ADD_SUBMISSIONS, _('Can make submissions to the form')),
-            (CAN_TRANSFER_OWNERSHIP, _('Can transfer form ownership.')),
-            (CAN_VALIDATE_XFORM, _('Can validate submissions')),
-            (CAN_DELETE_DATA_XFORM, _('Can delete submissions')),
+            (CAN_ADD_SUBMISSIONS, t('Can make submissions to the form')),
+            (CAN_TRANSFER_OWNERSHIP, t('Can transfer form ownership.')),
+            (CAN_VALIDATE_XFORM, t('Can validate submissions')),
+            (CAN_DELETE_DATA_XFORM, t('Can delete submissions')),
         )
+
+    objects = XFormWithoutPendingDeletedManager()
+    all_objects = XFormAllManager()
 
     def file_name(self):
         return self.id_string + ".xml"
@@ -131,21 +149,21 @@ class XForm(BaseModel):
     def _set_id_string(self):
         matches = self.instance_id_regex.findall(self.xml)
         if len(matches) != 1:
-            raise XLSFormError(_("There should be a single id string."))
+            raise XLSFormError(t("There should be a single id string."))
         self.id_string = matches[0]
 
     def _set_title(self):
-        self.xml = smart_text(self.xml)
+        self.xml = smart_str(self.xml)
         text = re.sub(r'\s+', ' ', self.xml)
         matches = title_pattern.findall(text)
         title_xml = matches[0][:XFORM_TITLE_LENGTH]
 
         if len(matches) != 1:
-            raise XLSFormError(_("There should be a single title."), matches)
+            raise XLSFormError(t("There should be a single title."), matches)
 
         if self.title and title_xml != self.title:
             title_xml = self.title[:XFORM_TITLE_LENGTH]
-            title_xml = saxutils.escape(title_xml)
+            title_xml = xml_escape(title_xml)
             self.xml = title_pattern.sub(
                 "<h:title>%s</h:title>" % title_xml, self.xml)
 
@@ -176,13 +194,13 @@ class XForm(BaseModel):
         # if so, the one must match but only if xform is NOT new
         if self.pk and old_id_string and old_id_string != self.id_string:
             raise XLSFormError(
-                _("Your updated form's id_string '%(new_id)s' must match "
+                t("Your updated form's id_string '%(new_id)s' must match "
                   "the existing forms' id_string '%(old_id)s'." %
                   {'new_id': self.id_string, 'old_id': old_id_string}))
 
         if getattr(settings, 'STRICT', True) and \
                 not re.search(r"^[\w-]+$", self.id_string):
-            raise XLSFormError(_('In strict mode, the XForm ID must be a '
+            raise XLSFormError(t('In strict mode, the XForm ID must be a '
                                'valid slug and contain no spaces.'))
 
         super().save(*args, **kwargs)
@@ -196,7 +214,7 @@ class XForm(BaseModel):
             self.num_of_submissions = count
             self.save(update_fields=['num_of_submissions'])
         return self.num_of_submissions
-    submission_count.short_description = ugettext_lazy("Submission Count")
+    submission_count.short_description = t("Submission Count")
 
     def geocoded_submission_count(self):
         """Number of geocoded submissions."""
@@ -226,6 +244,10 @@ class XForm(BaseModel):
         return get_hash(self.xml)
 
     @property
+    def md5_hash_with_disclaimer(self):
+        return get_hash(self.xml_with_disclaimer)
+
+    @property
     def can_be_replaced(self):
         if hasattr(self.submission_count, '__call__'):
             num_submissions = self.submission_count()
@@ -244,7 +266,6 @@ class XForm(BaseModel):
         this should be used sparingly
         """
         file_path = self.xls.name
-        default_storage = get_storage_class()()
 
         if file_path != '' and default_storage.exists(file_path):
             with default_storage.open(file_path) as ff:
@@ -271,6 +292,10 @@ class XForm(BaseModel):
         return {
             "validation_statuses": default_validation_statuses
         }
+
+    @property
+    def xml_with_disclaimer(self):
+        return XMLFormWithDisclaimer(self).get_object().xml
 
 
 def update_profile_num_submissions(sender, instance, **kwargs):
@@ -299,3 +324,20 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
 
 post_save.connect(set_object_permissions, sender=XForm,
                   dispatch_uid='xform_object_permissions')
+
+
+# signals are fired during cascade deletion (i.e. deletion initiated by the
+# removal of a related object), whereas the `delete()` model method is not
+# called. We need call this signal before cascade deletion. Otherwise,
+# MonthlySubmissionCounter objects will be deleted before the signal is fired.
+pre_delete.connect(
+    MonthlyXFormSubmissionCounter.update_catch_all_counter_on_delete,
+    sender=XForm,
+    dispatch_uid='update_catch_all_monthly_xform_submission_counter',
+)
+
+pre_delete.connect(
+    DailyXFormSubmissionCounter.update_catch_all_counter_on_delete,
+    sender=XForm,
+    dispatch_uid='update_catch_all_daily_xform_submission_counter',
+)

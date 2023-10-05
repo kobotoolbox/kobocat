@@ -1,4 +1,6 @@
 # coding: utf-8
+from __future__ import annotations
+
 import os
 import re
 import sys
@@ -6,13 +8,16 @@ import traceback
 from datetime import date, datetime
 from xml.etree import ElementTree as ET
 from xml.parsers.expat import ExpatError
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
-import pytz
+
 from dict2xml import dict2xml
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, PermissionDenied
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import default_storage
 from django.core.mail import mail_admins
 from django.db import IntegrityError, transaction
 from django.db.models import Q
@@ -25,15 +30,19 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.encoding import DjangoUnicodeDecodeError, smart_str
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
+from kobo_service_account.utils import get_real_user
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
 from xml.dom import Node
 from wsgiref.util import FileWrapper
 
-from onadata.apps.api.models.one_time_auth_token import OneTimeAuthToken
-from onadata.apps.logger.exceptions import FormInactiveError, DuplicateUUIDError
+from onadata.apps.logger.exceptions import (
+    DuplicateUUIDError,
+    FormInactiveError,
+    TemporarilyUnavailableError,
+)
 from onadata.apps.logger.models import Attachment, Instance, XForm
 from onadata.apps.logger.models.attachment import (
     generate_attachment_filename,
@@ -42,10 +51,12 @@ from onadata.apps.logger.models.attachment import (
 from onadata.apps.logger.models.instance import (
     InstanceHistory,
     get_id_string_from_xml_str,
+    update_xform_daily_counter,
+    update_xform_monthly_counter,
     update_xform_submission_count,
-    update_user_submissions_counter,
 )
 from onadata.apps.logger.models.xform import XLSFormError
+from onadata.apps.logger.signals import post_save_attachment
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
     InstanceInvalidUserError,
@@ -103,16 +114,16 @@ def check_submission_permissions(
         and xform.user != request.user
         and not request.user.has_perm('report_xform', xform)
     ):
-        raise PermissionDenied(_('Forbidden'))
+        raise PermissionDenied(t('Forbidden'))
 
 
 def check_edit_submission_permissions(
-    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
+    request: 'rest_framework.request.Request', xform: XForm
 ):
     if request.user.is_anonymous:
         raise UnauthenticatedEditAttempt
-    if not _has_edit_xform_permission(request, xform, instance):
-        raise PermissionDenied(_(
+    if not _has_edit_xform_permission(request, xform):
+        raise PermissionDenied(t(
             'Forbidden attempt to edit a submission. To make a new submission, '
             'Remove `deprecatedID` from the submission XML and try again.'
         ))
@@ -122,7 +133,7 @@ def check_edit_submission_permissions(
 def create_instance(
     username: str,
     xml_file: str,
-    media_files: list,
+    media_files: list['django.core.files.uploadedfile.UploadedFile'],
     status: str = 'submitted_via_web',
     uuid: str = None,
     date_created_override: datetime = None,
@@ -169,9 +180,10 @@ def create_instance(
         existing_instance = None
 
     if existing_instance:
+        existing_instance.check_active(force=False)
         # ensure we have saved the extra attachments
-        any_new_attachment = save_attachments(existing_instance, media_files)
-        if not any_new_attachment:
+        new_attachments = save_attachments(existing_instance, media_files)
+        if not new_attachments:
             raise DuplicateInstance()
         else:
             # Update Mongo via the related ParsedInstance
@@ -241,7 +253,7 @@ def get_xform_from_submission(xml, username, uuid=None):
         raise InstanceInvalidUserError()
 
     if uuid:
-        # try find the form by its uuid which is the ideal condition
+        # try to find the form by its uuid which is the ideal condition
         try:
             xform = XForm.objects.get(uuid=uuid)
         except XForm.DoesNotExist:
@@ -260,7 +272,7 @@ def inject_instanceid(xml_str, uuid):
         xml = clean_and_parse_xml(xml_str)
         children = xml.childNodes
         if children.length == 0:
-            raise ValueError(_("XML string must have a survey element."))
+            raise ValueError(t("XML string must have a survey element."))
 
         # check if we have a meta tag
         survey_node = children.item(0)
@@ -384,7 +396,7 @@ def publish_form(callback):
         # on clone invalid URL
         return {
             'type': 'alert-error',
-            'text': _('Invalid URL format.'),
+            'text': t('Invalid URL format.'),
         }
     except AttributeError as e:
         # form.publish returned None, not sure why...
@@ -396,7 +408,7 @@ def publish_form(callback):
         # catch timeout errors
         return {
             'type': 'alert-error',
-            'text': _('Form validation timeout, please try again.'),
+            'text': t('Form validation timeout, please try again.'),
         }
     except Exception as e:
         # TODO: Something less horrible. This masks storage backend
@@ -427,7 +439,16 @@ def publish_xls_form(xls_file, user, id_string=None):
         dd.save()
         return dd
     else:
-        return DataDictionary.objects.create(user=user, xls=xls_file)
+        # Creation needs to be wrapped in a transaction because of unit tests.
+        # It raises `TransactionManagementError` on IntegrityError in
+        # `RestrictedAccessMiddleware` when accessing `request.user.profile`.
+        # See https://stackoverflow.com/a/23326971
+        try:
+            with transaction.atomic():
+                dd = DataDictionary.objects.create(user=user, xls=xls_file)
+        except IntegrityError as e:
+            raise e
+        return dd
 
 
 def publish_xml_form(xml_file, user, id_string=None):
@@ -456,7 +477,7 @@ def report_exception(subject, info, exc_info=None):
     # TODO: replace with standard logging (i.e. `import logging`)
     if exc_info:
         cls, err = exc_info[:2]
-        message = _("Exception in request:"
+        message = t("Exception in request:"
                     " %(class)s: %(error)s")\
             % {'class': cls.__name__, 'error': err}
         message += "".join(traceback.format_exception(*exc_info))
@@ -480,19 +501,16 @@ def response_with_mimetype_and_name(
     if file_path:
         try:
             if not use_local_filesystem:
-                default_storage = get_storage_class()()
                 wrapper = FileWrapper(default_storage.open(file_path))
-                response = StreamingHttpResponse(wrapper,
-                                                 content_type=mimetype)
+                response = StreamingHttpResponse(wrapper, content_type=mimetype)
                 response['Content-Length'] = default_storage.size(file_path)
             else:
                 wrapper = FileWrapper(open(file_path))
-                response = StreamingHttpResponse(wrapper,
-                                                 content_type=mimetype)
+                response = StreamingHttpResponse(wrapper, content_type=mimetype)
                 response['Content-Length'] = os.path.getsize(file_path)
         except IOError:
             response = HttpResponseNotFound(
-                _("The requested file could not be found."))
+                t("The requested file could not be found."))
     else:
         response = HttpResponse(content_type=mimetype)
     response['Content-Disposition'] = disposition_ext_and_date(
@@ -512,21 +530,23 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
         instance = create_instance(
             username, xml_file, media_files, uuid=uuid, request=request)
     except InstanceInvalidUserError:
-        error = OpenRosaResponseBadRequest(_("Username or ID required."))
+        error = OpenRosaResponseBadRequest(t("Username or ID required."))
     except InstanceEmptyError:
         error = OpenRosaResponseBadRequest(
-            _("Received empty submission. No instance was created")
+            t("Received empty submission. No instance was created")
         )
     except FormInactiveError:
-        error = OpenRosaResponseNotAllowed(_("Form is not active"))
+        error = OpenRosaResponseNotAllowed(t("Form is not active"))
+    except TemporarilyUnavailableError:
+        error = OpenRosaTemporarilyUnavailable(t("Temporarily unavailable"))
     except XForm.DoesNotExist:
         error = OpenRosaResponseNotFound(
-            _("Form does not exist on this account")
+            t("Form does not exist on this account")
         )
     except ExpatError as e:
-        error = OpenRosaResponseBadRequest(_("Improperly formatted XML."))
+        error = OpenRosaResponseBadRequest(t("Improperly formatted XML."))
     except DuplicateInstance:
-        response = OpenRosaResponse(_("Duplicate submission"))
+        response = OpenRosaResponse(t("Duplicate submission"))
         response.status_code = 202
         response['Location'] = request.build_absolute_uri(request.path)
         error = response
@@ -535,19 +555,28 @@ def safe_create_instance(username, xml_file, media_files, uuid, request):
     except InstanceMultipleNodeError as e:
         error = OpenRosaResponseBadRequest(e)
     except DjangoUnicodeDecodeError:
-        error = OpenRosaResponseBadRequest(_("File likely corrupted during "
+        error = OpenRosaResponseBadRequest(t("File likely corrupted during "
                                              "transmission, please try later."
                                              ))
 
     return [error, instance]
 
 
-def save_attachments(instance, media_files):
+def save_attachments(
+    instance: Instance,
+    media_files: list['django.core.files.uploadedfile.UploadedFile'],
+    defer_counting: bool = False,
+) -> list[Attachment]:
     """
     Returns `True` if any new attachment was saved, `False` if all attachments
-    were duplicates or none were provided
+    were duplicates or none were provided.
+
+    `defer_counting=False` will set a Python-only attribute of the same name on
+    any *new* `Attachment` instances created. This will prevent
+    `update_xform_attachment_storage_bytes()` and friends from doing anything,
+    which avoids locking any rows in `logger_xform` or `main_userprofile`.
     """
-    any_new_attachment = False
+    new_attachments = []
     for f in media_files:
         attachment_filename = generate_attachment_filename(instance, f.name)
         existing_attachment = Attachment.objects.filter(
@@ -561,21 +590,26 @@ def save_attachments(instance, media_files):
             continue
         f.seek(0)
         # This is a new attachment; save it!
-        Attachment.objects.create(
-            instance=instance,
-            media_file=f, mimetype=f.content_type)
-        any_new_attachment = True
+        new_attachment = Attachment(
+            instance=instance, media_file=f, mimetype=f.content_type
+        )
+        if defer_counting:
+            # Only set the attribute if requested, i.e. don't bother ever
+            # setting it to `False`
+            new_attachment.defer_counting = True
+        new_attachment.save()
+        new_attachments.append(new_attachment)
 
     _update_instance_attachments(instance)
 
-    return any_new_attachment
+    return new_attachments
 
 
 def save_submission(
     request: 'rest_framework.request.Request',
     xform: XForm,
     xml: str,
-    media_files: list,
+    media_files: list['django.core.files.uploadedfile.UploadedFile'],
     new_uuid: str,
     status: str,
     date_created_override: datetime,
@@ -601,7 +635,9 @@ def save_submission(
     instance = _get_instance(request, xml, new_uuid, status, xform,
                              defer_counting=True)
 
-    save_attachments(instance, media_files)
+    new_attachments = save_attachments(
+        instance, media_files, defer_counting=True
+    )
 
     # override date created if required
     if date_created_override:
@@ -625,8 +661,23 @@ def save_submission(
     if getattr(instance, 'defer_counting', False):
         # Remove the Python-only attribute
         del instance.defer_counting
-        update_xform_submission_count(instance=instance, created=True)
-        update_user_submissions_counter(instance=instance, created=True)
+        update_xform_daily_counter(
+            sender=Instance, instance=instance, created=True
+        )
+        update_xform_monthly_counter(
+            sender=Instance, instance=instance, created=True
+        )
+        update_xform_submission_count(
+            sender=Instance, instance=instance, created=True
+        )
+
+    # Update the storage totals for new attachments as well, which were
+    # deferred for the same performance reasons
+    for new_attachment in new_attachments:
+        if getattr(new_attachment, 'defer_counting', False):
+            # Remove the Python-only attribute
+            del new_attachment.defer_counting
+            post_save_attachment(new_attachment, created=True)
 
     return instance
 
@@ -652,7 +703,7 @@ def _get_instance(
     if instances:
         # edits
         instance = instances[0]
-        check_edit_submission_permissions(request, xform, instance)
+        check_edit_submission_permissions(request, xform)
         InstanceHistory.objects.create(
             xml=instance.xml, xform_instance=instance, uuid=old_uuid)
         instance.xml = xml
@@ -661,7 +712,9 @@ def _get_instance(
         instance.save()
     else:
         submitted_by = (
-            request.user if request and request.user.is_authenticated else None
+            get_real_user(request)
+            if request and request.user.is_authenticated
+            else None
         )
         # new submission
         # Avoid `Instance.objects.create()` so that we can set a Python-only
@@ -681,23 +734,13 @@ def _get_instance(
 
 
 def _has_edit_xform_permission(
-    request: 'rest_framework.request.Request', xform: XForm, instance: Instance
+    request: 'rest_framework.request.Request', xform: XForm
 ) -> bool:
-    if isinstance(xform, XForm) and isinstance(request.user, User):
-        if request.user.has_perm('logger.change_xform', xform):
+    if isinstance(xform, XForm):
+        if request.user.is_superuser:
             return True
 
-        # The referrer string contains the UUID of the submission that is
-        # allowed to be edited. Pass the instance being edited to verify that
-        # it matches that UUID
-        is_granted_once = OneTimeAuthToken.grant_access(
-            request, use_referrer=True, instance=instance
-        )
-        # If a one-time authentication request token has been detected,
-        # we return its validity.
-        # Otherwise, the permissions validation keeps going as normal
-        if is_granted_once is not None:
-            return is_granted_once
+        return request.user.has_perm('logger.change_xform', xform)
 
     return False
 
@@ -804,8 +847,7 @@ class BaseOpenRosaResponse(HttpResponse):
         super().__init__(*args, **kwargs)
 
         self[OPEN_ROSA_VERSION_HEADER] = OPEN_ROSA_VERSION
-        tz = pytz.timezone(settings.TIME_ZONE)
-        dt = datetime.now(tz).strftime('%a, %d %b %Y %H:%M:%S %Z')
+        dt = datetime.now(tz=ZoneInfo('UTC')).strftime('%a, %d %b %Y %H:%M:%S %Z')
         self['Date'] = dt
         self['X-OpenRosa-Accept-Content-Length'] = DEFAULT_CONTENT_LENGTH
         self['Content-Type'] = DEFAULT_CONTENT_TYPE
@@ -841,6 +883,10 @@ class OpenRosaResponseNotAllowed(OpenRosaResponse):
 
 class OpenRosaResponseForbidden(OpenRosaResponse):
     status_code = 403
+
+
+class OpenRosaTemporarilyUnavailable(OpenRosaResponse):
+    status_code = 503
 
 
 class UnauthenticatedEditAttempt(Exception):

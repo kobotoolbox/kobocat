@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ['3.8']
+        python-version: ['3.8', '3.10']
     services:
       postgres:
-        image: postgis/postgis:9.5-2.5
+        image: postgis/postgis:14-3.2
         env:
           POSTGRES_USER: kobo
           POSTGRES_PASSWORD: kobo
@@ -29,7 +29,7 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
       redis_cache:
-        image: redis:3.2
+        image: redis:6.2
         ports:
           - 6380:6379
     steps:
@@ -38,18 +38,25 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
+    - name: Install pip-tools
+      run: python -m pip install pip-tools==7.\*
     - name: Update apt package lists
       run: sudo apt update
-    - name: Install apt dependencies
-      run: sudo apt-get install ghostscript libxml2-dev libxslt-dev python3-dev gdal-bin libproj-dev gettext postgresql-client openjdk-11-jre
+    - name: Update Debian package lists
+      run: sudo DEBIAN_FRONTEND=noninteractive apt-get -y update
+    - name: Install Debian dependencies
+      run: >-
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install 
+        ghostscript libxml2-dev libxslt-dev python3-dev gdal-bin libproj-dev 
+        gettext postgresql-client openjdk-11-jre build-essential
     - name: Install Python dependencies
-      run: pip install -r dependencies/pip/dev.txt
+      run: pip-sync dependencies/pip/dev_requirements.txt
     - name: Run pytest
       run: pytest -vv -rf
       env:
         DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         TEST_DATABASE_URL: postgis://kobo:kobo@localhost:5432/kobocat_test
         REDIS_SESSION_URL: redis://localhost:6380/2
+        CACHE_URL: redis://localhost:6380/3
+        SERVICE_ACCOUNT_BACKEND_URL: redis://localhost:6380/4
         USE_POSTGRESQL: True

@@ -1,7 +1,6 @@
 # coding: utf-8
 import os
 
-import dj_database_url
 from mongomock import MongoClient as MockMongoClient
 
 from .base import *
@@ -11,8 +10,7 @@ from .base import *
 ################################
 
 DATABASES = {
-    'default': dj_database_url.config(
-        env='TEST_DATABASE_URL', default="sqlite:///%s/db.sqlite3" % BASE_DIR)
+    'default': env.db_url('TEST_DATABASE_URL', default="sqlite:///%s/db.sqlite3" % PROJECT_ROOT)
 }
 
 MEDIA_ROOT = '/tmp/test_media/'
@@ -25,6 +23,8 @@ LOGGING['loggers']['django.db.backends'] = {
 
 SECRET_KEY = os.urandom(50).hex()
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
 ###################################
 # Django Rest Framework settings  #
 ###################################
@@ -35,7 +35,7 @@ SECRET_KEY = os.urandom(50).hex()
 ################################
 
 TESTING_MODE = True
-TEST_HTTP_HOST = 'testserver.com'
+TEST_HTTP_HOST = 'testserver'
 TEST_USERNAME = 'bob'
 # Tests can be run locally or with GitHub Actions. Locally, we usually use
 # SQLite while GitHub Actions is set to use PostgreSQL.
@@ -49,6 +49,9 @@ if not USE_POSTGRESQL:
     DATABASES['default']['ENGINE'] = "django.contrib.gis.db.backends.spatialite"
     SPATIALITE_LIBRARY_PATH = os.environ.get('SPATIALITE_LIBRARY_PATH',
                                              'mod_spatialite')
+
+SERVICE_ACCOUNT['WHITELISTED_HOSTS'] = ['testserver']
+SERVICE_ACCOUNT['NAMESPACE'] = 'kobo-service-account-test'
 
 ################################
 # Celery settings              #
@@ -67,7 +70,8 @@ ENKETO_API_TOKEN = os.urandom(50).hex()
 # MongoDB settings             #
 ################################
 
-MONGO_CONNECTION_URL = 'mongodb://fakehost/formhub_test'
-MONGO_CONNECTION = MockMongoClient(
-    MONGO_CONNECTION_URL, j=True, tz_aware=True)
-MONGO_DB = MONGO_CONNECTION['formhub_test']
+MONGO_DB_URL = 'mongodb://fakehost/formhub_test'
+mongo_client = MockMongoClient(
+    MONGO_DB_URL, connect=False, joural=True, tz_aware=True
+)
+MONGO_DB = mongo_client['formhub_test']

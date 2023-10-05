@@ -5,12 +5,11 @@
 import glob
 import os
 from django.core.management.base import BaseCommand
-from django.utils.translation import ugettext_lazy
 from ... import models
 
 
 class Command(BaseCommand):
-    help = ugettext_lazy("Import a folder of XForms for ODK.")
+    help = "Import a folder of XForms for ODK."
 
     def handle(self, *args, **kwargs):
         path = args[0]

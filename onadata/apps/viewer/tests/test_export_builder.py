@@ -1,18 +1,11 @@
 # coding: utf-8
-import csv
 import datetime
 import os
-import shutil
-import tempfile
-import unittest
-import zipfile
 
 from django.conf import settings
 from django.core.files.temp import NamedTemporaryFile
-from django.utils.six import string_types
 from openpyxl import load_workbook
 from pyxform.builder import create_survey_from_xls
-from savReaderWriter import SavReader
 
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.main.tests.test_base import TestBase
@@ -758,7 +751,7 @@ class TestExportBuilder(TestBase):
         data = dict_to_joined_export(submission_2, 1, indices, survey_name)
         new_row = export_builder.pre_process_row(data[survey_name],
                                                  export_builder.sections[0])
-        self.assertIsInstance(new_row['amount'], string_types)
+        self.assertIsInstance(new_row['amount'], str)
         self.assertEqual(new_row['amount'], '')
 
     def test_xls_convert_dates_before_1900(self):

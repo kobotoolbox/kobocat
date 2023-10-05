@@ -67,7 +67,7 @@ var fhExportList =  (function(){
                                 if(status.url)
                                 {
                                     parent.empty()
-                                    parent.append($('<a></a>').attr('href', status.url).html(status.filename))
+                                    parent.append($('<a></a>').attr('href', status.url).attr('target', '_blank').html(status.filename))
                                 }
                                 else
                                 {

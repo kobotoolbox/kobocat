@@ -18,7 +18,6 @@ class UserProfileSerializer(serializers.Serializer):
     twitter = serializers.ReadOnlyField()
     gravatar = serializers.ReadOnlyField()
     require_auth = serializers.ReadOnlyField()
-    metadata = JsonField(read_only=True)
 
     class Meta:
         model = UserProfile
@@ -35,7 +34,6 @@ class UserProfileSerializer(serializers.Serializer):
             'twitter',
             'gravatar',
             'require_auth',
-            'metadata',
         )
 
     def to_representation(self, obj):
@@ -73,7 +71,6 @@ class UserProfileWithTokenSerializer(UserProfileSerializer):
             'gravatar',
             'require_auth',
             'user',
-            'metadata',
             'api_token',
             'temp_token',
         )

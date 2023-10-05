@@ -3,7 +3,7 @@ import mimetypes
 import os
 import requests
 from contextlib import closing
-
+from urllib.parse import urlparse
 
 from django.core.exceptions import ValidationError
 from django.core.files.temp import NamedTemporaryFile
@@ -12,7 +12,6 @@ from django.core.validators import URLValidator
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from six.moves.urllib.parse import urlparse
 from requests.exceptions import RequestException
 
 from onadata.apps.logger.models import XForm
@@ -182,7 +181,12 @@ class MetaData(models.Model):
             # `PAIRED_DATA_EXPIRATION` period. However, this introduces a race
             # condition where it's possible that KPI *deletes* this file before
             # we attempt to update it. We avoid that by locking the row
-            MetaData.objects.filter(pk=self.pk).select_for_update().update(
+            ### TODO: this previously used `select_for_update()`, which locked
+            ### the object for the duration of the *entire* request due to
+            ### Django's `ATOMIC_REQUESTS`. The `update()` method is itself
+            ### atomic since it does not reference any value previously read
+            ### from the database. Is that enough?
+            MetaData.objects.filter(pk=self.pk).update(
                 date_modified=timezone.now()
             )
             return True

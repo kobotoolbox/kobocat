@@ -4,6 +4,7 @@ import os
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from guardian.shortcuts import assign_perm
+from kobo_service_account.utils import get_request_headers
 from rest_framework import status
 
 from onadata.apps.api.tests.viewsets.test_abstract_viewset import (
@@ -30,6 +31,22 @@ class TestMetaDataViewSet(TestAbstractViewSet):
             "transportation"
         )
         self.path = os.path.join(self.fixture_dir, self.data_value)
+
+        self.alice_profile_data = {
+            'username': 'alice',
+            'email': 'alice@kobotoolbox.org',
+            'password1': 'alice',
+            'password2': 'alice',
+            'name': 'Alice',
+            'city': 'AliceTown',
+            'country': 'CA',
+            'organization': 'Alice Inc.',
+            'home_page': 'alice.com',
+            'twitter': 'alicetwitter'
+        }
+
+        alice_profile = self._create_user_profile(self.alice_profile_data)
+        self.alice = alice_profile.user
 
     def test_add_metadata_with_file_attachment(self):
         for data_type in ['supporting_doc', 'media', 'source']:
@@ -73,6 +90,35 @@ class TestMetaDataViewSet(TestAbstractViewSet):
             request = self.factory.delete('/', **self.extra)
             response = self.view(request, pk=self.metadata.pk)
             self.assertEqual(response.status_code, 204)
+            self.assertEqual(count, MetaData.objects.count())
+
+    def test_delete_metadata_with_service_account(self):
+        alice_meta = {'HTTP_AUTHORIZATION': f'Token {self.alice.auth_token}'}
+
+        # Try the same request with service account user on behalf of alice
+        service_account_meta = self.get_meta_from_headers(
+            get_request_headers(self.alice.username)
+        )
+        # Test server does not provide `host` header
+        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
+
+        for data_type in ['supporting_doc', 'media', 'source']:
+            count = MetaData.objects.count()
+            # Add bob's metadata
+            self._add_form_metadata(
+                self.xform, data_type, self.data_value, self.path
+            )
+            # Try to delete bob's objects with alice account,
+            # object should not found (we do not reveal presence of a
+            # non-granted object)
+            request = self.factory.delete('/', **alice_meta)
+            response = self.view(request, pk=self.metadata.pk)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+            # Try with service account on behalf of alice, it should work
+            request = self.factory.delete('/', **service_account_meta)
+            response = self.view(request, pk=self.metadata.pk)
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(count, MetaData.objects.count())
 
     def test_windows_csv_file_upload_to_metadata(self):
@@ -173,8 +219,7 @@ class TestMetaDataViewSet(TestAbstractViewSet):
 
     def test_add_metadata_to_not_allowed_xform(self):
         # Create a project with a different user
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
-        self._login_user_and_profile(extra_post_data=alice_data)
+        self._login_user_and_profile(extra_post_data=self.alice_profile_data)
         # `self.xform` is now owned by alice
         self.publish_xls_form()
 
@@ -202,14 +247,12 @@ class TestMetaDataViewSet(TestAbstractViewSet):
 
     def test_add_metadata_to_shared_xform(self):
         # Create a project with a different user
-        alice_data = {'username': 'alice', 'email': 'alice@localhost.com'}
-        self._login_user_and_profile(extra_post_data=alice_data)
+        self._login_user_and_profile(extra_post_data=self.alice_profile_data)
         # `self.xform` is now owned by alice
         self.publish_xls_form()
 
         # Log in as the default user (i.e.: bob)
-        self._login_user_and_profile(
-            extra_post_data=self.default_profile_data)
+        self._login_user_and_profile(extra_post_data=self.default_profile_data)
 
         # Give bob write access to alice's xform
         assign_perm(CAN_VIEW_XFORM, self.user, self.xform)

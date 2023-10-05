@@ -1,14 +1,15 @@
 # coding: utf-8
+import logging
 import json
 from typing import Union
 
 from django.db.models import Q
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, post_delete
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.utils import six
-from django.utils.translation import ugettext as _
-
+from django.utils.translation import gettext as t
+from kobo_service_account.models import ServiceAccountUser
+from kobo_service_account.utils import get_real_user
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -23,9 +24,16 @@ from onadata.apps.api.tools import add_tags_to_instance, \
     add_validation_status_to_instance, get_validation_status, \
     remove_validation_status_from_instance
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.models.instance import Instance
+from onadata.apps.logger.models.instance import (
+    Instance,
+    nullify_exports_time_of_last_submission,
+    update_xform_submission_count_delete,
+)
 from onadata.apps.main.models import UserProfile
-from onadata.apps.viewer.models.parsed_instance import _remove_from_mongo, ParsedInstance
+from onadata.apps.viewer.models.parsed_instance import (
+    _remove_from_mongo,
+    ParsedInstance,
+)
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
     AnonymousUserPublicFormsMixin)
@@ -389,6 +397,14 @@ Delete a specific submission in a form
     extra_lookup_fields = None
     queryset = XForm.objects.all()
 
+    def get_queryset(self):
+        if isinstance(self.request.user, ServiceAccountUser):
+            # We need to get all xforms (even soft-deleted ones) to
+            # system-account user to let it delete data
+            # when the xform is already soft-deleted.
+            self.queryset = XForm.all_objects.all()
+        return super().get_queryset()
+
     def bulk_delete(self, request, *args, **kwargs):
         """
         Bulk delete instances
@@ -396,20 +412,53 @@ Delete a specific submission in a form
         xform = self.get_object()
         postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
-        # Disconnect redundant parsed instance pre_delete signal
+        # Disconnect signals to speed-up bulk deletion
         pre_delete.disconnect(_remove_from_mongo, sender=ParsedInstance)
+        post_delete.disconnect(
+            nullify_exports_time_of_last_submission, sender=Instance,
+            dispatch_uid='nullify_exports_time_of_last_submission',
+        )
+        post_delete.disconnect(
+            update_xform_submission_count_delete, sender=Instance,
+            dispatch_uid='update_xform_submission_count_delete',
+        )
 
-        # Delete Postgres & Mongo
-        all_count, results = Instance.objects.filter(**postgres_query).delete()
-        identifier = f'{Instance._meta.app_label}.Instance'
-        deleted_records_count = results[identifier]
-        ParsedInstance.bulk_delete(mongo_query)
+        try:
+            # Delete Postgres & Mongo
+            all_count, results = Instance.objects.filter(**postgres_query).delete()
+            identifier = f'{Instance._meta.app_label}.Instance'
+            try:
+                deleted_records_count = results[identifier]
+            except KeyError:
+                # PostgreSQL did not delete any Instance objects. Keep going in case
+                # they are still present in MongoDB.
+                logging.warning('Instance objects cannot be found')
+                deleted_records_count = 0
 
-        # Pre_delete signal needs to be re-enabled for parsed instance
-        pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+            ParsedInstance.bulk_delete(mongo_query)
+
+            # Update xform like signals would do if it was as single object deletion
+            nullify_exports_time_of_last_submission(sender=Instance, instance=xform)
+            update_xform_submission_count_delete(
+                sender=Instance,
+                instance=xform, value=deleted_records_count
+            )
+        finally:
+            # Pre_delete signal needs to be re-enabled for parsed instance
+            pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+            post_delete.connect(
+                nullify_exports_time_of_last_submission,
+                sender=Instance,
+                dispatch_uid='nullify_exports_time_of_last_submission',
+            )
+            post_delete.connect(
+                update_xform_submission_count_delete,
+                sender=Instance,
+                dispatch_uid='update_xform_submission_count_delete',
+            )
 
         return Response({
-            'detail': _('{} submissions have been deleted').format(
+            'detail': t('{} submissions have been deleted').format(
                 deleted_records_count)
         }, status.HTTP_200_OK)
 
@@ -421,12 +470,14 @@ Delete a specific submission in a form
             new_validation_status_uid = request.data['validation_status.uid']
         except KeyError:
             raise ValidationError({
-                'payload': _('No `validation_status.uid` provided')
+                'payload': t('No `validation_status.uid` provided')
             })
 
         # Create new validation_status object
+        real_user = get_real_user(request)
         new_validation_status = get_validation_status(
-            new_validation_status_uid, xform, request.user.username)
+            new_validation_status_uid, xform, real_user.username
+        )
 
         postgres_query, mongo_query = self.__build_db_queries(xform,
                                                               request.data)
@@ -438,7 +489,7 @@ Delete a specific submission in a form
         ParsedInstance.bulk_update_validation_statuses(mongo_query,
                                                        new_validation_status)
         return Response({
-            'detail': _('{} submissions have been updated').format(
+            'detail': t('{} submissions have been updated').format(
                       updated_records_count)
         }, status.HTTP_200_OK)
 
@@ -471,11 +522,11 @@ Delete a specific submission in a form
         try:
             int(pk)
         except ValueError:
-            raise ParseError(_("Invalid pk `%(pk)s`" % {'pk': pk}))
+            raise ParseError(t("Invalid pk `%(pk)s`" % {'pk': pk}))
         try:
             int(dataid)
         except ValueError:
-            raise ParseError(_("Invalid dataid `%(dataid)s`"
+            raise ParseError(t("Invalid dataid `%(dataid)s`"
                                % {'dataid': dataid}))
 
         return get_object_or_404(Instance, pk=dataid, xform__pk=pk)
@@ -491,7 +542,7 @@ Delete a specific submission in a form
             filter_kwargs['shared_data'] = True
             qs = XForm.objects.filter(**filter_kwargs)
             if not qs:
-                raise Http404(_("No data matches with given query."))
+                raise Http404(t("No data matches with given query."))
 
         return qs
 
@@ -500,7 +551,7 @@ Delete a specific submission in a form
         pk = self.kwargs.get(self.lookup_field)
         tags = self.request.query_params.get('tags', None)
 
-        if tags and isinstance(tags, six.string_types):
+        if tags and isinstance(tags, str):
             tags = tags.split(',')
             qs = qs.filter(tags__name__in=tags).distinct()
 
@@ -508,7 +559,7 @@ Delete a specific submission in a form
             try:
                 int(pk)
             except ValueError:
-                raise ParseError(_("Invalid pk %(pk)s" % {'pk': pk}))
+                raise ParseError(t("Invalid pk %(pk)s" % {'pk': pk}))
             else:
                 qs = self._filtered_or_shared_qs(qs, pk)
 
@@ -608,7 +659,7 @@ Delete a specific submission in a form
         """
         profile = UserProfile.objects.get_or_create(user=request.user)[0]
         if not profile.require_auth:
-            raise ValidationError(_(
+            raise ValidationError(t(
                 'Cannot edit submissions while "Require authentication to see '
                 'forms and submit data" is disabled for your account'
             ))
@@ -626,11 +677,11 @@ Delete a specific submission in a form
         object_ = self.get_object()
         data = {}
         if isinstance(object_, XForm):
-            raise ParseError(_('Data id not provided.'))
+            raise ParseError(t('Data id not provided.'))
         elif isinstance(object_, Instance):
             return_url = request.query_params.get('return_url')
             if not return_url and not action_ == 'view':
-                raise ParseError(_('`return_url` not provided.'))
+                raise ParseError(t('`return_url` not provided.'))
 
             try:
                 data['url'] = get_enketo_submission_url(
@@ -652,7 +703,7 @@ Delete a specific submission in a form
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if isinstance(instance, XForm):
-            raise ParseError(_('Data id not provided'))
+            raise ParseError(t('Data id not provided'))
         elif isinstance(instance, Instance):
             instance.delete()
 
@@ -717,7 +768,7 @@ Delete a specific submission in a form
         #
         if all(key_ in payload for key_ in ('query', 'submission_ids')):
             raise ValidationError({
-                'payload': _("`query` and `instance_ids` can't be used together")
+                'payload': t("`query` and `instance_ids` can't be used together")
             })
 
         # First scenario / Get submissions based on user's query
@@ -730,7 +781,7 @@ Delete a specific submission in a form
                 query.update(mongo_query)  # Overrides `_userform_id` if exists
             except AttributeError:
                 raise ValidationError({
-                    'payload': _('Invalid query: %(query)s')
+                    'payload': t('Invalid query: %(query)s')
                                % {'query': json.dumps(query)}
                 })
 
@@ -754,7 +805,7 @@ Delete a specific submission in a form
                                 for submission_id in submission_ids]
             except ValueError:
                 raise ValidationError({
-                    'payload': _('Invalid submission ids: %(submission_ids)s')
+                    'payload': t('Invalid submission ids: %(submission_ids)s')
                                % {'submission_ids':
                                   json.dumps(payload['submission_ids'])}
                 })

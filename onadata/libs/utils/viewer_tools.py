@@ -4,14 +4,15 @@ import logging
 import traceback
 import requests
 import zipfile
+from datetime import datetime
 
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.core.files.storage import get_storage_class, FileSystemStorage
+from django.core.files.storage import default_storage, FileSystemStorage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.mail import mail_admins
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 
 
 SLASH = "/"
@@ -23,6 +24,12 @@ class MyError(Exception):
 
 class EnketoError(Exception):
     pass
+
+
+def format_date_for_mongo(x):
+    return datetime.strptime(x, '%y_%m_%d_%H_%M_%S').strftime(
+        '%Y-%m-%dT%H:%M:%S'
+    )
 
 
 def get_path(path, suffix):
@@ -51,15 +58,16 @@ def image_urls_dict(instance):
 def report_exception(subject, info, exc_info=None):
     if exc_info:
         cls, err = exc_info[:2]
-        info += _("Exception in request: %(class)s: %(error)s") \
+        info += t("Exception in request: %(class)s: %(error)s") \
             % {'class': cls.__name__, 'error': err}
         info += "".join(traceback.format_exception(*exc_info))
 
     if settings.DEBUG:
-        print(subject)
-        print(info)
+        print(subject, flush=True)
+        print(info, flush=True)
     else:
         mail_admins(subject=subject, message=info)
+        logging.error(info, exc_info=exc_info)
 
 
 def django_file(path, field_name, content_type):
@@ -192,15 +200,25 @@ def create_attachments_zipfile(attachments, output_file=None):
                     f'disabling seeking failed: {e}'
                 )
 
-    storage = get_storage_class()()
-    with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_STORED, allowZip64=True) as zip_file:
+    with zipfile.ZipFile(
+        output_file, 'w', zipfile.ZIP_STORED, allowZip64=True
+    ) as zip_file:
         for attachment in attachments:
-            if storage.exists(attachment.media_file.name):
+            if default_storage.exists(attachment.media_file.name):
                 try:
-                    with storage.open(attachment.media_file.name, 'rb') as source_file:
-                        zip_file.writestr(attachment.media_file.name, source_file.read())
+                    with default_storage.open(
+                        attachment.media_file.name, 'rb'
+                    ) as source_file:
+                        zip_file.writestr(
+                            attachment.media_file.name, source_file.read()
+                        )
                 except Exception as e:
-                    report_exception("Error adding file \"{}\" to archive.".format(attachment.media_file.name), e)
+                    report_exception(
+                        "Error adding file \"{}\" to archive.".format(
+                            attachment.media_file.name
+                        ),
+                        e,
+                    )
 
     return output_file
 

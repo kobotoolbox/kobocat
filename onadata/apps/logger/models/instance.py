@@ -1,26 +1,37 @@
 # coding: utf-8
-import pytz
-from datetime import date
 from hashlib import sha256
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 import reversion
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GeometryCollection, Point
-from django.db import transaction
-from django.db.models import F
+from django.db import models as django_models, transaction
+from django.db.models import Case, F, When
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from jsonfield import JSONField
 from taggit.managers import TaggableManager
 
-from onadata.apps.logger.exceptions import FormInactiveError
+from onadata.apps.logger.exceptions import (
+    FormInactiveError,
+    TemporarilyUnavailableError,
+)
 from onadata.apps.logger.fields import LazyDefaultBooleanField
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.models.submission_counter import SubmissionCounter
+from onadata.apps.logger.models.daily_xform_submission_counter import (
+    DailyXFormSubmissionCounter,
+)
+from onadata.apps.logger.models.monthly_xform_submission_counter import (
+    MonthlyXFormSubmissionCounter,
+)
 from onadata.apps.logger.xform_instance_parser import XFormInstanceParser, \
     clean_and_parse_xml, get_uuid_from_xml
 from onadata.libs.utils.common_tags import (
@@ -66,7 +77,7 @@ def submission_time():
     return timezone.now()
 
 
-def update_xform_submission_count(instance, created, **kwargs):
+def update_xform_submission_count(sender, instance, created, **kwargs):
     if not created:
         return
     # `defer_counting` is a Python-only attribute
@@ -101,69 +112,114 @@ def nullify_exports_time_of_last_submission(sender, instance, **kwargs):
     makes every `Export` for a form appear stale by nulling out its
     `time_of_last_submission` attribute.
     """
+    if isinstance(instance, Instance):
+        try:
+            xform = instance.xform
+        except XForm.DoesNotExist:  # In case of XForm.delete()
+            return
+    else:
+        xform = instance
+
     # Avoid circular import
-    try:
-        export_model = instance.xform.export_set.model
-    except XForm.DoesNotExist:
-        return
-    f = instance.xform.export_set.filter(
+    export_model = xform.export_set.model
+    f = xform.export_set.filter(
         # Match the statuses considered by `Export.exports_outdated()`
         internal_status__in=[export_model.SUCCESSFUL, export_model.PENDING],
     )
     f.update(time_of_last_submission=None)
 
 
-def update_user_submissions_counter(instance, created, **kwargs):
+def update_xform_daily_counter(sender, instance, created, **kwargs):
     if not created:
         return
     if getattr(instance, 'defer_counting', False):
         return
 
-    # Querying the database this way because it's faster than querying
-    # the instance model for the data
-    user_id = XForm.objects.values_list('user_id', flat=True).get(
+    # get the date submitted
+    date_created = instance.date_created.date()
+
+    # make sure the counter exists
+    DailyXFormSubmissionCounter.objects.get_or_create(
+        date=date_created,
+        xform=instance.xform,
+        user=instance.xform.user,
+    )
+
+    # update the count for the current submission
+    DailyXFormSubmissionCounter.objects.filter(
+        date=date_created,
+        xform=instance.xform,
+    ).update(counter=F('counter') + 1)
+
+
+def update_xform_monthly_counter(sender, instance, created, **kwargs):
+    if not created:
+        return
+    if getattr(instance, 'defer_counting', False):
+        return
+
+    # get the user_id for the xform the instance was submitted for
+    xform = XForm.objects.only('pk', 'user_id').get(
         pk=instance.xform_id
     )
-    date_created = instance.date_created
-    first_day_of_month = date(
-        year=date_created.year, month=date_created.month, day=1
+
+    # get the date the instance was created
+    date_created = instance.date_created.date()
+
+    # make sure the counter exists
+    MonthlyXFormSubmissionCounter.objects.get_or_create(
+        user_id=xform.user_id,
+        xform=instance.xform,
+        year=date_created.year,
+        month=date_created.month,
     )
 
-    queryset = SubmissionCounter.objects.filter(
-        user_id=user_id, timestamp=first_day_of_month
-    )
-    if not queryset.exists():
-        SubmissionCounter.objects.create(
-            user_id=user_id,
-            timestamp=first_day_of_month,
-        )
-
-    queryset.update(count=F('count') + 1)
+    # update the counter for the current submission
+    MonthlyXFormSubmissionCounter.objects.filter(
+        xform=instance.xform,
+        year=date_created.year,
+        month=date_created.month,
+    ).update(counter=F('counter') + 1)
 
 
 def update_xform_submission_count_delete(sender, instance, **kwargs):
-    try:
-        xform = XForm.objects.select_for_update().get(pk=instance.xform.pk)
-    except XForm.DoesNotExist:
-        pass
-    else:
-        xform.num_of_submissions -= 1
-        if xform.num_of_submissions < 0:
-            xform.num_of_submissions = 0
-        # Update `date_modified` to detect outdated exports
-        # with deleted instances
-        xform.save(update_fields=['num_of_submissions', 'date_modified'])
-        profile_qs = User.profile.get_queryset()
+
+    value = kwargs.pop('value', 1)
+
+    if isinstance(instance, Instance):
+        xform_id = instance.xform_id
         try:
-            profile = profile_qs.select_for_update()\
-                .get(pk=xform.user.profile.pk)
-        except profile_qs.model.DoesNotExist:
-            pass
-        else:
-            profile.num_of_submissions -= 1
-            if profile.num_of_submissions < 0:
-                profile.num_of_submissions = 0
-            profile.save(update_fields=['num_of_submissions'])
+            xform = XForm.objects.only('user_id').get(pk=xform_id)
+        except XForm.DoesNotExist:  # In case of XForm.delete()
+            return
+    else:
+        xform_id = instance.pk
+        xform = instance
+
+    with transaction.atomic():
+        # Like `update_xform_submission_count()`, update with `F` expression
+        # instead of `select_for_update` to avoid locks, and `save()` which
+        # loads not required fields for these updates.
+        XForm.objects.filter(pk=xform_id).update(
+            num_of_submissions=Case(
+                When(
+                    num_of_submissions__gte=value,
+                    then=F('num_of_submissions') - value,
+                ),
+                default=0,
+            )
+        )
+        # Hack to avoid circular imports
+        UserProfile = User.profile.related.related_model  # noqa
+        UserProfile.objects.filter(user_id=xform.user_id).update(
+            num_of_submissions=Case(
+                When(
+                    num_of_submissions__gte=value,
+                    then=F('num_of_submissions') - value,
+                ),
+                default=0,
+            )
+        )
 
 
 @reversion.register
@@ -224,13 +280,21 @@ class Instance(models.Model):
         """
         return self.xform
 
-    def _check_active(self, force):
+    def check_active(self, force):
         """Check that form is active and raise exception if not.
 
         :param force: Ignore restrictions on saving.
         """
-        if not force and self.xform and not self.xform.downloadable:
+        if force:
+            return
+        if self.xform and not self.xform.downloadable:
             raise FormInactiveError()
+        try:
+            profile = self.xform.user.profile
+        except self.xform.user.profile.RelatedObjectDoesNotExist:
+            return
+        if profile.metadata.get('submissions_suspended', False):
+            raise TemporarilyUnavailableError()
 
     def _set_geom(self):
         xform = self.xform
@@ -399,11 +463,11 @@ class Instance(models.Model):
         """
         Compute the SHA256 hash of the given string. A wrapper to standardize hash computation.
 
-        :param string_types input_string: The string to be hashed.
+        :param str input_string: The string to be hashed.
         :return: The resulting hash.
         :rtype: str
         """
-        input_string = smart_text(input_string)
+        input_string = smart_str(input_string)
         return sha256(input_string.encode()).hexdigest()
 
     @property
@@ -416,7 +480,7 @@ class Instance(models.Model):
     def save(self, *args, **kwargs):
         force = kwargs.pop("force", False)
 
-        self._check_active(force)
+        self.check_active(force)
 
         self._set_geom()
         self._set_json()
@@ -449,8 +513,11 @@ post_save.connect(update_xform_submission_count, sender=Instance,
 post_delete.connect(nullify_exports_time_of_last_submission, sender=Instance,
                     dispatch_uid='nullify_exports_time_of_last_submission')
 
-post_save.connect(update_user_submissions_counter, sender=Instance,
-                  dispatch_uid='update_user_submissions_counter')
+post_save.connect(update_xform_daily_counter, sender=Instance,
+                  dispatch_uid='update_xform_daily_counter')
+
+post_save.connect(update_xform_monthly_counter, sender=Instance,
+                  dispatch_uid='update_xform_monthly_counter')
 
 post_delete.connect(update_xform_submission_count_delete, sender=Instance,
                     dispatch_uid='update_xform_submission_count_delete')

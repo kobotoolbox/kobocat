@@ -1,17 +1,15 @@
 # coding: utf-8
-import datetime
 import json
-import logging
 
-from bson import json_util, ObjectId
-from celery import task
+from bson import json_util
 from dateutil import parser
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_delete
-from django.utils.six import string_types
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
+from pymongo.errors import PyMongoError
 
+from onadata.celery import app
 from onadata.apps.api.mongo_helper import MongoHelper
 from onadata.apps.logger.models import Instance
 from onadata.apps.logger.models import Note
@@ -51,18 +49,17 @@ def datetime_from_str(text):
         return None
     return dt
 
-@task
+
+@app.task
 def update_mongo_instance(record):
     # since our dict always has an id, save will always result in an upsert op
     # - so we dont need to worry whether its an edit or not
     # https://api.mongodb.com/python/current/api/pymongo/collection.html#pymongo.collection.Collection.replace_one
     try:
         xform_instances.replace_one({'_id': record['_id']}, record, upsert=True)
-        return True
-    except Exception as e:
-        logging.getLogger().error("update_mongo_instance - {}".format(str(e)), exc_info=True)
-        logging.getLogger().warning('Submission could not be saved to Mongo.', exc_info=True)
-    return False
+    except PyMongoError as e:
+        raise Exception('Submission could not be saved to Mongo') from e
+    return True
 
 
 class ParsedInstance(models.Model):
@@ -106,12 +103,12 @@ class ParsedInstance(models.Model):
 
         cursor = cls._get_mongo_cursor(query, fields)
 
-        if isinstance(sort, string_types):
+        if isinstance(sort, str):
             sort = json.loads(sort, object_hook=json_util.object_hook)
         sort = sort if sort else {}
 
         if start < 0 or limit < 0:
-            raise ValueError(_("Invalid start/limit params"))
+            raise ValueError(t("Invalid start/limit params"))
 
         return cls._get_paginated_and_sorted_cursor(cursor, start, limit, sort)
 
@@ -123,13 +120,13 @@ class ParsedInstance(models.Model):
         pipeline - list of dicts or dict of mongodb pipeline operators,
         http://docs.mongodb.org/manual/reference/operator/aggregation-pipeline
         """
-        if isinstance(query, string_types):
+        if isinstance(query, str):
             query = json.loads(
                 query, object_hook=json_util.object_hook) if query else {}
         if not (isinstance(pipeline, dict) or isinstance(pipeline, list)):
-            raise Exception(_("Invalid pipeline! %s" % pipeline))
+            raise Exception(t("Invalid pipeline! %s" % pipeline))
         if not isinstance(query, dict):
-            raise Exception(_("Invalid query! %s" % query))
+            raise Exception(t("Invalid query! %s" % query))
         query = MongoHelper.to_safe_dict(query)
         k = [{'$match': query}]
         if isinstance(pipeline, list):
@@ -158,12 +155,12 @@ class ParsedInstance(models.Model):
 
         cursor = cls._get_mongo_cursor(query, fields)
 
-        if isinstance(sort, string_types):
+        if isinstance(sort, str):
             sort = json.loads(sort, object_hook=json_util.object_hook)
         sort = sort if sort else {}
 
         if start < 0 or limit < 0:
-            raise ValueError(_("Invalid start/limit params"))
+            raise ValueError(t("Invalid start/limit params"))
 
         if limit > cls.DEFAULT_LIMIT:
             limit = cls.DEFAULT_LIMIT
@@ -199,7 +196,7 @@ class ParsedInstance(models.Model):
         fields_to_select = {cls.USERFORM_ID: 0}
 
         # fields must be a string array i.e. '["name", "age"]'
-        if isinstance(fields, string_types):
+        if isinstance(fields, str):
             fields = json.loads(fields, object_hook=json_util.object_hook)
         fields = fields if fields else []
 
@@ -227,7 +224,7 @@ class ParsedInstance(models.Model):
         """
         # TODO: give more detailed error messages to 3rd parties
         # using the API when json.loads fails
-        if isinstance(query, string_types):
+        if isinstance(query, str):
             query = json.loads(query, object_hook=json_util.object_hook)
         query = query if query else {}
         query = MongoHelper.to_safe_dict(query, reading=True)

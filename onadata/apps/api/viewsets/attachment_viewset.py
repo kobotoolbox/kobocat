@@ -1,6 +1,6 @@
 # coding: utf-8
 from django.http import Http404
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as t
 from rest_framework import renderers
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -167,6 +167,6 @@ class AttachmentViewSet(viewsets.ReadOnlyModelViewSet):
             if filename == self.object.media_file.name:
                 return Response(serializer.get_download_url(self.object))
             else:
-                raise Http404(_("Filename '%s' not found." % filename))
+                raise Http404(t("Filename '%s' not found." % filename))
 
         return Response(serializer.data)
