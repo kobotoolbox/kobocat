@@ -14,6 +14,10 @@ def populate_missing_monthly_counters(apps, schema_editor):
     first_daily_counter = DailyXFormSubmissionCounter.objects.order_by(
         'date'
     ).first()
+
+    if not first_daily_counter:
+        return
+
     MonthlyXFormSubmissionCounter.objects.annotate(
         date=Cast(
             Concat(
