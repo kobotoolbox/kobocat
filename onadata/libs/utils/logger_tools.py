@@ -56,7 +56,11 @@ from onadata.apps.logger.models.instance import (
     update_xform_submission_count,
 )
 from onadata.apps.logger.models.xform import XLSFormError
-from onadata.apps.logger.signals import post_save_attachment
+from onadata.apps.logger.signals import (
+    post_save_attachment,
+    pre_delete_attachment,
+)
+
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
     InstanceInvalidUserError,
@@ -182,7 +186,7 @@ def create_instance(
     if existing_instance:
         existing_instance.check_active(force=False)
         # ensure we have saved the extra attachments
-        new_attachments = save_attachments(existing_instance, media_files)
+        new_attachments, _ = save_attachments(existing_instance, media_files)
         if not new_attachments:
             raise DuplicateInstance()
         else:
@@ -566,10 +570,11 @@ def save_attachments(
     instance: Instance,
     media_files: list['django.core.files.uploadedfile.UploadedFile'],
     defer_counting: bool = False,
-) -> list[Attachment]:
+) -> tuple[list[Attachment], list[Attachment]]:
     """
-    Returns `True` if any new attachment was saved, `False` if all attachments
-    were duplicates or none were provided.
+    Return a tuple of two lists.
+    - The former is new attachments
+    - The latter is the replaced/soft-deleted attachments
 
     `defer_counting=False` will set a Python-only attribute of the same name on
     any *new* `Attachment` instances created. This will prevent
@@ -600,9 +605,9 @@ def save_attachments(
         new_attachment.save()
         new_attachments.append(new_attachment)
 
-    _update_instance_attachments(instance)
+    soft_deleted_attachments = _soft_delete_replaced_attachments(instance)
 
-    return new_attachments
+    return new_attachments, soft_deleted_attachments
 
 
 def save_submission(
@@ -632,10 +637,11 @@ def save_submission(
     # attribute set to `True` *if* a new instance was created. We are
     # responsible for calling `update_xform_submission_count()` if the returned
     # `Instance` has `defer_counting = True`.
-    instance = _get_instance(request, xml, new_uuid, status, xform,
-                             defer_counting=True)
+    instance = _get_instance(
+        request, xml, new_uuid, status, xform, defer_counting=True
+    )
 
-    new_attachments = save_attachments(
+    new_attachments, soft_deleted_attachments = save_attachments(
         instance, media_files, defer_counting=True
     )
 
@@ -678,6 +684,9 @@ def save_submission(
             # Remove the Python-only attribute
             del new_attachment.defer_counting
             post_save_attachment(new_attachment, created=True)
+
+    for soft_deleted_attachment in soft_deleted_attachments:
+        pre_delete_attachment(soft_deleted_attachment, counting_only=True)
 
     return instance
 
@@ -745,7 +754,7 @@ def _has_edit_xform_permission(
     return False
 
 
-def _update_instance_attachments(instance: Instance):
+def _soft_delete_replaced_attachments(instance: Instance) -> list[Attachment]:
     """
     Soft delete replaced attachments when editing a submission
     """
@@ -779,9 +788,13 @@ def _update_instance_attachments(instance: Instance):
 
     # Update Attachment objects to hide them if they are not used anymore.
     # We do not want to delete them until the instance itself is deleted.
-    Attachment.objects.filter(instance=instance, replaced_at=None).exclude(
-        media_file_basename__in=basenames
-    ).update(replaced_at=timezone.now())
+    queryset = Attachment.objects.filter(
+        instance=instance, replaced_at=None
+    ).exclude(media_file_basename__in=basenames)
+    soft_deleted_attachments = list(queryset.all())
+    queryset.update(replaced_at=timezone.now())
+
+    return soft_deleted_attachments
 
 
 def _update_mongo_for_xform(xform, only_update_missing=True):

@@ -31,8 +31,10 @@ def pre_delete_attachment(instance, **kwargs):
     # change the name of the parameter
     attachment = instance
     file_size = attachment.media_file_size
-
+    counting_only = kwargs.pop('counting_only', False)
     xform = attachment.instance.xform
+
+    print('ON SUPPRIME ', file_size, flush=True)
 
     if file_size:
         with transaction.atomic():
@@ -49,7 +51,7 @@ def pre_delete_attachment(instance, **kwargs):
                 attachment_storage_bytes=F('attachment_storage_bytes') - file_size
             )
 
-    if not (media_file_name := str(attachment.media_file)):
+    if not counting_only or not (media_file_name := str(attachment.media_file)):
         return
 
     # Clean-up storage
@@ -77,6 +79,8 @@ def post_save_attachment(instance, created, **kwargs):
     file_size = attachment.media_file_size
     if not file_size:
         return
+
+    print('ON AJOUTE ', file_size, flush=True)
 
     xform = attachment.instance.xform
 

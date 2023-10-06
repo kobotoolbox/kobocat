@@ -399,7 +399,7 @@ class ParsedInstance(models.Model):
 
 def _get_attachments_from_instance(instance):
     attachments = []
-    for a in instance.attachments.filter(replaced_at=None):
+    for a in instance.attachments.filter(replaced_at__isnull=True):
         attachment = dict()
         attachment['download_url'] = a.secure_url()
         for suffix in settings.THUMB_CONF.keys():

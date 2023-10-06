@@ -119,15 +119,15 @@ def get_deprecated_uuid_from_xml(xml):
     return None
 
 
-def clean_and_parse_xml(xml_string: str) -> minidom.Node:
+def clean_and_parse_xml(xml_string: str) -> Node:
     clean_xml_str = xml_string.strip()
     clean_xml_str = re.sub(r'>\s+<', '><', smart_str(clean_xml_str))
     xml_obj = minidom.parseString(clean_xml_str)
     return xml_obj
 
 
-def _xml_node_to_dict(node: minidom.Node, repeats: list = []) -> dict:
-    assert isinstance(node, minidom.Node)
+def _xml_node_to_dict(node: Node, repeats: list = []) -> dict:
+    assert isinstance(node, Node)
     if len(node.childNodes) == 0:
         # there's no data for this leaf node
         return None
