@@ -80,8 +80,6 @@ def post_save_attachment(instance, created, **kwargs):
     if not file_size:
         return
 
-    print('ON AJOUTE ', file_size, flush=True)
-
     xform = attachment.instance.xform
 
     with transaction.atomic():
