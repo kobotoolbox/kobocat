@@ -51,7 +51,7 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
-            '--skip_monthly',
+            '--skip-monthly',
             action='store_true',
             default=False,
             help='Skip updating monthly counters. Default is False',
@@ -181,6 +181,9 @@ class Command(BaseCommand):
         DailyXFormSubmissionCounter.objects.filter(
             xform__user_id=user.pk, date__gte=self._date_threshold
         ).delete()
+
+        if self._skip_monthly:
+            return
 
         # Because we don't have a real date field on `MonthlyXFormSubmissionCounter`
         # but we need to cast `year` and `month` as a date field to
