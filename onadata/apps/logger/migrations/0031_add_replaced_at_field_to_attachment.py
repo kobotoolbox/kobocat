@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0029_populate_daily_xform_counters_for_year'),
+        ('logger', '0030_backfill_lost_monthly_counters'),
     ]
 
     operations = [
