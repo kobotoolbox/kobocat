@@ -4,7 +4,7 @@ from django.db.models import Sum
 from django.db.models import Value, F, DateField
 from django.db.models.functions import Cast, Concat
 from django.db.models.functions import ExtractYear, ExtractMonth
-from django.utils.timezone import now
+from django.utils import timezone
 
 
 def populate_missing_monthly_counters(apps, schema_editor):
@@ -33,13 +33,12 @@ def populate_missing_monthly_counters(apps, schema_editor):
         DailyXFormSubmissionCounter.objects.filter(
             date__range=[
                 previous_migration.applied.date().replace(day=1),
-                now().date()
+                timezone.now().date()
             ]
         )
         .annotate(year=ExtractYear('date'), month=ExtractMonth('date'))
-        .values('month', 'year')
+        .values('user_id', 'xform_id', 'month', 'year')
         .annotate(total=Sum('counter'))
-        .values('user_id', 'xform_id', 'month', 'year', 'total')
     ).order_by('year', 'month', 'user_id')
 
     # Do not use `ignore_conflicts=True` to ensure all counters are successfully
