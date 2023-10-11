@@ -68,22 +68,41 @@ class TestExport(TestBase):
                 self.assertEqual(actual_content, expected_content)
 
     def test_dotted_fields_csv_export_output(self):
-        path = os.path.join(os.path.dirname(__file__), 'fixtures', 'userone',
-                            'userone_with_dot_name_fields.xls')
+        path = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures',
+            'userone',
+            'userone_with_dot_name_fields.xls',
+        )
         self._publish_xls_file_and_set_xform(path)
-        path = os.path.join(os.path.dirname(__file__), 'fixtures', 'userone',
-                            'userone_with_dot_name_fields.xml')
+        path = os.path.join(
+            os.path.dirname(__file__),
+            'fixtures',
+            'userone',
+            'userone_with_dot_name_fields.xml',
+        )
         self._make_submission(
-            path, forced_submission_time=self._submission_time)
+            path, forced_submission_time=self._submission_time
+        )
         # test csv
-        export = generate_export(Export.CSV_EXPORT, 'csv', self.user.username,
-                                 'userone')
+        export = generate_export(
+            Export.CSV_EXPORT,
+            'csv',
+            self.user.username,
+            'userone_with_dot_name_fields',
+        )
         self.assertTrue(default_storage.exists(export.filepath))
         path, ext = os.path.splitext(export.filename)
         self.assertEqual(ext, '.csv')
-        with open(os.path.join(
-                os.path.dirname(__file__), 'fixtures', 'userone',
-                'userone_with_dot_name_fields.csv'), 'rb') as f1:
+        with open(
+            os.path.join(
+                os.path.dirname(__file__),
+                'fixtures',
+                'userone',
+                'userone_with_dot_name_fields.csv',
+            ),
+            'rb',
+        ) as f1:
             with default_storage.open(export.filepath) as f2:
                 expected_content = f1.read()
                 actual_content = f2.read()

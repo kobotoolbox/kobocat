@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import annotations
 
+import logging
 import os
 import re
 import sys
@@ -267,8 +268,9 @@ def get_xform_from_submission(xml, username, uuid=None):
 
     id_string = get_id_string_from_xml_str(xml)
 
-    return get_object_or_404(XForm, id_string__exact=id_string,
-                             user__username=username)
+    return get_object_or_404(
+        XForm, id_string__exact=id_string, user__username=username
+    )
 
 
 def inject_instanceid(xml_str, uuid):
@@ -763,7 +765,7 @@ def _soft_delete_replaced_attachments(instance: Instance) -> list[Attachment]:
 
     # If XForm does not have any media fields, do not go further
     if not media_question_xpaths:
-        return
+        return []
 
     # Parse instance XML to get the basename of each file of the updated
     # submission
@@ -772,7 +774,13 @@ def _soft_delete_replaced_attachments(instance: Instance) -> list[Attachment]:
 
     for media_question_xpath in media_question_xpaths:
         root_name, xpath_without_root = media_question_xpath.split('/', 1)
-        assert root_name == xml_parsed.tag
+        try:
+            assert root_name == xml_parsed.tag
+        except AssertionError:
+            logging.warning(
+                'Instance XML root tag name does not match with its form'
+            )
+
         # With repeat groups, several nodes can have the same XPath. We
         # need to retrieve all of them
         questions = xml_parsed.findall(xpath_without_root)

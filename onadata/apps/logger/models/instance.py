@@ -54,7 +54,7 @@ from onadata.libs.utils.model_tools import set_uuid
 def get_id_string_from_xml_str(xml_str):
     xml_obj = clean_and_parse_xml(xml_str)
     root_node = xml_obj.documentElement
-    id_string = root_node.getAttribute("id")
+    id_string = root_node.getAttribute('id')
 
     if len(id_string) == 0:
         # may be hidden in submission/data/id_string

@@ -34,8 +34,6 @@ def pre_delete_attachment(instance, **kwargs):
     counting_only = kwargs.pop('counting_only', False)
     xform = attachment.instance.xform
 
-    print('ON SUPPRIME ', file_size, flush=True)
-
     if file_size:
         with transaction.atomic():
             """

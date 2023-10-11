@@ -331,9 +331,10 @@ class XFormInstanceParser:
             try:
                 assert key not in self._attributes
             except AssertionError:
-                logger = logging.getLogger("console_logger")
-                logger.debug("Skipping duplicate attribute: %s"
-                             " with value %s" % (key, value))
+                pass
+                #logger = logging.getLogger('console_logger')
+                #logger.debug("Skipping duplicate attribute: %s"
+                #             " with value %s" % (key, value))
             else:
                 self._attributes[key] = value
 
@@ -373,7 +374,7 @@ def get_xform_media_question_xpaths(
     # sent in the same order.
     # For example:
     #   <upload mediatype="application/*" ref="/azx11113333/Question_Name"/>
-    # `ref` attribute should always comes right after `mediatype`
+    # `ref` attribute should always come right after `mediatype`
     for (key, value) in all_attributes:
         if key.lower() == 'mediatype':
             try:
