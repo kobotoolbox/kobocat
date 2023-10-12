@@ -4,8 +4,10 @@ import re
 from tempfile import NamedTemporaryFile
 from typing import Union
 
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django_digest.test import DigestAuth
+from kobo_service_account.utils import get_request_headers
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
@@ -43,6 +45,7 @@ class MakeSubmissionMixin:
         forced_submission_time: bool = None,
         auth: Union[DigestAuth, bool] = None,
         media_file: 'io.BufferedReader' = None,
+        use_service_account: bool = False,
     ):
         """
         Pass `auth=False` for an anonymous request, or omit `auth` to perform
@@ -50,8 +53,16 @@ class MakeSubmissionMixin:
         """
         # store temporary file with dynamic uuid
         self.factory = APIRequestFactory()
-        if auth is None:
+
+        if auth is None and not use_service_account:
             auth = DigestAuth('bob', 'bob')
+
+        extras = {}
+        if use_service_account:
+            extras = self.get_meta_from_headers(
+                get_request_headers(self.user.username)
+            )
+            extras['HTTP_HOST'] = settings.TEST_HTTP_HOST
 
         if add_uuid:
             path = self._add_uuid_to_submission_xml(path, self.xform)
@@ -67,7 +78,7 @@ class MakeSubmissionMixin:
 
             url_prefix = f'{username}/' if username else ''
             url = f'/{url_prefix}submission'
-            request = self.factory.post(url, post_data)
+            request = self.factory.post(url, post_data, **extras)
             if auth:
                 request.user = authenticate(username=auth.username,
                                             password=auth.password)

@@ -60,11 +60,11 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
                 'owner': self.user.username,
                 'public': False,
                 'public_data': False,
-                'description': u'transportation_2011_07_25',
+                'description': 'transportation_2011_07_25',
                 'downloadable': True,
                 'encrypted': False,
-                'id_string': u'transportation_2011_07_25',
-                'title': u'transportation_2011_07_25',
+                'id_string': 'transportation_2011_07_25',
+                'title': 'transportation_2011_07_25',
             }
 
         if not path:
@@ -192,8 +192,9 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
         forced_submission_time=None,
         auth=None,
         media_file=None,
+        use_service_account=False,
     ):
-        if auth is None:
+        if auth is None and not use_service_account:
             auth = DigestAuth(
                 self.profile_data['username'], self.profile_data['password1']
             )
@@ -205,6 +206,7 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
             forced_submission_time,
             auth,
             media_file,
+            use_service_account,
         )
 
     def _make_submissions(self, username=None):
