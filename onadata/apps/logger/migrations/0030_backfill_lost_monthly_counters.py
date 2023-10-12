@@ -15,6 +15,9 @@ def populate_missing_monthly_counters(apps, schema_editor):
     if not DailyXFormSubmissionCounter.objects.all().exists():
         return
 
+    # Delete daily counters without a user to avoid creating invalid monthly counters
+    DailyXFormSubmissionCounter.objects.filter(user=None).delete()
+
     previous_migration = MigrationRecorder.Migration.objects.filter(
         app='logger', name='0029_populate_daily_xform_counters_for_year'
     ).first()
