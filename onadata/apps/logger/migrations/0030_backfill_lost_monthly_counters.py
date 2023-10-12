@@ -15,6 +15,17 @@ def populate_missing_monthly_counters(apps, schema_editor):
     if not DailyXFormSubmissionCounter.objects.all().exists():
         return
 
+    # Associate each daily counter with user=None with a user based on its xform
+    for counter in DailyXFormSubmissionCounter.objects.filter(user=None).iterator:
+        if counter.xform and counter.xform.user:
+            has_duplicate = DailyXFormSubmissionCounter.objects.filter(
+                date=counter.date, xform=counter.xform
+            ).exclude(user=None).exists()
+            # don't add a user to duplicate counters, so they get deleted in the next step
+            if not has_duplicate:
+                counter.user = counter.xform.user
+                counter.save()
+
     # Delete daily counters without a user to avoid creating invalid monthly counters
     DailyXFormSubmissionCounter.objects.filter(user=None).delete()
 
