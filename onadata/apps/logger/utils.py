@@ -1,5 +1,9 @@
-def delete_null_user_daily_counters(apps, schema_editor):
-
+def delete_null_user_daily_counters(apps, *args):
+    """
+    Find any DailyXFormCounters without a user, assign them to a user if we can, otherwise delete them
+    This function is reused between two migrations, logger.0030 and logger.0031.
+    If/when those migrations get squashed, please delete this function
+    """
     DailyXFormSubmissionCounter = apps.get_model('logger', 'DailyXFormSubmissionCounter')  # noqa
 
     counters_without_users = DailyXFormSubmissionCounter.objects.filter(user=None)

@@ -6,7 +6,7 @@ from django.db.models.functions import Cast, Concat
 from django.db.models.functions import ExtractYear, ExtractMonth
 from django.utils import timezone
 
-from kobocat.onadata.apps.logger.migrations.utils import delete_null_user_daily_counters
+from onadata.apps.logger.utils import delete_null_user_daily_counters
 
 
 def populate_missing_monthly_counters(apps, schema_editor):

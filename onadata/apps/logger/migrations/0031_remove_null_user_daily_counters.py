@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import migrations
 
-from kobocat.onadata.apps.logger.migrations.utils import delete_null_user_daily_counters
+from onadata.apps.logger.utils import delete_null_user_daily_counters
 
 
 class Migration(migrations.Migration):
