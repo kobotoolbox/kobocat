@@ -6,6 +6,8 @@ from django.db.models.functions import Cast, Concat
 from django.db.models.functions import ExtractYear, ExtractMonth
 from django.utils import timezone
 
+from onadata.apps.logger.utils import delete_null_user_daily_counters
+
 
 def populate_missing_monthly_counters(apps, schema_editor):
 
@@ -66,6 +68,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(
+            delete_null_user_daily_counters,
+            migrations.RunPython.noop,
+        ),
         migrations.RunPython(
             populate_missing_monthly_counters,
             migrations.RunPython.noop,

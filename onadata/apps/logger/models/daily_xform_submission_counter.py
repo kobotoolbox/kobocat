@@ -7,7 +7,7 @@ from django.db.models import UniqueConstraint, Q, F
 
 class DailyXFormSubmissionCounter(models.Model):
     date = models.DateField()
-    user = models.ForeignKey(User, related_name='daily_counts', null=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='daily_counts', on_delete=models.CASCADE)
     xform = models.ForeignKey(
         'logger.XForm', related_name='daily_counters', null=True, on_delete=models.CASCADE
     )
