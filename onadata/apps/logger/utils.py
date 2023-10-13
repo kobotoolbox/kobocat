@@ -18,7 +18,7 @@ def delete_null_user_daily_counters(apps, *args):
             counters_without_users
             .exclude(xform=None)
             .exclude(xform__user=None)
-            .iterator()
+            .iterator(chunk_size=batch_size)
     ):
         counter.user = counter.xform.user
         # don't add a user to duplicate counters, so they get deleted when we're done looping
