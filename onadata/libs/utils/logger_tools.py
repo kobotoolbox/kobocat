@@ -607,7 +607,7 @@ def save_attachments(
         new_attachment.save()
         new_attachments.append(new_attachment)
 
-    soft_deleted_attachments = _soft_delete_replaced_attachments(instance)
+    soft_deleted_attachments = soft_delete_replaced_attachments(instance)
 
     return new_attachments, soft_deleted_attachments
 
@@ -693,6 +693,55 @@ def save_submission(
     return instance
 
 
+def soft_delete_replaced_attachments(instance: Instance) -> list[Attachment]:
+    """
+    Soft delete replaced attachments when editing a submission
+    """
+    # Retrieve all media questions of Xform
+    media_question_xpaths = get_xform_media_question_xpaths(instance.xform)
+
+    # If XForm does not have any media fields, do not go further
+    if not media_question_xpaths:
+        return []
+
+    # Parse instance XML to get the basename of each file of the updated
+    # submission
+    xml_parsed = ET.fromstring(instance.xml)
+    basenames = []
+
+    for media_question_xpath in media_question_xpaths:
+        root_name, xpath_without_root = media_question_xpath.split('/', 1)
+        try:
+            assert root_name == xml_parsed.tag
+        except AssertionError:
+            logging.warning(
+                'Instance XML root tag name does not match with its form'
+            )
+
+        # With repeat groups, several nodes can have the same XPath. We
+        # need to retrieve all of them
+        questions = xml_parsed.findall(xpath_without_root)
+        for question in questions:
+            try:
+                basename = question.text
+            except AttributeError:
+                raise XPathNotFoundException
+
+            # Only keep non-empty fields
+            if basename:
+                basenames.append(basename)
+
+    # Update Attachment objects to hide them if they are not used anymore.
+    # We do not want to delete them until the instance itself is deleted.
+    queryset = Attachment.objects.filter(
+        instance=instance, replaced_at=None
+    ).exclude(media_file_basename__in=basenames)
+    soft_deleted_attachments = list(queryset.all())
+    queryset.update(replaced_at=timezone.now())
+
+    return soft_deleted_attachments
+
+
 def _get_instance(
     request: 'rest_framework.request.Request',
     xml: str,
@@ -754,55 +803,6 @@ def _has_edit_xform_permission(
         return request.user.has_perm('logger.change_xform', xform)
 
     return False
-
-
-def _soft_delete_replaced_attachments(instance: Instance) -> list[Attachment]:
-    """
-    Soft delete replaced attachments when editing a submission
-    """
-    # Retrieve all media questions of Xform
-    media_question_xpaths = get_xform_media_question_xpaths(instance.xform)
-
-    # If XForm does not have any media fields, do not go further
-    if not media_question_xpaths:
-        return []
-
-    # Parse instance XML to get the basename of each file of the updated
-    # submission
-    xml_parsed = ET.fromstring(instance.xml)
-    basenames = []
-
-    for media_question_xpath in media_question_xpaths:
-        root_name, xpath_without_root = media_question_xpath.split('/', 1)
-        try:
-            assert root_name == xml_parsed.tag
-        except AssertionError:
-            logging.warning(
-                'Instance XML root tag name does not match with its form'
-            )
-
-        # With repeat groups, several nodes can have the same XPath. We
-        # need to retrieve all of them
-        questions = xml_parsed.findall(xpath_without_root)
-        for question in questions:
-            try:
-                basename = question.text
-            except AttributeError:
-                raise XPathNotFoundException
-
-            # Only keep non-empty fields
-            if basename:
-                basenames.append(basename)
-
-    # Update Attachment objects to hide them if they are not used anymore.
-    # We do not want to delete them until the instance itself is deleted.
-    queryset = Attachment.objects.filter(
-        instance=instance, replaced_at=None
-    ).exclude(media_file_basename__in=basenames)
-    soft_deleted_attachments = list(queryset.all())
-    queryset.update(replaced_at=timezone.now())
-
-    return soft_deleted_attachments
 
 
 def _update_mongo_for_xform(xform, only_update_missing=True):

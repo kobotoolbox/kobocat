@@ -331,10 +331,10 @@ class XFormInstanceParser:
             try:
                 assert key not in self._attributes
             except AssertionError:
-                pass
-                #logger = logging.getLogger('console_logger')
-                #logger.debug("Skipping duplicate attribute: %s"
-                #             " with value %s" % (key, value))
+                logger = logging.getLogger('console_logger')
+                logger.debug(
+                    f'Skipping duplicate attribute: {key} with value {value}'
+                )
             else:
                 self._attributes[key] = value
 
