@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('logger', '0030_backfill_lost_monthly_counters'),
+        ('logger', '0031_remove_null_user_daily_counters'),
     ]
 
     operations = [
