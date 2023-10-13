@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logger', '0030_backfill_lost_monthly_counters'),
+        ('logger', '0032_alter_daily_submission_counter_user'),
     ]
 
     operations = [
