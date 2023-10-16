@@ -28,6 +28,12 @@ def hash_attachment_contents(contents):
     return get_hash(contents)
 
 
+class AttachmentDefaultManager(models.Manager):
+
+    def get_queryset(self):
+        return super().get_queryset().filter(replaced_at__isnull=True)
+
+
 class Attachment(models.Model):
     instance = models.ForeignKey(
         Instance, related_name='attachments', on_delete=models.CASCADE
@@ -40,7 +46,10 @@ class Attachment(models.Model):
     media_file_size = models.PositiveIntegerField(blank=True, null=True)
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
-    replaced_at = models.DateTimeField(blank=True, null=True)
+    replaced_at = models.DateTimeField(blank=True, null=True, db_index=True)
+
+    objects = AttachmentDefaultManager()
+    all_objects = models.Manager()
 
     class Meta:
         app_label = 'logger'

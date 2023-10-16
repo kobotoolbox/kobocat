@@ -49,7 +49,7 @@ def pre_delete_attachment(instance, **kwargs):
                 attachment_storage_bytes=F('attachment_storage_bytes') - file_size
             )
 
-    if not counting_only or not (media_file_name := str(attachment.media_file)):
+    if counting_only or not (media_file_name := str(attachment.media_file)):
         return
 
     # Clean-up storage

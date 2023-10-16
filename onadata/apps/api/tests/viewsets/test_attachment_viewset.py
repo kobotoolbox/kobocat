@@ -11,6 +11,7 @@ from onadata.apps.api.tests.viewsets.test_abstract_viewset import (
     TestAbstractViewSet
 )
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
+from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.main.models import UserProfile
 
 
@@ -340,15 +341,24 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         self.assertEqual(user_profile.attachment_storage_bytes, new_media_file_size)
         self.assertNotEqual(new_media_file_size, media_file_size)
 
-
         instance = self.xform.instances.first()
-        attachment = instance.attachments.filter(replaced_at__isnull=True).first()
+        attachment = instance.attachments.first()
 
-        # Validate previous attachment has been replaced
-        replaced_attachment_qs = instance.attachments.filter(replaced_at__isnull=False)
+        # Validate previous attachment has been replaced but file still exists
+        replaced_attachment_qs = Attachment.all_objects.filter(
+            instance=instance,
+            replaced_at__isnull=False
+        )
         self.assertEqual(replaced_attachment_qs.count(), 1)
         replaced_attachment = replaced_attachment_qs.first()
-        self.assertEqual(replaced_attachment.media_file_basename, '1335783522563.jpg')
+        self.assertEqual(
+            replaced_attachment.media_file_basename, '1335783522563.jpg'
+        )
+        self.assertTrue(
+            replaced_attachment.media_file.storage.exists(
+                str(replaced_attachment.media_file)
+            )
+        )
 
         # Validate that /api/v1/media endpoint returns the correct list
         expected = {

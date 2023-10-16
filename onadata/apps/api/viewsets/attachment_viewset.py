@@ -143,7 +143,7 @@ class AttachmentViewSet(viewsets.ReadOnlyModelViewSet):
     content_negotiation_class = MediaFileContentNegotiation
     filter_backends = (filters.AttachmentFilter,)
     lookup_field = 'pk'
-    queryset = Attachment.objects.filter(replaced_at__isnull=True)
+    queryset = Attachment.objects.all()
     permission_classes = (AttachmentObjectPermissions,)
     serializer_class = AttachmentSerializer
     renderer_classes = (

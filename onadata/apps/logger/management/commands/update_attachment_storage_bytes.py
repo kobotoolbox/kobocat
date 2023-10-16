@@ -126,7 +126,6 @@ class Command(BaseCommand):
                 # aggregate total media file size for all media per xform
                 form_attachments = Attachment.objects.filter(
                     instance__xform_id=xform['pk'],
-                    replaced_at__isnull=True,
                 ).aggregate(total=Sum('media_file_size'))
 
                 if form_attachments['total']:
