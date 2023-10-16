@@ -292,9 +292,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
             'transport_with_attachment',
             '1335783522563.jpg'
         )
-        xform = self.xform
-
-        user_profile = UserProfile.objects.get(user=xform.user)
+        user_profile = UserProfile.objects.get(user=self.xform.user)
         # Submit the same XML again, but this time include the attachment
         with open(media_file_path, 'rb') as media_file:
             self._make_submission(xml_path, media_file=media_file)
@@ -303,7 +301,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         self.assertEqual(self.xform.instances.first().uuid, submission_uuid)
         media_file_size = os.path.getsize(media_file_path)
         self.xform.refresh_from_db()
-        self.assertEqual(xform.attachment_storage_bytes, media_file_size)
+        self.assertEqual(self.xform.attachment_storage_bytes, media_file_size)
         user_profile.refresh_from_db()
         self.assertEqual(user_profile.attachment_storage_bytes, media_file_size)
 
@@ -336,7 +334,7 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         self.assertEqual(self.xform.instances.count(), 1)
         new_media_file_size = os.path.getsize(media_file_path)
         self.xform.refresh_from_db()
-        self.assertEqual(xform.attachment_storage_bytes, new_media_file_size)
+        self.assertEqual(self.xform.attachment_storage_bytes, new_media_file_size)
         user_profile.refresh_from_db()
         self.assertEqual(user_profile.attachment_storage_bytes, new_media_file_size)
         self.assertNotEqual(new_media_file_size, media_file_size)
@@ -345,18 +343,18 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         attachment = instance.attachments.first()
 
         # Validate previous attachment has been replaced but file still exists
-        replaced_attachment_qs = Attachment.all_objects.filter(
+        soft_deleted_attachment_qs = Attachment.all_objects.filter(
             instance=instance,
-            replaced_at__isnull=False
+            deleted_at__isnull=False
         )
-        self.assertEqual(replaced_attachment_qs.count(), 1)
-        replaced_attachment = replaced_attachment_qs.first()
+        self.assertEqual(soft_deleted_attachment_qs.count(), 1)
+        soft_deleted_attachment = soft_deleted_attachment_qs.first()
         self.assertEqual(
-            replaced_attachment.media_file_basename, '1335783522563.jpg'
+            soft_deleted_attachment.media_file_basename, '1335783522563.jpg'
         )
         self.assertTrue(
-            replaced_attachment.media_file.storage.exists(
-                str(replaced_attachment.media_file)
+            soft_deleted_attachment.media_file.storage.exists(
+                str(soft_deleted_attachment.media_file)
             )
         )
 
@@ -403,3 +401,48 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         )
         self.assertEqual(instance_response.data['_attachments'][0], expected)
         self.assertEqual(len(instance_response.data['_attachments']), 1)
+
+    def test_storage_counters_still_accurate_on_hard_delete(self):
+        """
+        This test is not an API test, not really an Attachment unit test.
+        It is there to simplify the code base for attachment replacement.
+
+
+        """
+        self.test_update_attachment_on_edit()
+        self.xform.refresh_from_db()
+
+        instance = self.xform.instances.first()
+        user_profile = UserProfile.objects.get(user=self.xform.user)
+        self.assertEqual(self.xform.instances.count(), 1)
+        self.assertNotEqual(self.xform.attachment_storage_bytes, 0)
+        self.assertNotEqual(user_profile.attachment_storage_bytes, 0)
+
+        total_size = sum(
+            [
+                a.media_file_size
+                for a in Attachment.all_objects.filter(instance=instance)
+            ]
+        )
+
+        self.assertGreater(total_size, self.xform.attachment_storage_bytes)
+
+        # When deleting a submission, it (hard) deletes all attachments related
+        # to it, even the soft-deleted one.
+        self.client.delete(
+            reverse(
+                'data-detail',
+                kwargs={'pk': self.xform.pk, 'dataid': instance.pk},
+            ),
+            format='json',
+        )
+        # Only not soft-deleted attachments should have been subtracted,
+        # and counters should be equal to 0
+        self.assertEqual(self.xform.instances.count(), 0)
+        self.xform.refresh_from_db()
+        self.assertEqual(self.xform.attachment_storage_bytes, 0)
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.attachment_storage_bytes, 0)
+        self.assertFalse(
+            Attachment.all_objects.filter(instance=instance).exists()
+        )

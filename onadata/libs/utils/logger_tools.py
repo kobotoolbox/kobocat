@@ -607,7 +607,7 @@ def save_attachments(
         new_attachment.save()
         new_attachments.append(new_attachment)
 
-    soft_deleted_attachments = soft_delete_replaced_attachments(instance)
+    soft_deleted_attachments = get_soft_deleted_attachments(instance)
 
     return new_attachments, soft_deleted_attachments
 
@@ -688,12 +688,12 @@ def save_submission(
             post_save_attachment(new_attachment, created=True)
 
     for soft_deleted_attachment in soft_deleted_attachments:
-        pre_delete_attachment(soft_deleted_attachment, counting_only=True)
+        pre_delete_attachment(soft_deleted_attachment, only_update_counters=True)
 
     return instance
 
 
-def soft_delete_replaced_attachments(instance: Instance) -> list[Attachment]:
+def get_soft_deleted_attachments(instance: Instance) -> list[Attachment]:
     """
     Soft delete replaced attachments when editing a submission
     """
@@ -734,10 +734,10 @@ def soft_delete_replaced_attachments(instance: Instance) -> list[Attachment]:
     # Update Attachment objects to hide them if they are not used anymore.
     # We do not want to delete them until the instance itself is deleted.
     queryset = Attachment.objects.filter(
-        instance=instance, replaced_at=None
+        instance=instance
     ).exclude(media_file_basename__in=basenames)
     soft_deleted_attachments = list(queryset.all())
-    queryset.update(replaced_at=timezone.now())
+    queryset.update(deleted_at=timezone.now())
 
     return soft_deleted_attachments
 

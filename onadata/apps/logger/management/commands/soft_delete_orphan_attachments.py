@@ -7,7 +7,7 @@ from onadata.apps.logger.models import (
     Instance,
 )
 from onadata.apps.logger.signals import pre_delete_attachment
-from onadata.libs.utils.logger_tools import soft_delete_replaced_attachments
+from onadata.libs.utils.logger_tools import get_soft_deleted_attachments
 
 
 class Command(BaseCommand):
@@ -43,9 +43,11 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f'Processing Instance object #{instance_id}{message}…'
                 )
-            soft_deleted_attachments = soft_delete_replaced_attachments(instance)
+            soft_deleted_attachments = get_soft_deleted_attachments(instance)
             for soft_deleted_attachment in soft_deleted_attachments:
-                pre_delete_attachment(soft_deleted_attachment, counting_only=True)
+                pre_delete_attachment(
+                    soft_deleted_attachment, only_update_counters=True
+                )
 
             cpt += 1
         self.stdout.write('Done!')

@@ -31,7 +31,7 @@ def hash_attachment_contents(contents):
 class AttachmentDefaultManager(models.Manager):
 
     def get_queryset(self):
-        return super().get_queryset().filter(replaced_at__isnull=True)
+        return super().get_queryset().filter(deleted_at__isnull=True)
 
 
 class Attachment(models.Model):
@@ -46,7 +46,7 @@ class Attachment(models.Model):
     media_file_size = models.PositiveIntegerField(blank=True, null=True)
     mimetype = models.CharField(
         max_length=100, null=False, blank=True, default='')
-    replaced_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    deleted_at = models.DateTimeField(blank=True, null=True, db_index=True)
 
     objects = AttachmentDefaultManager()
     all_objects = models.Manager()
