@@ -5,10 +5,13 @@ import pytest
 from django.conf import settings
 from kobo_service_account.utils import get_request_headers
 from rest_framework import status
+from rest_framework.reverse import reverse
 
-from onadata.apps.api.tests.viewsets.test_abstract_viewset import \
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import (
     TestAbstractViewSet
+)
 from onadata.apps.api.viewsets.attachment_viewset import AttachmentViewSet
+from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.main.models import UserProfile
 
 
@@ -249,3 +252,197 @@ class TestAttachmentViewSet(TestAbstractViewSet):
         self.assertEqual(xform.attachment_storage_bytes, media_file_size)
         user_profile.refresh_from_db()
         self.assertEqual(user_profile.attachment_storage_bytes, media_file_size)
+
+    def test_update_attachment_on_edit(self):
+        data = {
+            'owner': self.user.username,
+            'public': False,
+            'public_data': False,
+            'description': 'transportation_with_attachment',
+            'downloadable': True,
+            'encrypted': False,
+            'id_string': 'transportation_with_attachment',
+            'title': 'transportation_with_attachment',
+        }
+
+        path = os.path.join(
+            settings.ONADATA_DIR,
+            'apps',
+            'main',
+            'tests',
+            'fixtures',
+            'transportation',
+            'transportation_with_attachment.xls',
+        )
+        self.publish_xls_form(data=data, path=path)
+
+        xml_path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            'transport_with_attachment',
+            'transport_with_attachment.xml',
+        )
+        media_file_path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            'transport_with_attachment',
+            '1335783522563.jpg'
+        )
+        user_profile = UserProfile.objects.get(user=self.xform.user)
+        # Submit the same XML again, but this time include the attachment
+        with open(media_file_path, 'rb') as media_file:
+            self._make_submission(xml_path, media_file=media_file)
+        submission_uuid = self.xform.instances.first().uuid
+        self.assertEqual(self.xform.instances.count(), 1)
+        self.assertEqual(self.xform.instances.first().uuid, submission_uuid)
+        media_file_size = os.path.getsize(media_file_path)
+        self.xform.refresh_from_db()
+        self.assertEqual(self.xform.attachment_storage_bytes, media_file_size)
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.attachment_storage_bytes, media_file_size)
+
+        xml_path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            'transport_with_attachment',
+            'transport_with_attachment_edit.xml',
+        )
+        media_file_path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            'transport_with_attachment',
+            'IMG_2235.JPG'
+        )
+        # Edit are only allowed with service account
+        with open(media_file_path, 'rb') as media_file:
+            self._make_submission(
+                xml_path,
+                media_file=media_file,
+                auth=False,
+                use_service_account=True,
+            )
+
+        # Validate counters are up-to-date and instances count is still one.
+        self.assertEqual(self.xform.instances.count(), 1)
+        new_media_file_size = os.path.getsize(media_file_path)
+        self.xform.refresh_from_db()
+        self.assertEqual(self.xform.attachment_storage_bytes, new_media_file_size)
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.attachment_storage_bytes, new_media_file_size)
+        self.assertNotEqual(new_media_file_size, media_file_size)
+
+        instance = self.xform.instances.first()
+        attachment = instance.attachments.first()
+
+        # Validate previous attachment has been replaced but file still exists
+        soft_deleted_attachment_qs = Attachment.all_objects.filter(
+            instance=instance,
+            deleted_at__isnull=False
+        )
+        self.assertEqual(soft_deleted_attachment_qs.count(), 1)
+        soft_deleted_attachment = soft_deleted_attachment_qs.first()
+        self.assertEqual(
+            soft_deleted_attachment.media_file_basename, '1335783522563.jpg'
+        )
+        self.assertTrue(
+            soft_deleted_attachment.media_file.storage.exists(
+                str(soft_deleted_attachment.media_file)
+            )
+        )
+
+        # Validate that /api/v1/media endpoint returns the correct list
+        expected = {
+            'url': f'http://testserver/api/v1/media/{attachment.pk}',
+            'field_xpath': None,
+            'download_url': attachment.secure_url(),
+            'small_download_url': attachment.secure_url('small'),
+            'medium_download_url': attachment.secure_url('medium'),
+            'large_download_url': attachment.secure_url('large'),
+            'id': attachment.pk,
+            'xform': self.xform.pk,
+            'instance': instance.pk,
+            'mimetype': attachment.mimetype,
+            'filename': attachment.media_file.name
+        }
+        request = self.factory.get('/', **self.extra)
+        response = self.list_view(request, pk=attachment.pk)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data[0], expected)
+        self.assertTrue(len(response.data), 1)
+
+        # Validate that /api/v1/data endpoint returns the correct attachment list
+        # Unfortunately, attachments list differ from /api/v1/media
+        expected = {
+            'download_url': expected['download_url'],
+            'download_small_url': expected['small_download_url'],
+            'download_medium_url': expected['medium_download_url'],
+            'download_large_url': expected['large_download_url'],
+            'id': expected['id'],
+            'xform': expected['xform'],
+            'instance': expected['instance'],
+            'mimetype': expected['mimetype'],
+            'filename': expected['filename']
+        }
+
+        instance_response = self.client.get(
+            reverse(
+                'data-detail',
+                kwargs={'pk': self.xform.pk, 'dataid': instance.pk},
+            ),
+            format='json',
+        )
+        self.assertEqual(instance_response.data['_attachments'][0], expected)
+        self.assertEqual(len(instance_response.data['_attachments']), 1)
+
+    def test_storage_counters_still_accurate_on_hard_delete(self):
+        """
+        This test is not an API test, not really an Attachment unit test.
+        It is there to simplify the code base for attachment replacement.
+
+
+        """
+        self.test_update_attachment_on_edit()
+        self.xform.refresh_from_db()
+
+        instance = self.xform.instances.first()
+        user_profile = UserProfile.objects.get(user=self.xform.user)
+        self.assertEqual(self.xform.instances.count(), 1)
+        self.assertNotEqual(self.xform.attachment_storage_bytes, 0)
+        self.assertNotEqual(user_profile.attachment_storage_bytes, 0)
+
+        total_size = sum(
+            [
+                a.media_file_size
+                for a in Attachment.all_objects.filter(instance=instance)
+            ]
+        )
+
+        self.assertGreater(total_size, self.xform.attachment_storage_bytes)
+
+        # When deleting a submission, it (hard) deletes all attachments related
+        # to it, even the soft-deleted one.
+        self.client.delete(
+            reverse(
+                'data-detail',
+                kwargs={'pk': self.xform.pk, 'dataid': instance.pk},
+            ),
+            format='json',
+        )
+        # Only not soft-deleted attachments should have been subtracted,
+        # and counters should be equal to 0
+        self.assertEqual(self.xform.instances.count(), 0)
+        self.xform.refresh_from_db()
+        self.assertEqual(self.xform.attachment_storage_bytes, 0)
+        user_profile.refresh_from_db()
+        self.assertEqual(user_profile.attachment_storage_bytes, 0)
+        self.assertFalse(
+            Attachment.all_objects.filter(instance=instance).exists()
+        )

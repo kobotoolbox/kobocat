@@ -1,9 +1,9 @@
 # coding: utf-8
+import json
+
 from rest_framework import serializers
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.libs.utils.decorators import check_obj
-from onadata.libs.utils.image_tools import image_url
-import json
 
 
 def dict_key_for_value(_dict, value):
@@ -13,7 +13,10 @@ def dict_key_for_value(_dict, value):
     return list(_dict.keys())[list(_dict.values()).index(value)]
 
 
-def get_path(data, question_name, path_list=[]):
+def get_path(data, question_name, path_list=None):
+    if path_list is None:
+        path_list = []
+
     name = data.get('name')
     if name == question_name:
         return '/'.join(path_list)

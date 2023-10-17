@@ -270,6 +270,10 @@ def attachment_url(request, size='medium'):
             media_file_logger.info('attachment not found')
             return HttpResponseNotFound(t('Attachment not found'))
 
+        # Attachment has a deleted date, it should not be shown anymore
+        if attachment.deleted_at:
+            return HttpResponseNotFound(_('Attachment not found'))
+
         # Checks whether users are allowed to see the media file before giving them
         # the url
         xform = attachment.instance.xform

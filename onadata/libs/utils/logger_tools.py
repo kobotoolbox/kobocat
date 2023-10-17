@@ -1,11 +1,13 @@
 # coding: utf-8
 from __future__ import annotations
 
+import logging
 import os
 import re
 import sys
 import traceback
 from datetime import date, datetime
+from xml.etree import ElementTree as ET
 from xml.parsers.expat import ExpatError
 try:
     from zoneinfo import ZoneInfo
@@ -55,7 +57,11 @@ from onadata.apps.logger.models.instance import (
     update_xform_submission_count,
 )
 from onadata.apps.logger.models.xform import XLSFormError
-from onadata.apps.logger.signals import post_save_attachment
+from onadata.apps.logger.signals import (
+    post_save_attachment,
+    pre_delete_attachment,
+)
+
 from onadata.apps.logger.xform_instance_parser import (
     InstanceEmptyError,
     InstanceInvalidUserError,
@@ -65,6 +71,7 @@ from onadata.apps.logger.xform_instance_parser import (
     get_uuid_from_xml,
     get_deprecated_uuid_from_xml,
     get_submission_date_from_xml,
+    get_xform_media_question_xpaths,
 )
 from onadata.apps.main.models import UserProfile
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
@@ -180,7 +187,7 @@ def create_instance(
     if existing_instance:
         existing_instance.check_active(force=False)
         # ensure we have saved the extra attachments
-        new_attachments = save_attachments(existing_instance, media_files)
+        new_attachments, _ = save_attachments(existing_instance, media_files)
         if not new_attachments:
             raise DuplicateInstance()
         else:
@@ -261,8 +268,9 @@ def get_xform_from_submission(xml, username, uuid=None):
 
     id_string = get_id_string_from_xml_str(xml)
 
-    return get_object_or_404(XForm, id_string__exact=id_string,
-                             user__username=username)
+    return get_object_or_404(
+        XForm, id_string__exact=id_string, user__username=username
+    )
 
 
 def inject_instanceid(xml_str, uuid):
@@ -564,10 +572,11 @@ def save_attachments(
     instance: Instance,
     media_files: list['django.core.files.uploadedfile.UploadedFile'],
     defer_counting: bool = False,
-) -> list[Attachment]:
+) -> tuple[list[Attachment], list[Attachment]]:
     """
-    Returns `True` if any new attachment was saved, `False` if all attachments
-    were duplicates or none were provided.
+    Return a tuple of two lists.
+    - The former is new attachments
+    - The latter is the replaced/soft-deleted attachments
 
     `defer_counting=False` will set a Python-only attribute of the same name on
     any *new* `Attachment` instances created. This will prevent
@@ -598,7 +607,9 @@ def save_attachments(
         new_attachment.save()
         new_attachments.append(new_attachment)
 
-    return new_attachments
+    soft_deleted_attachments = get_soft_deleted_attachments(instance)
+
+    return new_attachments, soft_deleted_attachments
 
 
 def save_submission(
@@ -628,10 +639,11 @@ def save_submission(
     # attribute set to `True` *if* a new instance was created. We are
     # responsible for calling `update_xform_submission_count()` if the returned
     # `Instance` has `defer_counting = True`.
-    instance = _get_instance(request, xml, new_uuid, status, xform,
-                             defer_counting=True)
+    instance = _get_instance(
+        request, xml, new_uuid, status, xform, defer_counting=True
+    )
 
-    new_attachments = save_attachments(
+    new_attachments, soft_deleted_attachments = save_attachments(
         instance, media_files, defer_counting=True
     )
 
@@ -675,7 +687,59 @@ def save_submission(
             del new_attachment.defer_counting
             post_save_attachment(new_attachment, created=True)
 
+    for soft_deleted_attachment in soft_deleted_attachments:
+        pre_delete_attachment(soft_deleted_attachment, only_update_counters=True)
+
     return instance
+
+
+def get_soft_deleted_attachments(instance: Instance) -> list[Attachment]:
+    """
+    Soft delete replaced attachments when editing a submission
+    """
+    # Retrieve all media questions of Xform
+    media_question_xpaths = get_xform_media_question_xpaths(instance.xform)
+
+    # If XForm does not have any media fields, do not go further
+    if not media_question_xpaths:
+        return []
+
+    # Parse instance XML to get the basename of each file of the updated
+    # submission
+    xml_parsed = ET.fromstring(instance.xml)
+    basenames = []
+
+    for media_question_xpath in media_question_xpaths:
+        root_name, xpath_without_root = media_question_xpath.split('/', 1)
+        try:
+            assert root_name == xml_parsed.tag
+        except AssertionError:
+            logging.warning(
+                'Instance XML root tag name does not match with its form'
+            )
+
+        # With repeat groups, several nodes can have the same XPath. We
+        # need to retrieve all of them
+        questions = xml_parsed.findall(xpath_without_root)
+        for question in questions:
+            try:
+                basename = question.text
+            except AttributeError:
+                raise XPathNotFoundException
+
+            # Only keep non-empty fields
+            if basename:
+                basenames.append(basename)
+
+    # Update Attachment objects to hide them if they are not used anymore.
+    # We do not want to delete them until the instance itself is deleted.
+    queryset = Attachment.objects.filter(
+        instance=instance
+    ).exclude(media_file_basename__in=basenames)
+    soft_deleted_attachments = list(queryset.all())
+    queryset.update(deleted_at=timezone.now())
+
+    return soft_deleted_attachments
 
 
 def _get_instance(
@@ -856,4 +920,8 @@ class UnauthenticatedEditAttempt(Exception):
     which passes through unmolested to `XFormSubmissionApi.create()`, which
     then returns the appropriate 401 response.
     """
+    pass
+
+
+class XPathNotFoundException(Exception):
     pass

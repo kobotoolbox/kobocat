@@ -132,7 +132,7 @@ class XForm(BaseModel):
     def data_dictionary(self):
         from onadata.apps.viewer.models.data_dictionary import\
             DataDictionary
-        return DataDictionary.objects.get(pk=self.pk)
+        return DataDictionary.all_objects.get(pk=self.pk)
 
     @property
     def has_instances_with_geopoints(self):
