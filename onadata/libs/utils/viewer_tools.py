@@ -193,9 +193,9 @@ def create_attachments_zipfile(attachments, output_file=None):
             # The default, file-system storage won't allow changing the `seek`
             # attribute, which is fine because seeking on local files works
             # perfectly anyway
-            if not issubclass(default_storage, FileSystemStorage):
+            if not isinstance(default_storage, FileSystemStorage):
                 logging.warning(
-                    f'{default_storage} may not be a local storage class, but '
+                    f'{default_storage.__class__} may not be a local storage class, but '
                     f'disabling seeking failed: {e}'
                 )
 
