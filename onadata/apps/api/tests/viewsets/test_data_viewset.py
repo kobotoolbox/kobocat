@@ -824,3 +824,18 @@ class TestDataViewSet(TestBase):
         view = DataViewSet.as_view({'get': 'list'})
         response = view(request, pk=self.xform.pk)
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_list_data_with_custom_handler(self):
+        request = self.factory.get('/', **self.extra)
+        view = DataViewSet.as_view({'get': 'list'})
+        response = view(request, pk=self.xform.pk, format='xlsx')
+        assert response.status_code == status.HTTP_200_OK
+        assert response.headers['Content-Type'] == 'application/vnd.openxmlformats'
+
+    def test_list_data_with_custom_handler_and_date_range(self):
+        qs_params = '?start=21_10_17_00_00_00&end=23_12_01_00_00_00'
+        request = self.factory.get(f'/{qs_params}', **self.extra)
+        view = DataViewSet.as_view({'get': 'list'})
+        response = view(request, pk=self.xform.pk, format='xlsx')
+        assert response.status_code == status.HTTP_200_OK
+        assert response.headers['Content-Type'] == 'application/vnd.openxmlformats'

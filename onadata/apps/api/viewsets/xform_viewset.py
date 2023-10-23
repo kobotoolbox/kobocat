@@ -82,11 +82,13 @@ def _set_start_end_params(request, query):
         try:
             if request.GET.get('start'):
                 query[SUBMISSION_TIME]['$gte'] = format_date_for_mongo(
-                    request.GET['start'], datetime)
+                    request.GET['start']
+                )
 
             if request.GET.get('end'):
                 query[SUBMISSION_TIME]['$lte'] = format_date_for_mongo(
-                    request.GET['end'], datetime)
+                    request.GET['end']
+                )
         except ValueError:
             raise exceptions.ParseError(
                 t("Dates must be in the format YY_MM_DD_hh_mm_ss")
