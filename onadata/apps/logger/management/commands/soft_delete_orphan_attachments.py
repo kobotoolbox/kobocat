@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
+from django.db.models import F
 
 from onadata.apps.logger.models import (
     Attachment,
@@ -37,61 +40,75 @@ class Command(BaseCommand):
             help='Starting date to start from. Format: yyyy-mm-aa.'
         )
 
+        parser.add_argument(
+            '--not-edited-offset',
+            type=int,
+            default=10,
+            help=(
+                'Offset in seconds between creation date and modification date '
+                'to consider submissions as not edited'
+            )
+        )
+
     def handle(self, *args, **kwargs):
         chunks = kwargs['chunks']
         verbosity = kwargs['verbosity']
         start_id = kwargs['start_id']
         start_date = kwargs['start_date']
+        offset = kwargs['not_edited_offset']
 
-        queryset = Attachment.objects.values_list('instance_id', flat=True).distinct()
+        self.stdout.write(
+            '⚠ Warning! This management can take a while (i.e. several days) '
+            'to run on big databases'
+        )
+
+        instance_ids = Attachment.objects.values_list('instance_id', flat=True).distinct()
 
         if start_id:
-            queryset = queryset.filter(instance_id__gte=start_id)
+            instance_ids = instance_ids.filter(instance_id__gte=start_id)
+
+        queryset = (
+            Instance.objects.only('xml', 'xform')
+            .filter(pk__in=instance_ids)
+            .exclude(
+                date_modified__lt=F('date_created')
+                + timedelta(seconds=offset),
+            )
+        )
+
+        if start_id:
+            queryset = queryset.filter(pk__gte=start_id)
+
+        if start_date:
+            queryset = queryset.filter(date_created__date__gte=start_date)
 
         if verbosity > 1:
             self.stdout.write(
-                f'Calculating number of instance with attachments…'
+                f'Calculating number of Instance objects with attachments…'
             )
             instances_count = queryset.count()
 
         cpt = 1
+        queryset = queryset.order_by('pk')
 
-        for instance_id in queryset.iterator(chunk_size=chunks):
-            instance = Instance.objects.get(pk=instance_id)
+        if verbosity > 1:
+            self.stdout.write(
+                f'Retrieving Instance objects…'
+            )
+
+        for instance in queryset.iterator(chunk_size=chunks):
             if verbosity > 0:
                 message = '' if verbosity <= 1 else f' - {cpt}/{instances_count}'
                 self.stdout.write(
-                    f'Processing Instance object #{instance_id}{message}…'
+                    f'Processing Instance object #{instance.pk}{message}…'
                 )
-
-            if start_date and instance.date_created < datetime_from_str(
-                f'{start_date}T00:00:00 +0000'
-            ):
-                if verbosity > 1:
-                    message = '' if verbosity <= 1 else f' - {cpt}/{instances_count}'
-                    self.stdout.write(
-                        f'\tSkip Instance object #{instance_id}{message}. Too old'
-                    )
-                cpt += 1
-                continue
-
-            if not self._has_instance_been_edited(instance):
-                if verbosity > 1:
-                    message = '' if verbosity <= 1 else f' - {cpt}/{instances_count}'
-                    self.stdout.write(
-                        f'\tSkip Instance object #{instance_id}{message}. Not edited'
-                    )
-                cpt += 1
-                continue
 
             try:
                 soft_deleted_attachments = get_soft_deleted_attachments(instance)
             except Exception as e:
                 cpt += 1
                 if verbosity > 0:
-                    self.stderr.write(
-                        f'\tError for Instance object #{instance_id}: {str(e)}'
-                    )
+                    self.stderr.write(f'\tError: {str(e)}')
                 continue
 
             for soft_deleted_attachment in soft_deleted_attachments:
@@ -101,20 +118,8 @@ class Command(BaseCommand):
             if verbosity > 1:
                 message = '' if verbosity <= 1 else f' - {cpt}/{instances_count}'
                 self.stdout.write(
-                    f'\tInstance object #{instance_id}{message} updated!'
+                    f'\tInstance object #{instance.pk}{message} updated!'
                 )
             cpt += 1
 
-            cpt += 1
         self.stdout.write('Done!')
-
-    def _has_instance_been_edited(self, instance):
-        """
-        Consider instance as edited if it modification date is more or less 10
-        seconds apart
-        """
-        date_created_ts = instance.date_created.timestamp()
-        date_modified_ts = instance.date_modified.timestamp()
-        return not (
-            date_created_ts <= date_modified_ts <= date_created_ts + 10
-        )
