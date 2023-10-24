@@ -49,6 +49,10 @@ function parseQuestions(children, prefix, cleanReplacement)
             questions[((prefix?prefix:'') + question.name)] = new Question(question);
         }
     }
+    if (typeof prefix === 'undefined') {
+      questions['_id'] = new Question(
+        {name: '_id', type: 'calculate', label: '_id'});
+    }
 }
 
 function addOrEditNote(){
