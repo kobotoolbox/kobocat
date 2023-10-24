@@ -11,7 +11,6 @@ from onadata.apps.logger.models import (
 )
 from onadata.apps.logger.signals import pre_delete_attachment
 from onadata.libs.utils.logger_tools import get_soft_deleted_attachments
-from onadata.apps.viewer.models.parsed_instance import datetime_from_str
 
 
 class Command(BaseCommand):
@@ -62,7 +61,9 @@ class Command(BaseCommand):
             'to run on big databases'
         )
 
-        instance_ids = Attachment.objects.values_list('instance_id', flat=True).distinct()
+        instance_ids = Attachment.objects.values_list(
+            'instance_id', flat=True
+        ).distinct()
 
         if start_id:
             instance_ids = instance_ids.filter(instance_id__gte=start_id)
@@ -112,6 +113,8 @@ class Command(BaseCommand):
                 continue
 
             for soft_deleted_attachment in soft_deleted_attachments:
+                # Avoid fetching Instance object once again
+                soft_deleted_attachment.instance = instance
                 pre_delete_attachment(
                     soft_deleted_attachment, only_update_counters=True
                 )
