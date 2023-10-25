@@ -78,8 +78,6 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
         if username is None:
-            print('USERNAME is None', flush=True)
-            print('reques.user', self.request.user, flush=True)
             # If no username is specified, the request must be authenticated
             if self.request.user.is_anonymous:
                 # raises a permission denied exception, forces authentication
@@ -89,26 +87,8 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
                 # including those shared by other users
                 queryset = super().filter_queryset(queryset)
         else:
-            print('USERNAME is not one', username, flush=True)
-            print('reques.user', self.request.user, flush=True)
-            # profile = get_object_or_404(
-            #     UserProfile, user__username=username.lower()
-            # )
-            # # Include only the forms belonging to the specified user
-            # queryset = queryset.filter(user=profile.user)
-            # if profile.require_auth:
-            #     # The specified has user ticked "Require authentication to see
-            #     # forms and submit data"; only allow anonymous users to see
-            #     # specifically-shared forms
-            #     # TODO: Treat `profile.require_auth` as always True
-            #     if self.request.user.is_anonymous:
-            #         queryset = queryset.filter(require_auth=False)
-            #     else:
-            #         # Someone has logged in, but they are not necessarily
-            #         # allowed to access the forms belonging to the specified
-            #         # user. Filter again to consider object-level permissions
-            #         queryset = super().filter_queryset(queryset)
             queryset = queryset.filter(user__username=username.lower())
+
             if self.request.user.is_anonymous:
                 queryset = queryset.filter(require_auth=False)
             else:

@@ -170,7 +170,6 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
             organization=self.profile_data['organization'],
             home_page=self.profile_data['home_page'],
             twitter=self.profile_data['twitter'],
-            require_auth=False
         )
 
         return new_profile
@@ -290,12 +289,3 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
             response = self._post_form_metadata(data, test)
 
         return response
-
-    def _get_digest_client(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-        client = DigestClient()
-        client.set_authorization(self.profile_data['username'],
-                                 self.profile_data['password1'],
-                                 'Digest')
-        return client

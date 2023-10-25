@@ -14,7 +14,6 @@ from httmock import urlmatch, HTTMock
 
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.logger.models import Instance, XForm
-from onadata.apps.logger.views import download_xform
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.libs.utils.briefcase_client import BriefcaseClient
@@ -27,6 +26,10 @@ def formList(*args, **kwargs):  # noqa
     response.render()
     return response
 
+def xformsDownload(*args, **kwargs):  # noqa
+    view = XFormListApi.as_view({'get': 'retrieve'})
+    response = view(*args, **kwargs)
+    return response
 
 def xformsManifest(*args, **kwargs):  # noqa
     view = XFormListApi.as_view({'get': 'manifest'})
@@ -46,8 +49,6 @@ def form_list_xml(url, request, **kwargs):
     factory = RequestFactory()
     req = factory.get(url.path)
     req.user = authenticate(username='bob', password='bob')
-    req.user.profile.require_auth = False
-    req.user.profile.save()
     id_string = 'transportation_2011_07_25'
     # Retrieve XForm pk for user bob.
     # SQLite resets PK to 1 every time the table is truncated (i.e. after
@@ -61,7 +62,8 @@ def form_list_xml(url, request, **kwargs):
     if url.path.endswith('formList'):
         res = formList(req, username='bob')
     elif url.path.endswith('form.xml'):
-        res = download_xform(req, username='bob', id_string=id_string)
+        res = xformsDownload(req, username='bob', pk=xform_id)
+        res.render()
     elif url.path.find('xformsManifest') > -1:
         res = xformsManifest(req, username='bob', pk=xform_id)
     elif url.path.find('xformsMedia') > -1:
@@ -189,6 +191,7 @@ class TestBriefcaseClient(TestBase):
             self.bc.download_xforms()
         with HTTMock(instances_xml):
             self.bc.download_instances(self.xform.id_string)
+
         XForm.objects.all().delete()
         xforms = XForm.objects.filter(
             user=self.user, id_string=self.xform.id_string)

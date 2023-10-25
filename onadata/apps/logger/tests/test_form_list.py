@@ -18,29 +18,33 @@ class TestFormList(TestBase):
         self.factory = RequestFactory()
 
     def test_returns_200_for_owner(self):
-        self._set_require_auth()
         request = self.factory.get('/')
         auth = DigestAuth('bob', 'bob')
-        response = formList(request, username=self.user.username)
+        response = formList(request)
         request.META.update(auth(request.META, response))
-        response = formList(request, username=self.user.username)
+        response = formList(request)
         self.assertEqual(response.status_code, 200)
 
     def test_return_401_for_anon_when_require_auth_true(self):
-        self._set_require_auth()
+        request = self.factory.get('/')
+        response = formList(request)
+        self.assertEqual(response.status_code, 401)
+        # TODO review require_auth
+
+    def test_return_200_for_anon_when_require_auth_true_with_username(self):
         request = self.factory.get('/')
         response = formList(request, username=self.user.username)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        # TODO review require_auth - test list of xforms
 
     def test_returns_200_for_authenticated_non_owner(self):
-        self._set_require_auth()
         credentials = ('alice', 'alice',)
         self._create_user(*credentials)
         auth = DigestAuth('alice', 'alice')
         request = self.factory.get('/')
-        response = formList(request, username=self.user.username)
+        response = formList(request)
         request.META.update(auth(request.META, response))
-        response = formList(request, username=self.user.username)
+        response = formList(request)
         self.assertEqual(response.status_code, 200)
 
     def test_show_for_anon_when_require_auth_false(self):
@@ -48,3 +52,4 @@ class TestFormList(TestBase):
         request.user = AnonymousUser()
         response = formList(request, username=self.user.username)
         self.assertEqual(response.status_code, 200)
+        # TODO review require_auth - redundant

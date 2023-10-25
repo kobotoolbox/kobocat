@@ -282,6 +282,7 @@ class BriefcaseClient:
 
             def publish_xform(self):
                 return publish_xml_form(self.xml_file, self.user)
+
         xml_file = default_storage.open(path)
         xml_file.name = file_name
         k = PublishXForm(xml_file, self.user)
@@ -341,14 +342,14 @@ class BriefcaseClient:
         for form_dir in dirs:
             dir_path = os.path.join(self.forms_path, form_dir)
             form_dirs, form_files = default_storage.listdir(dir_path)
-            form_xml = '%s.xml' % form_dir
+            form_xml = f'{form_dir}.xml'
             if form_xml in form_files:
                 form_xml_path = os.path.join(dir_path, form_xml)
                 x = self._upload_xform(form_xml_path, form_xml)
-                if isinstance(x, dict):
-                    self.logger.error("Failed to publish %s" % form_dir)
-                else:
-                    self.logger.debug("Successfully published %s" % form_dir)
+                # if isinstance(x, dict):
+                #     self.logger.error("Failed to publish %s" % form_dir)
+                # else:
+                #     self.logger.debug("Successfully published %s" % form_dir)
             if 'instances' in form_dirs:
                 self.logger.debug("Uploading instances")
                 c = self._upload_instances(os.path.join(dir_path, 'instances'))

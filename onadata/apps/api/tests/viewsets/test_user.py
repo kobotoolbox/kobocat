@@ -117,7 +117,6 @@ class TestUserViewSet(TestAbstractViewSet):
     def test_only_open_rosa_endpoints_allowed_with_not_validated_password(self):
         # log in as bob
         self._login_user_and_profile()
-        self.user.profile.require_auth = True
         self.user.profile.validated_password = True
         self.user.profile.save()
 

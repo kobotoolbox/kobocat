@@ -78,7 +78,11 @@ class TestXFormListApi(TestAbstractViewSet):
         self.assertEqual(response['Content-Type'],
                          'text/xml; charset=utf-8')
 
-    def test_get_xform_list_anonymous_user(self):
+    def test_get_xform_list_anonymous_user_no_auth_required(self):
+
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+
         request = self.factory.get('/')
         response = self.view(request)
         self.assertEqual(response.status_code, 401)
@@ -101,14 +105,16 @@ class TestXFormListApi(TestAbstractViewSet):
             self.assertEqual(response['Content-Type'],
                              'text/xml; charset=utf-8')
 
-    def test_get_xform_list_anonymous_user_require_auth(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
+    def test_get_xform_list_anonymous_user_with_auth_required(self):
         request = self.factory.get('/')
+        # Get formList without username requires auth unconditionally
         response = self.view(request)
         self.assertEqual(response.status_code, 401)
+
+        # Get formList with username does not require auth and return all xform
+        # with `require_auth=False`
         response = self.view(request, username=self.user.username)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
 
     def test_get_xform_list_other_user_with_no_role(self):
         request = self.factory.get('/')
@@ -214,13 +220,21 @@ class TestXFormListApi(TestAbstractViewSet):
         """
         # Test unrecognized `formID`
         request = self.factory.get('/', {'formID': 'unrecognizedID'})
-        response = self.view(request, username=self.user.username)
+        response = self.view(request)
+        self.assertEqual(response.status_code, 401)
+        auth = DigestAuth('bob', 'bobbob')
+        request.META.update(auth(request.META, response))
+        response = self.view(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, [])
 
         # Test a valid `formID`
         request = self.factory.get('/', {'formID': self.xform.id_string})
-        response = self.view(request, username=self.user.username)
+        response = self.view(request)
+        self.assertEqual(response.status_code, 401)
+        auth = DigestAuth('bob', 'bobbob')
+        request.META.update(auth(request.META, response))
+        response = self.view(request)
         self.assertEqual(response.status_code, 200)
         path = os.path.join(
             os.path.dirname(__file__), '..', 'fixtures', 'formList.xml'
@@ -312,6 +326,10 @@ class TestXFormListApi(TestAbstractViewSet):
         self.assertEqual(response['Content-Type'], 'text/xml; charset=utf-8')
 
     def test_retrieve_xform_manifest_anonymous_user(self):
+        # Allow anonymous access to manifest
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+
         self._load_metadata(self.xform)
         self.view = XFormListApi.as_view({
             "get": "manifest"
@@ -336,18 +354,19 @@ class TestXFormListApi(TestAbstractViewSet):
         self.assertEqual(response['Content-Type'], 'text/xml; charset=utf-8')
 
     def test_retrieve_xform_manifest_anonymous_user_require_auth(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
         self._load_metadata(self.xform)
         self.view = XFormListApi.as_view({
             "get": "manifest"
         })
         request = self.factory.get('/')
+        # Require auth
         response = self.view(request, pk=self.xform.pk)
         self.assertEqual(response.status_code, 401)
-        response = self.view(request, pk=self.xform.pk,
-                             username=self.user.username)
-        self.assertEqual(response.status_code, 401)
+
+        # Not auth required but XForm cannot be found except if `required_auth` is True
+        # See `test_retrieve_xform_manifest_anonymous_user()`
+        response = self.view(request, pk=self.xform.pk, username=self.user.username)
+        self.assertEqual(response.status_code, 404)
 
     def test_head_xform_media(self):
         self._load_metadata(self.xform)
@@ -381,6 +400,10 @@ class TestXFormListApi(TestAbstractViewSet):
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_xform_media_anonymous_user(self):
+        # Allow anonymous access to media
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+
         self._load_metadata(self.xform)
         self.view = XFormListApi.as_view({
             "get": "media"
@@ -396,8 +419,6 @@ class TestXFormListApi(TestAbstractViewSet):
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_xform_media_anonymous_user_require_auth(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
         self._load_metadata(self.xform)
         self.view = XFormListApi.as_view({
             "get": "media"

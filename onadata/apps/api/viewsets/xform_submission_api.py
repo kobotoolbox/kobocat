@@ -59,7 +59,6 @@ def create_instance_from_xml(username, request):
     xml_file_list = request.FILES.pop('xml_submission_file', [])
     xml_file = xml_file_list[0] if len(xml_file_list) else None
     media_files = request.FILES.values()
-
     return safe_create_instance(username, xml_file, media_files, None, request)
 
 
@@ -170,12 +169,12 @@ Here is some example JSON, it would replace `[the JSON]` above:
 
         username = self.kwargs.get('username')
         if self.request.user.is_anonymous:
-            if username is None:
+            if not username:
                 # Authentication is mandatory when username is omitted from the
                 # submission URL
                 raise NotAuthenticated
             else:
-                user = get_object_or_404(User, username=username.lower())
+                _ = get_object_or_404(User, username=username.lower())
         elif not username:
             # get the username from the user if not set
             username = request.user and get_real_user(request).username

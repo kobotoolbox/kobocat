@@ -3,6 +3,7 @@ import os
 
 from django.core.files.base import ContentFile
 from django.urls import reverse
+from django_digest.test import Client as DigestClient
 
 from onadata import koboform
 from onadata.apps.logger.models import XForm
@@ -110,13 +111,14 @@ class TestFormShow(TestBase):
     def test_dl_xform_to_anon_if_public(self):
         self.xform.shared = True
         self.xform.save()
+
         response = self.anon.get(reverse(download_xform, kwargs={
             'username': self.user.username,
             'id_string': self.xform.id_string
         }))
         self.assertEqual(response.status_code, 200)
 
-    def test_dl_xform_for_basic_auth(self):
+    def test_dl_xform_for_authenticated_w_basic_auth(self):
         extra = {
             'HTTP_AUTHORIZATION':
             http_auth_string(self.login_username, self.login_password)
@@ -125,11 +127,14 @@ class TestFormShow(TestBase):
             'username': self.user.username,
             'id_string': self.xform.id_string
         }), **extra)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 401)
 
-    def test_dl_xform_for_authenticated_non_owner(self):
+    def test_dl_xform_for_authenticated_w_digest_non_owner(self):
         self._create_user_and_login('alice', 'alice')
-        response = self.client.get(reverse(download_xform, kwargs={
+
+        client = DigestClient()
+        client.set_authorization('alice', 'alice', 'Digest')
+        response = client.get(reverse(download_xform, kwargs={
             'username': 'bob',
             'id_string': self.xform.id_string
         }))

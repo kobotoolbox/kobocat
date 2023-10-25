@@ -473,12 +473,6 @@ KOBOCAT_PUBLIC_HOSTNAME = '{}.{}'.format(
     os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
     os.environ.get('PUBLIC_DOMAIN_NAME', 'kobotoolbox.org'))
 
-# Default value for the `UserProfile.require_auth` attribute
-REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = env.bool(
-    'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
-    False
-)
-
 OAUTH2_PROVIDER = {
     # this is the list of available scopes
     'SCOPES': {

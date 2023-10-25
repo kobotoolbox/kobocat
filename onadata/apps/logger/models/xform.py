@@ -68,7 +68,8 @@ class XForm(BaseModel):
 
     user = models.ForeignKey(User, related_name='xforms', null=True, on_delete=models.CASCADE)
     require_auth = models.BooleanField(
-        default=settings.REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT
+        default=True,
+        verbose_name=t('Require authentication to see forms and submit data'),
     )
     shared = models.BooleanField(default=False)
     shared_data = models.BooleanField(default=False)

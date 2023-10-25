@@ -50,11 +50,11 @@ def _extract_uuid(text):
     return text
 
 
-def _extract_id_string(formId):
-    if isinstance(formId, str):
-        return formId[0:formId.find('[')]
+def _extract_id_string(form_id):
+    if isinstance(form_id, str):
+        return form_id[0:form_id.find('[')]
 
-    return formId
+    return form_id
 
 
 def _parse_int(num):
@@ -103,9 +103,9 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         ]
 
     def get_object(self):
-        formId = self.request.GET.get('formId', '')
-        id_string = _extract_id_string(formId)
-        uuid = _extract_uuid(formId)
+        form_id = self.request.GET.get('formId', '')
+        id_string = _extract_id_string(form_id)
+        uuid = _extract_uuid(form_id)
         username = self.kwargs.get('username')
 
         obj = get_instance_or_404(xform__user__username__iexact=username,
@@ -117,28 +117,31 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
-        if username is None and self.request.user.is_anonymous:
-            # raises a permission denied exception, forces authentication
-            self.permission_denied(self.request)
-
-        if username is not None and self.request.user.is_anonymous:
-            profile = get_object_or_404(
-                UserProfile, user__username=username.lower())
-
-            if profile.require_auth:
+        if username is None:
+            # If no username is specified, the request must be authenticated
+            if self.request.user.is_anonymous:
                 # raises a permission denied exception, forces authentication
                 self.permission_denied(self.request)
             else:
-                queryset = queryset.filter(user=profile.user)
+                # Return all the forms the currently-logged-in user can access,
+                # including those shared by other users
+                queryset = super().filter_queryset(queryset)
         else:
-            queryset = super().filter_queryset(queryset)
+            queryset = queryset.filter(user__username=username.lower())
+            if self.request.user.is_anonymous:
+                queryset = queryset.filter(require_auth=False)
+            else:
+                # Someone has logged in, but they are not necessarily
+                # allowed to access the forms belonging to the specified
+                # user. Filter again to consider object-level permissions
+                queryset = super().filter_queryset(queryset)
 
-        formId = self.request.GET.get('formId', '')
+        form_id = self.request.GET.get('formId', '')
 
-        if formId.find('[') != -1:
-            formId = _extract_id_string(formId)
+        if form_id.find('[') != -1:
+            form_id = _extract_id_string(form_id)
 
-        xform = get_object_or_404(queryset, id_string__exact=formId)
+        xform = get_object_or_404(queryset, id_string__exact=form_id)
         self.check_object_permissions(self.request, xform)
         instances = Instance.objects.filter(xform=xform).order_by('pk')
         num_entries = self.request.GET.get('numEntries')
@@ -154,11 +157,11 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         if instances.count():
             last_instance = instances[instances.count() - 1]
-            self.resumptionCursor = last_instance.pk
+            self.resumption_cursor = last_instance.pk
         elif instances.count() == 0 and cursor:
-            self.resumptionCursor = cursor
+            self.resumption_cursor = cursor
         else:
-            self.resumptionCursor = 0
+            self.resumption_cursor = 0
 
         return instances
 
@@ -207,13 +210,16 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
     def list(self, request, *args, **kwargs):
         self.object_list = self.filter_queryset(self.get_queryset())
 
-        data = {'instances': self.object_list,
-                'resumptionCursor': self.resumptionCursor}
+        data = {
+            'instances': self.object_list,
+            'resumptionCursor': self.resumption_cursor,
+        }
 
-        return Response(data,
-                        headers=self.get_openrosa_headers(request,
-                                                          location=False),
-                        template_name='submissionList.xml')
+        return Response(
+            data,
+            headers=self.get_openrosa_headers(request, location=False),
+            template_name='submissionList.xml',
+        )
 
     def retrieve(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -253,12 +259,14 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
             data_type__in=MetaData.MEDIA_FILES_TYPE, xform=self.object
         )
         context = self.get_serializer_context()
-        serializer = XFormManifestSerializer(object_list, many=True,
-                                             context=context)
+        serializer = XFormManifestSerializer(
+            object_list, many=True, context=context
+        )
 
-        return Response(serializer.data,
-                        headers=self.get_openrosa_headers(request,
-                                                          location=False))
+        return Response(
+            serializer.data,
+            headers=self.get_openrosa_headers(request, location=False),
+        )
 
     @action(detail=True, methods=['GET'])
     def media(self, request, *args, **kwargs):

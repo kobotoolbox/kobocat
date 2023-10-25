@@ -32,7 +32,7 @@ class TestConnectViewSet(TestAbstractViewSet):
             'website': user_profile_data['website'],
             'twitter': user_profile_data['twitter'],
             'gravatar': user_profile_data['gravatar'],
-            'require_auth': False,
+            'require_auth': True,
             'api_token': self.user.auth_token.key,
             'temp_token': self.client.session.session_key,
         }

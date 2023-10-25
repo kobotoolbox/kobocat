@@ -40,38 +40,64 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         self.validate_openrosa_head_response(response)
 
     def test_post_submission_anonymous(self):
+
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+
         s = self.surveys[0]
-        media_file = "1335783522563.jpg"
-        path = os.path.join(self.main_directory, 'fixtures',
-                            'transportation', 'instances', s, media_file)
+        media_file = '1335783522563.jpg'
+        path = os.path.join(
+            self.main_directory,
+            'fixtures',
+            'transportation',
+            'instances',
+            s,
+            media_file,
+        )
         with open(path, 'rb') as f:
-            f = InMemoryUploadedFile(f, 'media_file', media_file, 'image/jpg',
-                                     os.path.getsize(path), None)
+            f = InMemoryUploadedFile(
+                f,
+                'media_file',
+                media_file,
+                'image/jpg',
+                os.path.getsize(path),
+                None,
+            )
             submission_path = os.path.join(
-                self.main_directory, 'fixtures',
-                'transportation', 'instances', s, s + '.xml')
+                self.main_directory,
+                'fixtures',
+                'transportation',
+                'instances',
+                s,
+                s + '.xml',
+            )
             with open(submission_path) as sf:
                 data = {'xml_submission_file': sf, 'media_file': f}
                 request = self.factory.post(
-                    '/%s/submission' % self.user.username, data)
+                    f'/{self.user.username}/submission', data
+                )
                 request.user = AnonymousUser()
 
                 response = self.view(request, username=self.user.username)
-                self.assertContains(response, 'Successful submission',
-                                    status_code=201)
+                self.assertContains(
+                    response, 'Successful submission', status_code=201
+                )
                 self.assertTrue(response.has_header('X-OpenRosa-Version'))
                 self.assertTrue(
-                    response.has_header('X-OpenRosa-Accept-Content-Length'))
+                    response.has_header('X-OpenRosa-Accept-Content-Length')
+                )
                 self.assertTrue(response.has_header('Date'))
-                self.assertEqual(response['Content-Type'],
-                                 'text/xml; charset=utf-8')
-                self.assertEqual(response['Location'],
-                                 'http://testserver/%s/submission'
-                                 % self.user.username)
+                self.assertEqual(
+                    response['Content-Type'], 'text/xml; charset=utf-8'
+                )
+                self.assertEqual(
+                    response['Location'],
+                    f'http://testserver/{self.user.username}/submission',
+                )
 
     def test_post_submission_authenticated(self):
         s = self.surveys[0]
-        media_file = "1335783522563.jpg"
+        media_file = '1335783522563.jpg'
         path = os.path.join(self.main_directory, 'fixtures',
                             'transportation', 'instances', s, media_file)
         with open(path, 'rb') as f:
@@ -91,6 +117,7 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 # rewind the file and redo the request since they were
                 # consumed
                 sf.seek(0)
+                f.seek(0)
                 request = self.factory.post('/submission', data)
                 auth = DigestAuth('bob', 'bobbob')
                 request.META.update(auth(request.META, response))
@@ -204,8 +231,6 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                              'http://testserver/submission')
 
     def test_post_submission_require_auth(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
         count = Attachment.objects.count()
         s = self.surveys[0]
         media_file = "1335783522563.jpg"
@@ -246,8 +271,6 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                                  'http://testserver/submission')
 
     def test_post_submission_require_auth_anonymous_user(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
         count = Attachment.objects.count()
         s = self.surveys[0]
         media_file = "1335783522563.jpg"
@@ -269,8 +292,6 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.assertEqual(count, Attachment.objects.count())
 
     def test_post_submission_require_auth_other_user(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
 
         alice_data = {
             'username': 'alice',
@@ -310,8 +331,6 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
                 self.assertContains(response, 'Forbidden', status_code=403)
 
     def test_post_submission_require_auth_data_entry_role(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
 
         alice_data = {
             'username': 'alice',
@@ -374,9 +393,6 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         """
 
         # Ensure only authenticated users can submit data
-        self.user.profile.require_auth = True
-        self.user.profile.save(update_fields=['require_auth'])
-
         path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             '..',
@@ -447,6 +463,11 @@ class TestXFormSubmissionApi(TestAbstractViewSet):
         # submission do fail with the flag set
         self.xform.user.profile.metadata['submissions_suspended'] = True
         self.xform.user.profile.save()
+
+        # No need auth for this test
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+
         s = self.surveys[0]
         username = self.user.username
         media_file = '1335783522563.jpg'
