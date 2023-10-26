@@ -252,7 +252,7 @@ class Instance(models.Model):
                               default='submitted_via_web')
     uuid = models.CharField(max_length=249, default='', db_index=True)
 
-    # store an geographic objects associated with this instance
+    # store a geographic objects associated with this instance
     geom = models.GeometryCollectionField(null=True)
 
     tags = TaggableManager()

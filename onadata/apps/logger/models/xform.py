@@ -2,6 +2,7 @@
 import json
 import os
 import re
+from copy import deepcopy
 from io import BytesIO
 from xml.sax.saxutils import escape as xml_escape
 
@@ -129,10 +130,15 @@ class XForm(BaseModel):
             }
         )
 
-    def data_dictionary(self):
-        from onadata.apps.viewer.models.data_dictionary import\
-            DataDictionary
-        return DataDictionary.all_objects.get(pk=self.pk)
+    def data_dictionary(self, use_cache: bool = False):
+        from onadata.apps.viewer.models.data_dictionary import DataDictionary
+
+        if not use_cache:
+            return DataDictionary.all_objects.get(pk=self.pk)
+
+        xform_dict = deepcopy(self.__dict__)
+        xform_dict.pop('_state', None)
+        return DataDictionary(**xform_dict)
 
     @property
     def has_instances_with_geopoints(self):

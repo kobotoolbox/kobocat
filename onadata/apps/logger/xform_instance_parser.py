@@ -366,10 +366,9 @@ def get_xform_media_question_xpaths(
     xform: 'onadata.apps.logger.models.XForm',
 ) -> list:
     logger = logging.getLogger('console_logger')
-    parser = XFormInstanceParser(xform.xml, xform.data_dictionary())
+    parser = XFormInstanceParser(xform.xml, xform.data_dictionary(use_cache=True))
     all_attributes = _get_all_attributes(parser.get_root_node())
     media_field_xpaths = []
-
     # This code expects that the attributes from Enketo Express are **always**
     # sent in the same order.
     # For example:
