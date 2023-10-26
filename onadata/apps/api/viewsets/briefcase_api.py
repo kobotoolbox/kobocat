@@ -172,23 +172,22 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         xform_def = request.FILES.get('form_def_file', None)
         response_status = status.HTTP_201_CREATED
-        username = kwargs.get('username')
-        form_user = (username and get_object_or_404(User, username=username)) \
-            or request.user
-
-        if not request.user.has_perm(
-            'can_add_xform',
-            UserProfile.objects.get_or_create(user=form_user)[0]
-        ):
+        if username := kwargs.get('username'):
             raise exceptions.PermissionDenied(
-                detail=t("User %(user)s has no permission to add xforms to "
-                         "account %(account)s" %
-                         {'user': request.user.username,
-                          'account': form_user.username}))
+                detail=t(
+                    'Cannot User %(user)s has no permission to add xforms to '
+                    'account %(account)s'
+                    % {
+                        'user': request.user.username,
+                        'account': username,
+                    }
+                )
+            )
+
         data = {}
 
         if isinstance(xform_def, File):
-            do_form_upload = DoXmlFormUpload(xform_def, form_user)
+            do_form_upload = DoXmlFormUpload(xform_def, request.user)
             dd = publish_form(do_form_upload.publish)
 
             if isinstance(dd, XForm):
@@ -207,10 +206,10 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
                         template_name=self.template_name)
 
     def list(self, request, *args, **kwargs):
-        self.object_list = self.filter_queryset(self.get_queryset())
+        object_list = self.filter_queryset(self.get_queryset())
 
         data = {
-            'instances': self.object_list,
+            'instances': object_list,
             'resumptionCursor': self.resumption_cursor,
         }
 
@@ -221,13 +220,13 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         )
 
     def retrieve(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        instance = self.get_object()
 
-        submission_xml_root_node = self.object.get_root_node()
+        submission_xml_root_node = instance.get_root_node()
         submission_xml_root_node.setAttribute(
-            'instanceID', 'uuid:%s' % self.object.uuid)
+            'instanceID', 'uuid:%s' % instance.uuid)
         submission_xml_root_node.setAttribute(
-            'submissionDate', self.object.date_created.isoformat()
+            'submissionDate', instance.date_created.isoformat()
         )
 
         # Added this because of https://github.com/onaio/onadata/pull/2139
@@ -241,7 +240,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         data = {
             'submission_data': submission_xml_root_node.toxml(),
-            'media_files': Attachment.objects.filter(instance=self.object),
+            'media_files': Attachment.objects.filter(instance=instance),
             'host': request.build_absolute_uri().replace(
                 request.get_full_path(), '')
         }
@@ -253,9 +252,9 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        xform = self.get_object()
         object_list = MetaData.objects.filter(
-            data_type__in=MetaData.MEDIA_FILES_TYPE, xform=self.object
+            data_type__in=MetaData.MEDIA_FILES_TYPE, xform=xform
         )
         context = self.get_serializer_context()
         serializer = XFormManifestSerializer(
@@ -269,7 +268,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
     @action(detail=True, methods=['GET'])
     def media(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        xform = self.get_object()
         pk = kwargs.get('metadata')
 
         if not pk:
@@ -278,7 +277,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         meta_obj = get_object_or_404(
             MetaData,
             data_type__in=MetaData.MEDIA_FILES_TYPE,
-            xform=self.object,
+            xform=xform,
             pk=pk,
         )
 

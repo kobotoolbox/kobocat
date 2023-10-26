@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 
 from kobo_service_account.utils import get_request_headers
+from onadata.apps.logger.models.xform import XForm
 from .test_abstract_viewset import TestAbstractViewSet
 
 
@@ -271,6 +272,8 @@ class TestUserViewSet(TestAbstractViewSet):
         )
         assert response.status_code == status.HTTP_200_OK
 
+        # Need to deactivate auth on XForm when using OpenRosa endpoints with username
+        XForm.objects.filter(pk=xform_id).update(require_auth=False)
         response = self.client.get(
             reverse('manifest-url', kwargs={'pk': xform_id, 'username': 'bob'}),
             **headers,

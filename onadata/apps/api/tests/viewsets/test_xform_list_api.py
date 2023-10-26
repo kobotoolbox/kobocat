@@ -1,12 +1,14 @@
 # coding: utf-8
 import os
+import re
 
 from django.conf import settings
 from django_digest.test import DigestAuth
 from guardian.shortcuts import assign_perm
 
-from onadata.apps.api.tests.viewsets.test_abstract_viewset import\
+from onadata.apps.api.tests.viewsets.test_abstract_viewset import (
     TestAbstractViewSet
+)
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
@@ -42,7 +44,10 @@ class TestXFormListApi(TestAbstractViewSet):
 
         path = os.path.join(
             os.path.dirname(__file__),
-            '..', 'fixtures', 'formList.xml')
+            '..',
+            'fixtures',
+            'formList_w_require_auth.xml',
+        )
 
         with open(path, 'r') as f:
             form_list_xml = f.read().strip()
@@ -115,6 +120,7 @@ class TestXFormListApi(TestAbstractViewSet):
         # with `require_auth=False`
         response = self.view(request, username=self.user.username)
         self.assertEqual(response.status_code, 200)
+        # TODO require_auth , add logic
 
     def test_get_xform_list_other_user_with_no_role(self):
         request = self.factory.get('/')
@@ -200,7 +206,10 @@ class TestXFormListApi(TestAbstractViewSet):
 
         path = os.path.join(
             os.path.dirname(__file__),
-            '..', 'fixtures', 'formList.xml')
+            '..',
+            'fixtures',
+            'formList_w_require_auth.xml',
+        )
 
         with open(path, 'r') as f:
             form_list_xml = f.read().strip()
@@ -237,7 +246,10 @@ class TestXFormListApi(TestAbstractViewSet):
         response = self.view(request)
         self.assertEqual(response.status_code, 200)
         path = os.path.join(
-            os.path.dirname(__file__), '..', 'fixtures', 'formList.xml'
+            os.path.dirname(__file__),
+            '..',
+            'fixtures',
+            'formList_w_require_auth.xml',
         )
 
         with open(path) as f:
@@ -313,8 +325,19 @@ class TestXFormListApi(TestAbstractViewSet):
         response = self.view(request, pk=self.xform.pk)
         self.assertEqual(response.status_code, 200)
 
-        manifest_xml = """<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns="http://openrosa.org/xforms/xformsManifest"><mediaFile><filename>screenshot.png</filename><hash>%(hash)s</hash><downloadUrl>http://testserver/bob/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl></mediaFile></manifest>"""  # noqa
+        manifest_xml = (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            '<manifest xmlns="http://openrosa.org/xforms/xformsManifest">'
+            '   <mediaFile>'
+            '        <filename>screenshot.png</filename>'
+            '        <hash>%(hash)s</hash>'
+            '        <downloadUrl>http://testserver/xformsMedia/%(xform)s/%(pk)s.png</downloadUrl>'
+            '    </mediaFile>'
+            '</manifest>'
+        )
+
+        manifest_xml = re.sub(r'> +<', '><', manifest_xml).strip()
+
         data = {"hash": self.metadata.md5_hash, "pk": self.metadata.pk,
                 "xform": self.xform.pk}
         content = response.render().content.decode('utf-8').strip()

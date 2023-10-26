@@ -1,13 +1,11 @@
 # coding: utf-8
 import os.path
 from io import BytesIO
-from urllib.parse import urljoin
 
 import requests
 from django.contrib.auth import authenticate
 from django.core.files.storage import default_storage as storage
 from django.core.files.uploadedfile import UploadedFile
-from django.urls import reverse
 from django.test import RequestFactory
 from django_digest.test import Client as DigestClient
 from httmock import urlmatch, HTTMock
@@ -60,21 +58,21 @@ def form_list_xml(url, request, **kwargs):
         .last()
     )
     if url.path.endswith('formList'):
-        res = formList(req, username='bob')
+        res = formList(req)
     elif url.path.endswith('form.xml'):
-        res = xformsDownload(req, username='bob', pk=xform_id)
+        res = xformsDownload(req, pk=xform_id)
         res.render()
     elif url.path.find('xformsManifest') > -1:
-        res = xformsManifest(req, username='bob', pk=xform_id)
+        res = xformsManifest(req, pk=xform_id)
     elif url.path.find('xformsMedia') > -1:
         filename = url.path[url.path.rfind('/') + 1:]
         metadata_id, _ = os.path.splitext(filename)
         res = xformsMedia(
-            req, username='bob', pk=xform_id, metadata=metadata_id
+            req, pk=xform_id, metadata=metadata_id
         )
         response._content = get_streaming_content(res)
     else:
-        res = formList(req, username='bob')
+        res = formList(req)
     response.status_code = 200
     if not response._content:
         response._content = res.content
@@ -118,15 +116,12 @@ class TestBriefcaseClient(TestBase):
         count = MetaData.objects.count()
         MetaData.media_upload(self.xform, uf)
         self.assertEqual(MetaData.objects.count(), count + 1)
-        url = urljoin(
-            self.base_url,
-            reverse('user_profile', kwargs={'username': self.user.username})
-        )
         self._logout()
         self._create_user_and_login('deno', 'deno')
+
         self.bc = BriefcaseClient(
             username='bob', password='bob',
-            url=url,
+            url=self.base_url,
             user=self.user
         )
 

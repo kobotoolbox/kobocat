@@ -139,7 +139,7 @@ class XFormListSerializer(serializers.Serializer):
     def get_url(self, obj):
         kwargs = {'pk': obj.pk}
         if not self._require_auth:
-            kwargs['username']: obj.user.username
+            kwargs['username'] = obj.user.username
 
         request = self.context.get('request')
 
@@ -149,7 +149,7 @@ class XFormListSerializer(serializers.Serializer):
     def get_manifest_url(self, obj):
         kwargs = {'pk': obj.pk}
         if not self._require_auth:
-            kwargs['username']: obj.user.username
+            kwargs['username'] = obj.user.username
         request = self.context.get('request')
 
         return reverse('manifest-url', kwargs=kwargs, request=request)
@@ -180,7 +180,7 @@ class XFormManifestSerializer(serializers.Serializer):
     def get_url(self, obj):
         kwargs = {'pk': obj.xform.pk, 'metadata': obj.pk}
         if not self._require_auth:
-            kwargs['username']: obj.user.username
+            kwargs['username'] = obj.xform.user.username
 
         request = self.context.get('request')
         _, extension = os.path.splitext(obj.filename)

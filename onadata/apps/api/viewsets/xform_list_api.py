@@ -111,8 +111,10 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         if request.method == 'HEAD':
             return self.get_response_for_head_request()
 
+
+
         serializer = self.get_serializer(
-            object_list, many=True, require_auth=bool(kwargs.get('username'))
+            object_list, many=True, require_auth=not bool(kwargs.get('username'))
         )
         return Response(serializer.data, headers=self.get_openrosa_headers())
 
@@ -165,7 +167,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
             media_files.values(),
             many=True,
             context=context,
-            require_auth=bool(kwargs.get('username')),
+            require_auth=not bool(kwargs.get('username')),
         )
 
         return Response(serializer.data, headers=self.get_openrosa_headers())
