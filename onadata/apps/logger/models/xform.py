@@ -125,10 +125,10 @@ class XForm(BaseModel):
 
     def url(self):
         return reverse(
-            "download_xform",
+            'download_xform',
             kwargs={
-                "username": self.user.username,
-                "id_string": self.id_string
+                'username': self.user.username,
+                'pk': self.pk
             }
         )
 

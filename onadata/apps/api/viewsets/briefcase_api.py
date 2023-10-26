@@ -106,11 +106,11 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         form_id = self.request.GET.get('formId', '')
         id_string = _extract_id_string(form_id)
         uuid = _extract_uuid(form_id)
-        username = self.kwargs.get('username')
 
-        obj = get_instance_or_404(xform__user__username__iexact=username,
-                                  xform__id_string__exact=id_string,
-                                  uuid=uuid)
+        obj = get_instance_or_404(
+            xform__id_string__exact=id_string,
+            uuid=uuid,
+        )
         self.check_object_permissions(self.request, obj.xform)
 
         return obj
@@ -127,14 +127,13 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
                 # including those shared by other users
                 queryset = super().filter_queryset(queryset)
         else:
-            queryset = queryset.filter(user__username=username.lower())
-            if self.request.user.is_anonymous:
-                queryset = queryset.filter(require_auth=False)
-            else:
-                # Someone has logged in, but they are not necessarily
-                # allowed to access the forms belonging to the specified
-                # user. Filter again to consider object-level permissions
-                queryset = super().filter_queryset(queryset)
+            raise exceptions.PermissionDenied(
+                detail=t(
+                    'Cannot access non secure URL. Remove username from '
+                    'aggregate server URL in configuration settings.'
+                ),
+                code=status.HTTP_403_FORBIDDEN,
+            )
 
         form_id = self.request.GET.get('formId', '')
 

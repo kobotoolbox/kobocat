@@ -105,6 +105,10 @@ class XFormListSerializer(serializers.Serializer):
     downloadUrl = serializers.SerializerMethodField('get_url')
     manifestUrl = serializers.SerializerMethodField('get_manifest_url')
 
+    def __init__(self, *args, **kwargs):
+        self._require_auth = kwargs.pop('require_auth', None)
+        super().__init__(*args, **kwargs)
+
     class Meta:
         fields = '__all__'
 
@@ -133,14 +137,19 @@ class XFormListSerializer(serializers.Serializer):
 
     @check_obj
     def get_url(self, obj):
-        kwargs = {'pk': obj.pk, 'username': obj.user.username}
+        kwargs = {'pk': obj.pk}
+        if not self._require_auth:
+            kwargs['username']: obj.user.username
+
         request = self.context.get('request')
 
         return reverse('download_xform', kwargs=kwargs, request=request)
 
     @check_obj
     def get_manifest_url(self, obj):
-        kwargs = {'pk': obj.pk, 'username': obj.user.username}
+        kwargs = {'pk': obj.pk}
+        if not self._require_auth:
+            kwargs['username']: obj.user.username
         request = self.context.get('request')
 
         return reverse('manifest-url', kwargs=kwargs, request=request)
@@ -151,6 +160,10 @@ class XFormManifestSerializer(serializers.Serializer):
     filename = serializers.SerializerMethodField()
     hash = serializers.SerializerMethodField()
     downloadUrl = serializers.SerializerMethodField('get_url')
+
+    def __init__(self, *args, **kwargs):
+        self._require_auth = kwargs.pop('require_auth', None)
+        super().__init__(*args, **kwargs)
 
     def get_filename(self, obj):
         # If file has been synchronized from KPI and it is a remote URL,
@@ -165,9 +178,10 @@ class XFormManifestSerializer(serializers.Serializer):
 
     @check_obj
     def get_url(self, obj):
-        kwargs = {'pk': obj.xform.pk,
-                  'username': obj.xform.user.username,
-                  'metadata': obj.pk}
+        kwargs = {'pk': obj.xform.pk, 'metadata': obj.pk}
+        if not self._require_auth:
+            kwargs['username']: obj.user.username
+
         request = self.context.get('request')
         _, extension = os.path.splitext(obj.filename)
         # if `obj` is a remote url, it is possible it does not have any

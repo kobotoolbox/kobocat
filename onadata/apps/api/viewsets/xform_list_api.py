@@ -15,7 +15,6 @@ from rest_framework.decorators import action
 from onadata.apps.api.tools import get_media_file_response
 from onadata.apps.logger.models.xform import XForm
 from onadata.apps.main.models.meta_data import MetaData
-from onadata.apps.main.models.user_profile import UserProfile
 from onadata.libs import filters
 from onadata.libs.authentication import DigestAuthentication
 from onadata.libs.renderers.renderers import MediaFileContentNegotiation
@@ -77,6 +76,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
+
         if username is None:
             # If no username is specified, the request must be authenticated
             if self.request.user.is_anonymous:
@@ -87,15 +87,10 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
                 # including those shared by other users
                 queryset = super().filter_queryset(queryset)
         else:
-            queryset = queryset.filter(user__username=username.lower())
-
-            if self.request.user.is_anonymous:
-                queryset = queryset.filter(require_auth=False)
-            else:
-                # Someone has logged in, but they are not necessarily
-                # allowed to access the forms belonging to the specified
-                # user. Filter again to consider object-level permissions
-                queryset = super().filter_queryset(queryset)
+            # Only returns non-secured projects with URL starts with username
+            queryset = queryset.filter(
+                user__username=username.lower(), require_auth=False
+            )
 
         try:
             # https://docs.getodk.org/openrosa-form-list/#form-list-api says:
@@ -110,21 +105,27 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        self.object_list = self.filter_queryset(self.get_queryset())
+
+        object_list = self.filter_queryset(self.get_queryset())
 
         if request.method == 'HEAD':
             return self.get_response_for_head_request()
 
-        serializer = self.get_serializer(self.object_list, many=True)
+        serializer = self.get_serializer(
+            object_list, many=True, require_auth=bool(kwargs.get('username'))
+        )
         return Response(serializer.data, headers=self.get_openrosa_headers())
 
     def retrieve(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return Response(self.object.xml_with_disclaimer, headers=self.get_openrosa_headers())
+        xform = self.get_object()
+
+        return Response(
+            xform.xml_with_disclaimer, headers=self.get_openrosa_headers()
+        )
 
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        xform = self.get_object()
         media_files = {}
         expired_objects = False
 
@@ -133,7 +134,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
         # Retrieve all media files for the current form
         queryset = MetaData.objects.filter(
-            data_type__in=MetaData.MEDIA_FILES_TYPE, xform=self.object
+            data_type__in=MetaData.MEDIA_FILES_TYPE, xform=xform
         )
         object_list = queryset.all()
 
@@ -160,15 +161,18 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         # > "A new version of this form has been downloaded"
         media_files = dict(sorted(media_files.items()))
         context = self.get_serializer_context()
-        serializer = XFormManifestSerializer(media_files.values(),
-                                             many=True,
-                                             context=context)
+        serializer = XFormManifestSerializer(
+            media_files.values(),
+            many=True,
+            context=context,
+            require_auth=bool(kwargs.get('username')),
+        )
 
         return Response(serializer.data, headers=self.get_openrosa_headers())
 
     @action(detail=True, methods=['GET'])
     def media(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        xform = self.get_object()
         pk = kwargs.get('metadata')
 
         if not pk:
@@ -177,7 +181,7 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
         meta_obj = get_object_or_404(
             MetaData,
             data_type__in=MetaData.MEDIA_FILES_TYPE,
-            xform=self.object,
+            xform=xform,
             pk=pk,
         )
 

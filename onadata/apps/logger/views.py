@@ -148,29 +148,6 @@ def bulksubmission_form(request, username=None):
         return HttpResponseRedirect('/%s' % request.user.username)
 
 
-# TODO DEPRECATED, remove
-def download_xform(request, username, id_string):
-    user = get_object_or_404(User, username__iexact=username)
-    xform = get_object_or_404(XForm, user=user, id_string__exact=id_string)
-
-    if (
-        xform.require_auth
-        and (digest_response := digest_authentication(request))
-    ):
-        return digest_response
-
-    audit = {'xform': xform.id_string}
-    audit_log(
-        Actions.FORM_XML_DOWNLOADED, request.user, xform.user,
-        t("Downloaded XML for form '%(id_string)s'.") %
-        {
-            "id_string": xform.id_string
-        }, audit, request)
-    response = response_with_mimetype_and_name('xml', id_string, show_date=False)
-    response.content = xform.xml
-    return response
-
-
 def download_xlsform(request, username, id_string):
     xform = get_object_or_404(XForm,
                               user__username__iexact=username,
