@@ -14,6 +14,7 @@ from onadata.libs.constants import (
     CAN_ADD_SUBMISSIONS,
     CAN_VIEW_XFORM
 )
+from onadata.apps.logger.models.xform import XForm
 
 
 class TestXFormListApi(TestAbstractViewSet):
@@ -85,22 +86,49 @@ class TestXFormListApi(TestAbstractViewSet):
 
     def test_get_xform_list_anonymous_user_no_auth_required(self):
 
-        self.xform.require_auth = False
-        self.xform.save(update_fields=['require_auth'])
+        xform_without_auth = self.xform
+        xform_without_auth.require_auth = False
+        xform_without_auth.save(update_fields=['require_auth'])
+
+        data = {
+            'owner': self.user.username,
+            'public': False,
+            'public_data': False,
+            'description': 'transportation_with_attachment',
+            'downloadable': True,
+            'encrypted': False,
+            'id_string': 'transportation_with_attachment',
+            'title': 'transportation_with_attachment',
+        }
+
+        path = os.path.join(
+            settings.ONADATA_DIR,
+            'apps',
+            'main',
+            'tests',
+            'fixtures',
+            'transportation',
+            'transportation_with_attachment.xls',
+        )
+        self.publish_xls_form(data=data, path=path)
+
+        self.assertEqual(XForm.objects.all().count(), 2)
+        self.assertEqual(XForm.objects.filter(require_auth=False).count(), 1)
 
         request = self.factory.get('/')
-        response = self.view(request)
-        self.assertEqual(response.status_code, 401)
         response = self.view(request, username=self.user.username)
         self.assertEqual(response.status_code, 200)
 
         path = os.path.join(
-            os.path.dirname(__file__),
-            '..', 'fixtures', 'formList.xml')
-
+            os.path.dirname(__file__), '..', 'fixtures', 'formList.xml'
+        )
+        # Response should contain only xform
         with open(path, 'r') as f:
             form_list_xml = f.read().strip()
-            data = {"hash": self.xform.md5_hash, "pk": self.xform.pk}
+            data = {
+                'hash': xform_without_auth.md5_hash,
+                'pk': xform_without_auth.pk,
+            }
             content = response.render().content
             self.assertEqual(content.decode('utf-8'), form_list_xml % data)
             self.assertTrue(response.has_header('X-OpenRosa-Version'))
@@ -115,12 +143,6 @@ class TestXFormListApi(TestAbstractViewSet):
         # Get formList without username requires auth unconditionally
         response = self.view(request)
         self.assertEqual(response.status_code, 401)
-
-        # Get formList with username does not require auth and return all xform
-        # with `require_auth=False`
-        response = self.view(request, username=self.user.username)
-        self.assertEqual(response.status_code, 200)
-        # TODO require_auth , add logic
 
     def test_get_xform_list_other_user_with_no_role(self):
         request = self.factory.get('/')
