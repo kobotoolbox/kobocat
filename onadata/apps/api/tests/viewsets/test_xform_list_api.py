@@ -484,8 +484,9 @@ class TestXFormListApiWithAuthRequired(TestXFormListApiBase):
             'get': 'manifest'
         })
         request = self.factory.get('/')
-        # Not auth required but XForm cannot be found except if `required_auth` is True
-        # See `test_retrieve_xform_manifest_anonymous_user()`
+        # Not auth required but XForm cannot be found except if `required_auth`
+        # is True.
+        # See `TestXFormListApiWithoutAuthRequired.test_retrieve_xform_manifest()`
         response = self.view(request, pk=self.xform.pk, username=self.user.username)
         self.assertEqual(response.status_code, 404)
 
