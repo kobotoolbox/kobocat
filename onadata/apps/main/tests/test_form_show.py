@@ -3,7 +3,6 @@ import os
 
 from django.core.files.base import ContentFile
 from django.urls import reverse
-from django_digest.test import Client as DigestClient
 
 from onadata import koboform
 from onadata.apps.logger.models import XForm

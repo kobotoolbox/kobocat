@@ -2,16 +2,12 @@
 import os
 import re
 
-import pytest
-from django.conf import settings
 from django.http import Http404
 from django_digest.test import DigestAuth
 from django_digest.test import Client as DigestClient
 from guardian.shortcuts import assign_perm
-from kobo_service_account.utils import get_request_headers
 from mock import patch
 
-from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.models.user_profile import UserProfile
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance

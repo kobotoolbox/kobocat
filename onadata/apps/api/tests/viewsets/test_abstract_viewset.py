@@ -9,7 +9,6 @@ from django.contrib.auth.models import (
 )
 from django.test import TestCase
 from django.test.client import Client
-from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
 from kobo_service_account.utils import get_request_headers
 from rest_framework.reverse import reverse
