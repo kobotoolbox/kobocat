@@ -63,12 +63,6 @@ class UserProfile(models.Model):
             ('view_profile', "Can view user profile"),
         )
 
-    def save(self, *args, **kwargs):
-        if not self.require_auth:
-            raise ValueError('`require_auth` cannot be False')
-
-        super().save(*args, **kwargs)
-
 
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
