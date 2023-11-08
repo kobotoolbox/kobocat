@@ -67,14 +67,6 @@ def restore_require_auth_at_profile_level(apps, schema_editor):
     if settings.SKIP_HEAVY_MIGRATIONS:
         return
 
-    print(
-        """
-        This migration might take a while. If it is too slow, you may want to
-        re-run migrations with SKIP_HEAVY_MIGRATIONS=True and apply this one
-        manually from the django shell.
-        """
-    )
-
     XForm = apps.get_model('logger', 'XForm')  # noqa
     UserProfile = apps.get_model('main', 'UserProfile')  # noqa
 
@@ -90,6 +82,14 @@ def set_require_auth_at_project_level(apps, schema_editor):
 
     if settings.SKIP_HEAVY_MIGRATIONS:
         return
+
+    print(
+        """
+        This migration might take a while. If it is too slow, you may want to
+        re-run migrations with SKIP_HEAVY_MIGRATIONS=True and apply this one
+        manually from the django shell.
+        """
+    )
 
     XForm = apps.get_model('logger', 'XForm')  # noqa
     UserProfile = apps.get_model('main', 'UserProfile')  # noqa
