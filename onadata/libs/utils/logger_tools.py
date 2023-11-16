@@ -738,6 +738,7 @@ def get_soft_deleted_attachments(instance: Instance) -> list[Attachment]:
     #  Bug comes from `get_xform_media_question_xpaths()`
     queryset = Attachment.objects.filter(instance=instance).exclude(
         Q(media_file_basename__in=basenames)
+        | Q(media_file_basename__endswith='.enc')
         | Q(media_file_basename='audit.csv')
         | Q(media_file_basename__regex=r'^\d{10,}\.(m4a|amr)$')
     )
