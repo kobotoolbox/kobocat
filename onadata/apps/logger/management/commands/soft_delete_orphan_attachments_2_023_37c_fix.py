@@ -46,6 +46,7 @@ class Command(BaseCommand):
 
         queryset = Attachment.all_objects.filter(
             Q(media_file_basename='audit.csv')
+            | Q(media_file_basename__endswith='.enc')
             | Q(media_file_basename__regex=r'^\d{10,}\.(m4a|amr)$'),
             deleted_at__isnull=False,
         )
@@ -58,6 +59,7 @@ class Command(BaseCommand):
 
         att_queryset = Attachment.all_objects.filter(
             Q(media_file_basename='audit.csv')
+            | Q(media_file_basename__endswith='.enc')
             | Q(media_file_basename__regex=r'^\d{10,}\.(m4a|amr)$')
         )
         if not force:
@@ -82,6 +84,7 @@ class Command(BaseCommand):
                 )
             Attachment.all_objects.filter(
                 Q(media_file_basename='audit.csv')
+                | Q(media_file_basename__endswith='.enc')
                 | Q(media_file_basename__regex=r'^\d+\.(m4a|amr)$'),
                 instance_id=instance.pk,
             ).update(deleted_at=None)
