@@ -16,3 +16,4 @@ class ServiceHealthMinimalTestCase(TestCase):
 
         # Ensure that no database queries were executed
         self.assertNumQueries(0)
+        
