@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.contrib import admin
 
-from django.urls import include, re_path
+from django.urls import include, re_path, path
 from django.views.generic import RedirectView
 from django.views.i18n import JavaScriptCatalog
 
@@ -37,7 +37,7 @@ urlpatterns = [
     re_path('^api/v1/', include(router.urls)),
     re_path('^api/v1/', include(router_with_patch_list.urls)),
     re_path(r'^service_health/$', service_health),
-    re_path(r'^service_health/minimal/$', service_health_minimal, name='service-health-minimal'),
+    path(r'^service_health/minimal/$', service_health_minimal, name='service-health-minimal'),
     re_path(r'^api/', RedirectView.as_view(url='/api/v1/')),
     re_path(r'^api/v1', RedirectView.as_view(url='/api/v1/')),
 
