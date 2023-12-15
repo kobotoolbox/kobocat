@@ -8,6 +8,8 @@ include:
 
 build:
   stage: build_test
+  # Please un-pin the version (24.0.6) once the following GitLab issue is resolved:
+  # https://gitlab.com/gitlab-com/gl-infra/production/-/issues/17283
   image: docker:24.0.6
   services:
     - docker:24.0.6-dind
