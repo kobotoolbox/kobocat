@@ -8,9 +8,9 @@ include:
 
 build:
   stage: build_test
-  image: docker
+  image: docker:24.0.6
   services:
-    - docker:dind
+    - docker:24.0.6-dind
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
