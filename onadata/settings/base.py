@@ -295,6 +295,7 @@ AUTH_PROFILE_MODULE = 'onadata.apps.main.UserProfile'
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 # Make Django use NGINX $host. Useful when running with ./manage.py runserver_plus
@@ -308,9 +309,9 @@ if os.getenv("USE_X_FORWARDED_HOST", "False") == "True":
 CSRF_COOKIE_HTTPONLY = True
 # SESSION_COOKIE_HTTPONLY is more useful, but it defaults to True.
 
-if env.str('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+# if env.str('PUBLIC_REQUEST_SCHEME', '').lower() == 'https':
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
 SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', False)
