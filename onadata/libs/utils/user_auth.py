@@ -2,9 +2,9 @@
 import re
 from functools import wraps
 
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import get_object_or_404
 from guardian.shortcuts import get_perms_for_model, assign_perm
@@ -25,7 +25,7 @@ class HttpResponseNotAuthorized(HttpResponse):
     def __init__(self):
         HttpResponse.__init__(self)
         self['WWW-Authenticate'] =\
-            'Basic realm="%s"' % Site.objects.get_current().name
+            'Basic realm="%s"' % settings.KOBOCAT_PUBLIC_HOSTNAME
 
 
 def check_and_set_user(request, username):
