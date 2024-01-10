@@ -4,12 +4,10 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import migrations
-from redis import Redis
+from django_redis import get_redis_connection
 
 
 CHUNK_SIZE = 2000
-
-redis_client = Redis.from_url(settings.ENKETO_REDIS_MAIN_URL)
 
 
 def restore_open_rosa_server_in_redis(apps, schema_editor):
@@ -28,7 +26,7 @@ def restore_open_rosa_server_in_redis(apps, schema_editor):
     XForm = apps.get_model('logger', 'XForm')  # noqa
 
     parsed_url = urlparse(settings.KOBOCAT_URL)
-    server_url = f"{settings.KOBOCAT_URL.rstrip('/')}"
+    server_url = settings.KOBOCAT_URL.rstrip('/')
 
     xforms_iter = (
         XForm.objects.filter(require_auth=False)
@@ -59,6 +57,7 @@ def restore_open_rosa_server_in_redis(apps, schema_editor):
                 end
             end
         """
+        redis_client = get_redis_connection('enketo_redis_main')
         pipeline = redis_client.pipeline()
         pipeline.eval(lua_script, 0)
         pipeline.execute()
@@ -66,18 +65,26 @@ def restore_open_rosa_server_in_redis(apps, schema_editor):
 
 def restore_require_auth_at_profile_level(apps, schema_editor):
 
-    if settings.SKIP_HEAVY_MIGRATIONS:
-        return
-
-    XForm = apps.get_model('logger', 'XForm')  # noqa
-    UserProfile = apps.get_model('main', 'UserProfile')  # noqa
-
-    UserProfile.objects.filter(
-        user_id__in=XForm.objects.filter(require_auth=False).values_list(
-            'user_id'
-        )
-    ).update(require_auth=False)
-    XForm.objects.filter(require_auth=True).update(require_auth=False)
+    print(
+        """
+        Restoring authentication at the profile level cannot be done 
+        automatically. 
+        
+        This is an example of what can be done:
+        ⚠️ WARNING ⚠️ The example below makes all projects publicly 
+        accessible when profile level is restored even if, at least, one project
+        was publicly accessible at project level.
+        
+        ```python
+        UserProfile.objects.filter(
+            user_id__in=XForm.objects.filter(require_auth=False).values_list(
+                'user_id'
+            )
+        ).update(require_auth=False)
+        XForm.objects.filter(require_auth=True).update(require_auth=False)
+        ```
+        """
+    )
 
 
 def set_require_auth_at_project_level(apps, schema_editor):
@@ -141,6 +148,7 @@ def update_open_rosa_server_in_redis(apps, schema_editor):
                 end
             end
         """
+        redis_client = get_redis_connection('enketo_redis_main')
         pipeline = redis_client.pipeline()
         pipeline.eval(lua_script, 0)
         pipeline.execute()

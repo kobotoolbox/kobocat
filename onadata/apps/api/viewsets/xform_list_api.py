@@ -87,7 +87,8 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
                 # including those shared by other users
                 queryset = super().filter_queryset(queryset)
         else:
-            # Only returns non-secured projects with URL starts with username
+            # Only return projects that allow anonymous submissions when path
+            # starts with a username
             queryset = queryset.filter(
                 user__username=username.lower(), require_auth=False
             )
@@ -110,8 +111,6 @@ class XFormListApi(viewsets.ReadOnlyModelViewSet):
 
         if request.method == 'HEAD':
             return self.get_response_for_head_request()
-
-
 
         serializer = self.get_serializer(
             object_list, many=True, require_auth=not bool(kwargs.get('username'))

@@ -27,6 +27,7 @@ def formList(*args, **kwargs):  # noqa
 def xformsDownload(*args, **kwargs):  # noqa
     view = XFormListApi.as_view({'get': 'retrieve'})
     response = view(*args, **kwargs)
+    response.render()
     return response
 
 def xformsManifest(*args, **kwargs):  # noqa
@@ -61,7 +62,6 @@ def form_list_xml(url, request, **kwargs):
         res = formList(req)
     elif url.path.endswith('form.xml'):
         res = xformsDownload(req, pk=xform_id)
-        res.render()
     elif url.path.find('xformsManifest') > -1:
         res = xformsManifest(req, pk=xform_id)
     elif url.path.find('xformsMedia') > -1:

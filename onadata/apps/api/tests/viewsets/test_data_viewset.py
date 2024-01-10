@@ -355,7 +355,7 @@ class TestDataViewSet(TestBase):
             self.assertTrue(
                 response.data[0].startswith(
                     'Cannot edit submissions while "Require authentication '
-                    'to see forms and submit data" is disabled for your '
+                    'to see form and submit data" is disabled for your '
                     'project'
                 )
             )

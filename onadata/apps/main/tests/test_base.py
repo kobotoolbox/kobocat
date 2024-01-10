@@ -78,7 +78,7 @@ class TestBase(RequestMixin, MakeSubmissionMixin, TestCase):
         self.login_password = password
         self.user = self._create_user(username, password)
 
-        # create user profile and set require_auth to false for tests
+        # create user profile if it does not exist
         UserProfile.objects.get_or_create(user=self.user)
 
         self.client = self._login(username, password)

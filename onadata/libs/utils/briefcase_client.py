@@ -346,10 +346,10 @@ class BriefcaseClient:
             if form_xml in form_files:
                 form_xml_path = os.path.join(dir_path, form_xml)
                 x = self._upload_xform(form_xml_path, form_xml)
-                # if isinstance(x, dict):
-                #     self.logger.error("Failed to publish %s" % form_dir)
-                # else:
-                #     self.logger.debug("Successfully published %s" % form_dir)
+                if isinstance(x, dict):
+                    self.logger.error("Failed to publish %s" % form_dir)
+                else:
+                    self.logger.debug("Successfully published %s" % form_dir)
             if 'instances' in form_dirs:
                 self.logger.debug("Uploading instances")
                 c = self._upload_instances(os.path.join(dir_path, 'instances'))

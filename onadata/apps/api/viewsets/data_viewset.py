@@ -648,15 +648,6 @@ Delete a specific submission in a form
         permission_classes=[EnketoSubmissionEditPermissions],
     )
     def enketo_edit(self, request, *args, **kwargs):
-        """
-        Trying to edit in Enketo while `profile.require_auth == False` leads to
-        an infinite authentication loop because Enketo never sends credentials
-        unless it receives a 401 response to an unauthenticated HEAD request.
-        There's no way to send such a response for editing only while
-        simultaneously allowing anonymous submissions to the same endpoint.
-        Avoid the infinite loop by blocking doomed requests here and returning
-        a helpful error message.
-        """
         return self._enketo_request(request, action_='edit', *args, **kwargs)
 
     @action(
@@ -678,9 +669,17 @@ Delete a specific submission in a form
                 raise ParseError(t('`return_url` not provided.'))
 
             if not object_.xform.require_auth and action_ == 'edit':
+                # Trying to edit in Enketo while `xform.require_auth == False`
+                # leads to an infinite authentication loop because Enketo never
+                # sends credentials unless it receives a 401 response to an
+                # unauthenticated HEAD request.
+                # There's no way to send such a response for editing only while
+                # simultaneously allowing anonymous submissions to the same endpoint.
+                # Avoid the infinite loop by blocking doomed requests here and
+                # returning a helpful error message.
                 raise ValidationError(t(
                     'Cannot edit submissions while "Require authentication to '
-                    'see forms and submit data" is disabled for your project'
+                    'see form and submit data" is disabled for your project'
                 ))
 
             try:

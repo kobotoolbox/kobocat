@@ -98,13 +98,9 @@ def check_submission_permissions(
     """
     Check that permission is required and the request user has permission.
 
-    The user does not have permissions if:
-        * the user is authed,
-        * the form require auth,
-        * the xform user is not submitting.
-
-    Since we have a username, the Instance creation logic will
-    handle checking for the forms existence by its id_string.
+    If the form does not require auth, anyone can submit, regardless of whether
+    they are authenticated. Otherwise, if the form does require auth, the
+    user must be the owner or have CAN_ADD_SUBMISSIONS.
 
     :returns: None.
     :raises: PermissionDenied based on the above criteria.

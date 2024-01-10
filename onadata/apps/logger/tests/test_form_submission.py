@@ -438,8 +438,7 @@ class TestFormSubmission(TestBase):
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
         )
-        # …without "Require authentication to see forms and submit data"
-        # self.assertFalse(self.user.profile.require_auth)
+        # …without "Require authentication to see form and submit data"
         self.xform.require_auth = False
         self.xform.save(update_fields=['require_auth'])
 
@@ -475,8 +474,6 @@ class TestFormSubmission(TestBase):
         impossible to support authenticated editing and anonymous (new)
         submissions at the same time.
         """
-
-        # self.assertFalse(self.user.profile.require_auth)
 
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -576,7 +573,7 @@ class TestFormSubmission(TestBase):
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
         )
-        # …without "Require authentication to see forms and submit data"
+        # …without "Require authentication to see form and submit data"
         self.xform.require_auth = False
         self.xform.save(update_fields=['require_auth'])
         self._make_submission(

@@ -484,10 +484,11 @@ class TestXFormListApiWithAuthRequired(TestXFormListApiBase):
             'get': 'manifest'
         })
         request = self.factory.get('/')
-        # Not auth required but XForm cannot be found except if `required_auth`
-        # is True.
-        # See `TestXFormListApiWithoutAuthRequired.test_retrieve_xform_manifest()`
         response = self.view(request, pk=self.xform.pk, username=self.user.username)
+        # The project (self.xform) requires auth by default. Anonymous user cannot
+        # access it. It is also true for the project manifest, thus anonymous
+        # should receive a 404.
+        # See `TestXFormListApiWithoutAuthRequired.test_retrieve_xform_manifest()`
         self.assertEqual(response.status_code, 404)
 
     def test_head_xform_manifest(self):

@@ -108,7 +108,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         uuid = _extract_uuid(form_id)
 
         obj = get_instance_or_404(
-            xform__id_string__exact=id_string,
+            xform__id_string=id_string,
             uuid=uuid,
         )
         self.check_object_permissions(self.request, obj.xform)
@@ -118,7 +118,8 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
         if username is None:
-            # If no username is specified, the request must be authenticated
+            # Briefcase does not allow anonymous access, user should always be
+            # authenticated
             if self.request.user.is_anonymous:
                 # raises a permission denied exception, forces authentication
                 self.permission_denied(self.request)
@@ -127,20 +128,20 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
                 # including those shared by other users
                 queryset = super().filter_queryset(queryset)
         else:
-            raise exceptions.PermissionDenied(
-                detail=t(
-                    'Cannot access non secure URL. Remove username from '
-                    'aggregate server URL in configuration settings.'
-                ),
-                code=status.HTTP_403_FORBIDDEN,
-            )
+            # With the advent of project-level anonymous access in #904, Briefcase
+            # requests must no longer use endpoints whose URLs contain usernames.
+            # Ideally, Briefcase would display error messages returned by this method,
+            # but sadly that is not the case.
+            # Raise an empty PermissionDenied since it's impossible to have
+            # Briefcase display any guidance.
+            raise exceptions.PermissionDenied()
 
         form_id = self.request.GET.get('formId', '')
 
         if form_id.find('[') != -1:
             form_id = _extract_id_string(form_id)
 
-        xform = get_object_or_404(queryset, id_string__exact=form_id)
+        xform = get_object_or_404(queryset, id_string=form_id)
         self.check_object_permissions(self.request, xform)
         instances = Instance.objects.filter(xform=xform).order_by('pk')
         num_entries = self.request.GET.get('numEntries')
@@ -172,17 +173,14 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         xform_def = request.FILES.get('form_def_file', None)
         response_status = status.HTTP_201_CREATED
-        if username := kwargs.get('username'):
-            raise exceptions.PermissionDenied(
-                detail=t(
-                    'Cannot User %(user)s has no permission to add xforms to '
-                    'account %(account)s'
-                    % {
-                        'user': request.user.username,
-                        'account': username,
-                    }
-                )
-            )
+        # With the advent of project-level anonymous access in #904, Briefcase
+        # requests must no longer use endpoints whose URLs contain usernames.
+        # Ideally, Briefcase would display error messages returned by this method,
+        # but sadly that is not the case.
+        # Raise an empty PermissionDenied since it's impossible to have
+        # Briefcase display any guidance.
+        if kwargs.get('username'):
+            raise exceptions.PermissionDenied()
 
         data = {}
 

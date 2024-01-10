@@ -203,11 +203,11 @@ INSTALLED_APPS = [
     'django_digest',
     'corsheaders',
     'oauth2_provider',
+    'onadata.apps.logger.LoggerAppConfig',
     'rest_framework',
     'rest_framework.authtoken',
     'taggit',
     'readonly',
-    'onadata.apps.logger.LoggerAppConfig',
     'onadata.apps.viewer',
     'onadata.apps.main',
     'onadata.apps.restservice',
@@ -395,6 +395,7 @@ SESSION_REDIS = {
 CACHES = {
     # Set CACHE_URL to override. Only redis is supported.
     'default': env.cache(default='redis://redis_cache:6380/3'),
+    'enketo_redis_main': env.cache('ENKETO_REDIS_MAIN_URL', None),
 }
 
 DIGEST_NONCE_BACKEND = 'onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage'
@@ -755,8 +756,6 @@ ENKETO_API_INSTANCE_IFRAME_URL = ENKETO_URL + ENKETO_API_ROOT + ENKETO_API_ENDPO
 # `ENKETO_PROTOCOL` variable is overridden when internal domain name is used.
 # All internal communications between containers must be HTTP only.
 ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
-
-ENKETO_REDIS_MAIN_URL = os.environ.get('ENKETO_REDIS_MAIN_URL', 'redis://localhost:6379/')
 
 
 ################################
