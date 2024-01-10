@@ -33,6 +33,7 @@ test:
     POSTGRES_PASSWORD: kobo
     POSTGRES_DB: kobocat_test
     SERVICE_ACCOUNT_BACKEND_URL: redis://redis_cache:6379/4
+    ENKETO_REDIS_MAIN_URL: redis://redis_cache:6379/0
   services:
     - name: postgis/postgis:14-3.2
       alias: postgres
