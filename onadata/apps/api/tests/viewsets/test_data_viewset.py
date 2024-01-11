@@ -145,11 +145,6 @@ class TestDataViewSet(TestBase):
                          response.data)
 
     def test_data_anon(self):
-        # By default, `_create_user_and_login()` creates users without
-        # authentication required. We force it when submitting data to persist
-        # collector's username because this test expects it.
-        # See `_submitted_data` in `data` below
-        self._set_require_auth(True)
         self._make_submissions()
         view = DataViewSet.as_view({'get': 'list'})
         request = self.factory.get('/')
@@ -341,15 +336,18 @@ class TestDataViewSet(TestBase):
         less-bad option is to reject edit requests with an explicit error
         message when anonymous submissions are enabled.
         """
-        self.assertFalse(self.user.profile.require_auth)
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+        self.assertFalse(self.xform.require_auth)
         self._make_submissions()
+
         for view_ in ['enketo', 'enketo_edit']:
             view = DataViewSet.as_view({'get': view_})
             formid = self.xform.pk
             dataid = self.xform.instances.all().order_by('id')[0].pk
             request = self.factory.get(
                 '/',
-                data={'return_url': "http://test.io/test_url"},
+                data={'return_url': 'http://test.io/test_url'},
                 **self.extra
             )
             response = view(request, pk=formid, dataid=dataid)
@@ -357,14 +355,12 @@ class TestDataViewSet(TestBase):
             self.assertTrue(
                 response.data[0].startswith(
                     'Cannot edit submissions while "Require authentication '
-                    'to see forms and submit data" is disabled for your '
-                    'account'
+                    'to see form and submit data" is disabled for your '
+                    'project'
                 )
             )
 
     def test_get_enketo_edit_url(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
         self._make_submissions()
         for view_ in ['enketo', 'enketo_edit']:
             # ensure both legacy `/enketo` and the new `/enketo_edit` endpoints
@@ -448,7 +444,6 @@ class TestDataViewSet(TestBase):
                          response_first_element)
 
     def test_data_w_attachment(self):
-        self._set_require_auth(auth=True)
         self._submit_transport_instance_w_attachment()
 
         view = DataViewSet.as_view({'get': 'list'})

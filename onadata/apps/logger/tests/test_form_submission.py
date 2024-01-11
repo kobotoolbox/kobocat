@@ -2,16 +2,12 @@
 import os
 import re
 
-import pytest
-from django.conf import settings
 from django.http import Http404
 from django_digest.test import DigestAuth
 from django_digest.test import Client as DigestClient
 from guardian.shortcuts import assign_perm
-from kobo_service_account.utils import get_request_headers
 from mock import patch
 
-from onadata.apps.api.viewsets.xform_viewset import XFormViewSet
 from onadata.apps.main.models.user_profile import UserProfile
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Instance
@@ -90,50 +86,48 @@ class TestFormSubmission(TestBase):
 
     def test_submission_to_require_auth_anon(self):
         """
-        test submission to a private form by non-owner without perm is
-        forbidden.
+        test submission anonymous cannot submit to a private form
         """
-        view = XFormViewSet.as_view({
-            'patch': 'partial_update'
-        })
-        data = {'require_auth': True}
-        self.assertFalse(self.xform.require_auth)
-        service_account_meta = self.get_meta_from_headers(
-            get_request_headers(self.user.username)
+        xml_submission_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../fixtures/tutorial/instances/tutorial_2012-06-27_11-27-53.xml"
         )
-        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
-        request = self.factory.patch('/', data=data, **service_account_meta)
-        view(request, pk=self.xform.id)
-        self.xform.reload()
-        self.assertTrue(self.xform.require_auth)
+
+        # Anonymous should authenticate when submit data to `/<username>/submission`
+        self._make_submission(
+            xml_submission_file_path, auth=False, assert_success=False
+        )
+        self.assertEqual(self.response.status_code, 401)
+
+        # …or `/submission`
+        self._make_submission(
+            xml_submission_file_path,
+            username='',
+            auth=False,
+            assert_success=False,
+        )
+        self.assertEqual(self.response.status_code, 401)
+
+    def test_submission_to_not_required_auth_as_anonymous_user(self):
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
 
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "../fixtures/tutorial/instances/tutorial_2012-06-27_11-27-53.xml"
         )
 
-        self._make_submission(xml_submission_file_path)
-        self.assertEqual(self.response.status_code, 403)
+        # Anonymous should be able to submit data
+        self._make_submission(
+            xml_submission_file_path, auth=False, assert_success=False
+        )
+        self.assertEqual(self.response.status_code, 201)
 
     def test_submission_to_require_auth_without_perm(self):
         """
         test submission to a private form by non-owner without perm is
         forbidden.
         """
-        view = XFormViewSet.as_view({
-            'patch': 'partial_update'
-        })
-        data = {'require_auth': True}
-        self.assertFalse(self.xform.require_auth)
-        service_account_meta = self.get_meta_from_headers(
-            get_request_headers(self.user.username)
-        )
-        service_account_meta['HTTP_HOST'] = settings.TEST_HTTP_HOST
-        request = self.factory.patch('/', data=data, **service_account_meta)
-        view(request, pk=self.xform.id)
-        self.xform.reload()
-        self.assertTrue(self.xform.require_auth)
-
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             '../fixtures/tutorial/instances/tutorial_2012-06-27_11-27-53.xml'
@@ -143,31 +137,13 @@ class TestFormSubmission(TestBase):
         username = 'alice'
         self._create_user(username, username)
         self._make_submission(
-            xml_submission_file_path, auth=DigestAuth('alice', 'alice')
+            xml_submission_file_path,
+            auth=DigestAuth('alice', 'alice'),
+            assert_success=False,
         )
         self.assertEqual(self.response.status_code, 403)
 
-    @pytest.mark.skip(reason='Send authentication challenge when xform.require_auth is set')
     def test_submission_to_require_auth_with_perm(self):
-        """
-        test submission to a private form by non-owner is forbidden.
-
-        TODO send authentication challenge when xform.require_auth is set.
-        This is non-trivial because we do not know the xform until we have
-        parsed the XML.
-        """
-
-        view = XFormViewSet.as_view({
-            'patch': 'partial_update'
-        })
-        data = {'require_auth': True}
-        self.assertFalse(self.xform.require_auth)
-        request = self.factory.patch('/', data=data, **{
-            'HTTP_AUTHORIZATION': 'Token %s' % self.user.auth_token})
-        view(request, pk=self.xform.id)
-        self.xform.reload()
-        self.assertTrue(self.xform.require_auth)
-
         # create a new user
         username = 'alice'
         alice = self._create_user(username, username)
@@ -189,7 +165,9 @@ class TestFormSubmission(TestBase):
             "../fixtures/tutorial/instances/"
             "tutorial_invalid_id_string_2012-06-27_11-27-53.xml"
         )
-        self._make_submission(path=xml_submission_file_path)
+        self._make_submission(
+            path=xml_submission_file_path, assert_success=False
+        )
         self.assertEqual(self.response.status_code, 404)
 
     def test_duplicate_submissions(self):
@@ -220,8 +198,6 @@ class TestFormSubmission(TestBase):
             "..", "fixtures", "tutorial", "instances",
             "tutorial_unicode_submission.xml"
         )
-        self.user.profile.require_auth = True
-        self.user.profile.save()
 
         # create a new user
         alice = self._create_user('alice', 'alice')
@@ -365,7 +341,9 @@ class TestFormSubmission(TestBase):
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_bad_id_string.xml"
         )
-        self._make_submission(path=xml_submission_file_path)
+        self._make_submission(
+            path=xml_submission_file_path, assert_success=False
+        )
         self.assertEqual(self.response.status_code, 404)
 
     def test_edit_updated_geopoint_cache(self):
@@ -406,9 +384,6 @@ class TestFormSubmission(TestBase):
         self.assertEqual(float(gps[1]), float(cached_geopoint[1]))
 
     def test_submission_when_requires_auth(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-
         # create a new user
         alice = self._create_user('alice', 'alice')
 
@@ -425,9 +400,6 @@ class TestFormSubmission(TestBase):
         self.assertEqual(self.response.status_code, 201)
 
     def test_submission_linked_to_reporter(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-
         # create a new user
         alice = self._create_user('alice', 'alice')
         UserProfile.objects.create(user=alice)
@@ -466,18 +438,24 @@ class TestFormSubmission(TestBase):
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
         )
-        # …without "Require authentication to see forms and submit data"
-        self.assertFalse(self.user.profile.require_auth)
-        self._make_submission(xml_submission_file_path, auth=False)
+        # …without "Require authentication to see form and submit data"
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+
+        self._make_submission(
+            xml_submission_file_path, auth=False, assert_success=False
+        )
         self.assertEqual(self.response.status_code, 401)
         self.assertEqual(
             Instance.objects.order_by('pk').last().xml_hash,
             created_instance.xml_hash,
         )
         # …now with "Require authentication to…"
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-        self._make_submission(xml_submission_file_path, auth=False)
+        self.xform.require_auth = True
+        self.xform.save(update_fields=['require_auth'])
+        self._make_submission(
+            xml_submission_file_path, auth=False, assert_success=False
+        )
         self.assertEqual(self.response.status_code, 401)
         self.assertEqual(
             Instance.objects.order_by('pk').last().xml_hash,
@@ -496,8 +474,6 @@ class TestFormSubmission(TestBase):
         impossible to support authenticated editing and anonymous (new)
         submissions at the same time.
         """
-
-        self.assertFalse(self.user.profile.require_auth)
 
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -535,8 +511,6 @@ class TestFormSubmission(TestBase):
         )
 
     def test_authorized_user_can_edit_submissions_with_require_auth(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
 
         xml_submission_file_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -599,18 +573,23 @@ class TestFormSubmission(TestBase):
             "..", "fixtures", "tutorial", "instances",
             "tutorial_2012-06-27_11-27-53_w_uuid_edited.xml"
         )
-        # …without "Require authentication to see forms and submit data"
-        self.assertFalse(self.user.profile.require_auth)
-        self._make_submission(xml_submission_file_path, auth=auth)
+        # …without "Require authentication to see form and submit data"
+        self.xform.require_auth = False
+        self.xform.save(update_fields=['require_auth'])
+        self._make_submission(
+            xml_submission_file_path, auth=auth, assert_success=False
+        )
         self.assertEqual(self.response.status_code, 403)
         self.assertEqual(
             Instance.objects.order_by('pk').last().xml_hash,
             created_instance.xml_hash,
         )
         # …now with "Require authentication to…"
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-        self._make_submission(xml_submission_file_path, auth=auth)
+        self.xform.require_auth = True
+        self.xform.save(update_fields=['require_auth'])
+        self._make_submission(
+            xml_submission_file_path, auth=auth, assert_success=False
+        )
         self.assertEqual(self.response.status_code, 403)
         self.assertEqual(
             Instance.objects.order_by('pk').last().xml_hash,

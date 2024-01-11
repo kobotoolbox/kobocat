@@ -68,7 +68,10 @@ class XForm(BaseModel):
     xml = models.TextField()
 
     user = models.ForeignKey(User, related_name='xforms', null=True, on_delete=models.CASCADE)
-    require_auth = models.BooleanField(default=False)
+    require_auth = models.BooleanField(
+        default=True,
+        verbose_name=t('Require authentication to see form and submit data'),
+    )
     shared = models.BooleanField(default=False)
     shared_data = models.BooleanField(default=False)
     downloadable = models.BooleanField(default=True)
@@ -123,10 +126,10 @@ class XForm(BaseModel):
 
     def url(self):
         return reverse(
-            "download_xform",
+            'download_xform',
             kwargs={
-                "username": self.user.username,
-                "id_string": self.id_string
+                'username': self.user.username,
+                'pk': self.pk
             }
         )
 

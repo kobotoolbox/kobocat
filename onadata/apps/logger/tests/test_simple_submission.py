@@ -4,11 +4,11 @@ from django.test import TestCase, RequestFactory
 from pyxform import SurveyElementBuilder
 
 from onadata.apps.logger.xform_instance_parser import DuplicateInstance
+from onadata.apps.main.models.user_profile import UserProfile
 from onadata.apps.viewer.models.data_dictionary import DataDictionary
 from onadata.libs.utils.logger_tools import (
     create_instance, safe_create_instance
 )
-
 
 class TempFileProxy:
     """
@@ -51,6 +51,8 @@ class TestSimpleSubmission(TestCase):
         self.user = User.objects.create(
             username="admin", email="sample@example.com")
         self.user.set_password("pass")
+        UserProfile.objects.get_or_create(user=self.user)
+
         self.xform1 = DataDictionary()
         self.xform1.user = self.user
         self.xform1.json = '{"id_string": "yes_or_no", "children": [{"name": '\
@@ -72,6 +74,11 @@ class TestSimpleSubmission(TestCase):
         self.assertTrue(self.xform2.has_start_time)
 
     def test_simple_yes_submission(self):
+        # Set require_auth to False to avoid permissions check.
+        # Other tests cover them.
+        self.xform1.require_auth = False
+        self.xform1.save(update_fields=['require_auth'])
+
         self.assertEqual(0, self.xform1.instances.count())
 
         self._submit_simple_yes()
@@ -88,6 +95,11 @@ class TestSimpleSubmission(TestCase):
         *with start_time available* are marked as duplicates when the XML is a
         direct match.
         """
+        # Set require_auth to False to avoid permissions check.
+        # Other tests cover them.
+        self.xform2.require_auth = False
+        self.xform2.save(update_fields=['require_auth'])
+
         self.assertEqual(0, self.xform2.instances.count())
         self._submit_at_hour(11)
         self.assertEqual(1, self.xform2.instances.count())

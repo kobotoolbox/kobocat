@@ -1,12 +1,9 @@
 # coding: utf-8
-import requests
 from django.urls import reverse
-from django_digest.test import DigestAuth
 from django_digest.test import Client as DigestClient
 
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Attachment
-from onadata.apps.viewer.views import attachment_url
 from onadata.libs.utils.storage import rmdir
 
 

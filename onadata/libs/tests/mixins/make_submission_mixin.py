@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django_digest.test import DigestAuth
 from kobo_service_account.utils import get_request_headers
+from rest_framework import status
 from rest_framework.test import APIRequestFactory
 
 from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
@@ -46,6 +47,7 @@ class MakeSubmissionMixin:
         auth: Union[DigestAuth, bool] = None,
         media_file: 'io.BufferedReader' = None,
         use_service_account: bool = False,
+        assert_success: bool = True,
     ):
         """
         Pass `auth=False` for an anonymous request, or omit `auth` to perform
@@ -84,11 +86,22 @@ class MakeSubmissionMixin:
                                             password=auth.password)
             self.response = None  # Reset in case error in viewset below
             self.response = self.submission_view(request, username=username)
+
             if auth and self.response.status_code == 401:
                 f.seek(0)
+                if media_file is not None:
+                    media_file.seek(0)
+
                 request = self.factory.post(url, post_data)
                 request.META.update(auth(request.META, self.response))
                 self.response = self.submission_view(request, username=username)
+
+            if assert_success:
+                assert self.response.status_code in [
+                    status.HTTP_200_OK,
+                    status.HTTP_201_CREATED,
+                    status.HTTP_202_ACCEPTED,
+                ]
 
         if forced_submission_time:
             instance = Instance.objects.order_by('-pk').all()[0]

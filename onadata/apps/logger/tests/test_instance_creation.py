@@ -45,9 +45,7 @@ class TestInstanceCreation(TestCase):
 
     def setUp(self):
         self.user = User.objects.create(username="bob")
-        profile, c = UserProfile.objects.get_or_create(user=self.user)
-        profile.require_auth = False
-        profile.save()
+        _ = UserProfile.objects.get_or_create(user=self.user)
 
         absolute_path = get_absolute_path("forms")
         open_forms = open_all_files(absolute_path)

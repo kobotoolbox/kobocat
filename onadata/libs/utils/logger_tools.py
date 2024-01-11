@@ -36,6 +36,7 @@ from kobo_service_account.utils import get_real_user
 from modilabs.utils.subprocess_timeout import ProcessTimedOut
 from pyxform.errors import PyXFormError
 from pyxform.xform2json import create_survey_element_from_xml
+from rest_framework.exceptions import NotAuthenticated
 from xml.dom import Node
 from wsgiref.util import FileWrapper
 
@@ -97,25 +98,22 @@ def check_submission_permissions(
     """
     Check that permission is required and the request user has permission.
 
-    The user does no have permissions iff:
-        * the user is authed,
-        * either the profile or the form require auth,
-        * the xform user is not submitting.
-
-    Since we have a username, the Instance creation logic will
-    handle checking for the forms existence by its id_string.
+    If the form does not require auth, anyone can submit, regardless of whether
+    they are authenticated. Otherwise, if the form does require auth, the
+    user must be the owner or have CAN_ADD_SUBMISSIONS.
 
     :returns: None.
     :raises: PermissionDenied based on the above criteria.
     """
-    profile = UserProfile.objects.get_or_create(user=xform.user)[0]
+    if not xform.require_auth:
+        # Anonymous submissions are allowed!
+        return
+
+    if request and request.user.is_anonymous:
+        raise NotAuthenticated
+
     if (
         request
-        and (
-            profile.require_auth
-            or xform.require_auth
-            or request.path == '/submission'
-        )
         and xform.user != request.user
         and not request.user.has_perm('report_xform', xform)
     ):
@@ -762,7 +760,7 @@ def _get_instance(
     `update_xform_submission_count()` from doing anything, which avoids locking
     any rows in `logger_xform` or `main_userprofile`.
     """
-    # check if its an edit submission
+    # check if it is an edit submission
     old_uuid = get_deprecated_uuid_from_xml(xml)
     instances = Instance.objects.filter(uuid=old_uuid)
 

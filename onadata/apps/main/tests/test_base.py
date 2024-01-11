@@ -78,10 +78,8 @@ class TestBase(RequestMixin, MakeSubmissionMixin, TestCase):
         self.login_password = password
         self.user = self._create_user(username, password)
 
-        # create user profile and set require_auth to false for tests
-        profile, created = UserProfile.objects.get_or_create(user=self.user)
-        profile.require_auth = False
-        profile.save()
+        # create user profile if it does not exist
+        UserProfile.objects.get_or_create(user=self.user)
 
         self.client = self._login(username, password)
         self.anon = Client()
@@ -222,14 +220,3 @@ class TestBase(RequestMixin, MakeSubmissionMixin, TestCase):
     def _set_mock_time(self, mock_time):
         current_time = timezone.now()
         mock_time.return_value = current_time
-
-    def _set_require_auth(self, auth=True):
-        profile, created = UserProfile.objects.get_or_create(user=self.user)
-        profile.require_auth = auth
-        profile.save()
-
-    def _get_digest_client(self):
-        self._set_require_auth(True)
-        client = DigestClient()
-        client.set_authorization('bob', 'bob', 'Digest')
-        return client

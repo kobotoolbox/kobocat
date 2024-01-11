@@ -47,10 +47,6 @@ class TestInstance(TestBase):
         mock_time.return_value = datetime.utcnow().replace(tzinfo=utc)
         self._publish_transportation_form()
 
-        # make account require phone auth
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-
         # submit instance with a request user
         path = os.path.join(
             self.this_directory, 'fixtures', 'transportation', 'instances',

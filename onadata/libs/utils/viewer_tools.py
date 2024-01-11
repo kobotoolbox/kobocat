@@ -146,8 +146,9 @@ def enketo_url(
     if action == 'view':
         url = f'{url}/view'
 
-    req = requests.post(url, data=values,
-                        auth=(settings.ENKETO_API_TOKEN, ''), verify=False)
+    req = requests.post(
+        url, data=values, auth=(settings.ENKETO_API_TOKEN, ''), verify=False
+    )
 
     if req.status_code in [200, 201]:
         try:
