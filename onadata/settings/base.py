@@ -394,8 +394,10 @@ SESSION_REDIS = {
 
 CACHES = {
     # Set CACHE_URL to override. Only redis is supported.
-    'default': env.cache(default='redis://redis_cache:6380/3'),
-    'enketo_redis_main': env.cache('ENKETO_REDIS_MAIN_URL', None),
+    'default': env.cache_url(default='redis://redis_cache:6380/3'),
+    'enketo_redis_main': env.cache_url(
+        'ENKETO_REDIS_MAIN_URL', default='redis://change-me.invalid/0'
+    ),
 }
 
 DIGEST_NONCE_BACKEND = 'onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage'
