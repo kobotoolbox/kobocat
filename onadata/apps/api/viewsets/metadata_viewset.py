@@ -170,10 +170,11 @@ Accept: image/png </pre>
     def retrieve(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        if isinstance(request.accepted_renderer, MediaFileRenderer) \
-                and self.object.data_file is not None:
-
-            return get_media_file_response(self.object)
+        if (
+            isinstance(request.accepted_renderer, MediaFileRenderer)
+            and self.object.data_file is not None
+        ):
+            return get_media_file_response(self.object, request)
 
         serializer = self.get_serializer(self.object)
 
