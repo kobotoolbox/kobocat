@@ -1,9 +1,10 @@
 # coding: utf-8
 from onadata.apps.restservice.models import RestService
 from onadata.apps.restservice.tasks import service_definition_task
+from onadata.libs.utils.common_tags import HOOK_EVENT
 
 
-def call_service(parsed_instance):
+def call_service(parsed_instance, event=HOOK_EVENT['ON_SUBMIT']):
     # lookup service
     instance = parsed_instance.instance
     rest_services = RestService.objects.filter(xform=instance.xform)
@@ -19,6 +20,7 @@ def call_service(parsed_instance):
             "instance_uuid": instance.uuid,
             "instance_id": instance.id,
             "xml": parsed_instance.instance.xml,
-            "json": parsed_instance.to_dict_for_mongo()
+            "json": parsed_instance.to_dict_for_mongo(),
+            "event": event
         }
         service_definition_task.delay(rest_service.pk, data)
