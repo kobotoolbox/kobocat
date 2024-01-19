@@ -1,9 +1,12 @@
 # coding: utf-8
 import json
+import os
 
 from bson import json_util
 from dateutil import parser
 from django.conf import settings
+from django.core.exceptions import SuspiciousFileOperation
+from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.utils.translation import gettext as t
@@ -265,7 +268,7 @@ class ParsedInstance(models.Model):
             self.USERFORM_ID: '%s_%s' % (
                 self.instance.xform.user.username,
                 self.instance.xform.id_string),
-            ATTACHMENTS: _get_attachments_from_instance(self.instance),
+            ATTACHMENTS: _get_attachments_from_instance(self.instance, d),
             self.STATUS: self.instance.status,
             GEOLOCATION: [self.lat, self.lng],
             SUBMISSION_TIME: self.instance.date_created.strftime(
@@ -397,7 +400,7 @@ class ParsedInstance(models.Model):
         return notes
 
 
-def _get_attachments_from_instance(instance):
+def _get_attachments_from_instance(instance: Instance, instance_dict: dict):
     attachments = []
     for a in instance.attachments.all():
         attachment = dict()
@@ -409,6 +412,20 @@ def _get_attachments_from_instance(instance):
         attachment['instance'] = a.instance.pk
         attachment['xform'] = instance.xform.id
         attachment['id'] = a.id
+        basename = os.path.basename(attachment['filename'])
+        attachment['question_xpath'] = ''
+        for idx, value in enumerate(instance_dict.values()):
+            if not isinstance(value, str):
+                continue
+            try:
+                valid_name = default_storage.get_valid_name(value)
+            except SuspiciousFileOperation:
+                continue
+
+            if valid_name == basename:
+                attachment['question_xpath'] = list(instance_dict)[idx]
+                break
+
         attachments.append(attachment)
 
     return attachments
