@@ -35,6 +35,7 @@ from onadata.libs.utils.user_auth import (
     check_and_set_form_by_id,
     check_and_set_form_by_id_string,
 )
+from onadata.libs.utils.common_tags import HOOK_EVENT
 
 DECIMAL_PRECISION = 2
 
@@ -155,6 +156,8 @@ def add_validation_status_to_instance(
             instance.validation_status = validation_status
             instance.save()
             success = instance.parsed_instance.update_mongo(asynchronous=False)
+            if success:
+                instance.parsed_instance.call_service_event(HOOK_EVENT['ON_VALIDATION_STATUS_CHANGE'])
 
     return success
 
@@ -182,7 +185,10 @@ def get_validation_status(validation_status_uid, asset, username):
 def remove_validation_status_from_instance(instance):
     instance.validation_status = {}
     instance.save()
-    return instance.parsed_instance.update_mongo(asynchronous=False)
+    success = instance.parsed_instance.update_mongo(asynchronous=False)
+    if success:
+        instance.parsed_instance.call_service_event(HOOK_EVENT['ON_VALIDATION_STATUS_CHANGE'])
+    return success
 
 
 def get_media_file_response(
