@@ -49,7 +49,7 @@ def restore_open_rosa_server_in_redis(apps, schema_editor):
         lua_script = f"""
             local keys = {{"{lua_keys}"}}
             for _, key in ipairs(keys) do
-                local redis_real_key = string.sub(key, 1, string.find(key, '|') - 1) 
+                local redis_real_key = string.sub(key, 1, string.find(key, '|') - 1)
                 local username = string.sub(key, string.find(key, '|') + 1, string.len(key))
                 local ee_id = redis.call('get', redis_real_key)
                 if ee_id then
