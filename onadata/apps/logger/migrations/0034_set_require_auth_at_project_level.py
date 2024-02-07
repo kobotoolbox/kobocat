@@ -131,7 +131,7 @@ def update_open_rosa_server_in_redis(apps, schema_editor):
     server_url = settings.KOBOCAT_URL.strip('/')
 
     xforms_iter = (
-        XForm.objects.filter(user__profile__require_auth=False)
+        XForm.objects.filter(require_auth=True)
         .values('id_string', 'user__username')
         .iterator(chunk_size=CHUNK_SIZE)
     )
