@@ -50,11 +50,11 @@ def _extract_uuid(text):
     return text
 
 
-def _extract_id_string(formId):
-    if isinstance(formId, str):
-        return formId[0:formId.find('[')]
+def _extract_id_string(form_id):
+    if isinstance(form_id, str):
+        return form_id[0:form_id.find('[')]
 
-    return formId
+    return form_id
 
 
 def _parse_int(num):
@@ -103,42 +103,45 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         ]
 
     def get_object(self):
-        formId = self.request.GET.get('formId', '')
-        id_string = _extract_id_string(formId)
-        uuid = _extract_uuid(formId)
-        username = self.kwargs.get('username')
+        form_id = self.request.GET.get('formId', '')
+        id_string = _extract_id_string(form_id)
+        uuid = _extract_uuid(form_id)
 
-        obj = get_instance_or_404(xform__user__username__iexact=username,
-                                  xform__id_string__exact=id_string,
-                                  uuid=uuid)
+        obj = get_instance_or_404(
+            xform__id_string=id_string,
+            uuid=uuid,
+        )
         self.check_object_permissions(self.request, obj.xform)
 
         return obj
 
     def filter_queryset(self, queryset):
         username = self.kwargs.get('username')
-        if username is None and self.request.user.is_anonymous:
-            # raises a permission denied exception, forces authentication
-            self.permission_denied(self.request)
-
-        if username is not None and self.request.user.is_anonymous:
-            profile = get_object_or_404(
-                UserProfile, user__username=username.lower())
-
-            if profile.require_auth:
+        if username is None:
+            # Briefcase does not allow anonymous access, user should always be
+            # authenticated
+            if self.request.user.is_anonymous:
                 # raises a permission denied exception, forces authentication
                 self.permission_denied(self.request)
             else:
-                queryset = queryset.filter(user=profile.user)
+                # Return all the forms the currently-logged-in user can access,
+                # including those shared by other users
+                queryset = super().filter_queryset(queryset)
         else:
-            queryset = super().filter_queryset(queryset)
+            # With the advent of project-level anonymous access in #904, Briefcase
+            # requests must no longer use endpoints whose URLs contain usernames.
+            # Ideally, Briefcase would display error messages returned by this method,
+            # but sadly that is not the case.
+            # Raise an empty PermissionDenied since it's impossible to have
+            # Briefcase display any guidance.
+            raise exceptions.PermissionDenied()
 
-        formId = self.request.GET.get('formId', '')
+        form_id = self.request.GET.get('formId', '')
 
-        if formId.find('[') != -1:
-            formId = _extract_id_string(formId)
+        if form_id.find('[') != -1:
+            form_id = _extract_id_string(form_id)
 
-        xform = get_object_or_404(queryset, id_string__exact=formId)
+        xform = get_object_or_404(queryset, id_string=form_id)
         self.check_object_permissions(self.request, xform)
         instances = Instance.objects.filter(xform=xform).order_by('pk')
         num_entries = self.request.GET.get('numEntries')
@@ -154,11 +157,11 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         if instances.count():
             last_instance = instances[instances.count() - 1]
-            self.resumptionCursor = last_instance.pk
+            self.resumption_cursor = last_instance.pk
         elif instances.count() == 0 and cursor:
-            self.resumptionCursor = cursor
+            self.resumption_cursor = cursor
         else:
-            self.resumptionCursor = 0
+            self.resumption_cursor = 0
 
         return instances
 
@@ -170,23 +173,19 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         xform_def = request.FILES.get('form_def_file', None)
         response_status = status.HTTP_201_CREATED
-        username = kwargs.get('username')
-        form_user = (username and get_object_or_404(User, username=username)) \
-            or request.user
+        # With the advent of project-level anonymous access in #904, Briefcase
+        # requests must no longer use endpoints whose URLs contain usernames.
+        # Ideally, Briefcase would display error messages returned by this method,
+        # but sadly that is not the case.
+        # Raise an empty PermissionDenied since it's impossible to have
+        # Briefcase display any guidance.
+        if kwargs.get('username'):
+            raise exceptions.PermissionDenied()
 
-        if not request.user.has_perm(
-            'can_add_xform',
-            UserProfile.objects.get_or_create(user=form_user)[0]
-        ):
-            raise exceptions.PermissionDenied(
-                detail=t("User %(user)s has no permission to add xforms to "
-                         "account %(account)s" %
-                         {'user': request.user.username,
-                          'account': form_user.username}))
         data = {}
 
         if isinstance(xform_def, File):
-            do_form_upload = DoXmlFormUpload(xform_def, form_user)
+            do_form_upload = DoXmlFormUpload(xform_def, request.user)
             dd = publish_form(do_form_upload.publish)
 
             if isinstance(dd, XForm):
@@ -205,24 +204,27 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
                         template_name=self.template_name)
 
     def list(self, request, *args, **kwargs):
-        self.object_list = self.filter_queryset(self.get_queryset())
+        object_list = self.filter_queryset(self.get_queryset())
 
-        data = {'instances': self.object_list,
-                'resumptionCursor': self.resumptionCursor}
+        data = {
+            'instances': object_list,
+            'resumptionCursor': self.resumption_cursor,
+        }
 
-        return Response(data,
-                        headers=self.get_openrosa_headers(request,
-                                                          location=False),
-                        template_name='submissionList.xml')
+        return Response(
+            data,
+            headers=self.get_openrosa_headers(request, location=False),
+            template_name='submissionList.xml',
+        )
 
     def retrieve(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        instance = self.get_object()
 
-        submission_xml_root_node = self.object.get_root_node()
+        submission_xml_root_node = instance.get_root_node()
         submission_xml_root_node.setAttribute(
-            'instanceID', 'uuid:%s' % self.object.uuid)
+            'instanceID', 'uuid:%s' % instance.uuid)
         submission_xml_root_node.setAttribute(
-            'submissionDate', self.object.date_created.isoformat()
+            'submissionDate', instance.date_created.isoformat()
         )
 
         # Added this because of https://github.com/onaio/onadata/pull/2139
@@ -236,7 +238,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
         data = {
             'submission_data': submission_xml_root_node.toxml(),
-            'media_files': Attachment.objects.filter(instance=self.object),
+            'media_files': Attachment.objects.filter(instance=instance),
             'host': request.build_absolute_uri().replace(
                 request.get_full_path(), '')
         }
@@ -248,21 +250,23 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
 
     @action(detail=True, methods=['GET'])
     def manifest(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        xform = self.get_object()
         object_list = MetaData.objects.filter(
-            data_type__in=MetaData.MEDIA_FILES_TYPE, xform=self.object
+            data_type__in=MetaData.MEDIA_FILES_TYPE, xform=xform
         )
         context = self.get_serializer_context()
-        serializer = XFormManifestSerializer(object_list, many=True,
-                                             context=context)
+        serializer = XFormManifestSerializer(
+            object_list, many=True, context=context
+        )
 
-        return Response(serializer.data,
-                        headers=self.get_openrosa_headers(request,
-                                                          location=False))
+        return Response(
+            serializer.data,
+            headers=self.get_openrosa_headers(request, location=False),
+        )
 
     @action(detail=True, methods=['GET'])
     def media(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        xform = self.get_object()
         pk = kwargs.get('metadata')
 
         if not pk:
@@ -271,7 +275,7 @@ class BriefcaseApi(OpenRosaHeadersMixin, mixins.CreateModelMixin,
         meta_obj = get_object_or_404(
             MetaData,
             data_type__in=MetaData.MEDIA_FILES_TYPE,
-            xform=self.object,
+            xform=xform,
             pk=pk,
         )
 

@@ -43,6 +43,8 @@ class TestAttachmentViewSet(TestAbstractViewSet):
 
         alice_profile = self._create_user_profile(alice_profile_data)
         self.alice = alice_profile.user
+        # re-assign `self.user` and `self.profile_data` to bob
+        self._login_user_and_profile(self.default_profile_data.copy())
 
     def _retrieve_view(self, auth_headers):
         self._submit_transport_instance_w_attachment()

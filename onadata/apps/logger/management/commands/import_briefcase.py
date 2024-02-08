@@ -23,7 +23,6 @@ class Command(BaseCommand):
         parser.add_argument('--to',
                             help="username in this server")
 
-
     def handle(self, *args, **kwargs):
         url = kwargs.get('url')
         username = kwargs.get('username')

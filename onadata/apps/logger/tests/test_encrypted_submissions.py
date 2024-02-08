@@ -3,9 +3,9 @@ import os
 
 from django.urls import reverse
 from django.contrib.auth import authenticate
+from django_digest.test import DigestAuth
 from rest_framework.test import APIRequestFactory
 
-from onadata.apps.api.viewsets.xform_submission_api import XFormSubmissionApi
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.apps.logger.models import Attachment
 from onadata.apps.logger.models import Instance
@@ -39,16 +39,26 @@ class TestEncryptedForms(TestBase):
         count = Instance.objects.count()
         attachments_count = Attachment.objects.count()
 
+        username = self.user.username  # bob
+
         with open(files['submission.xml.enc'], 'rb') as ef:
             with open(files['submission.xml'], 'rb') as f:
                 post_data = {
                     'xml_submission_file': f,
                     'submission.xml.enc': ef}
                 self.factory = APIRequestFactory()
+                auth = DigestAuth(username, username)
                 request = self.factory.post(self._submission_url, post_data)
-                request.user = authenticate(username='bob',
-                                            password='bob')
-                response = self.submission_view(request, username=self.user.username)
+                request.user = authenticate(username=auth.username, password=auth.password)
+                response = self.submission_view(request, username=username)
+                self.assertEqual(response.status_code, 401)
+
+                f.seek(0)
+                ef.seek(0)
+
+                request = self.factory.post(self._submission_url, post_data)
+                request.META.update(auth(request.META, response))
+                response = self.submission_view(request, username=username)
                 self.assertContains(response, message, status_code=201)
                 self.assertEqual(Instance.objects.count(), count + 1)
                 self.assertEqual(Attachment.objects.count(), attachments_count + 1)

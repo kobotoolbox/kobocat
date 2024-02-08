@@ -67,8 +67,6 @@ USE_TZ = True
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
-SITE_ID = env.int('DJANGO_SITE_ID', 1)
-
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = True
@@ -192,7 +190,6 @@ INSTALLED_APPS = [
     # https://code.djangoproject.com/ticket/10827
     'django.contrib.auth',
     'django.contrib.sessions',
-    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
@@ -203,11 +200,11 @@ INSTALLED_APPS = [
     'django_digest',
     'corsheaders',
     'oauth2_provider',
+    'onadata.apps.logger.LoggerAppConfig',
     'rest_framework',
     'rest_framework.authtoken',
     'taggit',
     'readonly',
-    'onadata.apps.logger.LoggerAppConfig',
     'onadata.apps.viewer',
     'onadata.apps.main',
     'onadata.apps.restservice',
@@ -394,7 +391,10 @@ SESSION_REDIS = {
 
 CACHES = {
     # Set CACHE_URL to override. Only redis is supported.
-    'default': env.cache(default='redis://redis_cache:6380/3'),
+    'default': env.cache_url(default='redis://redis_cache:6380/3'),
+    'enketo_redis_main': env.cache_url(
+        'ENKETO_REDIS_MAIN_URL', default='redis://change-me.invalid/0'
+    ),
 }
 
 DIGEST_NONCE_BACKEND = 'onadata.apps.django_digest_backends.cache.RedisCacheNonceStorage'
@@ -472,12 +472,6 @@ KOBOCAT_INTERNAL_HOSTNAME = '{}.{}'.format(
 KOBOCAT_PUBLIC_HOSTNAME = '{}.{}'.format(
     os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
     os.environ.get('PUBLIC_DOMAIN_NAME', 'kobotoolbox.org'))
-
-# Default value for the `UserProfile.require_auth` attribute
-REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT = env.bool(
-    'REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT',
-    False
-)
 
 OAUTH2_PROVIDER = {
     # this is the list of available scopes

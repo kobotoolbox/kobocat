@@ -1,20 +1,17 @@
 # coding: utf-8
 import os.path
 from io import BytesIO
-from urllib.parse import urljoin
 
 import requests
 from django.contrib.auth import authenticate
 from django.core.files.storage import default_storage as storage
 from django.core.files.uploadedfile import UploadedFile
-from django.urls import reverse
 from django.test import RequestFactory
 from django_digest.test import Client as DigestClient
 from httmock import urlmatch, HTTMock
 
 from onadata.apps.api.viewsets.xform_list_api import XFormListApi
 from onadata.apps.logger.models import Instance, XForm
-from onadata.apps.logger.views import download_xform
 from onadata.apps.main.models import MetaData
 from onadata.apps.main.tests.test_base import TestBase
 from onadata.libs.utils.briefcase_client import BriefcaseClient
@@ -27,6 +24,11 @@ def formList(*args, **kwargs):  # noqa
     response.render()
     return response
 
+def xformsDownload(*args, **kwargs):  # noqa
+    view = XFormListApi.as_view({'get': 'retrieve'})
+    response = view(*args, **kwargs)
+    response.render()
+    return response
 
 def xformsManifest(*args, **kwargs):  # noqa
     view = XFormListApi.as_view({'get': 'manifest'})
@@ -46,8 +48,6 @@ def form_list_xml(url, request, **kwargs):
     factory = RequestFactory()
     req = factory.get(url.path)
     req.user = authenticate(username='bob', password='bob')
-    req.user.profile.require_auth = False
-    req.user.profile.save()
     id_string = 'transportation_2011_07_25'
     # Retrieve XForm pk for user bob.
     # SQLite resets PK to 1 every time the table is truncated (i.e. after
@@ -59,20 +59,20 @@ def form_list_xml(url, request, **kwargs):
         .last()
     )
     if url.path.endswith('formList'):
-        res = formList(req, username='bob')
+        res = formList(req)
     elif url.path.endswith('form.xml'):
-        res = download_xform(req, username='bob', id_string=id_string)
+        res = xformsDownload(req, pk=xform_id)
     elif url.path.find('xformsManifest') > -1:
-        res = xformsManifest(req, username='bob', pk=xform_id)
+        res = xformsManifest(req, pk=xform_id)
     elif url.path.find('xformsMedia') > -1:
         filename = url.path[url.path.rfind('/') + 1:]
         metadata_id, _ = os.path.splitext(filename)
         res = xformsMedia(
-            req, username='bob', pk=xform_id, metadata=metadata_id
+            req, pk=xform_id, metadata=metadata_id
         )
         response._content = get_streaming_content(res)
     else:
-        res = formList(req, username='bob')
+        res = formList(req)
     response.status_code = 200
     if not response._content:
         response._content = res.content
@@ -116,15 +116,12 @@ class TestBriefcaseClient(TestBase):
         count = MetaData.objects.count()
         MetaData.media_upload(self.xform, uf)
         self.assertEqual(MetaData.objects.count(), count + 1)
-        url = urljoin(
-            self.base_url,
-            reverse('user_profile', kwargs={'username': self.user.username})
-        )
         self._logout()
         self._create_user_and_login('deno', 'deno')
+
         self.bc = BriefcaseClient(
             username='bob', password='bob',
-            url=url,
+            url=self.base_url,
             user=self.user
         )
 
@@ -189,6 +186,7 @@ class TestBriefcaseClient(TestBase):
             self.bc.download_xforms()
         with HTTMock(instances_xml):
             self.bc.download_instances(self.xform.id_string)
+
         XForm.objects.all().delete()
         xforms = XForm.objects.filter(
             user=self.user, id_string=self.xform.id_string)

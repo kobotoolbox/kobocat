@@ -9,7 +9,6 @@ from onadata.apps.logger.models import XForm
 from onadata.apps.logger.views import (
     download_xlsform,
     download_jsonform,
-    download_xform,
 )
 from onadata.libs.utils.logger_tools import publish_xml_form
 from onadata.libs.utils.user_auth import http_auth_string
@@ -106,34 +105,6 @@ class TestFormShow(TestBase):
         self.assertListEqual(allowed_headers, provided_headers)
         self.assertEqual(response['Access-Control-Allow-Methods'], 'GET')
         self.assertEqual(response['Access-Control-Allow-Origin'], '*')
-
-    def test_dl_xform_to_anon_if_public(self):
-        self.xform.shared = True
-        self.xform.save()
-        response = self.anon.get(reverse(download_xform, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string
-        }))
-        self.assertEqual(response.status_code, 200)
-
-    def test_dl_xform_for_basic_auth(self):
-        extra = {
-            'HTTP_AUTHORIZATION':
-            http_auth_string(self.login_username, self.login_password)
-        }
-        response = self.anon.get(reverse(download_xform, kwargs={
-            'username': self.user.username,
-            'id_string': self.xform.id_string
-        }), **extra)
-        self.assertEqual(response.status_code, 200)
-
-    def test_dl_xform_for_authenticated_non_owner(self):
-        self._create_user_and_login('alice', 'alice')
-        response = self.client.get(reverse(download_xform, kwargs={
-            'username': 'bob',
-            'id_string': self.xform.id_string
-        }))
-        self.assertEqual(response.status_code, 200)
 
     def test_publish_xml_xlsform_download(self):
         count = XForm.objects.count()

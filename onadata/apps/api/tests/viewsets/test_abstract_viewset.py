@@ -9,7 +9,6 @@ from django.contrib.auth.models import (
 )
 from django.test import TestCase
 from django.test.client import Client
-from django_digest.test import Client as DigestClient
 from django_digest.test import DigestAuth
 from kobo_service_account.utils import get_request_headers
 from rest_framework.reverse import reverse
@@ -170,7 +169,6 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
             organization=self.profile_data['organization'],
             home_page=self.profile_data['home_page'],
             twitter=self.profile_data['twitter'],
-            require_auth=False
         )
 
         return new_profile
@@ -290,12 +288,3 @@ class TestAbstractViewSet(RequestMixin, MakeSubmissionMixin, TestCase):
             response = self._post_form_metadata(data, test)
 
         return response
-
-    def _get_digest_client(self):
-        self.user.profile.require_auth = True
-        self.user.profile.save()
-        client = DigestClient()
-        client.set_authorization(self.profile_data['username'],
-                                 self.profile_data['password1'],
-                                 'Digest')
-        return client

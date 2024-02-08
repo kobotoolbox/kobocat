@@ -10,7 +10,6 @@ import rest_framework.views as rest_framework_views
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.core.files.storage import default_storage
 from django.http import (
     HttpResponse,
@@ -18,7 +17,7 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.utils.translation import gettext as t
-from kobo_service_account.utils import get_real_user
+from kobo_service_account.utils import get_real_user, get_request_headers
 from rest_framework import exceptions
 from rest_framework.authtoken.models import Token
 from rest_framework.request import Request
@@ -31,8 +30,6 @@ from onadata.apps.viewer.models.parsed_instance import datetime_from_str
 from onadata.libs.utils.logger_tools import (
     publish_form,
     response_with_mimetype_and_name,
-    OPEN_ROSA_VERSION_HEADER,
-    OPEN_ROSA_VERSION,
 )
 from onadata.libs.utils.user_auth import (
     check_and_set_form_by_id,
@@ -213,12 +210,12 @@ def get_media_file_response(
     # an HTTP redirection. We use KoBoCAT to proxy the response from KPI
     headers = {}
     if not request.user.is_anonymous:
-        token = Token.objects.get(user=request.user)
-        headers['Authorization'] = f'Token {token.key}'
+        headers = get_request_headers(request.user.username)
 
     # Send the request internally to avoid extra traffic on the public interface
-    internal_url = metadata.data_value.replace(settings.KOBOFORM_URL,
-                                               settings.KOBOFORM_INTERNAL_URL)
+    internal_url = metadata.data_value.replace(
+        settings.KOBOFORM_URL, settings.KOBOFORM_INTERNAL_URL
+    )
     response = requests.get(internal_url, headers=headers)
 
     return HttpResponse(
@@ -247,7 +244,7 @@ def get_view_description(view_obj, html=False):
     Replace example.com in Django REST framework's default API description
     with the domain name of the current site
     """
-    domain = Site.objects.get_current().domain
+    domain = settings.KOBOCAT_PUBLIC_HOSTNAME
     description = rest_framework_views.get_view_description(view_obj, html)
     # description might not be a plain string: e.g. it could be a SafeText
     # to prevent further HTML escaping

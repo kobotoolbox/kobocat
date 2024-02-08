@@ -27,12 +27,9 @@ class UserProfile(models.Model):
     home_page = models.CharField(max_length=255, blank=True)
     twitter = models.CharField(max_length=255, blank=True)
     description = models.CharField(max_length=255, blank=True)
-    require_auth = models.BooleanField(
-        default=False,
-        verbose_name=gettext_lazy(
-            "Require authentication to see forms and submit data"
-        )
-    )
+    # TODO Remove this field (`require_auth`) in the next release following the one where
+    #  this commit has been deployed to production
+    require_auth = models.BooleanField(default=True)
     address = models.CharField(max_length=255, blank=True)
     phonenumber = models.CharField(max_length=30, blank=True)
     num_of_submissions = models.IntegerField(default=0)
@@ -85,20 +82,6 @@ def set_object_permissions(sender, instance=None, created=False, **kwargs):
 
 post_save.connect(set_object_permissions, sender=UserProfile,
                   dispatch_uid='set_object_permissions')
-
-
-def default_user_profile_require_auth(
-        sender, instance, created, raw, **kwargs):
-    if raw or not created:
-        return
-    instance.require_auth = \
-        settings.REQUIRE_AUTHENTICATION_TO_SEE_FORMS_AND_SUBMIT_DATA_DEFAULT
-    instance.save()
-
-
-post_save.connect(default_user_profile_require_auth,
-                  sender=UserProfile,
-                  dispatch_uid='default_user_profile_require_auth')
 
 
 def get_anonymous_user_instance(User):

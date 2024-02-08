@@ -5,7 +5,6 @@ import json
 import os
 import re
 import unittest
-from io import BytesIO
 from xml.dom import Node
 
 from defusedxml import minidom
@@ -13,7 +12,6 @@ from django.urls import reverse
 from django.conf import settings
 from django_digest.test import Client as DigestClient
 from django.core.files.uploadedfile import UploadedFile
-from openpyxl import load_workbook
 
 from onadata.apps.main.models import MetaData
 from onadata.apps.logger.models import XForm
