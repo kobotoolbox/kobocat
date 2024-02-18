@@ -29,8 +29,7 @@ from onadata.apps.logger.models.instance import Instance
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.logger.models.attachment import Attachment
 from onadata.apps.logger.models.note import Note
-# handled by calling _set_survey_type() during Instance migration
-# from onadata.apps.logger.models.survey_type import SurveyType
+from onadata.apps.logger.models.survey_type import SurveyType
 
 
 # to be replaced by reading usernames from a file
@@ -133,9 +132,15 @@ def copy_related_objs(
                 ] = created_obj.pk
 
 
-def call_set_survey_type(instance):
+survey_type_slug_to_dest_pk_cache = {}
+def set_survey_type(instance):
     with route_to_dest():
-        instance._set_survey_type()
+        instance.survey_type_id = survey_type_slug_to_dest_pk_cache.setdefault(
+            instance.survey_type_id,
+            SurveyType.objects.get_or_create(slug=instance.survey_type.slug)[
+                0
+            ].pk,
+        )
 
 
 def update_user_pk(obj):
@@ -147,9 +152,9 @@ def update_user_pk(obj):
         obj.user_id = None
 
 
-def update_user_pk_and_call_set_survey_type(instance):
+def update_user_pk_and_set_survey_type(instance):
     update_user_pk(instance)
-    call_set_survey_type(instance)
+    set_survey_type(instance)
 
 
 def call_update_mongo(parsedinstance):
@@ -191,11 +196,11 @@ def copy_instances_for_single_username(single_username):
 
 
     copy_related_objs(
-        Instance.objects.all(),
+        Instance.objects.all().select_related('survey_type'),
         'xform',
         xform_qs,
         ['uuid', 'xml_hash', 'date_created', 'date_modified'],
-        fixup=update_user_pk_and_call_set_survey_type,
+        fixup=update_user_pk_and_set_survey_type,
     )
 
     # Related to Instance
