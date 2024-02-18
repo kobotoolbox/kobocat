@@ -35,13 +35,12 @@ from onadata.apps.logger.models.survey_type import SurveyType
 # to be replaced by reading usernames from a file
 # all_users_qs = User.objects.filter(username__in=('tino', 'tinok', 'tinok3', 'jamesld_test'))
 
-usernames = [x.strip() for x in open('../kf-usernames.txt').readlines()]
+usernames = [x.strip() for x in open('../eu-usernames.txt').readlines()]
 all_users_qs = User.objects.filter(username__in=usernames)
-# useless if we're running multiple processes in parallel
-# csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/kf-kc.log', 'w'))
+csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/eu-kc-2.log', 'w'))
 
 
-CHUNK_SIZE = 500
+CHUNK_SIZE = 1000
 
 counts = defaultdict(lambda: 1)
 
@@ -50,7 +49,7 @@ csv_writer = csv.writer(sys.stdout)
 
 def print_csv(*args):
     csv_writer.writerow((datetime.datetime.now(),) + args)
-    # csv_file_writer.writerow((datetime.datetime.now(),) + args)
+    csv_file_writer.writerow((datetime.datetime.now(),) + args)
 
 
 def legible_class(cls):
