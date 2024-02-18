@@ -36,9 +36,9 @@ from onadata.apps.logger.models.note import Note
 # to be replaced by reading usernames from a file
 # all_users_qs = User.objects.filter(username__in=('tino', 'tinok', 'tinok3', 'jamesld_test'))
 
-usernames = [x.strip() for x in open('../kf-usernames.txt').readlines()]
+usernames = [x.strip() for x in open('../eu-usernames.txt').readlines()]
 all_users_qs = User.objects.filter(username__in=usernames)
-csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/kf-kc.log', 'w'))
+csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/eu-kc-1.log', 'w'))
 
 
 CHUNK_SIZE = 2000
