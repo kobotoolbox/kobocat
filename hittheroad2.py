@@ -176,6 +176,19 @@ with route_to_dest():
 def copy_instances_for_single_username(single_username):
     xform_qs = XForm.objects.filter(user__username=single_username)
 
+    source_xform_xref = {
+        (id_string, uuid): pk
+        for (id_string, uuid, pk) in xform_qs.values_list(
+            'id_string', 'uuid', 'pk'
+        )
+    }
+    with route_to_dest():
+        for dest_xform in xform_qs.only('id_string', 'uuid'):
+            source_to_dest_pks[XForm][
+                source_xform_xref[(dest_xform.id_string, dest_xform.uuid)]
+            ] = dest_xform.pk
+
+
     copy_related_objs(
         Instance.objects.all(),
         'xform',
