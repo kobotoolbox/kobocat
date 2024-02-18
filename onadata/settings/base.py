@@ -763,43 +763,13 @@ ENKETO_PROTOCOL = os.environ.get('ENKETO_PROTOCOL', 'https')
 ################################
 # MongoDB settings             #
 ################################
-if not (MONGO_DB_URL := env.str('MONGO_DB_URL', False)):
-    # ToDo Remove all this block by the end of 2022.
-    #   Update kobo-install accordingly
-    logging.warning(
-        '`MONGO_DB_URL` is not found. '
-        '`KOBOCAT_MONGO_HOST`, `KOBOCAT_MONGO_PORT`, `KOBOCAT_MONGO_NAME`, '
-        '`KOBOCAT_MONGO_USER`, `KOBOCAT_MONGO_PASS` '
-        'are deprecated and will not be supported anymore soon.'
-    )
-
-    MONGO_DATABASE = {
-        'HOST': os.environ.get('KOBOCAT_MONGO_HOST', 'mongo'),
-        'PORT': int(os.environ.get('KOBOCAT_MONGO_PORT', 27017)),
-        'NAME': os.environ.get('KOBOCAT_MONGO_NAME', 'formhub'),
-        'USER': os.environ.get('KOBOCAT_MONGO_USER', ''),
-        'PASSWORD': os.environ.get('KOBOCAT_MONGO_PASS', '')
-    }
-
-    if MONGO_DATABASE.get('USER') and MONGO_DATABASE.get('PASSWORD'):
-        MONGO_DB_URL = "mongodb://{user}:{password}@{host}:{port}/{db_name}".\
-            format(
-                user=MONGO_DATABASE['USER'],
-                password=quote_plus(MONGO_DATABASE['PASSWORD']),
-                host=MONGO_DATABASE['HOST'],
-                port=MONGO_DATABASE['PORT'],
-                db_name=MONGO_DATABASE['NAME']
-            )
-    else:
-        MONGO_DB_URL = "mongodb://%(HOST)s:%(PORT)s/%(NAME)s" % MONGO_DATABASE
-    mongo_db_name = MONGO_DATABASE['NAME']
-else:
-    # Attempt to get collection name from the connection string
-    # fallback on MONGO_DB_NAME or 'formhub' if it is empty or None or unable to parse
-    try:
-        mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or env.str('MONGO_DB_NAME', 'formhub')
-    except ValueError:  # db_url is unable to parse replica set strings
-        mongo_db_name = env.str('MONGO_DB_NAME', 'formhub')
+MONGO_DB_URL = env.str('MONGO_DB_URL')
+# Attempt to get collection name from the connection string
+# fallback on MONGO_DB_NAME or 'formhub' if it is empty or None or unable to parse
+try:
+    mongo_db_name = env.db_url('MONGO_DB_URL').get('NAME') or env.str('MONGO_DB_NAME', 'formhub')
+except ValueError:  # db_url is unable to parse replica set strings
+    mongo_db_name = env.str('MONGO_DB_NAME', 'formhub')
 
 mongo_client = MongoClient(
     MONGO_DB_URL, connect=False, journal=True, tz_aware=True
