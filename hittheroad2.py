@@ -37,7 +37,8 @@ from onadata.apps.logger.models.survey_type import SurveyType
 
 usernames = [x.strip() for x in open('../kf-usernames.txt').readlines()]
 all_users_qs = User.objects.filter(username__in=usernames)
-csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/kf-kc.log', 'w'))
+# useless if we're running multiple processes in parallel
+# csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/kf-kc.log', 'w'))
 
 
 CHUNK_SIZE = 2000
@@ -48,12 +49,22 @@ csv_writer = csv.writer(sys.stdout)
 
 
 def print_csv(*args):
-    csv_writer.writerow(args)
-    csv_file_writer.writerow((datetime.datetime.now(),) + args)
+    csv_writer.writerow((datetime.datetime.now(),) + args)
+    # csv_file_writer.writerow((datetime.datetime.now(),) + args)
 
 
 def legible_class(cls):
     return f'{cls.__module__}.{cls.__name__}'
+
+
+def get_chunk_from_list(list_, chunk, chunk_size):
+    return list_[chunk_size * chunk:chunk_size * (chunk + 1)]
+
+
+def copy_instances_for_chunk_of_usernames(chunk, chunk_size=10):
+    unames = get_chunk_from_list(usernames, chunk, chunk_size)
+    for uname in unames:
+        copy_instances_for_single_username(uname)
 
 
 class SkipObject(Exception):
