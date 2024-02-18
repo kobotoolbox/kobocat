@@ -176,6 +176,7 @@ with route_to_dest():
 def copy_instances_for_single_username(single_username):
     xform_qs = XForm.objects.filter(user__username=single_username)
 
+    source_to_dest_pks[XForm] = {}
     source_xform_xref = {
         (id_string, uuid): pk
         for (id_string, uuid, pk) in xform_qs.values_list(
