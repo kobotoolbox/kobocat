@@ -145,6 +145,8 @@ def copy_related_objs(
 
 survey_type_slug_to_dest_pk_cache = {}
 def set_survey_type(instance):
+    # just calling Instance._set_survey_type() was leaking tons of memory (and
+    # slow)
     with route_to_dest():
         instance.survey_type_id = survey_type_slug_to_dest_pk_cache.setdefault(
             instance.survey_type_id,
@@ -222,7 +224,9 @@ def copy_instances_for_single_username(single_username):
         ParsedInstance.objects.all(),
         'instance',
         instance_qs,
-        fixup=call_update_mongo,
+        # hits a memory leak in pyxform?
+        # without it we have to run `./manage.py sync_mongo` afterwards :sad:
+        # fixup=call_update_mongo,
     )
 
     copy_related_objs(
