@@ -41,7 +41,7 @@ all_users_qs = User.objects.filter(username__in=usernames)
 # csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/kf-kc.log', 'w'))
 
 
-CHUNK_SIZE = 2000
+CHUNK_SIZE = 500
 
 counts = defaultdict(lambda: 1)
 
