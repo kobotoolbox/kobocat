@@ -1,4 +1,5 @@
 import csv
+import datetime
 import sys
 from collections import defaultdict
 from copy import deepcopy
@@ -33,9 +34,11 @@ from onadata.apps.logger.models.note import Note
 
 
 # to be replaced by reading usernames from a file
-all_users_qs = User.objects.filter(username__startswith='moveme')
+# all_users_qs = User.objects.filter(username__in=('tino', 'tinok', 'tinok3', 'jamesld_test'))
 
-
+usernames = [x.strip() for x in open('../kf-usernames.txt').readlines()]
+all_users_qs = User.objects.filter(username__in=usernames)
+csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/kf-kc.log', 'w'))
 
 
 CHUNK_SIZE = 2000
@@ -47,6 +50,7 @@ csv_writer = csv.writer(sys.stdout)
 
 def print_csv(*args):
     csv_writer.writerow(args)
+    csv_file_writer.writerow((datetime.datetime.now(),) + args)
 
 
 def legible_class(cls):
@@ -254,17 +258,22 @@ with route_to_dest():
     )
 source_to_dest_pks[Permission] = {}
 for p in dest_permissions:
-    source_to_dest_pks[Permission][
-        source_permissions_xref[
+    try:
+        source_pk = source_permissions_xref[
             (p.content_type.app_label, p.content_type.model, p.codename)
         ]
-    ] = p.pk
+    except KeyError:
+        continue
+    source_to_dest_pks[Permission][source_pk] = p.pk
 
 
 def update_permission_pk(obj_related_to_permission):
-    obj_related_to_permission.permission_id = source_to_dest_pks[Permission][
-        obj_related_to_permission.permission_id
-    ]
+    try:
+        obj_related_to_permission.permission_id = source_to_dest_pks[Permission][
+            obj_related_to_permission.permission_id
+        ]
+    except KeyError:
+        raise SkipObject
 
 
 source_xform_ct = ContentType.objects.get_for_model(XForm)
