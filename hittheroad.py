@@ -180,6 +180,8 @@ for user in all_users_qs.only('username'):
     )
 
 
+''' All this moved to hittheroad2.py and hittheroad3.py
+
 def call_set_survey_type(instance):
     with route_to_dest():
         instance._set_survey_type()
@@ -303,6 +305,7 @@ copy_related_objs(
     all_users_qs,
     fixup=fixup_guardian_perm,
 )
+'''
 
 
 ''' Zafacón
