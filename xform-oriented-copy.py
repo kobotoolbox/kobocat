@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
 route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
+from onadata.libs.utils.logger_tools import _update_mongo_for_xform
 
 
 # Imports are in a weird order because below are the models being copied
@@ -222,3 +223,6 @@ def copy_xforms():
                 )
                 for obj in mod_qs.iterator():
                     copy_related_obj(obj, 'instance')
+
+        with route_to_dest():
+            _update_mongo_for_xform(xform)
