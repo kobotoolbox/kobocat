@@ -120,6 +120,7 @@ def copy_related_obj(
             fixup(obj)
         except SkipObject:
             return obj
+    status = 'done'
     if not nat_key:
         model.objects.bulk_create([obj])
     else:
@@ -133,18 +134,13 @@ def copy_related_obj(
                 # "bulk create" single item to sidestep `save()` logic
                 model.objects.bulk_create([obj])
             else:
-                print_csv(
-                    f'ℹ️ {legible_class(model)}',
-                    source_obj_pk,
-                    obj.pk,
-                    '(already exists!)',
-                )
+                status ='already exists!'
         this_model_source_to_dest_pks[source_obj_pk] = obj.pk
     print_csv(
         f'✅ {legible_class(model)}',
         source_obj_pk,
         obj.pk,
-        f'({counts[model]} done)',
+        f'({counts[model]} {status})',
     )
     counts[model] += 1
     return obj
@@ -193,7 +189,9 @@ def copy_xforms():
             copy_related_obj(meta_data, 'xform', ['data_type', 'data_value'])
 
         # Hard stuff! Could be millions
-        instance_qs = Instance.objects.filter(xform_id=xform_source_pk)
+        instance_qs = Instance.objects.filter(
+            xform_id=xform_source_pk
+        ).select_related('survey_type')
         for instance in instance_qs.iterator():
             instance_source_pk = instance.pk
             copy_related_obj(
