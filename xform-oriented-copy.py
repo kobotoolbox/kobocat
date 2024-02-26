@@ -127,21 +127,23 @@ def copy_related_obj(
     else:
         nat_key_vals = tuple(getattr(obj, f) for f in nat_key)
         with route_to_dest():
+            criteria = dict(zip(nat_key, nat_key_vals))
+            criteria[related_id_attr] = dest_related_id
             try:
-                criteria = dict(zip(nat_key, nat_key_vals))
-                criteria[related_id_attr] = dest_related_id
-                obj = model.objects.get(**criteria)
+                existing_obj = model.objects.get(**criteria)
             except model.DoesNotExist:
                 # "bulk create" single item to sidestep `save()` logic
                 model.objects.bulk_create([obj])
             else:
+                obj.pk = existing_obj.pk
                 status ='already exists!'
         this_model_source_to_dest_pks[source_obj_pk] = obj.pk
     print_csv(
         f'✅ {legible_class(model)}',
         source_obj_pk,
         obj.pk,
-        f'({counts[model]} {status})',
+        status,
+        f'(complete: {counts[model]})',
     )
     counts[model] += 1
     return obj
