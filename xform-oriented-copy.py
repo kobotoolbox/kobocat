@@ -59,14 +59,14 @@ def xref_source_and_dest_users():
             '🛑 Users were not found in the source database: '
             + ','.join(not_found_source_usernames)
         )
+    dest_usernames = []
     with route_to_dest():
         for dest_user in all_users_qs.only('username'):
+            dest_usernames.append(dest_user.username)
             source_to_dest_pks[User][
                 source_user_xref[dest_user.username]
             ] = dest_user.pk
-    not_found_dest_usernames = usernames.difference(
-        source_to_dest_pks[User].keys()
-    )
+    not_found_dest_usernames = usernames.difference(dest_usernames)
     if not_found_dest_usernames:
         raise Exception(
             '🛑 Users were not found in the destination database: '
