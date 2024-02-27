@@ -32,7 +32,7 @@ def run(username):
     count = 0
     with route_to_dest():
         for vals in (
-            Instance.objects.filter(xform__user__username)
+            Instance.objects.filter(xform__user__username=username)
             .values_list(*(['pk'] + instance_nat_key_fields))
             .iterator()
         ):
