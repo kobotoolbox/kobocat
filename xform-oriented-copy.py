@@ -216,7 +216,7 @@ def copy_xforms(xform_qs=None):
         # Try to save time when a lot of instances have already been created
         dest_instance_nat_key_pk_lookup = {}
         with route_to_dest():
-            for vals in Instance.objects.filter(xform_id=xform.pk).values(
+            for vals in Instance.objects.filter(xform_id=xform.pk).values_list(
                 *(['pk'] + instance_nat_key_fields)
             ):
                 dest_instance_nat_key_pk_lookup[tuple(vals[1:])] = vals[0]
