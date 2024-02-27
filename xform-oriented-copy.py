@@ -35,6 +35,7 @@ counts = defaultdict(lambda: 1)
 csv_writer = csv.writer(sys.stdout)
 source_to_dest_pks = {}
 source_to_dest_pks[User] = {-1: -1}  # PK for AnonymousUser doesn't change
+source_to_dest_pks[Instance] = {}
 
 
 class SkipObject(Exception):
