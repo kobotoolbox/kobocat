@@ -1,100 +1,74 @@
-from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
-route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
-
-from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
-from onadata.apps.logger.models.attachment import Attachment
-from onadata.apps.logger.models.note import Note
-
-def run(username):
-    print(f'Username {username}')
-
-    instance_nat_key_fields = [
-        'uuid',
-        'xml_hash',
-        'date_created',
-        'date_modified',
-    ]
-
-    source_instance_nat_key_to_pks = {}
-    count = 0
-    for vals in (
-        Instance.objects.filter(xform__user__username=username)
-        .values_list(*(['pk'] + instance_nat_key_fields))
-        .iterator()
-    ):
-        source_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
-        count += 1
-        print(f'\r{count} source instances', end='')
-    print()
-
-    dest_instance_nat_key_to_pks = {}
-    count = 0
-    with route_to_dest():
-        for vals in (
-            Instance.objects.filter(xform__user__username=username)
-            .values_list(*(['pk'] + instance_nat_key_fields))
-            .iterator()
-        ):
-            dest_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
-            count += 1
-            print(f'\r{count} dest instances', end='')
-        print()
-
-    nat_keys_in_source_only = set(
-        source_instance_nat_key_to_pks.keys()
-    ).difference(dest_instance_nat_key_to_pks.keys())
-    print(f'{len(nat_keys_in_source_only)} instances need to be copied')
-    breakpoint()
-
-'''
 import csv
 import datetime
 import sys
-from collections import defaultdict
-from copy import deepcopy
 from itertools import islice
+from collections import defaultdict
 
-from django.db.models import Prefetch
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 
-from onadata.libs.utils.user_auth import set_api_permissions_for_user
-from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
-route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
-
-# Imports are in a weird order because below are the models being copied
-
-from django.contrib.auth.models import User, Permission
-from onadata.apps.main.models.user_profile import UserProfile
-# from django.contrib.auth.models import User_user_permissions
-from django_digest.models import PartialDigest
-from rest_framework.authtoken.models import Token
-from onadata.apps.logger.models.xform import XForm
-
-from onadata.apps.restservice.models import RestService
-from onadata.apps.main.models.meta_data import MetaData
-from guardian.models.models import UserObjectPermission
-
-from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.apps.logger.models.attachment import Attachment
+from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.note import Note
 from onadata.apps.logger.models.survey_type import SurveyType
+from onadata.apps.logger.models.xform import XForm
+from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
 
-
-# to be replaced by reading usernames from a file
-# all_users_qs = User.objects.filter(username__in=('tino', 'tinok', 'tinok3', 'jamesld_test'))
-
-usernames = [x.strip() for x in open('../eu-usernames.txt').readlines()]
-all_users_qs = User.objects.filter(username__in=usernames)
-csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/eu-kc-2.log', 'w'))
-
+route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
 
 CHUNK_SIZE = 1000
-
 counts = defaultdict(lambda: 1)
-
 csv_writer = csv.writer(sys.stdout)
+csv_file_writer = csv.writer(
+    open(f'copy-instances-and-related-{datetime.datetime.now()}.log', 'w')
+)
+source_to_dest_pks = {}
+
+
+class SkipObject(Exception):
+    pass
+
+
+def xref_all_users():
+    with route_to_dest():
+        dest_usernames_to_pks = {
+            v[0]: v[1] for v in User.objects.values_list('username', 'pk')
+        }
+    source_usernames_to_pks = {
+        v[0]: v[1]
+        for v in User.objects.filter(
+            username__in=dest_usernames_to_pks.keys()
+        ).values_list('username', 'pk')
+    }
+    source_to_dest_pks[User] = {}
+    for username, dest_pk in dest_usernames_to_pks.items():
+        try:
+            source_pk = source_usernames_to_pks[username]
+        except KeyError:
+            continue
+        source_to_dest_pks[User][source_pk] = dest_pk
+
+
+def xref_xforms(xform_qs):
+    source_to_dest_pks[XForm] = {}
+    source_xform_xref = {
+        (id_string, uuid): pk
+        for (id_string, uuid, pk) in xform_qs.values_list(
+            'id_string', 'uuid', 'pk'
+        )
+    }
+    with route_to_dest():
+        for dest_xform in xform_qs.only('id_string', 'uuid'):
+            source_to_dest_pks[XForm][
+                source_xform_xref[(dest_xform.id_string, dest_xform.uuid)]
+            ] = dest_xform.pk
+
+
+def disable_auto_now(model):
+    for field in model._meta.fields:
+        for bad in ('auto_now', 'auto_now_add'):
+            if hasattr(field, bad):
+                setattr(field, bad, False)
 
 
 def print_csv(*args):
@@ -106,25 +80,30 @@ def legible_class(cls):
     return f'{cls.__module__}.{cls.__name__}'
 
 
-def get_chunk_from_list(list_, chunk, chunk_size):
-    return list_[chunk_size * chunk:chunk_size * (chunk + 1)]
+def set_survey_type(instance, survey_type_slug_to_dest_pk_cache={}):
+    # just calling Instance._set_survey_type() was leaking tons of memory (and
+    # slow)
+    with route_to_dest():
+        instance.survey_type_id = survey_type_slug_to_dest_pk_cache.setdefault(
+            instance.survey_type_id,
+            SurveyType.objects.get_or_create(slug=instance.survey_type.slug)[
+                0
+            ].pk,
+        )
 
 
-def copy_instances_for_chunk_of_usernames(chunk, chunk_size=10):
-    unames = get_chunk_from_list(usernames, chunk, chunk_size)
-    for uname in unames:
-        copy_instances_for_single_username(uname)
+def update_user_pk(obj):
+    try:
+        obj.user_id = source_to_dest_pks[User][obj.user_id]
+    except KeyError:
+        # If the submitting user is not also being migrated, null out the
+        # field
+        obj.user_id = None
 
 
-class SkipObject(Exception):
-    pass
-
-
-def disable_auto_now(model):
-    for field in model._meta.fields:
-        for bad in ('auto_now', 'auto_now_add'):
-            if hasattr(field, bad):
-                setattr(field, bad, False)
+def update_user_pk_and_set_survey_type(instance):
+    update_user_pk(instance)
+    set_survey_type(instance)
 
 
 def copy_related_objs(
@@ -192,82 +171,70 @@ def copy_related_objs(
                 ] = created_obj.pk
 
 
-survey_type_slug_to_dest_pk_cache = {}
-def set_survey_type(instance):
-    # just calling Instance._set_survey_type() was leaking tons of memory (and
-    # slow)
+def run(username):
+    print(f'Username {username}')
+
+    instance_nat_key_fields = [
+        'uuid',
+        'xml_hash',
+        'date_created',
+        'date_modified',
+    ]
+
+    source_instance_nat_key_to_pks = {}
+    count = 0
+    for vals in (
+        Instance.objects.filter(xform__user__username=username)
+        .values_list(*(['pk'] + instance_nat_key_fields))
+        .iterator()
+    ):
+        source_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+        count += 1
+        print(f'\r{count} source instances', end='', flush=True)
+    print()
+
+    dest_instance_nat_key_to_pks = {}
+    count = 0
     with route_to_dest():
-        instance.survey_type_id = survey_type_slug_to_dest_pk_cache.setdefault(
-            instance.survey_type_id,
-            SurveyType.objects.get_or_create(slug=instance.survey_type.slug)[
-                0
-            ].pk,
-        )
+        for vals in (
+            Instance.objects.filter(xform__user__username=username)
+            .values_list(*(['pk'] + instance_nat_key_fields))
+            .iterator()
+        ):
+            dest_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+            count += 1
+            print(f'\r{count} dest instances', end='', flush=True)
+        print()
 
+    nat_keys_in_source_only = set(
+        source_instance_nat_key_to_pks.keys()
+    ).difference(dest_instance_nat_key_to_pks.keys())
+    print(f'{len(nat_keys_in_source_only)} instances need to be copied')
 
-def update_user_pk(obj):
-    try:
-        obj.user_id = source_to_dest_pks[User][obj.user_id]
-    except KeyError:
-        # If the submitting user is not also being migrated, null out the
-        # field
-        obj.user_id = None
+    if not nat_keys_in_source_only:
+        return
 
+    print('Cross-referencing all users…', end='', flush=True)
+    xref_all_users()
+    print(' done!')
 
-def update_user_pk_and_set_survey_type(instance):
-    update_user_pk(instance)
-    set_survey_type(instance)
+    xform_qs = XForm.objects.filter(user__username=username)
+    print('Cross-referencing XForms…', end='', flush=True)
+    xref_xforms(xform_qs)
+    print(' done!')
 
-
-def call_update_mongo(parsedinstance):
-    with route_to_dest():
-        parsedinstance.update_mongo(asynchronous=False)
-
-
-# Things that depend on all users having been copied already
-
-source_to_dest_pks = {}
-source_to_dest_pks[User] = {-1: -1}  # PK for AnonymousUser doesn't change
-
-# Even for Instances that belong to XForms owned by only a single user, it's
-# necessary to cross-reference all users, since the user who submitted the
-# instance could be anyone
-source_user_xref = dict(all_users_qs.values_list('username', 'pk'))
-with route_to_dest():
-    for dest_user in all_users_qs.only('username'):
-        source_to_dest_pks[User][
-            source_user_xref[dest_user.username]
-        ] = dest_user.pk
-
-
-def copy_instances_for_single_username(single_username):
-    xform_qs = XForm.objects.filter(user__username=single_username)
-
-    source_to_dest_pks[XForm] = {}
-    source_xform_xref = {
-        (id_string, uuid): pk
-        for (id_string, uuid, pk) in xform_qs.values_list(
-            'id_string', 'uuid', 'pk'
-        )
-    }
-    with route_to_dest():
-        for dest_xform in xform_qs.only('id_string', 'uuid'):
-            source_to_dest_pks[XForm][
-                source_xform_xref[(dest_xform.id_string, dest_xform.uuid)]
-            ] = dest_xform.pk
-
+    instance_pks_in_source_only = [
+        source_instance_nat_key_to_pks[nk] for nk in nat_keys_in_source_only
+    ]
+    instance_qs = Instance.objects.filter(pk__in=instance_pks_in_source_only)
 
     copy_related_objs(
-        Instance.objects.all().select_related('survey_type'),
+        instance_qs.select_related('survey_type'),
         'xform',
         xform_qs,
         ['uuid', 'xml_hash', 'date_created', 'date_modified'],
         fixup=update_user_pk_and_set_survey_type,
     )
-
-    # Related to Instance
-
-    instance_qs = Instance.objects.filter(xform__in=xform_qs)
 
     copy_related_objs(
         ParsedInstance.objects.all(),
@@ -289,4 +256,3 @@ def copy_instances_for_single_username(single_username):
         'instance',
         instance_qs,
     )
-'''
