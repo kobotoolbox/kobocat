@@ -175,10 +175,24 @@ def update_user_pk_and_set_survey_type(instance):
     set_survey_type(instance)
 
 
-def copy_xforms():
+def are_source_and_dest_counts_equal(
+    model, related_field, source_related_pk, dest_related_pk
+):
+    source_count = model.objects.filter(
+        **{related_field: source_related_pk}
+    ).count()
+    with route_to_dest():
+        dest_count = model.objects.filter(
+            **{related_field: dest_related_pk}
+        ).count()
+    return source_count == dest_count
+
+
+def copy_xforms(xform_qs=None):
     xref_source_and_dest_users()
     print(f'✅ Cross-referenced {len(source_to_dest_pks[User])} users')
-    xform_qs = XForm.objects.filter(user__username__in=usernames)
+    if xform_qs is None:
+        xform_qs = XForm.objects.filter(user__username__in=usernames)
     for xform in xform_qs.iterator():
         xform_source_pk = xform.pk
         copy_related_obj(xform, 'user', ['id_string', 'uuid'])
@@ -192,17 +206,75 @@ def copy_xforms():
             copy_related_obj(meta_data, 'xform', ['data_type', 'data_value'])
 
         # Hard stuff! Could be millions
-        instance_qs = Instance.objects.filter(
-            xform_id=xform_source_pk
-        ).select_related('survey_type')
-        for instance in instance_qs.iterator():
-            instance_source_pk = instance.pk
-            copy_related_obj(
-                instance,
-                'xform',
-                ['uuid', 'xml_hash', 'date_created', 'date_modified'],
-                fixup=update_user_pk_and_set_survey_type,
+        instance_qs = Instance.objects.filter(xform_id=xform_source_pk)
+        instance_nat_key_fields = [
+            'uuid',
+            'xml_hash',
+            'date_created',
+            'date_modified',
+        ]
+        # Try to save time when a lot of instances have already been created
+        dest_instance_nat_key_pk_lookup = {}
+        with route_to_dest():
+            for vals in instance_qs.values(['pk'] + instance_nat_key_fields):
+                dest_instance_nat_key_pk_lookup[tuple(vals[1:])] = vals[0]
+            print(
+                f'✅ Found {len(dest_instance_nat_key_pk_lookup)} existing'
+                f' instances for XForm #{xform_source_pk}'
             )
+        for instance in instance_qs.select_related('survey_type').iterator():
+            instance_source_pk = instance.pk
+            nat_key_vals = tuple(
+                getattr(instance, f) for f in instance_nat_key_fields
+            )
+            try:
+                instance_dest_pk = dest_instance_nat_key_pk_lookup[nat_key_vals]
+            except KeyError:
+                instance_dest_pk = None
+            if instance_dest_pk is not None:
+                source_to_dest_pks[Instance][
+                    instance_source_pk
+                ] = instance_dest_pk
+                counts[Instance] += 1
+                can_skip_entirely = (
+                    are_source_and_dest_counts_equal(
+                        ParsedInstance,
+                        'instance_id',
+                        instance_source_pk,
+                        instance_dest_pk,
+                    )
+                    and are_source_and_dest_counts_equal(
+                        Attachment,
+                        'instance_id',
+                        instance_source_pk,
+                        instance_dest_pk,
+                    )
+                    and are_source_and_dest_counts_equal(
+                        Note,
+                        'instance_id',
+                        instance_source_pk,
+                        instance_dest_pk,
+                    )
+                )
+                status = (
+                    'already exists entirely!'
+                    if can_skip_entirely
+                    else 'exists but lacks related items'
+                )
+                print_csv(
+                    f'✅ {legible_class(Instance)}',
+                    instance_source_pk,
+                    instance_dest_pk,
+                    status,
+                    f'(complete: {counts[Instance]})',
+                )
+            else:
+                copy_related_obj(
+                    instance,
+                    'xform',
+                    ['uuid', 'xml_hash', 'date_created', 'date_modified'],
+                    fixup=update_user_pk_and_set_survey_type,
+                )
             with route_to_dest():
                 try:
                     parsed_instance = ParsedInstance.objects.get(
