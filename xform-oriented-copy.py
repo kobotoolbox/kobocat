@@ -231,32 +231,35 @@ def copy_xforms(xform_qs=None):
                 getattr(instance, f) for f in instance_nat_key_fields
             )
             try:
-                instance_dest_pk = dest_instance_nat_key_pk_lookup[nat_key_vals]
+                _instance_dest_pk = dest_instance_nat_key_pk_lookup[
+                    nat_key_vals
+                ]
             except KeyError:
-                instance_dest_pk = None
-            if instance_dest_pk is not None:
+                _instance_dest_pk = None
+            if _instance_dest_pk is not None:
                 source_to_dest_pks[Instance][
                     instance_source_pk
-                ] = instance_dest_pk
+                ] = _instance_dest_pk
                 counts[Instance] += 1
+                instance.pk = _instance_dest_pk
                 can_skip_entirely = (
                     are_source_and_dest_counts_equal(
                         ParsedInstance,
                         'instance_id',
                         instance_source_pk,
-                        instance_dest_pk,
+                        instance.pk,
                     )
                     and are_source_and_dest_counts_equal(
                         Attachment,
                         'instance_id',
                         instance_source_pk,
-                        instance_dest_pk,
+                        instance.pk,
                     )
                     and are_source_and_dest_counts_equal(
                         Note,
                         'instance_id',
                         instance_source_pk,
-                        instance_dest_pk,
+                        instance.pk,
                     )
                 )
                 status = (
@@ -267,10 +270,12 @@ def copy_xforms(xform_qs=None):
                 print_csv(
                     f'✅ {legible_class(Instance)}',
                     instance_source_pk,
-                    instance_dest_pk,
+                    instance.pk,
                     status,
                     f'(complete: {counts[Instance]})',
                 )
+                if can_skip_entirely:
+                    continue
             else:
                 copy_related_obj(
                     instance,
