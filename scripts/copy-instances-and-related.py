@@ -219,9 +219,14 @@ def run(username):
     print(' done!')
 
     xform_qs = XForm.objects.filter(user__username=username)
+    # By gosh, they're still creating XForms!
+    '''
     print('Cross-referencing XForms…', end='', flush=True)
     xref_xforms(xform_qs)
     print(' done!')
+    '''
+    for xform in xform_qs.iterator():
+        copy_related_obj(xform, 'user', ['id_string', 'uuid'])
 
     instance_pks_in_source_only = [
         source_instance_nat_key_to_pks[nk] for nk in nat_keys_in_source_only
@@ -256,3 +261,72 @@ def run(username):
         'instance',
         instance_qs,
     )
+
+
+def copy_related_obj(
+    obj,
+    related_fk_field,
+    nat_key: list = None,
+    retain_pk=False,
+    fixup: callable = None,
+):
+    # Yay, code duplication
+    model = type(obj)
+    disable_auto_now(model)  # never reenable within this single-use process
+    related_field = model._meta.get_field(related_fk_field)
+    related_id_attr = related_field.attname
+    related_model = related_field.related_model
+    try:
+        related_source_to_dest_pks = source_to_dest_pks[related_model]
+    except KeyError:
+        raise Exception(
+            f'{related_model} must be copied with `nat_key` specified before'
+            f' {model} can be copied'
+        )
+    this_model_source_to_dest_pks = source_to_dest_pks.setdefault(model, {})
+    source_obj_pk = obj.pk
+    if not retain_pk:
+        obj.pk = None
+    source_related_id = getattr(obj, related_id_attr)
+    try:
+        dest_related_id = related_source_to_dest_pks[source_related_id]
+    except KeyError:
+        raise Exception(
+            f'{legible_class(model)} #{source_obj_pk} expects {related_model}'
+            f' #{source_related_id}, but it has not been copied'
+        )
+    setattr(obj, related_id_attr, dest_related_id)
+    if fixup:
+        # We don't have all the time in the world… apply any necessary
+        # hacks here
+        try:
+            fixup(obj)
+        except SkipObject:
+            return obj
+    status = 'done'
+    if not nat_key:
+        with route_to_dest():
+            model.objects.bulk_create([obj])
+    else:
+        nat_key_vals = tuple(getattr(obj, f) for f in nat_key)
+        with route_to_dest():
+            criteria = dict(zip(nat_key, nat_key_vals))
+            criteria[related_id_attr] = dest_related_id
+            try:
+                existing_obj = model.objects.get(**criteria)
+            except model.DoesNotExist:
+                # "bulk create" single item to sidestep `save()` logic
+                model.objects.bulk_create([obj])
+            else:
+                obj.pk = existing_obj.pk
+                status ='already exists!'
+        this_model_source_to_dest_pks[source_obj_pk] = obj.pk
+    print_csv(
+        f'✅ {legible_class(model)}',
+        source_obj_pk,
+        obj.pk,
+        status,
+        f'(complete: {counts[model]})',
+    )
+    counts[model] += 1
+    return obj
