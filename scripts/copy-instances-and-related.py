@@ -264,9 +264,10 @@ def run(username):
             print(f'\r{count} dest instances', end='', flush=True)
         print()
 
+    count = 0
     for vals in Attachment.objects.filter(
         instance__xform__user__username=username
-    ).values(
+    ).values_list(
         'pk',
         'instance__uuid',
         'instance__xml_hash',
@@ -274,7 +275,7 @@ def run(username):
         'instance__date_modified',
         'media_file',
         'media_file_size',
-    ):
+    ).iterator():
         (
             pk,
             instance__uuid,
@@ -290,12 +291,16 @@ def run(username):
             instance__date_created,
             instance__date_modified,
         )
+        count += 1
+        print(f'\r{count} source attachments', end='', flush=True)
         if instance_nat_key_vals not in dest_instance_nat_key_to_pks:
             # At this phase, instance copying has completed. Skip attachments
             # for any new instances not already on the destination
             continue
         attachment = Attachment.objects.get(pk=pk)
+        print()
         print(attachment, attachment.instance.xform)
+    print()
 
 
 def __run(username):
