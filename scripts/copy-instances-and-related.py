@@ -240,7 +240,65 @@ def copy_related_obj(
     return obj
 
 
+#def check_for_missing_attachments(username):
 def run(username):
+    print(f'Username {username}')
+
+    instance_nat_key_fields = [
+        'uuid',
+        'xml_hash',
+        'date_created',
+        'date_modified',
+    ]
+
+    dest_instance_nat_key_to_pks = {}
+    count = 0
+    with route_to_dest():
+        for vals in (
+            Instance.objects.filter(xform__user__username=username)
+            .values_list(*(['pk'] + instance_nat_key_fields))
+            .iterator()
+        ):
+            dest_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+            count += 1
+            print(f'\r{count} dest instances', end='', flush=True)
+        print()
+
+    for vals in Attachment.objects.filter(
+        instance__xform__user__username=username
+    ).values(
+        'pk',
+        'instance__uuid',
+        'instance__xml_hash',
+        'instance__date_created',
+        'instance__date_modified',
+        'media_file',
+        'media_file_size',
+    ):
+        (
+            pk,
+            instance__uuid,
+            instance__xml_hash,
+            instance__date_created,
+            instance__date_modified,
+            media_file,
+            media_file_size,
+        ) = vals
+        instance_nat_key_vals = tuple(
+            instance__uuid,
+            instance__xml_hash,
+            instance__date_created,
+            instance__date_modified,
+        )
+        if instance_nat_key_vals not in dest_instance_nat_key_to_pks:
+            # At this phase, instance copying has completed. Skip attachments
+            # for any new instances not already on the destination
+            continue
+        attachment = Attachment.objects.get(pk=pk)
+        print(attachment, attachment.instance.xform)
+
+
+def __run(username):
     print(f'Username {username}')
 
     instance_nat_key_fields = [
