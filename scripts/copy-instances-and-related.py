@@ -314,6 +314,10 @@ def run(username):
         source_attachment_nat_key_to_pks.keys()
     ).difference(dest_attachment_nat_key_to_pks.keys())
 
+    print(
+        f'{count_attachments_for_post_migration_instances} attachments were'
+        ' ignored because they belong to post-migration instances'
+    )
     if attachment_nat_keys_in_source_only:
         print('Missing attachments:')
         for a in attachment_nat_keys_in_source_only:
