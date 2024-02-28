@@ -20,7 +20,8 @@ CHUNK_SIZE = 1000
 counts = defaultdict(lambda: 1)
 csv_writer = csv.writer(sys.stdout)
 csv_file_writer = csv.writer(
-    open(f'copy-instances-and-related-{datetime.datetime.now()}.log', 'w')
+    #open(f'copy-instances-and-related-{datetime.datetime.now()}.log', 'w')
+    open(f'copy-attachments-{datetime.datetime.now()}.log', 'w')
 )
 source_to_dest_pks = {}
 
@@ -251,6 +252,19 @@ def run(username):
         'date_modified',
     ]
 
+    source_instance_nat_key_to_pks = {}
+    count = 0
+    for vals in (
+        Instance.objects.filter(xform__user__username=username)
+        .values_list(*(['pk'] + instance_nat_key_fields))
+        .iterator()
+    ):
+        source_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+        count += 1
+        print(f'\r{count} source instances', end='', flush=True)
+    print()
+
+    source_to_dest_pks[Instance] = {}
     dest_instance_nat_key_to_pks = {}
     count = 0
     with route_to_dest():
@@ -259,10 +273,19 @@ def run(username):
             .values_list(*(['pk'] + instance_nat_key_fields))
             .iterator()
         ):
-            dest_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+            nat_key_vals = tuple(vals[1:])
+            dest_instance_nat_key_to_pks[nat_key_vals] = vals[0]
             count += 1
             print(f'\r{count} dest instances', end='', flush=True)
+            try:
+                source_pk = source_instance_nat_key_to_pks[nat_key_vals]
+            except KeyError:
+                pass  # It was deleted from the source? Oh well
+            else:
+                source_to_dest_pks[Instance][source_pk] = vals[0]
         print()
+
+    source_to_dest_pks[Instance]
 
     attachment_nat_key_fields = [
         'instance__uuid',
@@ -310,20 +333,35 @@ def run(username):
             print(f'\r{count} dest attachments', end='', flush=True)
         print()
 
-    attachment_nat_keys_in_source_only = set(
-        source_attachment_nat_key_to_pks.keys()
-    ).difference(dest_attachment_nat_key_to_pks.keys())
-
     print(
         f'{count_attachments_for_post_migration_instances} attachments were'
         ' ignored because they belong to post-migration instances'
     )
-    if attachment_nat_keys_in_source_only:
-        print('Missing attachments:')
-        for a in attachment_nat_keys_in_source_only:
-            print(a)
-    else:
-        print('Nothing missing, yay!')
+
+    attachment_nat_keys_in_source_only = set(
+        source_attachment_nat_key_to_pks.keys()
+    ).difference(dest_attachment_nat_key_to_pks.keys())
+    print(
+        f'{len(attachment_nat_keys_in_source_only)} attachments need to be'
+        ' copied'
+    )
+    if not attachment_nat_keys_in_source_only:
+        return
+
+    attachment_qs = Attachment.objects.filter(
+        pk__in=[
+            source_attachment_nat_key_to_pks[vals]
+            for vals in attachment_nat_keys_in_source_only
+        ]
+    )
+    copy_related_objs(
+        attachment_qs,
+        'instance',
+        # Would be better to refactor the function to accept a model instead of
+        # a queryset when no filtering by related objects is needed. Hopefully
+        # the database is smart enough to optimize it away
+        Instance.objects.all()
+    )
 
 
 def __run(username):
