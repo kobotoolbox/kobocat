@@ -284,8 +284,9 @@ def run(username):
         #print(f'\r{count} source attachments', end='', flush=True)
 
         instance_nat_key_vals = tuple(
-            vals[i + 1].removeprefix('instance__')
-            for i, field in attachment_nat_key_fields
+            vals[i + 1]
+            for i, field in enumerate(attachment_nat_key_fields)
+            if field.startswith('instance__')
         )
         if instance_nat_key_vals in dest_instance_nat_key_to_pks:
             # At this phase, instance copying has completed. Only consider
