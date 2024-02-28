@@ -281,7 +281,7 @@ def run(username):
         .iterator()
     ):
         count += 1
-        #print(f'\r{count} source attachments', end='', flush=True)
+        print(f'\r{count} source attachments', end='', flush=True)
 
         instance_nat_key_vals = tuple(
             vals[i + 1]
@@ -292,9 +292,26 @@ def run(username):
             # At this phase, instance copying has completed. Only consider
             # attachments for instances already on the destination
             source_attachment_nat_key_to_pks[tuple(vals[1:])] = vals[0]
-            print('.', end='', flush=True)
-        else:
-            print('!', end='', flush=True)
+
+    dest_attachment_nat_key_to_pks = {}
+    count = 0
+    with route_to_dest():
+        for vals in (
+            Attachment.objects.filter(xform__user__username=username)
+            .values_list(*(['pk'] + attachment_nat_key_fields))
+            .iterator()
+        ):
+            dest_attachment_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+            count += 1
+            print(f'\r{count} dest attachments', end='', flush=True)
+        print()
+
+    attachment_nat_keys_in_source_only = set(
+        source_attachment_nat_key_to_pks.keys()
+    ).difference(dest_attachment_nat_key_to_pks.keys())
+
+    for a in attachment_nat_keys_in_source_only:
+        print(a)
 
     print()
 
