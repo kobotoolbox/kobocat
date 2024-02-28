@@ -285,7 +285,7 @@ def run(username):
             media_file,
             media_file_size,
         ) = vals
-        instance_nat_key_vals = tuple(
+        instance_nat_key_vals = (
             instance__uuid,
             instance__xml_hash,
             instance__date_created,
