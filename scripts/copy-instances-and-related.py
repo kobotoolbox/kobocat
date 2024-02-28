@@ -275,6 +275,7 @@ def run(username):
 
     source_attachment_nat_key_to_pks = {}
     count = 0
+    count_attachments_for_post_migration_instances = 0
     for vals in (
         Attachment.objects.filter(instance__xform__user__username=username)
         .values_list(*(['pk'] + attachment_nat_key_fields))
@@ -292,6 +293,9 @@ def run(username):
             # At this phase, instance copying has completed. Only consider
             # attachments for instances already on the destination
             source_attachment_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+        else:
+            count_attachments_for_post_migration_instances += 1
+    print()
 
     dest_attachment_nat_key_to_pks = {}
     count = 0
@@ -310,10 +314,12 @@ def run(username):
         source_attachment_nat_key_to_pks.keys()
     ).difference(dest_attachment_nat_key_to_pks.keys())
 
-    for a in attachment_nat_keys_in_source_only:
-        print(a)
-
-    print()
+    if attachment_nat_keys_in_source_only:
+        print('Missing attachments:')
+        for a in attachment_nat_keys_in_source_only:
+            print(a)
+    else:
+        print('Nothing missing, yay!')
 
 
 def __run(username):
