@@ -264,42 +264,37 @@ def run(username):
             print(f'\r{count} dest instances', end='', flush=True)
         print()
 
-    count = 0
-    for vals in Attachment.objects.filter(
-        instance__xform__user__username=username
-    ).values_list(
-        'pk',
+    attachment_nat_key_fields = [
         'instance__uuid',
         'instance__xml_hash',
         'instance__date_created',
         'instance__date_modified',
         'media_file',
         'media_file_size',
-    ).iterator():
-        (
-            pk,
-            instance__uuid,
-            instance__xml_hash,
-            instance__date_created,
-            instance__date_modified,
-            media_file,
-            media_file_size,
-        ) = vals
-        instance_nat_key_vals = (
-            instance__uuid,
-            instance__xml_hash,
-            instance__date_created,
-            instance__date_modified,
-        )
+    ]
+
+    source_attachment_nat_key_to_pks = {}
+    count = 0
+    for vals in (
+        Attachment.objects.filter(instance__xform__user__username=username)
+        .values_list(*(['pk'] + attachment_nat_key_fields))
+        .iterator()
+    ):
         count += 1
-        print(f'\r{count} source attachments', end='', flush=True)
-        if instance_nat_key_vals not in dest_instance_nat_key_to_pks:
-            # At this phase, instance copying has completed. Skip attachments
-            # for any new instances not already on the destination
-            continue
-        attachment = Attachment.objects.get(pk=pk)
-        print()
-        print(attachment, attachment.instance.xform)
+        #print(f'\r{count} source attachments', end='', flush=True)
+
+        instance_nat_key_vals = tuple(
+            vals[i + 1].removeprefix('instance__')
+            for i, field in attachment_nat_key_fields
+        )
+        if instance_nat_key_vals in dest_instance_nat_key_to_pks:
+            # At this phase, instance copying has completed. Only consider
+            # attachments for instances already on the destination
+            source_attachment_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+            print('.', end='', flush=True)
+        else:
+            print('!', end='', flush=True)
+
     print()
 
 
