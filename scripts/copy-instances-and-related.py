@@ -297,7 +297,7 @@ def run(username):
     count = 0
     with route_to_dest():
         for vals in (
-            Attachment.objects.filter(xform__user__username=username)
+            Attachment.objects.filter(instance__xform__user__username=username)
             .values_list(*(['pk'] + attachment_nat_key_fields))
             .iterator()
         ):
