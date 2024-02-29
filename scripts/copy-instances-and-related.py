@@ -345,7 +345,6 @@ def run(username):
         f'{len(parsedinstance_nat_keys_in_source_only)} parsedinstances need to'
         ' be copied'
     )
-    return  # WIP
     if not parsedinstance_nat_keys_in_source_only:
         return
 
