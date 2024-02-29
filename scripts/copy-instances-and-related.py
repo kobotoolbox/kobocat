@@ -241,8 +241,130 @@ def copy_related_obj(
     return obj
 
 
-#def check_for_missing_attachments(username):
+#def check_for_missing_parsedinstances(username):
 def run(username):
+    print(f'Username {username}')
+
+    instance_nat_key_fields = [
+        'uuid',
+        'xml_hash',
+        'date_created',
+        'date_modified',
+    ]
+
+    source_instance_nat_key_to_pks = {}
+    count = 0
+    for vals in (
+        Instance.objects.filter(xform__user__username=username)
+        .values_list(*(['pk'] + instance_nat_key_fields))
+        .iterator()
+    ):
+        source_instance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+        count += 1
+        print(f'\r{count} source instances', end='', flush=True)
+    print()
+
+    source_to_dest_pks[Instance] = {}
+    dest_instance_nat_key_to_pks = {}
+    count = 0
+    with route_to_dest():
+        for vals in (
+            Instance.objects.filter(xform__user__username=username)
+            .values_list(*(['pk'] + instance_nat_key_fields))
+            .iterator()
+        ):
+            nat_key_vals = tuple(vals[1:])
+            dest_instance_nat_key_to_pks[nat_key_vals] = vals[0]
+            count += 1
+            print(f'\r{count} dest instances', end='', flush=True)
+            try:
+                source_pk = source_instance_nat_key_to_pks[nat_key_vals]
+            except KeyError:
+                pass  # It was deleted from the source? Oh well
+            else:
+                source_to_dest_pks[Instance][source_pk] = vals[0]
+        print()
+
+    source_to_dest_pks[Instance]
+
+    parsedinstance_nat_key_fields = [
+        'instance__uuid',
+        'instance__xml_hash',
+        'instance__date_created',
+        'instance__date_modified',
+    ]
+
+    source_parsedinstance_nat_key_to_pks = {}
+    count = 0
+    count_parsedinstances_for_post_migration_instances = 0
+    for vals in (
+        ParsedInstance.objects.filter(instance__xform__user__username=username)
+        .values_list(*(['pk'] + parsedinstance_nat_key_fields))
+        .iterator()
+    ):
+        count += 1
+        print(f'\r{count} source parsedinstances', end='', flush=True)
+
+        instance_nat_key_vals = tuple(
+            vals[i + 1]
+            for i, field in enumerate(parsedinstance_nat_key_fields)
+            if field.startswith('instance__')
+        )
+        if instance_nat_key_vals in dest_instance_nat_key_to_pks:
+            # At this phase, instance copying has completed. Only consider
+            # parsedinstances for instances already on the destination
+            source_parsedinstance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+        else:
+            count_parsedinstances_for_post_migration_instances += 1
+    print()
+
+    dest_parsedinstance_nat_key_to_pks = {}
+    count = 0
+    with route_to_dest():
+        for vals in (
+            ParsedInstance.objects.filter(
+                instance__xform__user__username=username
+            )
+            .values_list(*(['pk'] + parsedinstance_nat_key_fields))
+            .iterator()
+        ):
+            dest_parsedinstance_nat_key_to_pks[tuple(vals[1:])] = vals[0]
+            count += 1
+            print(f'\r{count} dest parsedinstances', end='', flush=True)
+        print()
+
+    print(
+        f'{count_parsedinstances_for_post_migration_instances} parsedinstances'
+        ' were ignored because they belong to post-migration instances'
+    )
+
+    parsedinstance_nat_keys_in_source_only = set(
+        source_parsedinstance_nat_key_to_pks.keys()
+    ).difference(dest_parsedinstance_nat_key_to_pks.keys())
+    print(
+        f'{len(parsedinstance_nat_keys_in_source_only)} parsedinstances need to'
+        ' be copied'
+    )
+    return  # WIP
+    if not parsedinstance_nat_keys_in_source_only:
+        return
+
+    parsedinstance_qs = ParsedInstance.objects.filter(
+        pk__in=[
+            source_parsedinstance_nat_key_to_pks[vals]
+            for vals in parsedinstance_nat_keys_in_source_only
+        ]
+    )
+    copy_related_objs(
+        parsedinstance_qs,
+        'instance',
+        # Would be better to refactor the function to accept a model instead of
+        # a queryset when no filtering by related objects is needed. Hopefully
+        # the database is smart enough to optimize it away
+        Instance.objects.all(),
+    )
+
+def check_for_missing_attachments(username):
     print(f'Username {username}')
 
     instance_nat_key_fields = [
