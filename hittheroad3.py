@@ -2,34 +2,16 @@ import csv
 import datetime
 import sys
 from collections import defaultdict
-from copy import deepcopy
 from itertools import islice
 
-from django.db.models import Prefetch
 from django.contrib.contenttypes.models import ContentType
-
-from onadata.libs.utils.user_auth import set_api_permissions_for_user
-from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
-route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
-
-# Imports are in a weird order because below are the models being copied
-
 from django.contrib.auth.models import User, Permission
-from onadata.apps.main.models.user_profile import UserProfile
-# from django.contrib.auth.models import User_user_permissions
-from django_digest.models import PartialDigest
-from rest_framework.authtoken.models import Token
-from onadata.apps.logger.models.xform import XForm
-
-from onadata.apps.restservice.models import RestService
-from onadata.apps.main.models.meta_data import MetaData
 from guardian.models.models import UserObjectPermission
 
-from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
-from onadata.apps.logger.models.attachment import Attachment
-from onadata.apps.logger.models.note import Note
+from onadata.apps.logger.models.xform import XForm
 from onadata.apps.logger.models.survey_type import SurveyType
+from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
+route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
 
 
 # to be replaced by reading usernames from a file
@@ -54,16 +36,6 @@ def print_csv(*args):
 
 def legible_class(cls):
     return f'{cls.__module__}.{cls.__name__}'
-
-
-def get_chunk_from_list(list_, chunk, chunk_size):
-    return list_[chunk_size * chunk:chunk_size * (chunk + 1)]
-
-
-def copy_instances_for_chunk_of_usernames(chunk, chunk_size=10):
-    unames = get_chunk_from_list(usernames, chunk, chunk_size)
-    for uname in unames:
-        copy_instances_for_single_username(uname)
 
 
 class SkipObject(Exception):
@@ -142,38 +114,6 @@ def copy_related_objs(
                 ] = created_obj.pk
 
 
-survey_type_slug_to_dest_pk_cache = {}
-def set_survey_type(instance):
-    # just calling Instance._set_survey_type() was leaking tons of memory (and
-    # slow)
-    with route_to_dest():
-        instance.survey_type_id = survey_type_slug_to_dest_pk_cache.setdefault(
-            instance.survey_type_id,
-            SurveyType.objects.get_or_create(slug=instance.survey_type.slug)[
-                0
-            ].pk,
-        )
-
-
-def update_user_pk(obj):
-    try:
-        obj.user_id = source_to_dest_pks[User][obj.user_id]
-    except KeyError:
-        # If the submitting user is not also being migrated, null out the
-        # field
-        obj.user_id = None
-
-
-def update_user_pk_and_set_survey_type(instance):
-    update_user_pk(instance)
-    set_survey_type(instance)
-
-
-def call_update_mongo(parsedinstance):
-    with route_to_dest():
-        parsedinstance.update_mongo(asynchronous=False)
-
-
 # Things that depend on all users having been copied already
 
 source_to_dest_pks = {}
@@ -193,9 +133,7 @@ xform_qs = XForm.objects.filter(user__username__in=usernames)
 source_to_dest_pks[XForm] = {}
 source_xform_xref = {
     (id_string, uuid): pk
-    for (id_string, uuid, pk) in xform_qs.values_list(
-        'id_string', 'uuid', 'pk'
-    )
+    for (id_string, uuid, pk) in xform_qs.values_list('id_string', 'uuid', 'pk')
 }
 with route_to_dest():
     for dest_xform in xform_qs.only('id_string', 'uuid'):
@@ -231,9 +169,9 @@ for p in dest_permissions:
 
 def update_permission_pk(obj_related_to_permission):
     try:
-        obj_related_to_permission.permission_id = source_to_dest_pks[Permission][
-            obj_related_to_permission.permission_id
-        ]
+        obj_related_to_permission.permission_id = source_to_dest_pks[
+            Permission
+        ][obj_related_to_permission.permission_id]
     except KeyError:
         raise SkipObject
 
