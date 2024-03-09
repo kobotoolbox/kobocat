@@ -1,29 +1,49 @@
+"""
+
+*** CAUTION *** *** CAUTION *** *** CAUTION ***
+
+This code will create duplicate submissions if run multiple times for the same
+user! If it fails, DO NOT run it again, but instead use
+    `./manage.py runscript copy-instances-and-related {username}`
+
+***********************************************
+
+What does this do?
+
+It copies all:
+
+* `Instance`s
+* `ParsedInstance`s
+* `Attachment`s
+* `Note`s
+
+…for `XForm`s owned by users identified in `htr-usernames.txt`. The `XForm`s
+**must already** be created in the destination database.
+
+You cannot simply `%run` this from an IPython Django shell: you have to call
+`copy_instances_for_chunk_of_usernames({zero-based chunk index})`, or,
+alternatively `copy_instances_for_single_username({username})`.
+
+If this code fails, you can fall back to migrating individual users'
+`Instance`s and related using:
+
+"""
+
 import csv
 import datetime
 import sys
 from collections import defaultdict
-from copy import deepcopy
 from itertools import islice
 
-from django.db.models import Prefetch
-from django.contrib.contenttypes.models import ContentType
 
-from onadata.libs.utils.user_auth import set_api_permissions_for_user
 from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
 route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
 
 # Imports are in a weird order because below are the models being copied
 
-from django.contrib.auth.models import User, Permission
-from onadata.apps.main.models.user_profile import UserProfile
+from django.contrib.auth.models import User
 # from django.contrib.auth.models import User_user_permissions
-from django_digest.models import PartialDigest
-from rest_framework.authtoken.models import Token
 from onadata.apps.logger.models.xform import XForm
-
-from onadata.apps.restservice.models import RestService
-from onadata.apps.main.models.meta_data import MetaData
-from guardian.models.models import UserObjectPermission
 
 from onadata.apps.logger.models.instance import Instance
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
@@ -32,12 +52,11 @@ from onadata.apps.logger.models.note import Note
 from onadata.apps.logger.models.survey_type import SurveyType
 
 
-# to be replaced by reading usernames from a file
-# all_users_qs = User.objects.filter(username__in=('tino', 'tinok', 'tinok3', 'jamesld_test'))
-
-usernames = [x.strip() for x in open('../eu-usernames.txt').readlines()]
+usernames = [x.strip() for x in open('htr-usernames.txt').readlines()]
 all_users_qs = User.objects.filter(username__in=usernames)
-csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/eu-kc-2.log', 'w'))
+csv_file_writer = csv.writer(
+    open(f'kc-hittheroad2-{datetime.datetime.now()}.log', 'w')
+)
 
 
 CHUNK_SIZE = 1000

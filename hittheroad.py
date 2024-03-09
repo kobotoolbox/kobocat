@@ -1,11 +1,29 @@
+"""
+What does this do?
+
+1. Depends on all `User`s having already been created by KPI's `hittheroad.py`
+2. Assigns needed model-level permissions to users being copied
+3. Copies objects related to these users:
+    1. `UserProfile`s
+    2. `PartialDigest`s
+    3. `Token`s
+4. Copies all `XForm`s owned by these users and related:
+    1. `RestService`s
+    2. `MetaData`s
+5. Copies all (django-guardian) permission assignments for these `XForm`s
+
+What next?
+
+1. Run code in `hittheroad2.py` to copy all `Instance`s and related objects
+
+"""
+
 import csv
 import datetime
 import sys
 from collections import defaultdict
-from copy import deepcopy
 from itertools import islice
 
-from django.db.models import Prefetch
 from django.contrib.contenttypes.models import ContentType
 
 from onadata.libs.utils.user_auth import set_api_permissions_for_user
@@ -20,25 +38,16 @@ from onadata.apps.main.models.user_profile import UserProfile
 from django_digest.models import PartialDigest
 from rest_framework.authtoken.models import Token
 from onadata.apps.logger.models.xform import XForm
-
 from onadata.apps.restservice.models import RestService
 from onadata.apps.main.models.meta_data import MetaData
 from guardian.models.models import UserObjectPermission
 
-from onadata.apps.logger.models.instance import Instance
-from onadata.apps.viewer.models.parsed_instance import ParsedInstance
-from onadata.apps.logger.models.attachment import Attachment
-from onadata.apps.logger.models.note import Note
 # handled by calling _set_survey_type() during Instance migration
 # from onadata.apps.logger.models.survey_type import SurveyType
 
 
-# to be replaced by reading usernames from a file
-# all_users_qs = User.objects.filter(username__in=('tino', 'tinok', 'tinok3', 'jamesld_test'))
-
-usernames = [x.strip() for x in open('../eu-usernames.txt').readlines()]
+usernames = [x.strip() for x in open('htr-usernames.txt').readlines()]
 all_users_qs = User.objects.filter(username__in=usernames)
-csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/eu-kc-1.log', 'w'))
 
 
 CHUNK_SIZE = 2000
@@ -46,6 +55,9 @@ CHUNK_SIZE = 2000
 counts = defaultdict(lambda: 1)
 
 csv_writer = csv.writer(sys.stdout)
+csv_file_writer = csv.writer(
+    open(f'kc-hittheroad-{datetime.datetime.now()}.log', 'w')
+)
 
 
 def print_csv(*args):
@@ -180,69 +192,8 @@ for user in all_users_qs.only('username'):
     )
 
 
-''' All this moved to hittheroad2.py and hittheroad3.py
-
-def call_set_survey_type(instance):
-    with route_to_dest():
-        instance._set_survey_type()
-
-
-def update_user_pk(obj):
-    try:
-        obj.user_id = source_to_dest_pks[User][obj.user_id]
-    except KeyError:
-        # If the submitting user is not also being migrated, null out the
-        # field
-        obj.user_id = None
-
-
-def update_user_pk_and_call_set_survey_type(instance):
-    update_user_pk(instance)
-    call_set_survey_type(instance)
-
-
-def call_update_mongo(parsedinstance):
-    with route_to_dest():
-        parsedinstance.update_mongo(asynchronous=False)
-
 
 # Things that depend on all users having been copied already
-
-for user in all_users_qs.only('username'):
-    # Loop through users again to handle Instances, which could've been
-    # submitted by any user
-    xform_qs = XForm.objects.filter(user__username=user.username)
-
-    copy_related_objs(
-        Instance.objects.all(),
-        'xform',
-        xform_qs,
-        ['uuid', 'xml_hash', 'date_created', 'date_modified'],
-        fixup=update_user_pk_and_call_set_survey_type,
-    )
-
-    # Related to Instance
-
-    instance_qs = Instance.objects.filter(xform__in=xform_qs)
-
-    copy_related_objs(
-        ParsedInstance.objects.all(),
-        'instance',
-        instance_qs,
-        fixup=call_update_mongo,
-    )
-
-    copy_related_objs(
-        Attachment.objects.all(),
-        'instance',
-        instance_qs,
-    )
-
-    copy_related_objs(
-        Note.objects.all(),
-        'instance',
-        instance_qs,
-    )
 
 # Cross-reference Permissions by app_label and model (from ContentType) and
 # codename
@@ -305,12 +256,3 @@ copy_related_objs(
     all_users_qs,
     fixup=fixup_guardian_perm,
 )
-'''
-
-
-''' Zafacón
-def DEBUG__clean_up():
-    with route_to_dest():
-        # `QuerySet.all()` copies the queryset. Is it necessary…?
-        print(all_users_qs.all().delete())
-'''
