@@ -1,3 +1,13 @@
+"""
+
+This is a pretty limited mechanism to copy django-guardian
+`UserObjectPermission`s after all `User`s and `XForm`s have already been
+copied. It fails to handle permissions assigned to users beyond those listed in
+`htr-usernames.txt`. It also does not copy anything else related to `XForm`, so
+it does not suffice for overall clean-up after piecemeal copy of `XForm`s.
+
+"""
+
 import csv
 import datetime
 import sys
@@ -9,17 +19,15 @@ from django.contrib.auth.models import User, Permission
 from guardian.models.models import UserObjectPermission
 
 from onadata.apps.logger.models.xform import XForm
-from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
 route_to_dest = HitTheRoadDatabaseRouter.route_to_destination
 
 
-# to be replaced by reading usernames from a file
-# all_users_qs = User.objects.filter(username__in=('tino', 'tinok', 'tinok3', 'jamesld_test'))
-
-usernames = [x.strip() for x in open('../eu-usernames.txt').readlines()]
+usernames = [x.strip() for x in open('htr-usernames.txt').readlines()]
 all_users_qs = User.objects.filter(username__in=usernames)
-csv_file_writer = csv.writer(open('/home/ubuntu/jnm-work/log/eu-kc-3.log', 'w'))
+csv_file_writer = csv.writer(
+    open(f'kc-hittheroad3-{datetime.datetime.now()}.log', 'w')
+)
 
 
 CHUNK_SIZE = 1000
@@ -31,7 +39,7 @@ csv_writer = csv.writer(sys.stdout)
 
 def print_csv(*args):
     csv_writer.writerow((datetime.datetime.now(),) + args)
-    # csv_file_writer.writerow((datetime.datetime.now(),) + args)
+    csv_file_writer.writerow((datetime.datetime.now(),) + args)
 
 
 def legible_class(cls):

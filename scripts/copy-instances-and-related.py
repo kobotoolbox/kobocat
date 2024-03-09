@@ -1,3 +1,14 @@
+"""
+What does this do?
+
+It will copy `Instance`s and related objects for `XForm`s owned by the username
+specified on the command line.
+
+The code is commented out, but there's logic to create missing `XForm`s in the
+destination database where needed. *HOWEVER*, this logic does nothing to handle
+related objects like `RestService`s, `MetaData`s, or `UserObjectPermission`s
+"""
+
 import csv
 import datetime
 import sys
@@ -20,8 +31,7 @@ CHUNK_SIZE = 1000
 counts = defaultdict(lambda: 1)
 csv_writer = csv.writer(sys.stdout)
 csv_file_writer = csv.writer(
-    #open(f'copy-instances-and-related-{datetime.datetime.now()}.log', 'w')
-    open(f'copy-attachments-{datetime.datetime.now()}.log', 'w')
+    open(f'copy-instances-and-related-{datetime.datetime.now()}.log', 'w')
 )
 source_to_dest_pks = {}
 
@@ -241,8 +251,12 @@ def copy_related_obj(
     return obj
 
 
-#def check_for_missing_parsedinstances(username):
-def run(username):
+def check_for_missing_parsedinstances(username):
+    """
+    This is for fixing up an interrupted migration. It is
+    NOT CALLED unless you call it manually!
+    """
+
     print(f'Username {username}')
 
     instance_nat_key_fields = [
@@ -363,7 +377,13 @@ def run(username):
         Instance.objects.all(),
     )
 
+
 def check_for_missing_attachments(username):
+    """
+    This is for fixing up an interrupted migration. It is
+    NOT CALLED unless you call it manually!
+    """
+
     print(f'Username {username}')
 
     instance_nat_key_fields = [
@@ -485,7 +505,7 @@ def check_for_missing_attachments(username):
     )
 
 
-def __run(username):
+def run(username):
     print(f'Username {username}')
 
     instance_nat_key_fields = [
@@ -533,14 +553,17 @@ def __run(username):
     print(' done!')
 
     xform_qs = XForm.objects.filter(user__username=username)
-    # By gosh, they're still creating XForms!
-    '''
     print('Cross-referencing XForms…', end='', flush=True)
     xref_xforms(xform_qs)
     print(' done!')
+
+    # If you need to create missing XForms on the fly, you can--but you'll have
+    # to deal with their related objects somehow
     '''
+    # By gosh, they're still creating XForms!
     for xform in xform_qs.iterator():
         copy_related_obj(xform, 'user', ['id_string', 'uuid'])
+    '''
 
     instance_pks_in_source_only = [
         source_instance_nat_key_to_pks[nk] for nk in nat_keys_in_source_only
@@ -575,5 +598,3 @@ def __run(username):
         'instance',
         instance_qs,
     )
-
-
