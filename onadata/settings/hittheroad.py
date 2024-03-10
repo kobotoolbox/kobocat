@@ -6,6 +6,9 @@ DATABASES = {
     'default': env.db_url('KC_DATABASE_URL'),
     'default_destination': env.db_url('KC_DATABASE_URL_DESTINATION'),
 }
+DATABASES['default']['OPTIONS'] = {
+    'options': '-c default_transaction_read_only=on'
+}
 
 # Mongo stuff just copied from base.py
 MONGO_DB_URL = env.str('MONGO_DB_URL_DESTINATION')
