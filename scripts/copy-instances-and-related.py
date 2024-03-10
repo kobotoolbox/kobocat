@@ -223,11 +223,12 @@ def copy_related_obj(
         try:
             fixup(obj)
         except SkipObject:
-            return obj
+            return obj, False
     status = 'done'
     if not nat_key:
         with route_to_dest():
             model.objects.bulk_create([obj])
+            created = True
     else:
         nat_key_vals = tuple(getattr(obj, f) for f in nat_key)
         with route_to_dest():
