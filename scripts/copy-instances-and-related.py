@@ -1,12 +1,12 @@
 """
 What does this do?
 
-It will copy `Instance`s and related objects for `XForm`s owned by the username
-specified on the command line.
+It copies `Instance`s and related objects for `XForm`s owned by the username
+specified on the command line. It also creates missing `XForm`s on the fly,
+along with related `RestService` and `MetaData` objects.
 
-The code is commented out, but there's logic to create missing `XForm`s in the
-destination database where needed. *HOWEVER*, this logic does nothing to handle
-related objects like `RestService`s, `MetaData`s, or `UserObjectPermission`s
+It does NOT handle `UserObjectPermission`s, which will need to be assigned if
+new `XForm`s are created.
 """
 
 import csv
@@ -22,6 +22,8 @@ from onadata.apps.logger.models.instance import Instance
 from onadata.apps.logger.models.note import Note
 from onadata.apps.logger.models.survey_type import SurveyType
 from onadata.apps.logger.models.xform import XForm
+from onadata.apps.restservice.models import RestService
+from onadata.apps.main.models.meta_data import MetaData
 from onadata.apps.viewer.models.parsed_instance import ParsedInstance
 from onadata.settings.hittheroad import HitTheRoadDatabaseRouter
 
@@ -236,9 +238,11 @@ def copy_related_obj(
             except model.DoesNotExist:
                 # "bulk create" single item to sidestep `save()` logic
                 model.objects.bulk_create([obj])
+                created = True
             else:
                 obj.pk = existing_obj.pk
                 status ='already exists!'
+                created = False
         this_model_source_to_dest_pks[source_obj_pk] = obj.pk
     print_csv(
         f'✅ {legible_class(model)}',
@@ -248,7 +252,7 @@ def copy_related_obj(
         f'(complete: {counts[model]})',
     )
     counts[model] += 1
-    return obj
+    return obj, created
 
 
 def check_for_missing_parsedinstances(username):
@@ -553,17 +557,36 @@ def run(username):
     print(' done!')
 
     xform_qs = XForm.objects.filter(user__username=username)
-    print('Cross-referencing XForms…', end='', flush=True)
-    xref_xforms(xform_qs)
-    print(' done!')
 
-    # If you need to create missing XForms on the fly, you can--but you'll have
-    # to deal with their related objects somehow
-    '''
+    # print('Cross-referencing XForms…', end='', flush=True)
+    # xref_xforms(xform_qs)
+    # print(' done!')
+
     # By gosh, they're still creating XForms!
+    xforms_created = 0
     for xform in xform_qs.iterator():
-        copy_related_obj(xform, 'user', ['id_string', 'uuid'])
-    '''
+        dest_xform, created = copy_related_obj(
+            xform, 'user', ['id_string', 'uuid']
+        )
+        if not created:
+            continue
+        xforms_created += 1
+        # For a new XForm, copy related objects as well
+        this_xform = XForm.objects.filter(
+            user__username=username, id_string=xform.id_string, uuid=xform.uuid
+        )
+        copy_related_objs(
+            RestService.objects.all(),
+            'xform',
+            this_xform,
+            # ['xform', 'service_url', 'name'],
+        )
+        copy_related_objs(
+            MetaData.objects.all(),
+            'xform',
+            this_xform,
+            # ['data_type', 'data_value'],
+        )
 
     instance_pks_in_source_only = [
         source_instance_nat_key_to_pks[nk] for nk in nat_keys_in_source_only
@@ -598,3 +621,9 @@ def run(username):
         'instance',
         instance_qs,
     )
+
+    if xforms_created:
+        print_csv(
+            f'!!! {xforms_created} new XForms were created! You must handle'
+            ' permission assignments for them'
+        )
