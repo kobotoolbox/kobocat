@@ -31,7 +31,6 @@ from onadata.apps.viewer.models.export import Export
 from onadata.apps.viewer.tasks import create_async_export
 from onadata.libs.authentication import digest_authentication
 from onadata.libs.utils.image_tools import image_url
-from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
     HttpResponseNotAuthorized,
@@ -79,17 +78,6 @@ def create_export(request, username, id_string, export_type):
         return HttpResponseBadRequest(
             t("%s is not a valid export type" % export_type))
     else:
-        audit = {
-            "xform": xform.id_string,
-            "export_type": export_type
-        }
-        audit_log(
-            Actions.EXPORT_CREATED, request.user, owner,
-            t("Created %(export_type)s export on '%(id_string)s'.") %
-            {
-                'export_type': export_type.upper(),
-                'id_string': xform.id_string,
-            }, audit, request)
         return HttpResponseRedirect(reverse(
             export_list,
             kwargs={
@@ -171,20 +159,6 @@ def export_download(request, username, id_string, export_type, filename):
 
     ext, mime_type = export_def_from_filename(export.filename)
 
-    audit = {
-        "xform": xform.id_string,
-        "export_type": export.export_type
-    }
-    audit_log(
-        Actions.EXPORT_DOWNLOADED, request.user, owner,
-        t("Downloaded %(export_type)s export '%(filename)s' "
-          "on '%(id_string)s'.") %
-        {
-            'export_type': export.export_type.upper(),
-            'filename': export.filename,
-            'id_string': xform.id_string,
-        }, audit, request)
-
     if not isinstance(default_storage, FileSystemStorage):
         return HttpResponseRedirect(default_storage.url(export.filepath))
 
@@ -213,19 +187,6 @@ def delete_export(request, username, id_string, export_type):
     export = get_object_or_404(Export, id=export_id)
 
     export.delete()
-    audit = {
-        "xform": xform.id_string,
-        "export_type": export.export_type
-    }
-    audit_log(
-        Actions.EXPORT_DOWNLOADED, request.user, owner,
-        t("Deleted %(export_type)s export '%(filename)s'"
-          " on '%(id_string)s'.") %
-        {
-            'export_type': export.export_type.upper(),
-            'filename': export.filename,
-            'id_string': xform.id_string,
-        }, audit, request)
     return HttpResponseRedirect(reverse(
         export_list,
         kwargs={
