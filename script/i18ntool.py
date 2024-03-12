@@ -110,13 +110,13 @@ def add(lang):
     for loc in langs:
         with indent(2):
             puts("Generating PO for %s" % loc)
-        shell_call("django-admin.py makemessages -l %(lang)s "
+        shell_call("django-admin makemessages -l %(lang)s "
                    "-e py,html,email,txt" % {'lang': loc})
         for app in I18N_APPS:
             with indent(4):
                 puts("Generating PO for app %s" % app)
             with chdir(os.path.join(REPO_ROOT, app)):
-                shell_call("django-admin.py makemessages "
+                shell_call("django-admin makemessages "
                            "-d djangojs -l %(lang)s" % {'lang': loc})
         puts(colored.green("sucesssfuly generated %s" % loc))
 
@@ -154,13 +154,13 @@ def compile_mo(lang=None):
     for loc in langs:
         with indent(2):
             puts("Compiling %s" % loc)
-        shell_call("django-admin.py compilemessages -l %(lang)s "
+        shell_call("django-admin compilemessages -l %(lang)s "
                    % {'lang': loc})
         for app in I18N_APPS:
             with indent(4):
                 puts("Compiling app %s" % app)
             with chdir(os.path.join(REPO_ROOT, app)):
-                shell_call("django-admin.py compilemessages -l %(lang)s"
+                shell_call("django-admin compilemessages -l %(lang)s"
                            % {'lang': loc})
         puts(colored.green("sucesssfuly compiled %s" % loc))
 

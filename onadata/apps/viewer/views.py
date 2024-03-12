@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+from urllib.parse import quote as urlquote
 
 import rest_framework.request
 from django.conf import settings
@@ -20,7 +21,6 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
-from django.utils.http import urlquote
 from django.utils.translation import gettext as t
 from django.views.decorators.http import require_POST
 from rest_framework.exceptions import AuthenticationFailed
