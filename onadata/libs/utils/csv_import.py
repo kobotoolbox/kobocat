@@ -70,15 +70,20 @@ def submit_csv(
     :py:func:`onadata.libs.utils.logger_tools.safe_create_instance`
 
     """
-    if isinstance(csv_file, InMemoryUploadedFile):
-        csv_file = csv_file.read().decode()
+
+    if hasattr(csv_file, 'readable'):
+        csv_file = io.TextIOWrapper(csv_file, encoding='utf-8')
 
     if isinstance(csv_file, str):
         csv_file = io.StringIO(csv_file)
     elif csv_file is None or not hasattr(csv_file, 'read'):
-        return {'error': ('Invalid param type for `csv_file`. '
-                          'Expected file or String '
-                          'got {} instead.'.format(type(csv_file).__name__))}
+        return {
+            'error': (
+                'Invalid param type for `csv_file`. '
+                'Expected file or String '
+                'got {} instead.'.format(type(csv_file).__name__)
+            )
+        }
 
     csv_reader = csv.DictReader(csv_file)
     rollback_uuids = []
