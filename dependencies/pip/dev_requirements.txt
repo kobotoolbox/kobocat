@@ -154,6 +154,8 @@ djangorestframework-jsonp==1.0.2
     # via -r dependencies/pip/requirements.in
 djangorestframework-xml==2.0.0
     # via -r dependencies/pip/requirements.in
+dnspython==2.6.1
+    # via pymongo
 dpath==2.1.6
     # via -r dependencies/pip/requirements.in
 ecdsa==0.18.0
@@ -250,7 +252,7 @@ pycparser==2.21
     # via cffi
 pygments==2.17.2
     # via ipython
-pymongo==3.13.0
+pymongo==4.6.2
     # via -r dependencies/pip/requirements.in
 pytest==8.1.1
     # via
