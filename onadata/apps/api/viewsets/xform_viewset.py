@@ -1,7 +1,6 @@
 # coding: utf-8
 import json
 import os
-from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -30,7 +29,6 @@ from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
 from onadata.libs.mixins.labels_mixin import LabelsMixin
 from onadata.libs.renderers import renderers
 from onadata.libs.serializers.xform_serializer import XFormSerializer
-from onadata.libs.utils import log
 from onadata.libs.utils.common_tags import SUBMISSION_TIME
 from onadata.libs.utils.csv_import import submit_csv
 from onadata.libs.utils.export_tools import (
@@ -108,17 +106,6 @@ def _generate_new_export(request, xform, query, export_type):
             export_type, extension, xform.user.username,
             xform.id_string, None, query
         )
-        audit = {
-            "xform": xform.id_string,
-            "export_type": export_type
-        }
-        log.audit_log(
-            log.Actions.EXPORT_CREATED, request.user, xform.user,
-            t("Created %(export_type)s export on '%(id_string)s'.") %
-            {
-                'id_string': xform.id_string,
-                'export_type': export_type.upper()
-            }, audit, request)
     except NoRecordsFoundError:
         raise Http404(t("No records found to export"))
     else:
@@ -172,21 +159,6 @@ def value_for_type(form, field, value):
     return value
 
 
-def log_export(request, xform, export_type):
-    # log download as well
-    audit = {
-        "xform": xform.id_string,
-        "export_type": export_type
-    }
-    log.audit_log(
-        log.Actions.EXPORT_DOWNLOADED, request.user, xform.user,
-        t("Downloaded %(export_type)s export on '%(id_string)s'.") %
-        {
-            'id_string': xform.id_string,
-            'export_type': export_type.upper()
-        }, audit, request)
-
-
 def custom_response_handler(request, xform, query, export_type):
     export_type = _get_export_type(export_type)
 
@@ -199,8 +171,6 @@ def custom_response_handler(request, xform, query, export_type):
         if not export.filename:
             # tends to happen when using newset_export_for.
             export = _generate_new_export(request, xform, query, export_type)
-
-    log_export(request, xform, export_type)
 
     # get extension from file_path, exporter could modify to
     # xlsx if it exceeds limits

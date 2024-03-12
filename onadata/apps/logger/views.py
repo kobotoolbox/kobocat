@@ -2,12 +2,9 @@
 import json
 import os
 import tempfile
-import re
-from datetime import datetime, date
 
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.http import (
     HttpResponse,
@@ -16,7 +13,6 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     StreamingHttpResponse,
-    Http404,
 )
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
@@ -25,11 +21,8 @@ from django.utils.translation import gettext as t
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
-from onadata.apps.main.models import UserProfile
 from onadata.apps.logger.import_tools import import_instances_from_zip
 from onadata.apps.logger.models.xform import XForm
-from onadata.libs.authentication import digest_authentication
-from onadata.libs.utils.log import audit_log, Actions
 from onadata.libs.utils.logger_tools import BaseOpenRosaResponse
 from onadata.libs.utils.logger_tools import response_with_mimetype_and_name
 from onadata.libs.utils.user_auth import (
@@ -37,7 +30,6 @@ from onadata.libs.utils.user_auth import (
     has_permission,
     add_cors_headers,
 )
-from .tasks import generate_stats_zip
 from ...koboform.pyxform_utils import convert_csv_to_xls
 
 IO_ERROR_STRINGS = [
@@ -128,11 +120,6 @@ def bulksubmission(request, username):
          'rejected': total_count - success_count},
         'errors': "%d %s" % (len(errors), errors)
     }
-    audit = {
-        "bulk_submission_log": json_msg
-    }
-    audit_log(Actions.USER_BULK_SUBMISSION, request.user, posting_user,
-              t("Made bulk submissions."), audit, request)
     response = HttpResponse(json.dumps(json_msg))
     response.status_code = 200
     response['Location'] = request.build_absolute_uri(request.path)
@@ -161,16 +148,6 @@ def download_xlsform(request, username, id_string):
     file_path = xform.xls.name
 
     if file_path != '' and default_storage.exists(file_path):
-        audit = {
-            "xform": xform.id_string
-        }
-        audit_log(
-            Actions.FORM_XLS_DOWNLOADED, request.user, xform.user,
-            t("Downloaded XLS file for form '%(id_string)s'.") %
-            {
-                "id_string": xform.id_string
-            }, audit, request)
-
         if file_path.endswith('.csv'):
             with default_storage.open(file_path) as ff:
                 xls_io = convert_csv_to_xls(ff.read())
