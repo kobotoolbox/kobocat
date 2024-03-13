@@ -346,8 +346,6 @@ if SESSION_COOKIE_DOMAIN:
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
-# If not properly overridden, leave uninitialized so Django can set the default.
-# (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
 default_file_storage = 'django.core.files.storage.FileSystemStorage'
 
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
