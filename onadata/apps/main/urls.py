@@ -45,9 +45,6 @@ urlpatterns = [
     re_path(r'^accounts/', include('django.contrib.auth.urls')),
     re_path(r'^admin/', admin.site.urls),
 
-    # oath2_provider
-    re_path(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-
     # main website views
     re_path(
         r'^$', RedirectView.as_view(url=koboform.redirect_url('/')), name='home'

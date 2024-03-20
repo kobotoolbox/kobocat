@@ -195,7 +195,6 @@ INSTALLED_APPS = [
     'reversion',
     'django_digest',
     'corsheaders',
-    'oauth2_provider',
     'onadata.apps.logger.LoggerAppConfig',
     'rest_framework',
     'rest_framework.authtoken',
@@ -411,7 +410,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'onadata.libs.authentication.DigestAuthentication',
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'onadata.libs.authentication.TokenAuthentication',
         # HttpsOnlyBasicAuthentication must come before SessionAuthentication because
         # Django authentication is called before DRF authentication and users get authenticated with
@@ -467,16 +465,6 @@ KOBOCAT_INTERNAL_HOSTNAME = '{}.{}'.format(
 KOBOCAT_PUBLIC_HOSTNAME = '{}.{}'.format(
     os.environ.get('KOBOCAT_PUBLIC_SUBDOMAIN', 'kc'),
     os.environ.get('PUBLIC_DOMAIN_NAME', 'kobotoolbox.org'))
-
-OAUTH2_PROVIDER = {
-    # this is the list of available scopes
-    'SCOPES': {
-        'read': 'Read scope',
-        'write': 'Write scope',
-        'groups': 'Access to your groups'
-    },
-    'PKCE_REQUIRED': False,
-}
 
 # All registration should be done through KPI, so Django Registration should
 # never be enabled here. It'd be best to remove all references to the

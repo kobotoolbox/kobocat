@@ -92,7 +92,6 @@ django==4.2.11
     #   django-extensions
     #   django-filter
     #   django-guardian
-    #   django-oauth-toolkit
     #   django-redis
     #   django-render-block
     #   django-reversion
@@ -121,8 +120,6 @@ django-guardian==2.4.0
     # via
     #   -r dependencies/pip/requirements.in
     #   djangorestframework-guardian
-django-oauth-toolkit==2.3.0
-    # via -r dependencies/pip/requirements.in
 django-pure-pagination==0.3.0
     # via -r dependencies/pip/requirements.in
 django-redis==5.4.0
@@ -181,8 +178,6 @@ jmespath==1.0.1
     #   botocore
 jsonfield==3.1.0
     # via -r dependencies/pip/requirements.in
-jwcrypto==1.5.6
-    # via django-oauth-toolkit
 kombu==5.3.5
     # via celery
 lxml==5.1.0
@@ -197,8 +192,6 @@ modilabs-python-utils==0.1.5
     # via -r dependencies/pip/requirements.in
 numpy==1.24.4
     # via pandas
-oauthlib==3.2.2
-    # via django-oauth-toolkit
 openpyxl==3.0.9
     # via
     #   -r dependencies/pip/requirements.in
@@ -241,7 +234,6 @@ redis==5.0.3
 requests==2.31.0
     # via
     #   azure-core
-    #   django-oauth-toolkit
 s3transfer==0.10.0
     # via boto3
 sentry-sdk==1.42.0
