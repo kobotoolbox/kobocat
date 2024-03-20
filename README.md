@@ -68,22 +68,22 @@ instructions on how to install KoboToolbox.
 To generate a locale from scratch (ex. Spanish)
 
 ``` sh
-$ django-admin.py makemessages -l es -e py,html,email,txt ;
-$ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin.py makemessages -d djangojs -l es && cd - ; done
+$ django-admin makemessages -l es -e py,html,email,txt ;
+$ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin makemessages -d djangojs -l es && cd - ; done
 ```
 
 To update PO files
 
 ``` sh
-$ django-admin.py makemessages -a ;
-$ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin.py makemessages -d djangojs -a && cd - ; done
+$ django-admin makemessages -a ;
+$ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin makemessages -d djangojs -a && cd - ; done
 ```
 
 To compile MO files and update live translations
 
 ``` sh
-$ django-admin.py compilemessages ;
-$ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin.py compilemessages && cd - ; done
+$ django-admin compilemessages ;
+$ for app in {main,viewer} ; do cd kobocat/apps/${app} && django-admin compilemessages && cd - ; done
 ```
 ## Testing in KoboCAT
 

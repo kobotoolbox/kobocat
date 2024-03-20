@@ -1,10 +1,9 @@
 # coding: utf-8
 import os
 import reversion
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from dateutil import parser
-from django.utils.timezone import utc
 from django_digest.test import DigestAuth
 from mock import patch
 
@@ -30,7 +29,7 @@ class TestInstance(TestBase):
 
     @patch('django.utils.timezone.now')
     def test_json_assigns_attributes(self, mock_time):
-        mock_time.return_value = datetime.utcnow().replace(tzinfo=utc)
+        mock_time.return_value = datetime.utcnow().replace(tzinfo=timezone.utc)
         self._publish_transportation_form_and_submit_instance()
 
         xform_id_string = XForm.objects.all()[0].id_string
@@ -44,7 +43,7 @@ class TestInstance(TestBase):
 
     @patch('django.utils.timezone.now')
     def test_json_stores_user_attribute(self, mock_time):
-        mock_time.return_value = datetime.utcnow().replace(tzinfo=utc)
+        mock_time.return_value = datetime.utcnow().replace(tzinfo=timezone.utc)
         self._publish_transportation_form()
 
         # submit instance with a request user
