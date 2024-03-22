@@ -260,12 +260,6 @@ LOGGING = {
             'formatter': 'verbose',
             'stream': sys.stdout
         },
-        'audit': {
-            'level': 'DEBUG',
-            'class': 'onadata.libs.utils.log.AuditLogHandler',
-            'formatter': 'verbose',
-            'model': 'onadata.apps.main.models.audit.AuditLog'
-        }
     },
     'loggers': {
         'django.request': {
@@ -278,11 +272,6 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True
         },
-        'audit_logger': {
-            'handlers': ['audit'],
-            'level': 'DEBUG',
-            'propagate': True
-        }
     }
 }
 
