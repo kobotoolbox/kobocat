@@ -71,10 +71,6 @@ LANGUAGE_CODE = 'en-us'
 # to load the internationalization machinery.
 USE_I18N = True
 
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale
-USE_L10N = True
-
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
@@ -350,13 +346,23 @@ if SESSION_COOKIE_DOMAIN:
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
-# If not properly overridden, leave uninitialized so Django can set the default.
-# (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
+default_file_storage = 'django.core.files.storage.FileSystemStorage'
+
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
-    DEFAULT_FILE_STORAGE = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
-    if DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
+    default_file_storage = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
+    if default_file_storage == 'storages.backends.s3boto3.S3Boto3Storage':
         # Force usage of custom S3 tellable Storage
-        DEFAULT_FILE_STORAGE = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
+        default_file_storage = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
+
+
+STORAGES = {
+    'default': {
+        'BACKEND': default_file_storage,
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 
 EMAIL_BACKEND = env.str(
     'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'

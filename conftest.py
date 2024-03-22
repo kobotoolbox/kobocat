@@ -58,7 +58,7 @@ def setup(request):
                     toggle_capturing(capture_manager, stop=False)
                 pytest.exit('User interrupted tests', pytest.ExitCode.INTERRUPTED)
 
-    if 'instances' in settings.MONGO_DB.collection_names():
+    if 'instances' in settings.MONGO_DB.list_collection_names():
         response = stderr_prompt(
             '\n\n'
             'WARNING: the MongoDB collection {}.instances already exists!\n'

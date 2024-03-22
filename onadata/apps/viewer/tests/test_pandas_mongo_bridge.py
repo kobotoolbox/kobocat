@@ -394,7 +394,7 @@ class TestPandasMongoBridge(TestBase):
         columns = ["key"]
         # test xls
         xls_df_writer = XLSDataFrameWriter(data, columns)
-        temp_file = NamedTemporaryFile(suffix='.xls', mode='w')
+        temp_file = NamedTemporaryFile(suffix='.xlsx', mode='w')
         excel_writer = ExcelWriter(temp_file.name)
         passed = False
         try:
