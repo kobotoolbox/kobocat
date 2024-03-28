@@ -8,6 +8,7 @@ from urllib.parse import quote_plus
 
 import environ
 from celery.schedules import crontab
+from django.conf import global_settings
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
@@ -344,25 +345,17 @@ SESSION_COOKIE_DOMAIN = env.str('SESSION_COOKIE_DOMAIN', None)
 if SESSION_COOKIE_DOMAIN:
     SESSION_COOKIE_NAME = env.str('SESSION_COOKIE_NAME', 'kobonaut')
 
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
-
-default_file_storage = 'django.core.files.storage.FileSystemStorage'
+# Storage configuration
+STORAGES = global_settings.STORAGES
 
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
-    default_file_storage = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
-    if default_file_storage == 'storages.backends.s3boto3.S3Boto3Storage':
+    STORAGES['default']['BACKEND'] = env.str(
+        'KOBOCAT_DEFAULT_FILE_STORAGE'
+    )
+    if STORAGES['default']['BACKEND'] == 'storages.backends.s3boto3.S3Boto3Storage':
         # Force usage of custom S3 tellable Storage
-        default_file_storage = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
+        STORAGES['default']['BACKEND'] = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
 
-
-STORAGES = {
-    'default': {
-        'BACKEND': default_file_storage,
-    },
-    'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
-    },
-}
 
 EMAIL_BACKEND = env.str(
     'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'
