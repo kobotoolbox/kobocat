@@ -355,7 +355,10 @@ if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
     if STORAGES['default']['BACKEND'] == 'storages.backends.s3boto3.S3Boto3Storage':
         # Force usage of custom S3 tellable Storage
         STORAGES['default']['BACKEND'] = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
-
+        # needed for some management commands to move files from local storage to S3
+        STORAGES['local'] = {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        }
 
 EMAIL_BACKEND = env.str(
     'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'
