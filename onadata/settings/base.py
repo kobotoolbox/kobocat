@@ -574,6 +574,7 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
     'image/png',
     'image/svg+xml',
+    'image/webp',
     'video/3gpp',
     'video/mp4',
     'video/quicktime',
