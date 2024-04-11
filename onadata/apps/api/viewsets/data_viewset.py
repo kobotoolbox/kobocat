@@ -29,14 +29,12 @@ from onadata.apps.logger.models.instance import (
     nullify_exports_time_of_last_submission,
     update_xform_submission_count_delete,
 )
-from onadata.apps.main.models import UserProfile
-from onadata.apps.viewer.models.parsed_instance import (
-    _remove_from_mongo,
-    ParsedInstance,
-)
+from onadata.apps.viewer.models.parsed_instance import ParsedInstance
+from onadata.apps.viewer.signals import remove_from_mongo
 from onadata.libs.renderers import renderers
 from onadata.libs.mixins.anonymous_user_public_forms_mixin import (
-    AnonymousUserPublicFormsMixin)
+    AnonymousUserPublicFormsMixin,
+)
 from onadata.apps.api.permissions import (
     EnketoSubmissionEditPermissions,
     EnketoSubmissionViewPermissions,
@@ -413,7 +411,7 @@ Delete a specific submission in a form
         postgres_query, mongo_query = self.__build_db_queries(xform, request.data)
 
         # Disconnect signals to speed-up bulk deletion
-        pre_delete.disconnect(_remove_from_mongo, sender=ParsedInstance)
+        pre_delete.disconnect(remove_from_mongo, sender=ParsedInstance)
         post_delete.disconnect(
             nullify_exports_time_of_last_submission, sender=Instance,
             dispatch_uid='nullify_exports_time_of_last_submission',
@@ -445,7 +443,7 @@ Delete a specific submission in a form
             )
         finally:
             # Pre_delete signal needs to be re-enabled for parsed instance
-            pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
+            pre_delete.connect(remove_from_mongo, sender=ParsedInstance)
             post_delete.connect(
                 nullify_exports_time_of_last_submission,
                 sender=Instance,
