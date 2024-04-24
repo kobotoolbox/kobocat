@@ -8,6 +8,7 @@ from urllib.parse import quote_plus
 
 import environ
 from celery.schedules import crontab
+from django.conf import global_settings
 from django.core.exceptions import SuspiciousOperation
 from pymongo import MongoClient
 
@@ -70,10 +71,6 @@ LANGUAGE_CODE = 'en-us'
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = True
-
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale
-USE_L10N = True
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -200,14 +197,14 @@ INSTALLED_APPS = [
     'django_digest',
     'corsheaders',
     'oauth2_provider',
-    'onadata.apps.logger.LoggerAppConfig',
+    'onadata.apps.logger.app.LoggerAppConfig',
     'rest_framework',
     'rest_framework.authtoken',
     'taggit',
     'readonly',
-    'onadata.apps.viewer',
-    'onadata.apps.main',
-    'onadata.apps.restservice',
+    'onadata.apps.viewer.app.ViewerConfig',
+    'onadata.apps.main.app.MainConfig',
+    'onadata.apps.restservice.app.RestServiceConfig',
     'onadata.apps.api',
     'guardian',
     'onadata.libs',
@@ -348,15 +345,20 @@ SESSION_COOKIE_DOMAIN = env.str('SESSION_COOKIE_DOMAIN', None)
 if SESSION_COOKIE_DOMAIN:
     SESSION_COOKIE_NAME = env.str('SESSION_COOKIE_NAME', 'kobonaut')
 
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
+# Storage configuration
+STORAGES = global_settings.STORAGES
 
-# If not properly overridden, leave uninitialized so Django can set the default.
-# (see https://docs.djangoproject.com/en/1.8/ref/settings/#default-file-storage)
 if os.environ.get('KOBOCAT_DEFAULT_FILE_STORAGE'):
-    DEFAULT_FILE_STORAGE = env.str('KOBOCAT_DEFAULT_FILE_STORAGE')
-    if DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
+    STORAGES['default']['BACKEND'] = env.str(
+        'KOBOCAT_DEFAULT_FILE_STORAGE'
+    )
+    if STORAGES['default']['BACKEND'] == 'storages.backends.s3boto3.S3Boto3Storage':
         # Force usage of custom S3 tellable Storage
-        DEFAULT_FILE_STORAGE = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
+        STORAGES['default']['BACKEND'] = 'onadata.apps.storage_backends.s3boto3.S3Boto3Storage'
+        # needed for some management commands to move files from local storage to S3
+        STORAGES['local'] = {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        }
 
 EMAIL_BACKEND = env.str(
     'EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend'
@@ -572,6 +574,7 @@ SUPPORTED_MEDIA_UPLOAD_TYPES = [
     'image/jpeg',
     'image/png',
     'image/svg+xml',
+    'image/webp',
     'video/3gpp',
     'video/mp4',
     'video/quicktime',

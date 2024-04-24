@@ -4,16 +4,9 @@ from tempfile import NamedTemporaryFile
 
 from django.core.files.storage import default_storage
 from django.db import models
-from django.db.models.signals import post_delete
 from django.utils.translation import gettext as t
 
 from onadata.apps.logger.models import XForm
-
-
-def export_delete_callback(sender, **kwargs):
-    export = kwargs['instance']
-    if export.filepath and default_storage.exists(export.filepath):
-        default_storage.delete(export.filepath)
 
 
 class Export(models.Model):
@@ -177,6 +170,3 @@ class Export(models.Model):
     def is_filename_unique(cls, xform, filename):
         return Export.objects.filter(
             xform=xform, filename=filename).count() == 0
-
-
-post_delete.connect(export_delete_callback, sender=Export)

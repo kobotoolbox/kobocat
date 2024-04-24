@@ -5,7 +5,7 @@ from bson import json_util
 from dateutil import parser
 from django.conf import settings
 from django.db import models
-from django.db.models.signals import pre_delete
+
 from django.utils.translation import gettext as t
 from pymongo.errors import PyMongoError
 
@@ -306,10 +306,9 @@ class ParsedInstance(models.Model):
 
     @staticmethod
     def bulk_update_validation_statuses(query, validation_status):
-        return xform_instances.update(
+        return xform_instances.update_many(
             query,
             {"$set": {VALIDATION_STATUS: validation_status}},
-            multi=True,
         )
 
     @staticmethod
@@ -412,11 +411,3 @@ def _get_attachments_from_instance(instance):
         attachments.append(attachment)
 
     return attachments
-
-
-def _remove_from_mongo(sender, **kwargs):
-    instance_id = kwargs.get('instance').instance.id
-    xform_instances.delete_one({'_id': instance_id})
-
-
-pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)

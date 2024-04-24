@@ -1,12 +1,12 @@
 # coding: utf-8
+import csv
 import io
 import json
 import uuid
 from datetime import datetime
 from typing import TextIO, Union
 
-import unicodecsv as ucsv
-from django.contrib.auth.models import User
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from onadata.apps.logger.models import Instance
 from onadata.libs.utils.logger_tools import dict2xml, safe_create_instance
@@ -70,14 +70,22 @@ def submit_csv(
     :py:func:`onadata.libs.utils.logger_tools.safe_create_instance`
 
     """
+
+    if hasattr(csv_file, 'readable'):
+        csv_file = io.TextIOWrapper(csv_file, encoding='utf-8')
+
     if isinstance(csv_file, str):
         csv_file = io.StringIO(csv_file)
     elif csv_file is None or not hasattr(csv_file, 'read'):
-        return {'error': ('Invalid param type for `csv_file`. '
-                          'Expected file or String '
-                          'got {} instead.'.format(type(csv_file).__name__))}
+        return {
+            'error': (
+                'Invalid param type for `csv_file`. '
+                'Expected file or String '
+                'got {} instead.'.format(type(csv_file).__name__)
+            )
+        }
 
-    csv_reader = ucsv.DictReader(csv_file)
+    csv_reader = csv.DictReader(csv_file)
     rollback_uuids = []
     submission_time = datetime.utcnow().isoformat()
     ona_uuid = {'formhub': {'uuid': xform.uuid}}
