@@ -665,6 +665,7 @@ SERVICE_ACCOUNT = {
 REVERSION_MIDDLEWARE_SKIPPED_URL_PATTERNS = {
     r'/api/v1/users/(.*)': ['DELETE']
 }
+KOBOCAT_REVERSION_RETENTION_DAYS = env.int("KOBOCAT_REVERSION_RETENTION_DAYS", 90)
 
 # run heavy migration scripts by default
 # NOTE: this should be set to False for major deployments. This can take a long time
