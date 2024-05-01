@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-# from django.db.models import QuerySet
 from django.conf import settings
 from django.utils import timezone
 from reversion.models import Revision

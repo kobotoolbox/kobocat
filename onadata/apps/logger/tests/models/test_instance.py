@@ -129,7 +129,7 @@ class TestInstance(TestBase):
         self.assertTrue(is_registered(Instance))
 
     @override_settings(KOBOCAT_REVERSION_RETENTION_DAYS=2)
-    def test_reversion_cleanup(self):
+    def test_revision_cleanup(self):
         days_ago_3 = timezone.now() - timedelta(days=3)
         self._publish_transportation_form()
 
