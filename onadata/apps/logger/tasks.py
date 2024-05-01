@@ -15,6 +15,7 @@ from django.core.management import call_command
 from django.utils import timezone
 
 from onadata.celery import app
+from .maintenance_tasks import remove_old_revisions
 from .models.daily_xform_submission_counter import DailyXFormSubmissionCounter
 from .models import Instance, XForm
 
@@ -122,3 +123,13 @@ def generate_stats_zip(output_filename):
 @app.task()
 def sync_storage_counters():
     call_command('update_attachment_storage_bytes', verbosity=3, sync=True)
+
+
+LIMIT_HOURS_23 = 82800
+
+@app.task(time_limit=LIMIT_HOURS_23, soft_time_limit=LIMIT_HOURS_23)
+def perform_maintenance():
+    """
+    Run daily maintenance tasks
+    """
+    remove_old_revisions()
