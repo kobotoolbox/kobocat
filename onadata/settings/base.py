@@ -709,16 +709,22 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_BEAT_SCHEDULE = {
     # Periodically mark exports stuck in the "pending" state as "failed"
     # See https://github.com/kobotoolbox/kobocat/issues/315
-    'log-stuck-exports-and-mark-failed': {
-        'task': 'onadata.apps.viewer.tasks.log_stuck_exports_and_mark_failed',
-        'schedule': timedelta(hours=6),
-        'options': {'queue': 'kobocat_queue'}
+    "log-stuck-exports-and-mark-failed": {
+        "task": "onadata.apps.viewer.tasks.log_stuck_exports_and_mark_failed",
+        "schedule": timedelta(hours=6),
+        "options": {"queue": "kobocat_queue"},
     },
-    'delete-daily-xform-submissions-counter': {
-        'task': 'onadata.apps.logger.tasks.delete_daily_counters',
-        'schedule': crontab(hour=0, minute=0),
-        'options': {'queue': 'kobocat_queue'}
-    }
+    "delete-daily-xform-submissions-counter": {
+        "task": "onadata.apps.logger.tasks.delete_daily_counters",
+        "schedule": crontab(hour=0, minute=0),
+        "options": {"queue": "kobocat_queue"},
+    },
+    # Run maintenance every day at 20:00 UTC
+    "perform-maintenance": {
+        "task": "onadata.apps.logger.tasks.perform_maintenance",
+        "schedule": crontab(hour=20, minute=0),
+        "options": {"queue": "kobocat_queue"},
+    },
 }
 
 CELERY_TASK_DEFAULT_QUEUE = "kobocat_queue"
