@@ -6,6 +6,7 @@ import requests
 from django.conf import settings
 from onadata.apps.restservice.RestServiceInterface import RestServiceInterface
 from onadata.apps.logger.models import Instance
+from onadata.libs.utils.common_tags import HOOK_EVENT
 
 
 class ServiceDefinition(RestServiceInterface):
@@ -16,7 +17,8 @@ class ServiceDefinition(RestServiceInterface):
 
         # Will be used internally by KPI to fetch data with KoBoCatBackend
         post_data = {
-            'submission_id': data.get('instance_id')
+            'submission_id': data.get('instance_id'),
+            'event': data.get('event') or HOOK_EVENT['ON_SUBMIT']
         }
         headers = {'Content-Type': 'application/json'}
 

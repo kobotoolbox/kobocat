@@ -67,3 +67,11 @@ MODE = "mode"
 NESTED_RESERVED_ATTRIBUTES = [
     VALIDATION_STATUS,
 ]
+
+
+HOOK_EVENT = {
+    'ON_SUBMIT': "on_submit",
+    'ON_EDIT': 'on_edit',
+    'ON_DELETE': 'on_delete',
+    'ON_VALIDATION_STATUS_CHANGE': 'on_validation_status_change'
+}

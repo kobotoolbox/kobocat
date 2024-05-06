@@ -24,7 +24,8 @@ from onadata.libs.utils.common_tags import (
     TAGS,
     NOTES,
     SUBMITTED_BY,
-    VALIDATION_STATUS
+    VALIDATION_STATUS,
+    HOOK_EVENT
 )
 from onadata.libs.utils.decorators import apply_form_field_names
 from onadata.libs.utils.model_tools import queryset_iterator
@@ -304,6 +305,9 @@ class ParsedInstance(models.Model):
 
         return True
 
+    def call_service_event(self, event='on_submit'):
+        call_service(self, event)
+
     @staticmethod
     def bulk_update_validation_statuses(query, validation_status):
         return xform_instances.update(
@@ -372,8 +376,8 @@ class ParsedInstance(models.Model):
         # Signal has been removed because of a race condition.
         # Rest Services were called before data was saved in DB.
         success = self.update_mongo(asynchronous)
-        if success and created:
-            call_service(self)
+        if success:
+            self.call_service_event(HOOK_EVENT['ON_SUBMIT'] if created else HOOK_EVENT['ON_EDIT'])
         return success
 
     def add_note(self, note):
@@ -414,9 +418,14 @@ def _get_attachments_from_instance(instance):
     return attachments
 
 
+def _send_remove_event(sender, **kwargs):
+    instance = kwargs.get('instance')
+    instance.call_service_event(HOOK_EVENT['ON_DELETE'])
+
 def _remove_from_mongo(sender, **kwargs):
     instance_id = kwargs.get('instance').instance.id
     xform_instances.delete_one({'_id': instance_id})
 
 
+pre_delete.connect(_send_remove_event, sender=ParsedInstance)
 pre_delete.connect(_remove_from_mongo, sender=ParsedInstance)
