@@ -2,15 +2,9 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import post_save
-from django.utils import timezone
-from django.utils.translation import gettext_lazy
 from guardian.conf import settings as guardian_settings
-from guardian.shortcuts import get_perms_for_model, assign_perm
-from rest_framework.authtoken.models import Token
 
 from onadata.apps.logger.fields import LazyDefaultBooleanField
-from onadata.apps.main.signals import set_api_permissions
 from onadata.libs.utils.country_field import COUNTRIES
 from onadata.libs.utils.gravatar import get_gravatar_img_link, gravatar_exists
 
@@ -61,27 +55,6 @@ class UserProfile(models.Model):
             ('can_add_xform', "Can add/upload an xform to user profile"),
             ('view_profile', "Can view user profile"),
         )
-
-
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
-
-
-post_save.connect(create_auth_token, sender=User, dispatch_uid='auth_token')
-
-post_save.connect(set_api_permissions, sender=User,
-                  dispatch_uid='set_api_permissions')
-
-
-def set_object_permissions(sender, instance=None, created=False, **kwargs):
-    if created:
-        for perm in get_perms_for_model(UserProfile):
-            assign_perm(perm.codename, instance.user, instance)
-
-
-post_save.connect(set_object_permissions, sender=UserProfile,
-                  dispatch_uid='set_object_permissions')
 
 
 def get_anonymous_user_instance(User):
