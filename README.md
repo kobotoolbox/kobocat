@@ -1,5 +1,13 @@
 # KoboCAT
 
+## Important notice when upgrading from any release older than [`2.024.19`](https://github.com/kobotoolbox/kobocat/releases/tag/2.024.19)
+
+`2.024.19` is the latest release for KoboCAT as a separate Django project. 
+
+Starting from version [2.024.25](https://github.com/kobotoolbox/kpi/releases/tag/2.024.25),
+KoboCAT has been consolidated into KPI as an application called [**openrosa**](https://github.com/kobotoolbox/kpi/tree/django-kobocat-app/kobo/apps/openrosa/DJANGO_APP_MIGRATION.md).
+
+
 ## Important notice when upgrading from any release older than [`2.020.18`](https://github.com/kobotoolbox/kobocat/releases/tag/2.020.18)
 
 Up to and including release [`2.020.18`](https://github.com/kobotoolbox/kobocat/releases/tag/2.020.18), this project (KoboCAT) and [KPI](https://github.com/kobotoolbox/kpi) both shared a common Postgres database. They now each have their own. **If you are upgrading an existing single-database installation, you must follow [these instructions](https://community.kobotoolbox.org/t/upgrading-to-separate-databases-for-kpi-and-kobocat/7202)** to migrate the KPI tables to a new database and adjust your configuration appropriately.
@@ -17,7 +25,9 @@ please refer to
 
 As features are migrated, we will list them here along with the last
 release where each was present:
-
+  - Starting from version [2.024.25](https://github.com/kobotoolbox/kpi/releases/tag/2.024.25),
+    the ability to import submissions in CSV to KoboCAT was
+    removed.
   - On 14 June 2021, the ability to upload forms directly to KoboCAT was
     removed, and it was announced that the legacy KoboCAT user interface would
     be preserved for "a few more months". After more than two years, we have
