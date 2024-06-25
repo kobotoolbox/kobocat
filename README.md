@@ -5,7 +5,7 @@
 `2.024.19` is the latest release for KoboCAT as a separate Django project. 
 
 Starting from version [2.024.25](https://github.com/kobotoolbox/kpi/releases/tag/2.024.25),
-KoboCAT has been consolidated into KPI as an application called [**openrosa**](https://github.com/kobotoolbox/kpi/tree/django-kobocat-app/kobo/apps/openrosa/DJANGO_APP_MIGRATION.md).
+KoboCAT has been consolidated into KPI as an application called [**openrosa**](https://github.com/kobotoolbox/kpi/blob/django-kobocat-app/kobo/apps/openrosa/MIGRATION_AS_DJANGO_APP.md).
 
 
 ## Important notice when upgrading from any release older than [`2.020.18`](https://github.com/kobotoolbox/kobocat/releases/tag/2.020.18)
