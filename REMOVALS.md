@@ -1,3 +1,11 @@
+# KoboCAT endpoint removals as of release 2.024.25
+
+## Already Unused or Non-functional
+
+URL Pattern | View Class or Function | Available in KPI
+-- | -- | --
+`/api/v1/forms/<form_id>/csv_import` | `onadata.apps.api.viewsets.xform_viewset.csv_import` | No
+
 # KoboCAT endpoint removals as of release 2.023.37
 
 The entire KoboCAT user interface has been removed.
