@@ -82,7 +82,7 @@ defusedxml==0.7.1
     #   pyxform
 dict2xml==1.7.5
     # via -r dependencies/pip/requirements.in
-django==4.2.11
+django==4.2.15
     # via
     #   -r dependencies/pip/requirements.in
     #   django-celery-beat
