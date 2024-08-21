@@ -4,7 +4,7 @@
 #
 #    pip-compile dependencies/pip/requirements.in
 #
--e git+https://github.com/dimagi/django-digest@419f7306443f9a800b07d832b2cc147941062d59#egg=django_digest
+-e git+https://github.com/kobotoolbox/django-digest@3995226ed8e5bd1cb32c640aae970f8c104f6156#egg=django_digest
     # via -r dependencies/pip/requirements.in
 -e git+https://github.com/kobotoolbox/kobo-service-account.git@8ee76730106ff8dc0ee2539c8e6a567aea4ed9ee#egg=kobo-service-account
     # via -r dependencies/pip/requirements.in
