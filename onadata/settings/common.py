@@ -199,6 +199,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
+USE_REMOTE_PERMS = os.getenv("USE_REMOTE_PERMS", "False") == "True"
+
 if os.getenv("USE_REMOTE_AUTH", "False") == "True":
     MIDDLEWARE_CLASSES += (
         'onadata.auth.QedAuthMiddleware',
