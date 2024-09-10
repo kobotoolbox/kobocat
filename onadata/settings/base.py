@@ -831,3 +831,5 @@ if sentry_dsn:
         traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', 0.01),
         send_default_pii=True
     )
+
+DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
