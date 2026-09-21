@@ -1,5 +1,7 @@
 # KoboCAT
 
+⚠️ **This repository is archived and has not been maintained since 2024.** ⚠️
+
 ## Important notice when upgrading from any release older than [`2.024.19`](https://github.com/kobotoolbox/kobocat/releases/tag/2.024.19)
 
 `2.024.19` is the latest release for KoboCAT as a separate Django project. 
